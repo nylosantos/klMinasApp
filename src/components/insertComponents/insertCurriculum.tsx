@@ -19,7 +19,6 @@ import {
 import { createCurriculumValidationSchema } from "../zodValidation";
 import {
   CreateCurriculumValidationZProps,
-  DataTypeArrayProps,
   GetCurriculumNameProps,
   HandleCurriculumNameNameProps,
 } from "../../@types";
@@ -30,17 +29,6 @@ import { SelectOptions } from "../SelectOptions";
 const db = getFirestore(app);
 
 export function InsertCurriculum() {
-  // CURRICULUM NAME STATE
-  const [curriculumName, setCurriculumName] = useState<GetCurriculumNameProps>({
-    name: {
-      schoolName: "",
-      schoolCourseName: "",
-      scheduleName: "",
-      classDayName: "",
-      teacherName: "",
-    },
-  });
-
   // CURRICULUM DATA
   const [curriculumData, setCurriculumData] =
     useState<CreateCurriculumValidationZProps>({
@@ -68,9 +56,29 @@ export function InsertCurriculum() {
     students: [{ name: "" }],
   });
 
+  // SCHEDULE DETAILS ARRAY STATE
+  const [schedulesDetailsData, setSchedulesDetailsData] = useState([]);
+
+  // GET SCHEDULE DETAILS FUNCTION
+  const handleScheduleDetails = async () => {
+    const scheduleDetailsRef = collection(db, "schedules");
+    const q = query(
+      scheduleDetailsRef,
+      where("name", "==", curriculumData.schedule)
+    );
+    const querySnapshot = await getDocs(q);
+    const dataTypePromises: any = [];
+    querySnapshot.forEach((doc) => {
+      const promise = doc.data();
+      dataTypePromises.push(promise);
+    });
+    setSchedulesDetailsData(dataTypePromises);
+  };
+
+  // GET SCHEDULE DETAILS WHEN CHOOSE SCHEDULE
   useEffect(() => {
-    console.log(dataTypeArray);
-  }, [dataTypeArray]);
+    handleScheduleDetails();
+  }, [curriculumData.schedule]);
 
   // GET CURRICULUM NAME
   const handleCurriculumName = async ({
@@ -120,15 +128,6 @@ export function InsertCurriculum() {
       teacher: "",
       confirmInsert: false,
     });
-    // setCurriculumName({
-    //   name: {
-    //     schoolName: "",
-    //     schoolCourseName: "",
-    //     scheduleName: "",
-    //     classDayName: "",
-    //     teacherName: "",
-    //   },
-    // });
     reset();
   };
 
@@ -221,8 +220,9 @@ export function InsertCurriculum() {
         const addCurriculum = async () => {
           const curriculumFormattedName = `${dataTypeArray.schools[0].name} | ${dataTypeArray.schoolCourses[0].name} | ${dataTypeArray.schedules[0].name} | ${dataTypeArray.classDays[0].name} | Professor: ${dataTypeArray.teachers[0].name}`;
           try {
-            await setDoc(doc(db, "curriculum", uuidv4()), {
-              id: uuidv4(),
+            const commonId = uuidv4();
+            await setDoc(doc(db, "curriculum", commonId), {
+              id: commonId,
               name: curriculumFormattedName,
               school: data.school,
               schoolClass: data.schoolClass,
@@ -484,6 +484,22 @@ export function InsertCurriculum() {
             }
           />
         </div>
+        {/* {curriculumData.school && curriculumData.schoolClass && curriculumData.schoolCourse && curriculumData.schedule && curriculumData.classDay && curriculumData.teacher ? ( */}
+          <div className="flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left">
+            <p>Colégio: {curriculumData.school}</p>
+            {curriculumData.school === "Colégio Bernoulli" ? (
+              <p>Turma: {curriculumData.schoolClass}</p>
+            ) : null}
+            <p>Modalidade: {curriculumData.schoolCourse}</p>
+            <p>Dias: {curriculumData.classDay}</p>
+            {schedulesDetailsData.map((details: any) =>
+              details.name === curriculumData.schedule
+                ? `Horário: De ${details.classStart} a ${details.classEnd} hrs`
+                : null
+            )}
+            <p>Professor: {curriculumData.teacher}</p>
+          </div>
+        {/* ) : null} */}
 
         {/** CHECKBOX CONFIRM INSERT */}
         <div className="flex justify-center items-center gap-2 mt-6">

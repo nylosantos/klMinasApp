@@ -34,7 +34,6 @@ export function InsertClass() {
     confirmInsert: false,
   });
 
-  console.log("Nome: ", classData.schoolName, "- Id: ", classData.schoolId)
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -48,7 +47,11 @@ export function InsertClass() {
       const promise = doc.data();
       schoolDataPromises.push(promise);
     });
-    setClassData({ ...classData, schoolId: id, schoolName: schoolDataPromises[0].name });
+    setClassData({
+      ...classData,
+      schoolId: id,
+      schoolName: schoolDataPromises[0].name,
+    });
   }
 
   // REACT HOOK FORM SETTINGS

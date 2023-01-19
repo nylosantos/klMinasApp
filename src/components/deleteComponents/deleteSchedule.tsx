@@ -1,11 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from "react";
-import DatePicker from "react-multi-date-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import TimePicker from "react-multi-date-picker/plugins/time_picker";
 import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
@@ -13,10 +10,7 @@ import {
   doc,
   getDocs,
   getFirestore,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
+  query, where
 } from "firebase/firestore";
 
 import { deleteScheduleValidationSchema } from "../zodValidation";
