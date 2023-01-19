@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind utilities;
+@tailwind components;
+
+input:focus, textarea:focus, select:focus{
+  @apply outline-0;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  @apply dark:bg-gray-800 dark:text-gray-100;
+  @apply transition-all duration-500;
+}
+
+input,
+select {
+  @apply dark:text-gray-800;
+  @apply transition-all duration-500;
+}
+
+/* Hidding Arrows From Input Number */
+@layer base {
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"] {
+    -webkit-appearance: none;
+    margin: 0;
+    -moz-appearance: textfield !important;
+  }
+}
