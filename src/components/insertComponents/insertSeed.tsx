@@ -138,14 +138,14 @@ export function InsertSeed() {
     });
 
     // CREATING SCHOOL CLASSES
-    const commomIdbernoulliFirstAndSecondPeriod = uuidv4();
+    const commomIdBernoulliFirstAndSecondPeriod = uuidv4();
     const bernoulliFirstAndSecondPeriod = doc(
       db,
       "schoolClasses",
-      commomIdbernoulliFirstAndSecondPeriod
+      commomIdBernoulliFirstAndSecondPeriod
     );
     batch.set(bernoulliFirstAndSecondPeriod, {
-      id: commomIdbernoulliFirstAndSecondPeriod,
+      id: commomIdBernoulliFirstAndSecondPeriod,
       timestamp: serverTimestamp(),
       name: "Turma Bernoulli - 1º e 2º Período",
       schoolName: "Colégio Bernoulli",
@@ -153,14 +153,14 @@ export function InsertSeed() {
       available: true,
     });
 
-    const commonIdbernoulliFirstAndSecondYear = uuidv4();
+    const commonIdBernoulliFirstAndSecondYear = uuidv4();
     const bernoulliFirstAndSecondYear = doc(
       db,
       "schoolClasses",
-      commonIdbernoulliFirstAndSecondYear
+      commonIdBernoulliFirstAndSecondYear
     );
     batch.set(bernoulliFirstAndSecondYear, {
-      id: commonIdbernoulliFirstAndSecondYear,
+      id: commonIdBernoulliFirstAndSecondYear,
       timestamp: serverTimestamp(),
       name: "Turma Bernoulli - 1º e 2º Ano",
       schoolName: "Colégio Bernoulli",
@@ -168,14 +168,14 @@ export function InsertSeed() {
       available: true,
     });
 
-    const commomIdbernoulliThirdToFifthYear = uuidv4();
+    const commomIdBernoulliThirdToFifthYear = uuidv4();
     const bernoulliThirdToFifthYear = doc(
       db,
       "schoolClasses",
-      commomIdbernoulliThirdToFifthYear
+      commomIdBernoulliThirdToFifthYear
     );
     batch.set(bernoulliThirdToFifthYear, {
-      id: commomIdbernoulliThirdToFifthYear,
+      id: commomIdBernoulliThirdToFifthYear,
       timestamp: serverTimestamp(),
       name: "Turma Bernoulli - 3º ao 5º Ano",
       schoolName: "Colégio Bernoulli",
@@ -183,14 +183,14 @@ export function InsertSeed() {
       available: true,
     });
 
-    const commomIdschoolClassVillaBuritis = uuidv4();
+    const commomIdSchoolClassVillaBuritis = uuidv4();
     const schoolClassVillaBuritis = doc(
       db,
       "schoolClasses",
-      commomIdschoolClassVillaBuritis
+      commomIdSchoolClassVillaBuritis
     );
     batch.set(schoolClassVillaBuritis, {
-      id: commomIdschoolClassVillaBuritis,
+      id: commomIdSchoolClassVillaBuritis,
       timestamp: serverTimestamp(),
       name: "Turma Villa Buritis",
       schoolName: "Colégio Villa Buritis",
@@ -198,29 +198,29 @@ export function InsertSeed() {
       available: true,
     });
 
-    const commomIdschoolClassBilboqueGutierrez = uuidv4();
+    const commomIdSchoolClassBilboqueGutierrez = uuidv4();
     const schoolClassBilboqueGutierrez = doc(
       db,
       "schoolClasses",
-      commomIdschoolClassBilboqueGutierrez
+      commomIdSchoolClassBilboqueGutierrez
     );
     batch.set(schoolClassBilboqueGutierrez, {
-      id: commomIdschoolClassBilboqueGutierrez,
+      id: commomIdSchoolClassBilboqueGutierrez,
       timestamp: serverTimestamp(),
       name: "Turma Bilboquê Gutierrez",
       schoolName: "Colégio Bilboquê Gutierrez",
-      schoolId: "commonIdBilboqueGutierrez",
+      schoolId: commonIdBilboqueGutierrez,
       available: true,
     });
 
-    const commomIdschoolClassBilboqueBuritis = uuidv4();
+    const commomIdSchoolClassBilboqueBuritis = uuidv4();
     const schoolClassBilboqueBuritis = doc(
       db,
       "schoolClasses",
-      commomIdschoolClassBilboqueBuritis
+      commomIdSchoolClassBilboqueBuritis
     );
     batch.set(schoolClassBilboqueBuritis, {
-      id: commomIdschoolClassBilboqueBuritis,
+      id: commomIdSchoolClassBilboqueBuritis,
       timestamp: serverTimestamp(),
       name: "Turma Bilboquê Buritis",
       schoolName: "Colégio Bilboquê Buritis",
@@ -228,14 +228,14 @@ export function InsertSeed() {
       available: true,
     });
 
-    const commomIdschoolClassEdnaRoriz = uuidv4();
+    const commomIdSchoolClassEdnaRoriz = uuidv4();
     const schoolClassEdnaRoriz = doc(
       db,
       "schoolClasses",
-      commomIdschoolClassEdnaRoriz
+      commomIdSchoolClassEdnaRoriz
     );
     batch.set(schoolClassEdnaRoriz, {
-      id: commomIdschoolClassEdnaRoriz,
+      id: commomIdSchoolClassEdnaRoriz,
       timestamp: serverTimestamp(),
       name: "Turma Edna Roriz",
       schoolName: "Colégio Edna Roriz",
@@ -633,6 +633,1140 @@ export function InsertSeed() {
     batch.set(teacherExample, {
       name: "Natália Peruzzo Costa",
       id: commonIdteacherExample,
+      timestamp: serverTimestamp(),
+    });
+
+    // CREATING CURRICULUM
+    // BERNOULLI - 1º AO 2º PERÍODO - BALLET
+    const commomIdBernoulliBallet1to2PeriodMorningCurriculum = uuidv4();
+    const bernoulliBallet1to2PeriodMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliBallet1to2PeriodMorningCurriculum
+    );
+    batch.set(bernoulliBallet1to2PeriodMorningCurriculum, {
+      id: commomIdBernoulliBallet1to2PeriodMorningCurriculum,
+      name: "Colégio Bernoulli | Ballet | Horário Bernoulli - 1º e 2º Período Matutino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliFirstAndSecondPeriod,
+      schoolClass: "Turma Bernoulli - 1º e 2º Período",
+      schoolCourseId: commomIdBallet,
+      schoolCourse: "Ballet",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondPeriodMorning,
+      schedule: "Horário Bernoulli - 1º e 2º Período Matutino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliBallet1to2PeriodAfternoonCurriculum = uuidv4();
+    const bernoulliBallet1to2PeriodAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliBallet1to2PeriodAfternoonCurriculum
+    );
+    batch.set(bernoulliBallet1to2PeriodAfternoonCurriculum, {
+      id: commomIdBernoulliBallet1to2PeriodAfternoonCurriculum,
+      name: "Colégio Bernoulli | Ballet | Horário Bernoulli - 1º e 2º Período Vespertino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliFirstAndSecondPeriod,
+      schoolClass: "Turma Bernoulli - 1º e 2º Período",
+      schoolCourseId: commomIdBallet,
+      schoolCourse: "Ballet",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondPeriodAfternoon,
+      schedule: "Horário Bernoulli - 1º e 2º Período Vespertino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 1º E 2º ANO - BALLET
+    const commomIdBernoulliBallet1and2YearMorningCurriculum = uuidv4();
+    const bernoulliBallet1and2YearMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliBallet1and2YearMorningCurriculum
+    );
+    batch.set(bernoulliBallet1and2YearMorningCurriculum, {
+      id: commomIdBernoulliBallet1and2YearMorningCurriculum,
+      name: "Colégio Bernoulli | Ballet | Horário Bernoulli - 1º e 2º Ano Matutino - Ballet | Sexta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdBallet,
+      schoolCourse: "Ballet",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearMorningBallet,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Matutino - Ballet",
+      classDayId: commomIdFriday,
+      classDay: "Sexta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliBallet1and2YearAfternoonCurriculum = uuidv4();
+    const bernoulliBallet1and2YearAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliBallet1and2YearAfternoonCurriculum
+    );
+    batch.set(bernoulliBallet1and2YearAfternoonCurriculum, {
+      id: commomIdBernoulliBallet1and2YearAfternoonCurriculum,
+      name: "Colégio Bernoulli | Ballet | Horário Bernoulli - 1º e 2º Ano Vespertino - Ballet | Sexta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdBallet,
+      schoolCourse: "Ballet",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearAfternoonBallet,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Vespertino - Ballet",
+      classDayId: commomIdFriday,
+      classDay: "Sexta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 1º AO 2º PERÍODO - FUTSAL
+    const commomIdBernoulliFutsal1to2PeriodMorningCurriculum = uuidv4();
+    const bernoulliFutsal1to2PeriodMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliFutsal1to2PeriodMorningCurriculum
+    );
+    batch.set(bernoulliFutsal1to2PeriodMorningCurriculum, {
+      id: commomIdBernoulliFutsal1to2PeriodMorningCurriculum,
+      name: "Colégio Bernoulli | Futsal | Horário Bernoulli - 1º e 2º Período Matutino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliFirstAndSecondPeriod,
+      schoolClass: "Turma Bernoulli - 1º e 2º Período",
+      schoolCourseId: commomIdFutsal,
+      schoolCourse: "Futsal",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondPeriodMorning,
+      schedule: "Horário Bernoulli - 1º e 2º Período Matutino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliFutsal1to2PeriodAfternoonCurriculum = uuidv4();
+    const bernoulliFutsal1to2PeriodAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliFutsal1to2PeriodAfternoonCurriculum
+    );
+    batch.set(bernoulliFutsal1to2PeriodAfternoonCurriculum, {
+      id: commomIdBernoulliFutsal1to2PeriodAfternoonCurriculum,
+      name: "Colégio Bernoulli | Futsal | Horário Bernoulli - 1º e 2º Período Vespertino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliFirstAndSecondPeriod,
+      schoolClass: "Turma Bernoulli - 1º e 2º Período",
+      schoolCourseId: commomIdFutsal,
+      schoolCourse: "Futsal",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondPeriodAfternoon,
+      schedule: "Horário Bernoulli - 1º e 2º Período Vespertino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 1º E 2º ANO - FUTSAL
+    const commomIdBernoulliFutsal1and2YearMorningCurriculum = uuidv4();
+    const bernoulliFutsal1and2YearMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliFutsal1and2YearMorningCurriculum
+    );
+    batch.set(bernoulliFutsal1and2YearMorningCurriculum, {
+      id: commomIdBernoulliFutsal1and2YearMorningCurriculum,
+      name: "Colégio Bernoulli | Futsal | Horário Bernoulli - 1º e 2º Ano Matutino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdFutsal,
+      schoolCourse: "Futsal",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearMorning,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Matutino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliFutsal1and2YearAfternoonCurriculum = uuidv4();
+    const bernoulliFutsal1and2YearAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliFutsal1and2YearAfternoonCurriculum
+    );
+    batch.set(bernoulliFutsal1and2YearAfternoonCurriculum, {
+      id: commomIdBernoulliFutsal1and2YearAfternoonCurriculum,
+      name: "Colégio Bernoulli | Futsal | Horário Bernoulli - 1º e 2º Ano Vespertino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdFutsal,
+      schoolCourse: "Futsal",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearAfternoon,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Vespertino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 3º AO 5º ANO - FUTSAL
+    const commomIdBernoulliFutsal3to5YearMorningCurriculum = uuidv4();
+    const bernoulliFutsal3to5YearMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliFutsal3to5YearMorningCurriculum
+    );
+    batch.set(bernoulliFutsal3to5YearMorningCurriculum, {
+      id: commomIdBernoulliFutsal3to5YearMorningCurriculum,
+      name: "Colégio Bernoulli | Futsal | Horário Bernoulli - 3º ao 5º Ano Matutino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliThirdToFifthYear,
+      schoolClass: "Turma Bernoulli - 3º ao 5º Ano",
+      schoolCourseId: commomIdFutsal,
+      schoolCourse: "Futsal",
+      scheduleId: commonIdScheduleBernoulliThirdToFifthYearMorning,
+      schedule: "Horário Bernoulli - 3º ao 5º Ano Matutino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliFutsal3to5YearAfternoonCurriculum = uuidv4();
+    const bernoulliFutsal3to5YearAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliFutsal3to5YearAfternoonCurriculum
+    );
+    batch.set(bernoulliFutsal3to5YearAfternoonCurriculum, {
+      id: commomIdBernoulliFutsal3to5YearAfternoonCurriculum,
+      name: "Colégio Bernoulli | Futsal | Horário Bernoulli - 3º ao 5º Ano Vespertino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliThirdToFifthYear,
+      schoolClass: "Turma Bernoulli - 3º ao 5º Ano",
+      schoolCourseId: commomIdFutsal,
+      schoolCourse: "Futsal",
+      scheduleId: commonIdScheduleBernoulliThirdToFifthYearAfternoon,
+      schedule: "Horário Bernoulli - 3º ao 5º Ano Vespertino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 1º AO 2º PERÍODO - JUDÔ
+    const commomIdBernoulliJudo1to2PeriodMorningCurriculum = uuidv4();
+    const bernoulliJudo1to2PeriodMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliJudo1to2PeriodMorningCurriculum
+    );
+    batch.set(bernoulliJudo1to2PeriodMorningCurriculum, {
+      id: commomIdBernoulliJudo1to2PeriodMorningCurriculum,
+      name: "Colégio Bernoulli | Judô | Horário Bernoulli - 1º e 2º Período Matutino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliFirstAndSecondPeriod,
+      schoolClass: "Turma Bernoulli - 1º e 2º Período",
+      schoolCourseId: commomIdJudo,
+      schoolCourse: "Judô",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondPeriodMorning,
+      schedule: "Horário Bernoulli - 1º e 2º Período Matutino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliJudo1to2PeriodAfternoonCurriculum = uuidv4();
+    const bernoulliJudo1to2PeriodAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliJudo1to2PeriodAfternoonCurriculum
+    );
+    batch.set(bernoulliJudo1to2PeriodAfternoonCurriculum, {
+      id: commomIdBernoulliJudo1to2PeriodAfternoonCurriculum,
+      name: "Colégio Bernoulli | Judô | Horário Bernoulli - 1º e 2º Período Vespertino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliFirstAndSecondPeriod,
+      schoolClass: "Turma Bernoulli - 1º e 2º Período",
+      schoolCourseId: commomIdJudo,
+      schoolCourse: "Judô",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondPeriodAfternoon,
+      schedule: "Horário Bernoulli - 1º e 2º Período Vespertino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 1º E 2º ANO - JUDÔ
+    const commomIdBernoulliJudo1and2YearMorningCurriculum = uuidv4();
+    const bernoulliJudo1and2YearMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliJudo1and2YearMorningCurriculum
+    );
+    batch.set(bernoulliJudo1and2YearMorningCurriculum, {
+      id: commomIdBernoulliJudo1and2YearMorningCurriculum,
+      name: "Colégio Bernoulli | Judô | Horário Bernoulli - 1º e 2º Ano Matutino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdJudo,
+      schoolCourse: "Judô",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearMorning,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Matutino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliJudo1and2YearAfternoonCurriculum = uuidv4();
+    const bernoulliJudo1and2YearAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliJudo1and2YearAfternoonCurriculum
+    );
+    batch.set(bernoulliJudo1and2YearAfternoonCurriculum, {
+      id: commomIdBernoulliJudo1and2YearAfternoonCurriculum,
+      name: "Colégio Bernoulli | Judô | Horário Bernoulli - 1º e 2º Ano Vespertino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdJudo,
+      schoolCourse: "Judô",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearAfternoon,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Vespertino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 3º AO 5º ANO - JUDÔ
+    const commomIdBernoulliJudo3to5YearMorningCurriculum = uuidv4();
+    const bernoulliJudo3to5YearMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliJudo3to5YearMorningCurriculum
+    );
+    batch.set(bernoulliJudo3to5YearMorningCurriculum, {
+      id: commomIdBernoulliJudo3to5YearMorningCurriculum,
+      name: "Colégio Bernoulli | Judô | Horário Bernoulli - 3º ao 5º Ano Matutino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliThirdToFifthYear,
+      schoolClass: "Turma Bernoulli - 3º ao 5º Ano",
+      schoolCourseId: commomIdJudo,
+      schoolCourse: "Judô",
+      scheduleId: commonIdScheduleBernoulliThirdToFifthYearMorning,
+      schedule: "Horário Bernoulli - 3º ao 5º Ano Matutino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliJudo3to5YearAfternoonCurriculum = uuidv4();
+    const bernoulliJudo3to5YearAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliJudo3to5YearAfternoonCurriculum
+    );
+    batch.set(bernoulliJudo3to5YearAfternoonCurriculum, {
+      id: commomIdBernoulliJudo3to5YearAfternoonCurriculum,
+      name: "Colégio Bernoulli | Judô | Horário Bernoulli - 3º ao 5º Ano Vespertino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliThirdToFifthYear,
+      schoolClass: "Turma Bernoulli - 3º ao 5º Ano",
+      schoolCourseId: commomIdJudo,
+      schoolCourse: "Judô",
+      scheduleId: commonIdScheduleBernoulliThirdToFifthYearAfternoon,
+      schedule: "Horário Bernoulli - 3º ao 5º Ano Vespertino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 1º AO 2º PERÍODO - INICIAÇÃO ESPORTIVA
+    const commomIdBernoulliIniciacaoEsportiva1to2PeriodMorningCurriculum =
+      uuidv4();
+    const bernoulliIniciacaoEsportiva1to2PeriodMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliIniciacaoEsportiva1to2PeriodMorningCurriculum
+    );
+    batch.set(bernoulliIniciacaoEsportiva1to2PeriodMorningCurriculum, {
+      id: commomIdBernoulliIniciacaoEsportiva1to2PeriodMorningCurriculum,
+      name: "Colégio Bernoulli | Iniciação Esportiva | Horário Bernoulli - 1º e 2º Período Matutino | Terça, Quinta e Sexta-Feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliFirstAndSecondPeriod,
+      schoolClass: "Turma Bernoulli - 1º e 2º Período",
+      schoolCourseId: commomIdIniciacaoEsportiva,
+      schoolCourse: "Iniciação Esportiva",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondPeriodMorning,
+      schedule: "Horário Bernoulli - 1º e 2º Período Matutino",
+      classDayId: commomIdTuesdayThursdayFriday,
+      classDay: "Terça, Quinta e Sexta-Feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliIniciacaoEsportiva1to2PeriodAfternoonCurriculum =
+      uuidv4();
+    const bernoulliIniciacaoEsportiva1to2PeriodAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliIniciacaoEsportiva1to2PeriodAfternoonCurriculum
+    );
+    batch.set(bernoulliIniciacaoEsportiva1to2PeriodAfternoonCurriculum, {
+      id: commomIdBernoulliIniciacaoEsportiva1to2PeriodAfternoonCurriculum,
+      name: "Colégio Bernoulli | Iniciação Esportiva | Horário Bernoulli - 1º e 2º Período Vespertino | Terça, Quinta e Sexta-Feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliFirstAndSecondPeriod,
+      schoolClass: "Turma Bernoulli - 1º e 2º Período",
+      schoolCourseId: commomIdIniciacaoEsportiva,
+      schoolCourse: "Iniciação Esportiva",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondPeriodAfternoon,
+      schedule: "Horário Bernoulli - 1º e 2º Período Vespertino",
+      classDayId: commomIdTuesdayThursdayFriday,
+      classDay: "Terça, Quinta e Sexta-Feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 1º E 2º ANO - INICIAÇÃO ESPORTIVA
+    const commomIdBernoulliIniciacaoEsportiva1and2YearMorningCurriculum =
+      uuidv4();
+    const bernoulliIniciacaoEsportiva1and2YearMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliIniciacaoEsportiva1and2YearMorningCurriculum
+    );
+    batch.set(bernoulliIniciacaoEsportiva1and2YearMorningCurriculum, {
+      id: commomIdBernoulliIniciacaoEsportiva1and2YearMorningCurriculum,
+      name: "Colégio Bernoulli | Iniciação Esportiva | Horário Bernoulli - 1º e 2º Ano Matutino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdIniciacaoEsportiva,
+      schoolCourse: "Iniciação Esportiva",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearMorning,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Matutino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliIniciacaoEsportiva1and2YearAfternoonCurriculum =
+      uuidv4();
+    const bernoulliIniciacaoEsportiva1and2YearAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliIniciacaoEsportiva1and2YearAfternoonCurriculum
+    );
+    batch.set(bernoulliIniciacaoEsportiva1and2YearAfternoonCurriculum, {
+      id: commomIdBernoulliIniciacaoEsportiva1and2YearAfternoonCurriculum,
+      name: "Colégio Bernoulli | Iniciação Esportiva | Horário Bernoulli - 1º e 2º Ano Vespertino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdIniciacaoEsportiva,
+      schoolCourse: "Iniciação Esportiva",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearAfternoon,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Vespertino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 1º E 2º ANO - JAZZ
+    const commomIdBernoulliJazz1and2YearMorningCurriculum = uuidv4();
+    const bernoulliJazz1and2YearMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliJazz1and2YearMorningCurriculum
+    );
+    batch.set(bernoulliJazz1and2YearMorningCurriculum, {
+      id: commomIdBernoulliJazz1and2YearMorningCurriculum,
+      name: "Colégio Bernoulli | Jazz | Horário Bernoulli - 1º e 2º Ano Matutino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdJazz,
+      schoolCourse: "Jazz",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearMorning,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Matutino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliJazz1and2YearAfternoonCurriculum = uuidv4();
+    const bernoulliJazz1and2YearAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliJazz1and2YearAfternoonCurriculum
+    );
+    batch.set(bernoulliJazz1and2YearAfternoonCurriculum, {
+      id: commomIdBernoulliJazz1and2YearAfternoonCurriculum,
+      name: "Colégio Bernoulli | Jazz | Horário Bernoulli - 1º e 2º Ano Vespertino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdJazz,
+      schoolCourse: "Jazz",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearAfternoon,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Vespertino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 3º AO 5º ANO - JAZZ
+    const commomIdBernoulliJazz3to5YearMorningCurriculum = uuidv4();
+    const bernoulliJazz3to5YearMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliJazz3to5YearMorningCurriculum
+    );
+    batch.set(bernoulliJazz3to5YearMorningCurriculum, {
+      id: commomIdBernoulliJazz3to5YearMorningCurriculum,
+      name: "Colégio Bernoulli | Jazz | Horário Bernoulli - 3º ao 5º Ano Matutino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliThirdToFifthYear,
+      schoolClass: "Turma Bernoulli - 3º ao 5º Ano",
+      schoolCourseId: commomIdJazz,
+      schoolCourse: "Jazz",
+      scheduleId: commonIdScheduleBernoulliThirdToFifthYearMorning,
+      schedule: "Horário Bernoulli - 3º ao 5º Ano Matutino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliJazz3to5YearAfternoonCurriculum = uuidv4();
+    const bernoulliJazz3to5YearAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliJazz3to5YearAfternoonCurriculum
+    );
+    batch.set(bernoulliJazz3to5YearAfternoonCurriculum, {
+      id: commomIdBernoulliJazz3to5YearAfternoonCurriculum,
+      name: "Colégio Bernoulli | Jazz | Horário Bernoulli - 3º ao 5º Ano Vespertino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliThirdToFifthYear,
+      schoolClass: "Turma Bernoulli - 3º ao 5º Ano",
+      schoolCourseId: commomIdJazz,
+      schoolCourse: "Jazz",
+      scheduleId: commonIdScheduleBernoulliThirdToFifthYearAfternoon,
+      schedule: "Horário Bernoulli - 3º ao 5º Ano Vespertino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 1º E 2º ANO - XADREZ
+    const commomIdBernoulliXadrez1and2YearMorningCurriculum = uuidv4();
+    const bernoulliXadrez1and2YearMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliXadrez1and2YearMorningCurriculum
+    );
+    batch.set(bernoulliXadrez1and2YearMorningCurriculum, {
+      id: commomIdBernoulliXadrez1and2YearMorningCurriculum,
+      name: "Colégio Bernoulli | Xadrez | Horário Bernoulli - 1º e 2º Ano Matutino | Sexta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdXadrez,
+      schoolCourse: "Xadrez",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearMorning,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Matutino",
+      classDayId: commomIdFriday,
+      classDay: "Sexta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliXadrez1and2YearAfternoonCurriculum = uuidv4();
+    const bernoulliXadrez1and2YearAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliXadrez1and2YearAfternoonCurriculum
+    );
+    batch.set(bernoulliXadrez1and2YearAfternoonCurriculum, {
+      id: commomIdBernoulliXadrez1and2YearAfternoonCurriculum,
+      name: "Colégio Bernoulli | Xadrez | Horário Bernoulli - 1º e 2º Ano Vespertino | Sexta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commonIdBernoulliFirstAndSecondYear,
+      schoolClass: "Turma Bernoulli - 1º e 2º Ano",
+      schoolCourseId: commomIdXadrez,
+      schoolCourse: "Xadrez",
+      scheduleId: commonIdScheduleBernoulliFirstAndSecondYearAfternoon,
+      schedule: "Horário Bernoulli - 1º e 2º Ano Vespertino",
+      classDayId: commomIdFriday,
+      classDay: "Sexta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BERNOULLI - 3º AO 5º ANO - XADREZ
+    const commomIdBernoulliXadrez3to5yearMorningCurriculum = uuidv4();
+    const bernoulliXadrez3to5yearMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliXadrez3to5yearMorningCurriculum
+    );
+    batch.set(bernoulliXadrez3to5yearMorningCurriculum, {
+      id: commomIdBernoulliXadrez3to5yearMorningCurriculum,
+      name: "Colégio Bernoulli | Xadrez | Horário Bernoulli - 3º ao 5º Ano Matutino | Sexta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliThirdToFifthYear,
+      schoolClass: "Turma Bernoulli - 3º ao 5º Ano",
+      schoolCourseId: commomIdXadrez,
+      schoolCourse: "Xadrez",
+      scheduleId: commonIdScheduleBernoulliThirdToFifthYearMorning,
+      schedule: "Horário Bernoulli - 3º ao 5º Ano Matutino",
+      classDayId: commomIdFriday,
+      classDay: "Sexta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBernoulliXadrez3to5yearAfternoonCurriculum = uuidv4();
+    const bernoulliXadrez3to5yearAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBernoulliXadrez3to5yearAfternoonCurriculum
+    );
+    batch.set(bernoulliXadrez3to5yearAfternoonCurriculum, {
+      id: commomIdBernoulliXadrez3to5yearAfternoonCurriculum,
+      name: "Colégio Bernoulli | Xadrez | Horário Bernoulli - 3º ao 5º Ano Vespertino | Sexta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBernoulli,
+      school: "Colégio Bernoulli",
+      schoolClassId: commomIdBernoulliThirdToFifthYear,
+      schoolClass: "Turma Bernoulli - 3º ao 5º Ano",
+      schoolCourseId: commomIdXadrez,
+      schoolCourse: "Xadrez",
+      scheduleId: commonIdScheduleBernoulliThirdToFifthYearAfternoon,
+      schedule: "Horário Bernoulli - 3º ao 5º Ano Vespertino",
+      classDayId: commomIdFriday,
+      classDay: "Sexta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // VILLA BURITIS - BALLET
+    const commomIdVillaBuritisBalletCurriculum = uuidv4();
+    const villaBuritisBalletCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdVillaBuritisBalletCurriculum
+    );
+    batch.set(villaBuritisBalletCurriculum, {
+      id: commomIdVillaBuritisBalletCurriculum,
+      name: "Colégio Villa Buritis | Ballet | Horário Villa Buritis | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdVillaBuritis,
+      school: "Colégio VillaBuritis",
+      schoolClassId: commomIdSchoolClassVillaBuritis,
+      schoolClass: "Turma Villa Buritis",
+      schoolCourseId: commomIdBallet,
+      schoolCourse: "Ballet",
+      scheduleId: commonIdScheduleVillaBuritis,
+      schedule: "Horário Villa Buritis",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // VILLA BURITIS - FUTSAL
+    const commomIdVillaBuritisFutsalCurriculum = uuidv4();
+    const villaBuritisFutsalCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdVillaBuritisFutsalCurriculum
+    );
+    batch.set(villaBuritisFutsalCurriculum, {
+      id: commomIdVillaBuritisFutsalCurriculum,
+      name: "Colégio Villa Buritis | Futsal | Horário Villa Buritis | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdVillaBuritis,
+      school: "Colégio VillaBuritis",
+      schoolClassId: commomIdSchoolClassVillaBuritis,
+      schoolClass: "Turma Villa Buritis",
+      schoolCourseId: commomIdFutsal,
+      schoolCourse: "Futsal",
+      scheduleId: commonIdScheduleVillaBuritis,
+      schedule: "Horário Villa Buritis",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // VILLA BURITIS - JUDÔ
+    const commomIdVillaBuritisJudoCurriculum = uuidv4();
+    const villaBuritisJudoCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdVillaBuritisJudoCurriculum
+    );
+    batch.set(villaBuritisJudoCurriculum, {
+      id: commomIdVillaBuritisJudoCurriculum,
+      name: "Colégio Villa Buritis | Judô | Horário Villa Buritis | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdVillaBuritis,
+      school: "Colégio Villa Buritis",
+      schoolClassId: commomIdSchoolClassVillaBuritis,
+      schoolClass: "Turma Villa Buritis",
+      schoolCourseId: commomIdJudo,
+      schoolCourse: "Judô",
+      scheduleId: commonIdScheduleVillaBuritis,
+      schedule: "Horário Villa Buritis",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // VILLA BURITIS - FUNCIONAL KIDS
+    const commomIdVillaBuritisFuncionalKidsCurriculum = uuidv4();
+    const villaBuritisFuncionalKidsCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdVillaBuritisFuncionalKidsCurriculum
+    );
+    batch.set(villaBuritisFuncionalKidsCurriculum, {
+      id: commomIdVillaBuritisFuncionalKidsCurriculum,
+      name: "Colégio Villa Buritis | Funcional Kids | Horário Villa Buritis | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdVillaBuritis,
+      school: "Colégio Villa Buritis",
+      schoolClassId: commomIdSchoolClassVillaBuritis,
+      schoolClass: "Turma Villa Buritis",
+      schoolCourseId: commomIdFuncionalKids,
+      schoolCourse: "Funcional Kids",
+      scheduleId: commonIdScheduleVillaBuritis,
+      schedule: "Horário Villa Buritis",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BILBOQUÊ GUTIERREZ - BALLET
+    const commomIdBilboqueGutierrezBalletMorningCurriculum = uuidv4();
+    const bilboqueGutierrezBalletMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBilboqueGutierrezBalletMorningCurriculum
+    );
+    batch.set(bilboqueGutierrezBalletMorningCurriculum, {
+      id: commomIdBilboqueGutierrezBalletMorningCurriculum,
+      name: "Colégio Bilboquê Gutierrez | Ballet | Horário Bilboquê Gutierrez - Matutino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBilboqueGutierrez,
+      school: "Colégio Bilboquê Gutierrez",
+      schoolClassId: commomIdSchoolClassBilboqueGutierrez,
+      schoolClass: "Turma Bilboquê Gutierrez",
+      schoolCourseId: commomIdBallet,
+      schoolCourse: "Ballet",
+      scheduleId: commonIdScheduleBilboqueGutierrezMorning,
+      schedule: "Horário Bilboquê Gutierrez - Matutino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBilboqueGutierrezBalletAfternoonCurriculum = uuidv4();
+    const bilboqueGutierrezBalletAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBilboqueGutierrezBalletAfternoonCurriculum
+    );
+    batch.set(bilboqueGutierrezBalletAfternoonCurriculum, {
+      id: commomIdBilboqueGutierrezBalletAfternoonCurriculum,
+      name: "Colégio Bilboquê Gutierrez | Ballet | Horário Bilboquê Gutierrez - Vespertino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBilboqueGutierrez,
+      school: "Colégio Bilboquê Gutierrez",
+      schoolClassId: commomIdSchoolClassBilboqueGutierrez,
+      schoolClass: "Turma Bilboquê Gutierrez",
+      schoolCourseId: commomIdBallet,
+      schoolCourse: "Ballet",
+      scheduleId: commonIdScheduleBilboqueGutierrezAfternoon,
+      schedule: "Horário Bilboquê Gutierrez - Vespertino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BILBOQUÊ GUTIERREZ - FUTSAL
+    const commomIdBilboqueGutierrezFutsalMorningCurriculum = uuidv4();
+    const bilboqueGutierrezFutsalMorningCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBilboqueGutierrezFutsalMorningCurriculum
+    );
+    batch.set(bilboqueGutierrezFutsalMorningCurriculum, {
+      id: commomIdBilboqueGutierrezFutsalMorningCurriculum,
+      name: "Colégio Bilboquê Gutierrez | Futsal | Horário Bilboquê Gutierrez - Matutino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBilboqueGutierrez,
+      school: "Colégio Bilboquê Gutierrez",
+      schoolClassId: commomIdSchoolClassBilboqueGutierrez,
+      schoolClass: "Turma Bilboquê Gutierrez",
+      schoolCourseId: commomIdFutsal,
+      schoolCourse: "Futsal",
+      scheduleId: commonIdScheduleBilboqueGutierrezMorning,
+      schedule: "Horário Bilboquê Gutierrez - Matutino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    const commomIdBilboqueGutierrezFutsalAfternoonCurriculum = uuidv4();
+    const bilboqueGutierrezFutsalAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBilboqueGutierrezFutsalAfternoonCurriculum
+    );
+    batch.set(bilboqueGutierrezFutsalAfternoonCurriculum, {
+      id: commomIdBilboqueGutierrezFutsalAfternoonCurriculum,
+      name: "Colégio Bilboquê Gutierrez | Futsal | Horário Bilboquê Gutierrez - Vespertino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBilboqueGutierrez,
+      school: "Colégio Bilboquê Gutierrez",
+      schoolClassId: commomIdSchoolClassBilboqueGutierrez,
+      schoolClass: "Turma Bilboquê Gutierrez",
+      schoolCourseId: commomIdFutsal,
+      schoolCourse: "Futsal",
+      scheduleId: commonIdScheduleBilboqueGutierrezAfternoon,
+      schedule: "Horário Bilboquê Gutierrez - Vespertino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BILBOQUÊ GUTIERREZ - JUDÔ
+    const commomIdBilboqueGutierrezJudoAfternoonCurriculum = uuidv4();
+    const bilboqueGutierrezJudoAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBilboqueGutierrezJudoAfternoonCurriculum
+    );
+    batch.set(bilboqueGutierrezJudoAfternoonCurriculum, {
+      id: commomIdBilboqueGutierrezJudoAfternoonCurriculum,
+      name: "Colégio Bilboquê Gutierrez | Judô | Horário Bilboquê Gutierrez - Vespertino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBilboqueGutierrez,
+      school: "Colégio Bilboquê Gutierrez",
+      schoolClassId: commomIdSchoolClassBilboqueGutierrez,
+      schoolClass: "Turma Bilboquê Gutierrez",
+      schoolCourseId: commomIdJudo,
+      schoolCourse: "Judô",
+      scheduleId: commonIdScheduleBilboqueGutierrezAfternoon,
+      schedule: "Horário Bilboquê Gutierrez - Vespertino",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BILBOQUÊ GUTIERREZ - INICIAÇÃO ESPORTIVA
+    const commomIdBilboqueGutierrezIniciacaoEsportivaAfternoonCurriculum =
+      uuidv4();
+    const bilboqueGutierrezIniciacaoEsportivaAfternoonCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBilboqueGutierrezIniciacaoEsportivaAfternoonCurriculum
+    );
+    batch.set(bilboqueGutierrezIniciacaoEsportivaAfternoonCurriculum, {
+      id: commomIdBilboqueGutierrezIniciacaoEsportivaAfternoonCurriculum,
+      name: "Colégio Bilboquê Gutierrez | Iniciação Esportiva | Horário Bilboquê Gutierrez - Vespertino | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBilboqueGutierrez,
+      school: "Colégio Bilboquê Gutierrez",
+      schoolClassId: commomIdSchoolClassBilboqueGutierrez,
+      schoolClass: "Turma Bilboquê Gutierrez",
+      schoolCourseId: commomIdIniciacaoEsportiva,
+      schoolCourse: "Iniciação Esportiva",
+      scheduleId: commonIdScheduleBilboqueGutierrezAfternoon,
+      schedule: "Horário Bilboquê Gutierrez - Vespertino",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BILBOQUÊ BURITIS - BALLET
+    const commomIdBilboqueBuritisBalletCurriculum = uuidv4();
+    const bilboqueBuritisBalletCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBilboqueBuritisBalletCurriculum
+    );
+    batch.set(bilboqueBuritisBalletCurriculum, {
+      id: commomIdBilboqueBuritisBalletCurriculum,
+      name: "Colégio Bilboquê Buritis | Ballet | Horário Bilboquê Buritis | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBilboqueBuritis,
+      school: "Colégio Bilboquê Buritis",
+      schoolClassId: commomIdSchoolClassBilboqueBuritis,
+      schoolClass: "Turma Bilboquê Buritis",
+      schoolCourseId: commomIdBallet,
+      schoolCourse: "Ballet",
+      scheduleId: commonIdScheduleBilboqueBuritis,
+      schedule: "Horário Bilboquê Buritis",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BILBOQUÊ BURITIS - FUTSAL
+    const commomIdBilboqueBuritisFutsalCurriculum = uuidv4();
+    const bilboqueBuritisFutsalCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBilboqueBuritisFutsalCurriculum
+    );
+    batch.set(bilboqueBuritisFutsalCurriculum, {
+      id: commomIdBilboqueBuritisFutsalCurriculum,
+      name: "Colégio Bilboquê Buritis | Futsal | Horário Bilboquê Buritis | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBilboqueBuritis,
+      school: "Colégio Bilboquê Buritis",
+      schoolClassId: commomIdSchoolClassBilboqueBuritis,
+      schoolClass: "Turma Bilboquê Buritis",
+      schoolCourseId: commomIdFutsal,
+      schoolCourse: "Futsal",
+      scheduleId: commonIdScheduleBilboqueBuritis,
+      schedule: "Horário Bilboquê Buritis",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BILBOQUÊ BURITIS - JUDÔ
+    const commomIdBilboqueBuritisJudoCurriculum = uuidv4();
+    const bilboqueBuritisJudoCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBilboqueBuritisJudoCurriculum
+    );
+    batch.set(bilboqueBuritisJudoCurriculum, {
+      id: commomIdBilboqueBuritisJudoCurriculum,
+      name: "Colégio Bilboquê Buritis | Judô | Horário Bilboquê Buritis | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBilboqueBuritis,
+      school: "Colégio Bilboquê Buritis",
+      schoolClassId: commomIdSchoolClassBilboqueBuritis,
+      schoolClass: "Turma Bilboquê Buritis",
+      schoolCourseId: commomIdJudo,
+      schoolCourse: "Judô",
+      scheduleId: commonIdScheduleBilboqueBuritis,
+      schedule: "Horário Bilboquê Buritis",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // BILBOQUÊ BURITIS - INICIAÇÃO ESPORTIVA
+    const commomIdBilboqueBuritisIniciacaoEsportivaCurriculum = uuidv4();
+    const bilboqueBuritisIniciacaoEsportivaCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdBilboqueBuritisIniciacaoEsportivaCurriculum
+    );
+    batch.set(bilboqueBuritisIniciacaoEsportivaCurriculum, {
+      id: commomIdBilboqueBuritisIniciacaoEsportivaCurriculum,
+      name: "Colégio Bilboquê Buritis | Iniciação Esportiva | Horário Bilboquê Buritis | Terça e Quinta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdBilboqueBuritis,
+      school: "Colégio Bilboquê Buritis",
+      schoolClassId: commomIdSchoolClassBilboqueBuritis,
+      schoolClass: "Turma Bilboquê Buritis",
+      schoolCourseId: commomIdIniciacaoEsportiva,
+      schoolCourse: "Iniciação Esportiva",
+      scheduleId: commonIdScheduleBilboqueBuritis,
+      schedule: "Horário Bilboquê Buritis",
+      classDayId: commomIdTuesdayThursday,
+      classDay: "Terça e Quinta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // EDNA RORIZ - BALLET
+    const commomIdEdnaRorizBalletCurriculum = uuidv4();
+    const ednaRorizBalletCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdEdnaRorizBalletCurriculum
+    );
+    batch.set(ednaRorizBalletCurriculum, {
+      id: commomIdEdnaRorizBalletCurriculum,
+      name: "Colégio Edna Roriz | Ballet | Horário Edna Roriz | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdEdnaRoriz,
+      school: "Colégio Edna Roriz",
+      schoolClassId: commomIdSchoolClassEdnaRoriz,
+      schoolClass: "Turma Edna Roriz",
+      schoolCourseId: commomIdBallet,
+      schoolCourse: "Ballet",
+      scheduleId: commonIdScheduleEdnaRoriz,
+      schedule: "Horário Edna Roriz",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
+      timestamp: serverTimestamp(),
+    });
+
+    // EDNA RORIZ - FUTSAL
+    const commomIdEdnaRorizFutsalCurriculum = uuidv4();
+    const ednaRorizFutsalCurriculum = doc(
+      db,
+      "curriculum",
+      commomIdEdnaRorizFutsalCurriculum
+    );
+    batch.set(ednaRorizFutsalCurriculum, {
+      id: commomIdEdnaRorizFutsalCurriculum,
+      name: "Colégio Edna Roriz | Futsal | Horário Edna Roriz | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      schoolId: commonIdEdnaRoriz,
+      school: "Colégio Edna Roriz",
+      schoolClassId: commomIdSchoolClassEdnaRoriz,
+      schoolClass: "Turma Edna Roriz",
+      schoolCourseId: commomIdFutsal,
+      schoolCourse: "Futsal",
+      scheduleId: commonIdScheduleEdnaRoriz,
+      schedule: "Horário Edna Roriz",
+      classDayId: commomIdMondayWednesday,
+      classDay: "Segunda e Quarta-feira",
+      teacherId: commonIdteacherExample,
+      teacher: "Natália Peruzzo Costa",
+      students: [],
       timestamp: serverTimestamp(),
     });
 

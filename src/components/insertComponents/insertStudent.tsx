@@ -35,6 +35,10 @@ import { BrazilianStateSelectOptions } from "../BrazilianStateSelectOptions";
 const db = getFirestore(app);
 
 export function InsertStudent() {
+  // EDITOR / ADMIN STATES
+  const [isEditor, setIsEditor] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
   // STUDENT DATA
   const [studentData, setStudentData] = useState<CreateStudentValidationZProps>(
     {
@@ -69,10 +73,108 @@ export function InsertStudent() {
       },
       responsible: "",
       financialResponsible: "",
+      familyAtSchool: false,
+      familyAtSchoolId: "",
       curriculum: "",
       confirmInsert: false,
     }
   );
+
+  // ---------------------------- FAMILY STUDENT VARIABLES, STATES AND FUNCTIONS ---------------------------- //
+  // STUDENT DATA
+  const [familyStudentData, setFamilyStudentData] = useState({
+    studentId: "",
+    curriculumId: "",
+    schoolId: "",
+    schoolClassId: "",
+    confirmDelete: false,
+  });
+
+  // DATA ARRAY STATES
+  const [familySchoolClassesData, setFamilySchoolClassesData] = useState([]);
+  const [familyCurriculumsData, setFamilyCurriculumsData] = useState([]);
+  const [familyStudentsArrayData, setFamilyStudentsArrayData] = useState([]);
+
+  // DISABLE SELECT STATE
+  const [familyToggleSelect, setFamilyToggleSelect] = useState<
+    "school" | "class" | "course" | "student"
+  >("school");
+
+  // GET SCHOOL CLASS DATA FUNCTION
+  async function getFamilySchoolClassData(id: string) {
+    setFamilyToggleSelect("class");
+    const familySchoolClassRef = collection(db, "schoolClasses");
+    const q = query(familySchoolClassRef, where("schoolId", "==", id));
+    const querySnapshot = await getDocs(q);
+    const familySchoolClassDataPromises: any = [];
+    querySnapshot.forEach((doc) => {
+      const promise = doc.data();
+      familySchoolClassDataPromises.push(promise);
+    });
+    setFamilyStudentData({
+      ...familyStudentData,
+      schoolId: id,
+      schoolClassId: " -- select an option -- ",
+      curriculumId: " -- select an option -- ",
+      studentId: " -- select an option -- ",
+      confirmDelete: false,
+    });
+    setFamilySchoolClassesData(familySchoolClassDataPromises);
+  }
+
+  // GET SCHOOL COURSE DATA FUNCTION
+  async function getFamilySchoolCourseData(id: string) {
+    setFamilyToggleSelect("course");
+    const familySchoolCourseRef = collection(db, "curriculum");
+    const q = query(
+      familySchoolCourseRef,
+      where("schoolClassId", "==", id),
+      where("schoolId", "==", familyStudentData.schoolId)
+    );
+    const querySnapshot = await getDocs(q);
+    const familyCurriculumDataPromises: any = [];
+    querySnapshot.forEach((doc) => {
+      const promise = doc.data();
+      familyCurriculumDataPromises.push(promise);
+    });
+    setFamilyStudentData({
+      ...familyStudentData,
+      schoolClassId: id,
+      curriculumId: " -- select an option -- ",
+      studentId: " -- select an option -- ",
+      confirmDelete: false,
+    });
+    setFamilyCurriculumsData(familyCurriculumDataPromises);
+  }
+
+  // GETTING STUDENTS AVAILABLE DATA
+  const handleAvailableFamilyStudentsData = async () => {
+    const q = query(
+      collection(db, "students"),
+      where("curriculum", "array-contains", familyStudentData.curriculumId),
+      orderBy("name")
+    );
+    const querySnapshot = await getDocs(q);
+    const promises: any = [];
+    querySnapshot.forEach((doc) => {
+      const promise = doc.data();
+      promises.push(promise);
+    });
+    setFamilyStudentsArrayData(promises);
+  };
+
+  // SET AVAILABLE STUDENTS DATA WHEN CHOOSE COURSE
+  useEffect(() => {
+    handleAvailableFamilyStudentsData();
+  }, [familyStudentData.curriculumId]);
+
+  // SET FAMILY STUDENT ID TO STUDENT DATA
+  useEffect(() => {
+    setStudentData({
+      ...studentData,
+      familyAtSchoolId: familyStudentData.studentId,
+    });
+  }, [familyStudentData.studentId]);
 
   // CURRICULUM DATA
   const [curriculumData, setCurriculumData] =
@@ -212,6 +314,13 @@ export function InsertStudent() {
     handleSchedulesDetails();
   }, []);
 
+  // TOGGLE TO "SCHOOL" WHEN TOGGLE FAMILY AT SCHOOL
+  useEffect(() => {
+    if (studentData.familyAtSchool === false) {
+      setFamilyToggleSelect("school");
+    }
+  }, [studentData.familyAtSchool]);
+
   // REACT HOOK FORM SETTINGS
   const {
     handleSubmit,
@@ -252,6 +361,8 @@ export function InsertStudent() {
       },
       responsible: "",
       financialResponsible: "",
+      familyAtSchool: false,
+      familyAtSchoolId: "",
       curriculum: "",
     },
   });
@@ -290,6 +401,8 @@ export function InsertStudent() {
       },
       responsible: "",
       financialResponsible: "",
+      familyAtSchool: false,
+      familyAtSchoolId: "",
       curriculum: "",
       confirmInsert: false,
     });
@@ -322,6 +435,8 @@ export function InsertStudent() {
     setValue("phoneTertiary.suffix", studentData.phoneTertiary.suffix);
     setValue("responsible", studentData.responsible);
     setValue("financialResponsible", studentData.financialResponsible);
+    setValue("familyAtSchool", studentData.familyAtSchool);
+    setValue("familyAtSchoolId", studentData.familyAtSchoolId);
     setValue("curriculum", studentData.curriculum);
     setValue("confirmInsert", studentData.confirmInsert);
   }, [studentData]);
@@ -352,6 +467,8 @@ export function InsertStudent() {
       errors.phoneTertiary?.suffix,
       errors.responsible,
       errors.financialResponsible,
+      errors.familyAtSchool,
+      errors.familyAtSchoolId,
       errors.curriculum,
       errors.confirmInsert,
     ];
@@ -372,6 +489,28 @@ export function InsertStudent() {
   ) => {
     setIsSubmitting(true);
 
+    // CHECK FAMILY AT SCHOOL DETAILS
+    if (studentData.familyAtSchool) {
+      if (
+        familyStudentData.schoolId === " -- select an option -- " ||
+        familyStudentData.schoolClassId === " -- select an option -- " ||
+        familyStudentData.curriculumId === " -- select an option -- " ||
+        familyStudentData.studentId === " -- select an option -- "
+      ) {
+        setIsSubmitting(false);
+        return toast.error(
+          `Por favor, verifique os dados do parente que já estuda na escola... ☑️`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        );
+      }
+    }
+
     // CHECK SCHOOL CLASS PICK
     if (curriculumData.schoolClass === " -- select an option -- ") {
       setIsSubmitting(false);
@@ -386,6 +525,7 @@ export function InsertStudent() {
         }
       );
     }
+
     // CHECK INSERT CONFIRMATION
     if (!data.confirmInsert) {
       setIsSubmitting(false);
@@ -453,37 +593,92 @@ export function InsertStudent() {
               students: arrayUnion(newStudentId),
             });
             try {
-              // ADD STUDENT TO DATABASE
-              await setDoc(newStudentRef, {
-                id: newStudentId,
-                name: data.name,
-                email: data.email,
-                birthDate: Timestamp.fromDate(new Date(data.birthDate)),
-                address: {
-                  street: data.address.street,
-                  number: data.address.number,
-                  complement: data.address.complement,
-                  neighborhood: data.address.neighborhood,
-                  city: data.address.city,
-                  state: data.address.state,
-                  cep: data.address.cep,
-                },
-                phone: `${data.phone.ddd} ${data.phone.prefix}-${data.phone.suffix}`,
-                phoneSecondary: `${data.phoneSecondary.ddd} ${data.phoneSecondary.prefix}-${data.phoneSecondary.suffix}`,
-                phoneTertiary: `${data.phoneTertiary.ddd} ${data.phoneTertiary.prefix}-${data.phoneTertiary.suffix}`,
-                responsible: data.responsible,
-                financialResponsible: data.financialResponsible,
-                curriculum: [data.curriculum],
-                timestamp: serverTimestamp(),
-              });
-              toast.success(`Aluno ${data.name} criado com sucesso! 👌`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
-              setIsSubmitting(false);
+              if (data.familyAtSchool) {
+                // ADD STUDENT TO DATABASE WITH BROTHER
+                await setDoc(newStudentRef, {
+                  id: newStudentId,
+                  name: data.name,
+                  email: data.email,
+                  birthDate: Timestamp.fromDate(new Date(data.birthDate)),
+                  address: {
+                    street: data.address.street,
+                    number: data.address.number,
+                    complement: data.address.complement,
+                    neighborhood: data.address.neighborhood,
+                    city: data.address.city,
+                    state: data.address.state,
+                    cep: data.address.cep,
+                  },
+                  phone: `${data.phone.ddd} ${data.phone.prefix}-${data.phone.suffix}`,
+                  phoneSecondary: `${data.phoneSecondary.ddd} ${data.phoneSecondary.prefix}-${data.phoneSecondary.suffix}`,
+                  phoneTertiary: `${data.phoneTertiary.ddd} ${data.phoneTertiary.prefix}-${data.phoneTertiary.suffix}`,
+                  responsible: data.responsible,
+                  financialResponsible: data.financialResponsible,
+                  curriculum: [data.curriculum],
+                  familyAtSchool: [data.familyAtSchoolId],
+                  timestamp: serverTimestamp(),
+                });
+                try {
+                  const brotherId = doc(db, "students", data.familyAtSchoolId!);
+                  await updateDoc(brotherId, {
+                    familyAtSchool: arrayUnion(newStudentId),
+                  });
+                  toast.success(`Aluno ${data.name} criado com sucesso! 👌`, {
+                    theme: "colored",
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    autoClose: 3000,
+                  });
+                  setIsSubmitting(false);
+                } catch (error) {
+                  console.log("ESSE É O ERROR", error);
+                  toast.error(
+                    `O aluno foi criado, mas ocorreu um erro ao adicioná-lo ao registro do seu irmão. Contate o suporte... 🤯`,
+                    {
+                      theme: "colored",
+                      closeOnClick: true,
+                      pauseOnHover: true,
+                      draggable: true,
+                      autoClose: 3000,
+                    }
+                  );
+                  setIsSubmitting(false);
+                }
+              } else {
+                // ADD STUDENT TO DATABASE WITHOUT BROTHER
+                await setDoc(newStudentRef, {
+                  id: newStudentId,
+                  name: data.name,
+                  email: data.email,
+                  birthDate: Timestamp.fromDate(new Date(data.birthDate)),
+                  address: {
+                    street: data.address.street,
+                    number: data.address.number,
+                    complement: data.address.complement,
+                    neighborhood: data.address.neighborhood,
+                    city: data.address.city,
+                    state: data.address.state,
+                    cep: data.address.cep,
+                  },
+                  phone: `${data.phone.ddd} ${data.phone.prefix}-${data.phone.suffix}`,
+                  phoneSecondary: `${data.phoneSecondary.ddd} ${data.phoneSecondary.prefix}-${data.phoneSecondary.suffix}`,
+                  phoneTertiary: `${data.phoneTertiary.ddd} ${data.phoneTertiary.prefix}-${data.phoneTertiary.suffix}`,
+                  responsible: data.responsible,
+                  financialResponsible: data.financialResponsible,
+                  curriculum: [data.curriculum],
+                  familyAtSchool: [],
+                  timestamp: serverTimestamp(),
+                });
+                toast.success(`Aluno ${data.name} criado com sucesso! 👌`, {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                });
+                setIsSubmitting(false);
+              }
             } catch (error) {
               console.log("ESSE É O ERROR", error);
               toast.error(`Ocorreu um erro... 🤯`, {
@@ -1344,7 +1539,6 @@ export function InsertStudent() {
         </div>
 
         {/* SCHOOL CLASS SELECT */}
-
         <div className="flex gap-2 items-center">
           <label
             htmlFor="schoolClassSelect"
@@ -1448,6 +1642,271 @@ export function InsertStudent() {
         ) : (
           "Selecione um colégio e uma turma para ver as modalidades disponíveis."
         )}
+
+        {/* FAMILY AT SCHOOL QUESTION */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="schoolSelect"
+            className={
+              errors.familyAtSchool
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
+          >
+            Algum parente estuda na escola?:{" "}
+          </label>
+          <select
+            defaultValue={"Não"}
+            className={
+              errors.familyAtSchool
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            name="schoolSelect"
+            onChange={() => {
+              setStudentData({
+                ...studentData,
+                familyAtSchool: !studentData.familyAtSchool,
+                confirmInsert: false,
+              });
+              setFamilyStudentData({
+                ...familyStudentData,
+                schoolId: " -- select an option -- ",
+                schoolClassId: " -- select an option -- ",
+                curriculumId: " -- select an option -- ",
+                studentId: " -- select an option -- ",
+              });
+            }}
+          >
+            <option value={"Não"}>Não</option>
+            <option value={"Sim"}>Sim</option>
+          </select>
+        </div>
+
+        {studentData.familyAtSchool ? (
+          <div className="flex flex-col py-2 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
+            <h1 className="font-bold text-lg py-4">
+              Atenção, a seguir insira os dados do parente do Aluno:
+            </h1>
+
+            {/* FAMILY SCHOOL SELECT */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="familySchoolSelect"
+                className={
+                  errors.familyAtSchoolId
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
+              >
+                Selecione a Escola do Parente:{" "}
+              </label>
+              <select
+                defaultValue={" -- select an option -- "}
+                className={
+                  errors.familyAtSchoolId
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                name="familySchoolSelect"
+                onChange={(e) => {
+                  getFamilySchoolClassData(e.target.value);
+                  setStudentData({
+                    ...studentData,
+                    confirmInsert: false,
+                  });
+                }}
+              >
+                <SelectOptions returnId dataType="schools" />
+              </select>
+            </div>
+
+            {/* FAMILY SCHOOL CLASS SELECT */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="familySchoolClassSelect"
+                className={
+                  errors.familyAtSchoolId
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
+              >
+                Selecione a Turma do Parente:{" "}
+              </label>
+              <select
+                defaultValue={" -- select an option -- "}
+                disabled={familyToggleSelect === "school" ? true : false}
+                className={
+                  familyStudentData.schoolId
+                    ? errors.familyAtSchoolId
+                      ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                }
+                name="familySchoolClassSelect"
+                onChange={(e) => {
+                  e.target.value === " -- select an option -- "
+                    ? setFamilyStudentData({
+                        ...familyStudentData,
+                        schoolClassId: e.target.value,
+                      })
+                    : getFamilySchoolCourseData(e.target.value);
+                  setStudentData({
+                    ...studentData,
+                    confirmInsert: false,
+                  });
+                }}
+              >
+                {familyStudentData.schoolId ? (
+                  <>
+                    <option value={" -- select an option -- "}>
+                      {" "}
+                      -- Selecione --{" "}
+                    </option>
+                    {familySchoolClassesData.map((option: any) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </>
+                ) : (
+                  <option disabled value={" -- select an option -- "}>
+                    {" "}
+                    -- Selecione uma escola para ver as turmas disponíveis --{" "}
+                  </option>
+                )}
+              </select>
+            </div>
+
+            {/* FAMILY SCHOOL COURSE SELECT */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="schoolCourseSelect"
+                className={
+                  errors.familyAtSchoolId
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
+              >
+                Selecione a Modalidade do Parente:{" "}
+              </label>
+              <select
+                defaultValue={" -- select an option -- "}
+                disabled={
+                  familyToggleSelect === "school" ||
+                  familyToggleSelect === "class"
+                    ? true
+                    : false
+                }
+                className={
+                  familyStudentData.schoolClassId
+                    ? errors.familyAtSchoolId
+                      ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                }
+                name="schoolCourseSelect"
+                onChange={(e) => {
+                  e.target.value === " -- select an option -- "
+                    ? setFamilyStudentData({
+                        ...familyStudentData,
+                        curriculumId: e.target.value,
+                      })
+                    : setFamilyStudentData({
+                        ...familyStudentData,
+                        curriculumId: e.target.value,
+                        studentId: " -- select an option -- ",
+                        confirmDelete: false,
+                      });
+                  setFamilyToggleSelect("student");
+                  setStudentData({
+                    ...studentData,
+                    confirmInsert: false,
+                  });
+                }}
+              >
+                {familyStudentData.schoolClassId ? (
+                  <>
+                    <option value={" -- select an option -- "}>
+                      {" "}
+                      -- Selecione --{" "}
+                    </option>
+                    {familyCurriculumsData.map((option: any) => (
+                      <option key={option.id} value={option.id}>
+                        {option.schoolCourse} | {option.schedule}
+                      </option>
+                    ))}
+                  </>
+                ) : (
+                  <option value={" -- select an option -- "}>
+                    {" "}
+                    -- Selecione uma Turma para ver as modalidades disponíveis
+                    --{" "}
+                  </option>
+                )}
+              </select>
+            </div>
+
+            {/* STUDENT SELECT */}
+            <div className="flex gap-2 items-center pb-2">
+              <label
+                htmlFor="familyAtSchoolSelect"
+                className={
+                  errors.familyAtSchoolId
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
+              >
+                Selecione o Parente:{" "}
+              </label>
+              <select
+                defaultValue={" -- select an option -- "}
+                disabled={
+                  familyToggleSelect === "school" ||
+                  familyToggleSelect === "class" ||
+                  familyToggleSelect === "course"
+                    ? true
+                    : false
+                }
+                className={
+                  familyStudentData.schoolClassId
+                    ? errors.familyAtSchoolId
+                      ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                }
+                name="familyAtSchoolSelect"
+                onChange={(e) => {
+                  setFamilyStudentData({
+                    ...familyStudentData,
+                    studentId: e.target.value,
+                    confirmDelete: false,
+                  });
+                }}
+              >
+                {familyStudentData.curriculumId ? (
+                  <>
+                    <option value={" -- select an option -- "}>
+                      {" "}
+                      -- Selecione --{" "}
+                    </option>
+                    {familyStudentsArrayData.map((option: any) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </>
+                ) : (
+                  <option disabled value={" -- select an option -- "}>
+                    {" "}
+                    -- Selecione Colégio, Turma e Modalidade para ver os alunos
+                    disponíveis --{" "}
+                  </option>
+                )}
+              </select>
+            </div>
+          </div>
+        ) : null}
 
         {/** CHECKBOX CONFIRM INSERT */}
         <div className="flex justify-center items-center gap-2 mt-6">

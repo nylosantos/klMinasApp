@@ -218,6 +218,7 @@ export function DeleteCurriculum() {
     Promise.all(promises).then((results) => {
       // IF EXISTS, RETURN ERROR
       if (results.length !== 0) {
+        console.log(results)
         return (
           setIsSubmitting(false),
           toast.error(
@@ -359,7 +360,7 @@ export function DeleteCurriculum() {
         {curriculumData.school && curriculumData.schoolClass ? (
           curriculumCoursesId.length !== 0 ? (
             <>
-              <h1 className="font-bold text-2xl py-4">
+              <h1 className="font-bold text-lg py-4">
                 Modalidades {curriculumData.school} -{" "}
                 {curriculumData.schoolClass}:
               </h1>
@@ -404,9 +405,14 @@ export function DeleteCurriculum() {
                 ))}
               </div>
             </>
-          ) : null
+          ) : (
+            <div className="pt-4">Nenhum currículo encontrado.</div>
+          )
         ) : (
-          "Selecione um colégio e uma turma para ver as modalidades disponíveis."
+          <div className="pt-4">
+            "Selecione um colégio e uma turma para ver as modalidades
+            disponíveis."
+          </div>
         )}
 
         {/** CHECKBOX CONFIRM DELETE */}

@@ -54,9 +54,6 @@ export type CreateSeedValidationZProps = z.infer<
 export type DeleteSchoolValidationZProps = z.infer<
   typeof deleteSchoolValidationSchema
 >;
-export type DeleteStudentValidationZProps = z.infer<
-  typeof deleteStudentValidationSchema
->;
 export type DeleteClassValidationZProps = z.infer<
   typeof deleteClassValidationSchema
 >;
@@ -74,6 +71,9 @@ export type DeleteTeacherValidationZProps = z.infer<
 >;
 export type DeleteCurriculumValidationZProps = z.infer<
   typeof deleteCurriculumValidationSchema
+>;
+export type DeleteStudentValidationZProps = z.infer<
+  typeof deleteStudentValidationSchema
 >;
 
 // SEARCH VALIDATIONS
