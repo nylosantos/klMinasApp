@@ -87,10 +87,8 @@ export function DeleteSchool() {
   };
 }
 
+// IMPLEMENTAR OS CURRÍCULOS NO SEED
 
-// REVISAR TODOS OS ARQUIVOS DE INSERT
-// REVISAR O SEED INSERT (deixar pronto para testar a parte de delete e depois inserir tudo novamente de uma vez só)
-// REVISAR TODOS OS ARQUIVOS DE DELETE
 // IMPLEMENTAR O DELETESTUDENT
 
 // IMPLEMENTAR A EDITPAGE

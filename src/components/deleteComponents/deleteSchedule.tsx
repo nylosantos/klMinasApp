@@ -10,7 +10,8 @@ import {
   doc,
   getDocs,
   getFirestore,
-  query, where
+  query,
+  where,
 } from "firebase/firestore";
 
 import { deleteScheduleValidationSchema } from "../zodValidation";
@@ -47,6 +48,7 @@ export function DeleteSchedule() {
       ...scheduleData,
       scheduleName: scheduleDataPromises[0].name,
       scheduleId: id,
+      confirmDelete: false
     });
   }
 
@@ -121,7 +123,7 @@ export function DeleteSchedule() {
       );
     }
 
-    // CHECKING IF SCHOOL EXISTS ON DATABASE
+    // CHECKING IF SCHEDULE EXISTS ON DATABASE
     const schedulesRef = collection(db, "curriculum");
     const q = query(schedulesRef, where("schedule", "==", data.scheduleName));
     const querySnapshot = await getDocs(q);
@@ -189,7 +191,7 @@ export function DeleteSchedule() {
         onSubmit={handleSubmit(handleDeleteSchedule)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
       >
-        {/* SCHOOL SELECT */}
+        {/* SCHEDULE SELECT */}
         <div className="flex gap-2 items-center">
           <label
             htmlFor="scheduleSelect"

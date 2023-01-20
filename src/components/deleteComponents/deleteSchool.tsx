@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
@@ -12,8 +11,6 @@ import {
   getDocs,
   getFirestore,
   query,
-  serverTimestamp,
-  setDoc,
   where,
 } from "firebase/firestore";
 
@@ -41,15 +38,16 @@ export function DeleteSchool() {
     const schoolRef = collection(db, "schools");
     const q = query(schoolRef, where("id", "==", id));
     const querySnapshot = await getDocs(q);
-    const schoolCourseDataPromises: any = [];
+    const schoolSchoolDataPromises: any = [];
     querySnapshot.forEach((doc) => {
       const promise = doc.data();
-      schoolCourseDataPromises.push(promise);
+      schoolSchoolDataPromises.push(promise);
     });
     setSchoolData({
       ...schoolData,
-      schoolName: schoolCourseDataPromises[0].name,
+      schoolName: schoolSchoolDataPromises[0].name,
       schoolId: id,
+      confirmDelete: false,
     });
   }
 

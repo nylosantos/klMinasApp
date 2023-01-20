@@ -120,7 +120,7 @@ export default function InsertPage() {
               Aluno
             </Tab>
             <Tab
-              disabled
+              
               className={({ selected }) =>
                 classNames(
                   "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",

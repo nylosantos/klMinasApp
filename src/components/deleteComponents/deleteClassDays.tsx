@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -12,14 +11,11 @@ import {
   getDocs,
   getFirestore,
   query,
-  serverTimestamp,
-  setDoc,
   where,
 } from "firebase/firestore";
 
 import { deleteClassDaysValidationSchema } from "../zodValidation";
 import { DeleteClassDaysValidationZProps } from "../../@types";
-import { ClassDays } from "../ClassDays";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../SelectOptions";
 
@@ -38,20 +34,21 @@ export function DeleteClassDays() {
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // GET SCHOOL COURSE DATA FUNCTION
+  // GET CLASS DAYS DATA FUNCTION
   async function getClassDaysData(id: string) {
     const classDayRef = collection(db, "classDays");
     const q = query(classDayRef, where("id", "==", id));
     const querySnapshot = await getDocs(q);
-    const schoolCourseDataPromises: any = [];
+    const schoolClassDayPromises: any = [];
     querySnapshot.forEach((doc) => {
       const promise = doc.data();
-      schoolCourseDataPromises.push(promise);
+      schoolClassDayPromises.push(promise);
     });
     setClassDaysData({
       ...classDaysData,
-      classDayName: schoolCourseDataPromises[0].name,
+      classDayName: schoolClassDayPromises[0].name,
       classDayId: id,
+      confirmDelete: false,
     });
   }
 
@@ -126,7 +123,7 @@ export function DeleteClassDays() {
       );
     }
 
-    // CHECKING IF SCHOOL EXISTS ON DATABASE
+    // CHECKING IF CLASS DAY EXISTS ON CURRICULUM DATABASE
     const classDayRef = collection(db, "curriculum");
     const q = query(classDayRef, where("classDay", "==", data.classDayName));
     const querySnapshot = await getDocs(q);
@@ -197,7 +194,7 @@ export function DeleteClassDays() {
         {/* CLASS DAYS SELECT */}
         <div className="flex gap-2 items-center">
           <label
-            htmlFor="schoolCourseSelect"
+            htmlFor="classDaySelect"
             className={
               errors.classDayId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
@@ -213,7 +210,7 @@ export function DeleteClassDays() {
                 ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                 : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
-            name="schoolCourseSelect"
+            name="classDaySelect"
             onChange={(e) => {
               getClassDaysData(e.target.value);
             }}
@@ -222,7 +219,7 @@ export function DeleteClassDays() {
           </select>
         </div>
 
-        {/** CHECKBOX CONFIRM INSERT */}
+        {/** CHECKBOX CONFIRM DELETE */}
         <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"

@@ -126,8 +126,9 @@ export function InsertSchool() {
         // IF NOT EXISTS, CREATE
         const addSchool = async () => {
           try {
-            await setDoc(doc(db, "schools", uuidv4()), {
-              id: uuidv4(),
+            const commonId = uuidv4();
+            await setDoc(doc(db, "schools", commonId), {
+              id: commonId,
               name: `Colégio ${data.name}`,
               timestamp: serverTimestamp(),
             });
@@ -202,7 +203,7 @@ export function InsertSchool() {
         <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
-            name="confirmDelete"
+            name="confirmInsert"
             className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
             checked={schoolData.confirmInsert}
             onChange={() => {

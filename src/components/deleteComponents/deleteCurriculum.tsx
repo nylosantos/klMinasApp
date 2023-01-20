@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
@@ -13,20 +12,13 @@ import {
   getFirestore,
   orderBy,
   query,
-  serverTimestamp,
-  setDoc,
   where,
 } from "firebase/firestore";
 
 import { deleteCurriculumValidationSchema } from "../zodValidation";
-import {
-  DeleteCurriculumValidationZProps,
-  GetCurriculumNameProps,
-  HandleCurriculumNameNameProps,
-} from "../../@types";
+import { DeleteCurriculumValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../SelectOptions";
-import { TesteNumero } from "../../functions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -60,15 +52,19 @@ export function DeleteCurriculum() {
   // GET SCHOOL CLASS DATA FUNCTION
   async function getSchoolClassData(name: string) {
     setToggleSchoolAndClass("class");
-    const schoolRef = collection(db, "schoolClasses");
-    const q = query(schoolRef, where("schoolName", "==", name));
+    const schoolClassRef = collection(db, "schoolClasses");
+    const q = query(schoolClassRef, where("schoolName", "==", name));
     const querySnapshot = await getDocs(q);
     const schoolClassDataPromises: any = [];
     querySnapshot.forEach((doc) => {
       const promise = doc.data();
       schoolClassDataPromises.push(promise);
     });
-    setCurriculumData({ ...curriculumData, school: name });
+    setCurriculumData({
+      ...curriculumData,
+      school: name,
+      confirmDelete: false,
+    });
     setSchoolClassesData(schoolClassDataPromises);
   }
 
@@ -105,7 +101,7 @@ export function DeleteCurriculum() {
     });
     setCurriculumCoursesId(promises);
   };
-  console.log(curriculumData);
+
   // SET CURRICULUM DATA WHEN CHOOSE CLASS
   useEffect(() => {
     handleAvailableCoursesData();
@@ -207,7 +203,7 @@ export function DeleteCurriculum() {
       );
     }
 
-    // CHECKING IF STUDENTS EXISTS ON CURRICULUM DATABASE
+    // CHECKING IF CURRICULUM CONTAINS STUDENTS
     const curriculumRef = collection(db, "students");
     const q = query(
       curriculumRef,
@@ -334,6 +330,7 @@ export function DeleteCurriculum() {
               setCurriculumData({
                 ...curriculumData,
                 schoolClass: e.target.value,
+                confirmDelete: false,
               });
             }}
           >
@@ -370,39 +367,40 @@ export function DeleteCurriculum() {
               <div className="flex flex-wrap gap-4 justify-center">
                 {curriculumCoursesId.map((c: any) => (
                   <>
-                  {console.log(c)}
-                  <div
-                    className="flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                    key={c.id}
-                  >
-                    <input
-                      type="radio"
-                      id={c.id}
-                      name="age"
-                      value={c.id}
-                      onChange={(e) =>
-                        setCurriculumData({
-                          ...curriculumData,
-                          curriculumId: e.target.value,
-                          schoolCourse: c.schoolCourse,
-                          curriculum: c.name,
-                        })
-                      }
-                    />
-                    <label htmlFor={c.id} className="flex flex-col gap-4">
-                      {curriculumData.school === "Colégio Bernoulli" ? (
-                        <p>Turma: {c.schoolClass}</p>
-                      ) : null}
-                      <p>Modalidade: {c.schoolCourse}</p>
-                      {schedulesDetailsData.map((details: any) =>
-                        details.name === c.schedule
-                          ? `Horário: De ${details.classStart} a ${details.classEnd} hrs`
-                          : null
-                      )}
-                      <p>Dias: {c.classDay}</p>
-                      <p>Professor: {c.teacher}</p>
-                    </label>
-                  </div></>
+                    <div
+                      className="flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                      key={c.id}
+                    >
+                      <input
+                        type="radio"
+                        id={c.id}
+                        name="age"
+                        value={c.id}
+                        onChange={(e) =>
+                          setCurriculumData({
+                            ...curriculumData,
+                            curriculumId: e.target.value,
+                            schoolCourse: c.schoolCourse,
+                            curriculum: c.name,
+                            confirmDelete: false,
+                          })
+                        }
+                      />
+                      <label htmlFor={c.id} className="flex flex-col gap-4">
+                        {curriculumData.school === "Colégio Bernoulli" ? (
+                          <p>Turma: {c.schoolClass}</p>
+                        ) : null}
+                        <p>Modalidade: {c.schoolCourse}</p>
+                        {schedulesDetailsData.map((details: any) =>
+                          details.name === c.schedule
+                            ? `Horário: De ${details.classStart} a ${details.classEnd} hrs`
+                            : null
+                        )}
+                        <p>Dias: {c.classDay}</p>
+                        <p>Professor: {c.teacher}</p>
+                      </label>
+                    </div>
+                  </>
                 ))}
               </div>
             </>
@@ -411,7 +409,7 @@ export function DeleteCurriculum() {
           "Selecione um colégio e uma turma para ver as modalidades disponíveis."
         )}
 
-        {/** CHECKBOX CONFIRM INSERT */}
+        {/** CHECKBOX CONFIRM DELETE */}
         <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
@@ -429,7 +427,7 @@ export function DeleteCurriculum() {
             htmlFor="confirmDelete"
             className="text-sm text-gray-600 dark:text-gray-100"
           >
-            Confirmar criação do Currículo
+            Confirmar exclusão do Currículo
           </label>
         </div>
 

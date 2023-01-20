@@ -206,8 +206,9 @@ export function InsertClassDays() {
         // IF NOT EXISTS, CREATE
         const addClassDays = async () => {
           try {
-            await setDoc(doc(db, "classDays", uuidv4()), {
-              id: uuidv4(),
+            const commonId = uuidv4();
+            await setDoc(doc(db, "classDays", commonId), {
+              id: commonId,
               name: data.name,
               sunday: data.sunday,
               monday: data.monday,

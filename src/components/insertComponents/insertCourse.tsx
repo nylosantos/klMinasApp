@@ -127,8 +127,9 @@ export function InsertCourse() {
         // IF NOT EXISTS, CREATE
         const addCourse = async () => {
           try {
-            await setDoc(doc(db, "schoolCourses", uuidv4()), {
-              id: uuidv4(),
+            const commonId = uuidv4();
+            await setDoc(doc(db, "schoolCourses", commonId), {
+              id: commonId,
               name: data.name,
               price: data.price,
               timestamp: serverTimestamp(),

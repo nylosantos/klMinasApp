@@ -161,8 +161,9 @@ export function InsertClass() {
         // IF NOT EXISTS, CREATE
         const addClass = async () => {
           try {
-            await setDoc(doc(db, "schoolClasses", uuidv4()), {
-              id: uuidv4(),
+            const commonId = uuidv4();
+            await setDoc(doc(db, "schoolClasses", commonId), {
+              id: commonId,
               name: `Turma ${data.name}`,
               schoolName: data.schoolName,
               schoolId: data.schoolId,

@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
@@ -12,8 +11,6 @@ import {
   getDocs,
   getFirestore,
   query,
-  serverTimestamp,
-  setDoc,
   where,
 } from "firebase/firestore";
 
@@ -40,8 +37,8 @@ export function DeleteTeacher() {
 
   // GET TEACHER DATA FUNCTION
   async function getTeacherData(id: string) {
-    const classDayRef = collection(db, "teachers");
-    const q = query(classDayRef, where("id", "==", id));
+    const teacherRef = collection(db, "teachers");
+    const q = query(teacherRef, where("id", "==", id));
     const querySnapshot = await getDocs(q);
     const teacherDataPromises: any = [];
     querySnapshot.forEach((doc) => {
@@ -52,6 +49,7 @@ export function DeleteTeacher() {
       ...teacherData,
       teacherName: teacherDataPromises[0].name,
       teacherId: id,
+      confirmDelete: false,
     });
   }
 
@@ -126,9 +124,9 @@ export function DeleteTeacher() {
       );
     }
 
-    // CHECKING IF SCHOOL EXISTS ON DATABASE
-    const classDayRef = collection(db, "curriculum");
-    const q = query(classDayRef, where("teacher", "==", data.teacherName));
+    // CHECKING IF TEACHER EXISTS ON DATABASE
+    const teacherRef = collection(db, "curriculum");
+    const q = query(teacherRef, where("teacher", "==", data.teacherName));
     const querySnapshot = await getDocs(q);
     const promises: any = [];
     querySnapshot.forEach((doc) => {
@@ -179,6 +177,8 @@ export function DeleteTeacher() {
               autoClose: 3000,
             });
             setIsSubmitting(false);
+          } finally {
+            resetForm();
           }
         };
         deleteTeacher();

@@ -150,13 +150,20 @@ export interface SelectProps {
 
 export interface HandleCurriculumNameNameProps {
   id: string;
-  fieldName:
+  idName:
     | "schoolId"
     | "schoolClassId"
     | "schoolCourseId"
     | "scheduleId"
     | "classDayId"
     | "teacherId";
+  fieldName:
+    | "school"
+    | "schoolClass"
+    | "schoolCourse"
+    | "schedule"
+    | "classDay"
+    | "teacher";
   dataType:
     | "schools"
     | "schoolClasses"

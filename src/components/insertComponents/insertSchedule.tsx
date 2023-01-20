@@ -89,12 +89,12 @@ export function InsertSchedule() {
   useEffect(() => {
     const fullErrors = [
       errors.name,
-      errors.transitionStart, 
-      errors.transitionEnd, 
-      errors.classStart, 
-      errors.classEnd, 
-      errors.exit, 
-      errors.confirmInsert
+      errors.transitionStart,
+      errors.transitionEnd,
+      errors.classStart,
+      errors.classEnd,
+      errors.exit,
+      errors.confirmInsert,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -157,8 +157,9 @@ export function InsertSchedule() {
         // IF NOT EXISTS, CREATE
         const addSchedule = async () => {
           try {
-            await setDoc(doc(db, "schedules", uuidv4()), {
-              id: uuidv4(),
+            const commonId = uuidv4();
+            await setDoc(doc(db, "schedules", commonId), {
+              id: commonId,
               name: `Horário ${data.name}`,
               transitionStart: data.transitionStart,
               transitionEnd: data.transitionEnd,

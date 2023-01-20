@@ -93,158 +93,228 @@ export function InsertSeed() {
     const batch = writeBatch(db);
 
     // CREATING SCHOOLS
-    const schoolBernoulli = doc(db, "schools", uuidv4());
-    const schoolEdnaRoriz = doc(db, "schools", uuidv4());
-    const schoolBilboqueBuritis = doc(db, "schools", uuidv4());
-    const schoolBilboqueGutierrez = doc(db, "schools", uuidv4());
-    const schoolVillaBuritis = doc(db, "schools", uuidv4());
+    const commonIdBernoulli = uuidv4();
+    const schoolBernoulli = doc(db, "schools", commonIdBernoulli);
     batch.set(schoolBernoulli, {
       name: "Colégio Bernoulli",
-      id: uuidv4(),
+      id: commonIdBernoulli,
       timestamp: serverTimestamp(),
     });
+
+    const commonIdEdnaRoriz = uuidv4();
+    const schoolEdnaRoriz = doc(db, "schools", commonIdEdnaRoriz);
     batch.set(schoolEdnaRoriz, {
       name: "Colégio Edna Roriz",
-      id: uuidv4(),
+      id: commonIdEdnaRoriz,
       timestamp: serverTimestamp(),
     });
+
+    const commonIdBilboqueBuritis = uuidv4();
+    const schoolBilboqueBuritis = doc(db, "schools", commonIdBilboqueBuritis);
     batch.set(schoolBilboqueBuritis, {
       name: "Colégio Bilboquê Buritis",
-      id: uuidv4(),
+      id: commonIdBilboqueBuritis,
       timestamp: serverTimestamp(),
     });
+
+    const commonIdBilboqueGutierrez = uuidv4();
+    const schoolBilboqueGutierrez = doc(
+      db,
+      "schools",
+      commonIdBilboqueGutierrez
+    );
     batch.set(schoolBilboqueGutierrez, {
       name: "Colégio Bilboquê Gutierrez",
-      id: uuidv4(),
+      id: commonIdBilboqueGutierrez,
       timestamp: serverTimestamp(),
     });
+
+    const commonIdVillaBuritis = uuidv4();
+    const schoolVillaBuritis = doc(db, "schools", commonIdVillaBuritis);
     batch.set(schoolVillaBuritis, {
       name: "Colégio Villa Buritis",
-      id: uuidv4(),
+      id: commonIdVillaBuritis,
       timestamp: serverTimestamp(),
     });
 
     // CREATING SCHOOL CLASSES
-    const bernoulliFirstAndSecondPeriod = doc(db, "schoolClasses", uuidv4());
-    const bernoulliFirstAndSecondYear = doc(db, "schoolClasses", uuidv4());
-    const bernoulliThirdToFifthYear = doc(db, "schoolClasses", uuidv4());
-    const schoolClassVillaBuritis = doc(db, "schoolClasses", uuidv4());
-    const schoolClassBilboqueGutierrez = doc(db, "schoolClasses", uuidv4());
-    const schoolClassBilboqueBuritis = doc(db, "schoolClasses", uuidv4());
-    const schoolClassEdnaRoriz = doc(db, "schoolClasses", uuidv4());
+    const commomIdbernoulliFirstAndSecondPeriod = uuidv4();
+    const bernoulliFirstAndSecondPeriod = doc(
+      db,
+      "schoolClasses",
+      commomIdbernoulliFirstAndSecondPeriod
+    );
     batch.set(bernoulliFirstAndSecondPeriod, {
-      id: uuidv4(),
+      id: commomIdbernoulliFirstAndSecondPeriod,
       timestamp: serverTimestamp(),
       name: "Turma Bernoulli - 1º e 2º Período",
+      schoolName: "Colégio Bernoulli",
+      schoolId: commonIdBernoulli,
       available: true,
     });
+
+    const commonIdbernoulliFirstAndSecondYear = uuidv4();
+    const bernoulliFirstAndSecondYear = doc(
+      db,
+      "schoolClasses",
+      commonIdbernoulliFirstAndSecondYear
+    );
     batch.set(bernoulliFirstAndSecondYear, {
-      id: uuidv4(),
+      id: commonIdbernoulliFirstAndSecondYear,
       timestamp: serverTimestamp(),
       name: "Turma Bernoulli - 1º e 2º Ano",
+      schoolName: "Colégio Bernoulli",
+      schoolId: commonIdBernoulli,
       available: true,
     });
+
+    const commomIdbernoulliThirdToFifthYear = uuidv4();
+    const bernoulliThirdToFifthYear = doc(
+      db,
+      "schoolClasses",
+      commomIdbernoulliThirdToFifthYear
+    );
     batch.set(bernoulliThirdToFifthYear, {
-      id: uuidv4(),
+      id: commomIdbernoulliThirdToFifthYear,
       timestamp: serverTimestamp(),
       name: "Turma Bernoulli - 3º ao 5º Ano",
+      schoolName: "Colégio Bernoulli",
+      schoolId: commonIdBernoulli,
       available: true,
     });
+
+    const commomIdschoolClassVillaBuritis = uuidv4();
+    const schoolClassVillaBuritis = doc(
+      db,
+      "schoolClasses",
+      commomIdschoolClassVillaBuritis
+    );
     batch.set(schoolClassVillaBuritis, {
-      id: uuidv4(),
+      id: commomIdschoolClassVillaBuritis,
       timestamp: serverTimestamp(),
       name: "Turma Villa Buritis",
+      schoolName: "Colégio Villa Buritis",
+      schoolId: commonIdVillaBuritis,
       available: true,
     });
+
+    const commomIdschoolClassBilboqueGutierrez = uuidv4();
+    const schoolClassBilboqueGutierrez = doc(
+      db,
+      "schoolClasses",
+      commomIdschoolClassBilboqueGutierrez
+    );
     batch.set(schoolClassBilboqueGutierrez, {
-      id: uuidv4(),
+      id: commomIdschoolClassBilboqueGutierrez,
       timestamp: serverTimestamp(),
       name: "Turma Bilboquê Gutierrez",
+      schoolName: "Colégio Bilboquê Gutierrez",
+      schoolId: "commonIdBilboqueGutierrez",
       available: true,
     });
+
+    const commomIdschoolClassBilboqueBuritis = uuidv4();
+    const schoolClassBilboqueBuritis = doc(
+      db,
+      "schoolClasses",
+      commomIdschoolClassBilboqueBuritis
+    );
     batch.set(schoolClassBilboqueBuritis, {
-      id: uuidv4(),
+      id: commomIdschoolClassBilboqueBuritis,
       timestamp: serverTimestamp(),
       name: "Turma Bilboquê Buritis",
+      schoolName: "Colégio Bilboquê Buritis",
+      schoolId: commonIdBilboqueBuritis,
       available: true,
     });
+
+    const commomIdschoolClassEdnaRoriz = uuidv4();
+    const schoolClassEdnaRoriz = doc(
+      db,
+      "schoolClasses",
+      commomIdschoolClassEdnaRoriz
+    );
     batch.set(schoolClassEdnaRoriz, {
-      id: uuidv4(),
+      id: commomIdschoolClassEdnaRoriz,
       timestamp: serverTimestamp(),
       name: "Turma Edna Roriz",
+      schoolName: "Colégio Edna Roriz",
+      schoolId: commonIdEdnaRoriz,
       available: true,
     });
 
     // CREATING SCHOOL COURSES
-    const ballet = doc(db, "schoolCourses", uuidv4());
-    const futsal = doc(db, "schoolCourses", uuidv4());
-    const judo = doc(db, "schoolCourses", uuidv4());
-    const iniciacaoEsportiva = doc(db, "schoolCourses", uuidv4());
-    const jazz = doc(db, "schoolCourses", uuidv4());
-    const xadrez = doc(db, "schoolCourses", uuidv4());
-    const funcionalKids = doc(db, "schoolCourses", uuidv4());
+    const commomIdBallet = uuidv4();
+    const ballet = doc(db, "schoolCourses", commomIdBallet);
     batch.set(ballet, {
-      id: uuidv4(),
+      id: commomIdBallet,
       timestamp: serverTimestamp(),
       name: "Ballet",
       price: 145,
     });
+
+    const commomIdFutsal = uuidv4();
+    const futsal = doc(db, "schoolCourses", commomIdFutsal);
     batch.set(futsal, {
-      id: uuidv4(),
+      id: commomIdFutsal,
       timestamp: serverTimestamp(),
       name: "Futsal",
       price: 145,
     });
+
+    const commomIdJudo = uuidv4();
+    const judo = doc(db, "schoolCourses", commomIdJudo);
     batch.set(judo, {
-      id: uuidv4(),
+      id: commomIdJudo,
       timestamp: serverTimestamp(),
       name: "Judô",
       price: 145,
     });
+    const commomIdIniciacaoEsportiva = uuidv4();
+    const iniciacaoEsportiva = doc(
+      db,
+      "schoolCourses",
+      commomIdIniciacaoEsportiva
+    );
     batch.set(iniciacaoEsportiva, {
-      id: uuidv4(),
+      id: commomIdIniciacaoEsportiva,
       timestamp: serverTimestamp(),
       name: "Iniciação Esportiva",
       price: 145,
     });
+
+    const commomIdJazz = uuidv4();
+    const jazz = doc(db, "schoolCourses", commomIdJazz);
     batch.set(jazz, {
-      id: uuidv4(),
+      id: commomIdJazz,
       timestamp: serverTimestamp(),
       name: "Jazz",
       price: 145,
     });
+
+    const commomIdXadrez = uuidv4();
+    const xadrez = doc(db, "schoolCourses", commomIdXadrez);
     batch.set(xadrez, {
-      id: uuidv4(),
+      id: commomIdXadrez,
       timestamp: serverTimestamp(),
       name: "Xadrez",
       price: 145,
     });
+
+    const commomIdFuncionalKids = uuidv4();
+    const funcionalKids = doc(db, "schoolCourses", commomIdFuncionalKids);
     batch.set(funcionalKids, {
-      id: uuidv4(),
+      id: commomIdFuncionalKids,
       timestamp: serverTimestamp(),
       name: "Funcional Kids",
       price: 145,
     });
 
     // CREATING CLASS DAYS
-    const tuesdayThursday = doc(db, "classDays", uuidv4());
-    const mondayWednesday = doc(db, "classDays", uuidv4());
-    const tuesdayThursdayFriday = doc(db, "classDays", uuidv4());
-    const friday = doc(db, "classDays", uuidv4());
-    batch.set(tuesdayThursday, {
-      id: uuidv4(),
-      timestamp: serverTimestamp(),
-      name: "Terça e Quinta-feira",
-      sunday: false,
-      monday: false,
-      tuesday: true,
-      wednesday: false,
-      thursday: true,
-      friday: false,
-      saturday: false,
-    });
+    const commomIdMondayWednesday = uuidv4();
+    const mondayWednesday = doc(db, "classDays", commomIdMondayWednesday);
     batch.set(mondayWednesday, {
-      id: uuidv4(),
+      id: commomIdMondayWednesday,
       timestamp: serverTimestamp(),
       name: "Segunda e Quarta-feira",
       sunday: false,
@@ -255,8 +325,30 @@ export function InsertSeed() {
       friday: false,
       saturday: false,
     });
+
+    const commomIdTuesdayThursday = uuidv4();
+    const tuesdayThursday = doc(db, "classDays", commomIdTuesdayThursday);
+    batch.set(tuesdayThursday, {
+      id: commomIdTuesdayThursday,
+      timestamp: serverTimestamp(),
+      name: "Terça e Quinta-feira",
+      sunday: false,
+      monday: false,
+      tuesday: true,
+      wednesday: false,
+      thursday: true,
+      friday: false,
+      saturday: false,
+    });
+
+    const commomIdTuesdayThursdayFriday = uuidv4();
+    const tuesdayThursdayFriday = doc(
+      db,
+      "classDays",
+      commomIdTuesdayThursdayFriday
+    );
     batch.set(tuesdayThursdayFriday, {
-      id: uuidv4(),
+      id: commomIdTuesdayThursdayFriday,
       timestamp: serverTimestamp(),
       name: "Terça, Quinta e Sexta-Feira",
       sunday: false,
@@ -267,8 +359,11 @@ export function InsertSeed() {
       friday: true,
       saturday: false,
     });
+
+    const commomIdFriday = uuidv4();
+    const friday = doc(db, "classDays", commomIdFriday);
     batch.set(friday, {
-      id: uuidv4(),
+      id: commomIdFriday,
       timestamp: serverTimestamp(),
       name: "Sexta-feira",
       sunday: false,
@@ -281,63 +376,14 @@ export function InsertSeed() {
     });
 
     // CREATING SCHEDULES
+    const commonIdScheduleBernoulliFirstAndSecondPeriodMorning = uuidv4();
     const scheduleBernoulliFirstAndSecondPeriodMorning = doc(
       db,
       "schedules",
-      uuidv4()
+      commonIdScheduleBernoulliFirstAndSecondPeriodMorning
     );
-    const scheduleBernoulliFirstAndSecondPeriodAfternoon = doc(
-      db,
-      "schedules",
-      uuidv4()
-    );
-    const scheduleBernoulliFirstAndSecondYearMorning = doc(
-      db,
-      "schedules",
-      uuidv4()
-    );
-    const scheduleBernoulliFirstAndSecondYearAfternoon = doc(
-      db,
-      "schedules",
-      uuidv4()
-    );
-    const scheduleBernoulliFirstAndSecondYearMorningBallet = doc(
-      db,
-      "schedules",
-      uuidv4()
-    );
-    const scheduleBernoulliFirstAndSecondYearAfternoonBallet = doc(
-      db,
-      "schedules",
-      uuidv4()
-    );
-    const scheduleBernoulliThirdToFifthYearMorning = doc(
-      db,
-      "schedules",
-      uuidv4()
-    );
-    const scheduleBernoulliThirdToFifthYearAfternoon = doc(
-      db,
-      "schedules",
-      uuidv4()
-    );
-    const scheduleBernoulliThirdToFifthYearMorningXadrez = doc(
-      db,
-      "schedules",
-      uuidv4()
-    );
-    const scheduleBernoulliThirdToFifthYearAfternoonXadrez = doc(
-      db,
-      "schedules",
-      uuidv4()
-    );
-    const scheduleVillaBuritis = doc(db, "schedules", uuidv4());
-    const scheduleBilboqueGutierrezMorning = doc(db, "schedules", uuidv4());
-    const scheduleBilboqueGutierrezAfternoon = doc(db, "schedules", uuidv4());
-    const scheduleBilboqueBuritis = doc(db, "schedules", uuidv4());
-    const scheduleEdnaRoriz = doc(db, "schedules", uuidv4());
     batch.set(scheduleBernoulliFirstAndSecondPeriodMorning, {
-      id: uuidv4(),
+      id: commonIdScheduleBernoulliFirstAndSecondPeriodMorning,
       timestamp: serverTimestamp(),
       name: "Horário Bernoulli - 1º e 2º Período Matutino",
       transitionStart: "11:40",
@@ -346,8 +392,15 @@ export function InsertSeed() {
       classEnd: "12:40",
       exit: "12:45",
     });
+
+    const commonIdScheduleBernoulliFirstAndSecondPeriodAfternoon = uuidv4();
+    const scheduleBernoulliFirstAndSecondPeriodAfternoon = doc(
+      db,
+      "schedules",
+      commonIdScheduleBernoulliFirstAndSecondPeriodAfternoon
+    );
     batch.set(scheduleBernoulliFirstAndSecondPeriodAfternoon, {
-      id: uuidv4(),
+      id: commonIdScheduleBernoulliFirstAndSecondPeriodAfternoon,
       timestamp: serverTimestamp(),
       name: "Horário Bernoulli - 1º e 2º Período Vespertino",
       transitionStart: "17:40",
@@ -356,8 +409,15 @@ export function InsertSeed() {
       classEnd: "18:40",
       exit: "18:45",
     });
+
+    const commonIdScheduleBernoulliFirstAndSecondYearMorning = uuidv4();
+    const scheduleBernoulliFirstAndSecondYearMorning = doc(
+      db,
+      "schedules",
+      commonIdScheduleBernoulliFirstAndSecondYearMorning
+    );
     batch.set(scheduleBernoulliFirstAndSecondYearMorning, {
-      id: uuidv4(),
+      id: commonIdScheduleBernoulliFirstAndSecondYearMorning,
       timestamp: serverTimestamp(),
       name: "Horário Bernoulli - 1º e 2º Ano Matutino",
       transitionStart: "12:15",
@@ -366,8 +426,15 @@ export function InsertSeed() {
       classEnd: "13:25",
       exit: "13:30",
     });
+
+    const commonIdScheduleBernoulliFirstAndSecondYearAfternoon = uuidv4();
+    const scheduleBernoulliFirstAndSecondYearAfternoon = doc(
+      db,
+      "schedules",
+      commonIdScheduleBernoulliFirstAndSecondYearAfternoon
+    );
     batch.set(scheduleBernoulliFirstAndSecondYearAfternoon, {
-      id: uuidv4(),
+      id: commonIdScheduleBernoulliFirstAndSecondYearAfternoon,
       timestamp: serverTimestamp(),
       name: "Horário Bernoulli - 1º e 2º Ano Vespertino",
       transitionStart: "18:15",
@@ -376,8 +443,15 @@ export function InsertSeed() {
       classEnd: "19:25",
       exit: "19:30",
     });
+
+    const commonIdScheduleBernoulliFirstAndSecondYearMorningBallet = uuidv4();
+    const scheduleBernoulliFirstAndSecondYearMorningBallet = doc(
+      db,
+      "schedules",
+      commonIdScheduleBernoulliFirstAndSecondYearMorningBallet
+    );
     batch.set(scheduleBernoulliFirstAndSecondYearMorningBallet, {
-      id: uuidv4(),
+      id: commonIdScheduleBernoulliFirstAndSecondYearMorningBallet,
       timestamp: serverTimestamp(),
       name: "Horário Bernoulli - 1º e 2º Ano Matutino - Ballet",
       transitionStart: "12:15",
@@ -386,8 +460,15 @@ export function InsertSeed() {
       classEnd: "13:15",
       exit: "13:20",
     });
+
+    const commonIdScheduleBernoulliFirstAndSecondYearAfternoonBallet = uuidv4();
+    const scheduleBernoulliFirstAndSecondYearAfternoonBallet = doc(
+      db,
+      "schedules",
+      commonIdScheduleBernoulliFirstAndSecondYearAfternoonBallet
+    );
     batch.set(scheduleBernoulliFirstAndSecondYearAfternoonBallet, {
-      id: uuidv4(),
+      id: commonIdScheduleBernoulliFirstAndSecondYearAfternoonBallet,
       timestamp: serverTimestamp(),
       name: "Horário Bernoulli - 1º e 2º Ano Vespertino - Ballet",
       transitionStart: "18:15",
@@ -396,8 +477,15 @@ export function InsertSeed() {
       classEnd: "19:15",
       exit: "19:20",
     });
+
+    const commonIdScheduleBernoulliThirdToFifthYearMorning = uuidv4();
+    const scheduleBernoulliThirdToFifthYearMorning = doc(
+      db,
+      "schedules",
+      commonIdScheduleBernoulliThirdToFifthYearMorning
+    );
     batch.set(scheduleBernoulliThirdToFifthYearMorning, {
-      id: uuidv4(),
+      id: commonIdScheduleBernoulliThirdToFifthYearMorning,
       timestamp: serverTimestamp(),
       name: "Horário Bernoulli - 3º ao 5º Ano Matutino",
       transitionStart: "12:00",
@@ -406,8 +494,15 @@ export function InsertSeed() {
       classEnd: "13:00",
       exit: "13:05",
     });
+
+    const commonIdScheduleBernoulliThirdToFifthYearAfternoon = uuidv4();
+    const scheduleBernoulliThirdToFifthYearAfternoon = doc(
+      db,
+      "schedules",
+      commonIdScheduleBernoulliThirdToFifthYearAfternoon
+    );
     batch.set(scheduleBernoulliThirdToFifthYearAfternoon, {
-      id: uuidv4(),
+      id: commonIdScheduleBernoulliThirdToFifthYearAfternoon,
       timestamp: serverTimestamp(),
       name: "Horário Bernoulli - 3º ao 5º Ano Vespertino",
       transitionStart: "18:00",
@@ -416,8 +511,15 @@ export function InsertSeed() {
       classEnd: "19:00",
       exit: "19:05",
     });
+
+    const commonIdScheduleBernoulliThirdToFifthYearMorningXadrez = uuidv4();
+    const scheduleBernoulliThirdToFifthYearMorningXadrez = doc(
+      db,
+      "schedules",
+      commonIdScheduleBernoulliThirdToFifthYearMorningXadrez
+    );
     batch.set(scheduleBernoulliThirdToFifthYearMorningXadrez, {
-      id: uuidv4(),
+      id: commonIdScheduleBernoulliThirdToFifthYearMorningXadrez,
       timestamp: serverTimestamp(),
       name: "Horário Bernoulli - 3º ao 5º Ano Matutino - Xadrez",
       transitionStart: "12:00",
@@ -426,8 +528,15 @@ export function InsertSeed() {
       classEnd: "12:50",
       exit: "12:55",
     });
+
+    const commonIdScheduleBernoulliThirdToFifthYearAfternoonXadrez = uuidv4();
+    const scheduleBernoulliThirdToFifthYearAfternoonXadrez = doc(
+      db,
+      "schedules",
+      commonIdScheduleBernoulliThirdToFifthYearAfternoonXadrez
+    );
     batch.set(scheduleBernoulliThirdToFifthYearAfternoonXadrez, {
-      id: uuidv4(),
+      id: commonIdScheduleBernoulliThirdToFifthYearAfternoonXadrez,
       timestamp: serverTimestamp(),
       name: "Horário Bernoulli - 3º ao 5º Ano Vespertino - Xadrez",
       transitionStart: "18:00",
@@ -436,8 +545,15 @@ export function InsertSeed() {
       classEnd: "18:50",
       exit: "18:55",
     });
+
+    const commonIdScheduleVillaBuritis = uuidv4();
+    const scheduleVillaBuritis = doc(
+      db,
+      "schedules",
+      commonIdScheduleVillaBuritis
+    );
     batch.set(scheduleVillaBuritis, {
-      id: uuidv4(),
+      id: commonIdScheduleVillaBuritis,
       timestamp: serverTimestamp(),
       name: "Horário Villa Buritis",
       transitionStart: "17:35",
@@ -446,8 +562,15 @@ export function InsertSeed() {
       classEnd: "18:40",
       exit: "18:45",
     });
+
+    const commonIdScheduleBilboqueGutierrezMorning = uuidv4();
+    const scheduleBilboqueGutierrezMorning = doc(
+      db,
+      "schedules",
+      commonIdScheduleBilboqueGutierrezMorning
+    );
     batch.set(scheduleBilboqueGutierrezMorning, {
-      id: uuidv4(),
+      id: commonIdScheduleBilboqueGutierrezMorning,
       timestamp: serverTimestamp(),
       name: "Horário Bilboquê Gutierrez - Matutino",
       transitionStart: "11:35",
@@ -456,8 +579,15 @@ export function InsertSeed() {
       classEnd: "12:40",
       exit: "12:45",
     });
+
+    const commonIdScheduleBilboqueGutierrezAfternoon = uuidv4();
+    const scheduleBilboqueGutierrezAfternoon = doc(
+      db,
+      "schedules",
+      commonIdScheduleBilboqueGutierrezAfternoon
+    );
     batch.set(scheduleBilboqueGutierrezAfternoon, {
-      id: uuidv4(),
+      id: commonIdScheduleBilboqueGutierrezAfternoon,
       timestamp: serverTimestamp(),
       name: "Horário Bilboquê Gutierrez - Vespertino",
       transitionStart: "17:35",
@@ -466,8 +596,15 @@ export function InsertSeed() {
       classEnd: "18:40",
       exit: "18:45",
     });
+
+    const commonIdScheduleBilboqueBuritis = uuidv4();
+    const scheduleBilboqueBuritis = doc(
+      db,
+      "schedules",
+      commonIdScheduleBilboqueBuritis
+    );
     batch.set(scheduleBilboqueBuritis, {
-      id: uuidv4(),
+      id: commonIdScheduleBilboqueBuritis,
       timestamp: serverTimestamp(),
       name: "Horário Bilboquê Buritis",
       transitionStart: "17:35",
@@ -476,8 +613,11 @@ export function InsertSeed() {
       classEnd: "18:40",
       exit: "18:45",
     });
+
+    const commonIdScheduleEdnaRoriz = uuidv4();
+    const scheduleEdnaRoriz = doc(db, "schedules", commonIdScheduleEdnaRoriz);
     batch.set(scheduleEdnaRoriz, {
-      id: uuidv4(),
+      id: commonIdScheduleEdnaRoriz,
       timestamp: serverTimestamp(),
       name: "Horário Edna Roriz",
       transitionStart: "11:45",
@@ -488,10 +628,11 @@ export function InsertSeed() {
     });
 
     // CREATING TEACHER EXAMPLE
-    const teacherExample = doc(db, "teachers", uuidv4());
+    const commonIdteacherExample = uuidv4();
+    const teacherExample = doc(db, "teachers", commonIdteacherExample);
     batch.set(teacherExample, {
       name: "Natália Peruzzo Costa",
-      id: uuidv4(),
+      id: commonIdteacherExample,
       timestamp: serverTimestamp(),
     });
 

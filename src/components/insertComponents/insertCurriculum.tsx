@@ -19,7 +19,6 @@ import {
 import { createCurriculumValidationSchema } from "../zodValidation";
 import {
   CreateCurriculumValidationZProps,
-  GetCurriculumNameProps,
   HandleCurriculumNameNameProps,
 } from "../../@types";
 import { app } from "../../db/Firebase";
@@ -64,7 +63,7 @@ export function InsertCurriculum() {
     const scheduleDetailsRef = collection(db, "schedules");
     const q = query(
       scheduleDetailsRef,
-      where("name", "==", curriculumData.schedule)
+      where("id", "==", curriculumData.schedule)
     );
     const querySnapshot = await getDocs(q);
     const dataTypePromises: any = [];
@@ -84,9 +83,10 @@ export function InsertCurriculum() {
   const handleCurriculumName = async ({
     id,
     fieldName,
+    idName,
     dataType,
   }: HandleCurriculumNameNameProps) => {
-    setCurriculumData({ ...curriculumData, [fieldName]: id });
+    setCurriculumData({ ...curriculumData, [fieldName]: id, [idName]: id });
     const dataTypeRef = collection(db, dataType);
     const q = query(dataTypeRef, where("id", "==", id));
     const querySnapshot = await getDocs(q);
@@ -127,6 +127,16 @@ export function InsertCurriculum() {
       classDay: "",
       teacher: "",
       confirmInsert: false,
+    });
+    setDataTypeArray({
+      schools: [{ name: "" }],
+      schoolClasses: [{ name: "" }],
+      schoolCourses: [{ name: "" }],
+      schedules: [{ name: "" }],
+      classDays: [{ name: "" }],
+      teachers: [{ name: "" }],
+      curriculum: [{ name: "" }],
+      students: [{ name: "" }],
     });
     reset();
   };
@@ -224,12 +234,18 @@ export function InsertCurriculum() {
             await setDoc(doc(db, "curriculum", commonId), {
               id: commonId,
               name: curriculumFormattedName,
-              school: data.school,
-              schoolClass: data.schoolClass,
-              schoolCourse: data.schoolCourse,
-              schedule: data.schedule,
-              classDay: data.classDay,
-              teacher: data.teacher,
+              schoolId: data.school,
+              school: dataTypeArray.schools[0].name,
+              schoolClassId: data.schoolClass,
+              schoolClass: dataTypeArray.schoolClasses[0].name,
+              schoolCourseId: data.schoolCourse,
+              schoolCourse: dataTypeArray.schoolCourses[0].name,
+              scheduleId: data.schedule,
+              schedule: dataTypeArray.schedules[0].name,
+              classDayId: data.classDay,
+              classDay: dataTypeArray.classDays[0].name,
+              teacherId: data.teacher,
+              teacher: dataTypeArray.teachers[0].name,
               students: [],
               timestamp: serverTimestamp(),
             });
@@ -290,7 +306,8 @@ export function InsertCurriculum() {
             onChange={(e) => {
               handleCurriculumName({
                 id: e.target.value,
-                fieldName: "schoolId",
+                fieldName: "school",
+                idName: "schoolId",
                 dataType: "schools",
               });
             }}
@@ -320,9 +337,11 @@ export function InsertCurriculum() {
             }
             name="schoolClassSelect"
             onChange={(e) => {
-              setCurriculumData({
-                ...curriculumData,
-                schoolClass: e.target.value,
+              handleCurriculumName({
+                id: e.target.value,
+                idName: "schoolClassId",
+                fieldName: "schoolClass",
+                dataType: "schoolClasses",
               });
             }}
           >
@@ -353,7 +372,8 @@ export function InsertCurriculum() {
             onChange={(e) => {
               handleCurriculumName({
                 id: e.target.value,
-                fieldName: "schoolCourseId",
+                idName: "schoolCourseId",
+                fieldName: "schoolCourse",
                 dataType: "schoolCourses",
               });
             }}
@@ -385,7 +405,8 @@ export function InsertCurriculum() {
             onChange={(e) => {
               handleCurriculumName({
                 id: e.target.value,
-                fieldName: "scheduleId",
+                idName: "scheduleId",
+                fieldName: "schedule",
                 dataType: "schedules",
               });
             }}
@@ -417,7 +438,8 @@ export function InsertCurriculum() {
             onChange={(e) => {
               handleCurriculumName({
                 id: e.target.value,
-                fieldName: "classDayId",
+                idName: "classDayId",
+                fieldName: "classDay",
                 dataType: "classDays",
               });
             }}
@@ -449,7 +471,8 @@ export function InsertCurriculum() {
             onChange={(e) => {
               handleCurriculumName({
                 id: e.target.value,
-                fieldName: "teacherId",
+                idName: "teacherId",
+                fieldName: "teacher",
                 dataType: "teachers",
               });
             }}
@@ -484,28 +507,30 @@ export function InsertCurriculum() {
             }
           />
         </div>
-        {/* {curriculumData.school && curriculumData.schoolClass && curriculumData.schoolCourse && curriculumData.schedule && curriculumData.classDay && curriculumData.teacher ? ( */}
-          <div className="flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left">
-            <p>Colégio: {curriculumData.school}</p>
-            {curriculumData.school === "Colégio Bernoulli" ? (
-              <p>Turma: {curriculumData.schoolClass}</p>
+
+        {/* CURRICULUM DESCRIPTON CARD */}
+        <div className="flex gap-2 items-center justify-center mt-2">
+          <div className="flex flex-col w-2/6 items-left p-4 my-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left">
+            <p>Colégio: {dataTypeArray.schools[0].name}</p>
+            {dataTypeArray.schools[0].name === "Colégio Bernoulli" ? (
+              <p>Turma: {dataTypeArray.schoolClasses[0].name}</p>
             ) : null}
-            <p>Modalidade: {curriculumData.schoolCourse}</p>
-            <p>Dias: {curriculumData.classDay}</p>
+            <p>Modalidade: {dataTypeArray.schoolCourses[0].name}</p>
+            <p>Dias: {dataTypeArray.classDays[0].name}</p>
             {schedulesDetailsData.map((details: any) =>
-              details.name === curriculumData.schedule
+              details.name === dataTypeArray.schedules[0].name
                 ? `Horário: De ${details.classStart} a ${details.classEnd} hrs`
                 : null
             )}
-            <p>Professor: {curriculumData.teacher}</p>
+            <p>Professor: {dataTypeArray.teachers[0].name}</p>
           </div>
-        {/* ) : null} */}
+        </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
+        <div className="flex justify-center items-center gap-2 mt-2">
           <input
             type="checkbox"
-            name="confirmDelete"
+            name="confirmInsert"
             className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
             checked={curriculumData.confirmInsert}
             onChange={() => {

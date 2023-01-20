@@ -1,8 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import CurrencyInput from "react-currency-input-field";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
@@ -13,8 +11,6 @@ import {
   getDocs,
   getFirestore,
   query,
-  serverTimestamp,
-  setDoc,
   where,
 } from "firebase/firestore";
 
@@ -40,8 +36,8 @@ export function DeleteCourse() {
 
   // GET SCHOOL COURSE DATA FUNCTION
   async function getSchoolCourseData(id: string) {
-    const schoolRef = collection(db, "schoolCourses");
-    const q = query(schoolRef, where("id", "==", id));
+    const schoolCourseRef = collection(db, "schoolCourses");
+    const q = query(schoolCourseRef, where("id", "==", id));
     const querySnapshot = await getDocs(q);
     const schoolCourseDataPromises: any = [];
     querySnapshot.forEach((doc) => {
@@ -52,6 +48,7 @@ export function DeleteCourse() {
       ...courseData,
       schoolCourseName: schoolCourseDataPromises[0].name,
       schoolCourseId: id,
+      confirmDelete: false,
     });
   }
 
@@ -122,7 +119,7 @@ export function DeleteCourse() {
       );
     }
 
-    // CHECKING IF SCHOOL EXISTS ON DATABASE
+    // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
     const schoolCourseRef = collection(db, "curriculum");
     const q = query(
       schoolCourseRef,
@@ -221,7 +218,7 @@ export function DeleteCourse() {
           </select>
         </div>
 
-        {/** CHECKBOX CONFIRM INSERT */}
+        {/** CHECKBOX CONFIRM DELETE */}
         <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"

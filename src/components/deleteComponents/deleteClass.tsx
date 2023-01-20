@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
@@ -12,8 +11,6 @@ import {
   getDocs,
   getFirestore,
   query,
-  serverTimestamp,
-  setDoc,
   where,
 } from "firebase/firestore";
 
@@ -52,6 +49,7 @@ export function DeleteClass() {
       ...schoolClassData,
       schoolClassName: schoolClassDataPromises[0].name,
       schoolClassId: id,
+      confirmDelete: false,
     });
   }
 
@@ -60,9 +58,14 @@ export function DeleteClass() {
 
   // GET SCHOOL CLASS DATA FUNCTION
   async function getSchoolData(id: string) {
-    setSchoolClassData({ ...schoolClassData, schoolId: id });
-    const schoolRef = collection(db, "schoolClasses");
-    const q = query(schoolRef, where("schoolId", "==", id));
+    setSchoolClassData({
+      ...schoolClassData,
+      schoolId: id,
+      schoolClassName: " -- select an option -- ",
+      confirmDelete: false,
+    });
+    const schoolClassesRef = collection(db, "schoolClasses");
+    const q = query(schoolClassesRef, where("schoolId", "==", id));
     const querySnapshot = await getDocs(q);
     const schoolClassDataPromises: any = [];
     querySnapshot.forEach((doc) => {
@@ -132,6 +135,21 @@ export function DeleteClass() {
   ) => {
     setIsSubmitting(true);
 
+    // CHECK SCHOOL CLASS PICK
+    if (schoolClassData.schoolClassName === " -- select an option -- ") {
+      setIsSubmitting(false);
+      return toast.error(
+        `Por favor, verifique as opções de Colégio e Turma... ☑️`,
+        {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        }
+      );
+    }
+
     // CHECK DELETE CONFIRMATION
     if (!data.confirmDelete) {
       setIsSubmitting(false);
@@ -147,7 +165,7 @@ export function DeleteClass() {
       );
     }
 
-    // CHECKING IF SCHOOL EXISTS ON DATABASE
+    // CHECKING IF SCHOOL EXISTS ON CURRRICULUM DATABASE
     const schoolClassRef = collection(db, "curriculum");
     const q = query(
       schoolClassRef,
@@ -270,12 +288,17 @@ export function DeleteClass() {
             }
             name="schoolClassSelect"
             onChange={(e) => {
-              getSchoolClassData(e.target.value);
+              e.target.value === " -- select an option -- "
+                ? setSchoolClassData({
+                    ...schoolClassData,
+                    schoolClassName: e.target.value,
+                  })
+                : getSchoolClassData(e.target.value);
             }}
           >
             {schoolClassData.schoolId ? (
               <>
-                <option disabled value={" -- select an option -- "}>
+                <option value={" -- select an option -- "}>
                   {" "}
                   -- Selecione --{" "}
                 </option>
@@ -294,11 +317,11 @@ export function DeleteClass() {
           </select>
         </div>
 
-        {/** CHECKBOX CONFIRM INSERT */}
+        {/** CHECKBOX CONFIRM DELETE */}
         <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
-            name="confirmInsert"
+            name="confirmDelete"
             className="ml-1 dark: text-green-500 dark:text-green-500 border-none "
             checked={schoolClassData.confirmDelete}
             onChange={() => {
@@ -313,7 +336,9 @@ export function DeleteClass() {
             className="text-sm text-gray-600 dark:text-gray-100"
           >
             {schoolClassData.schoolClassName
-              ? `Confirmar exclusão da ${schoolClassData.schoolClassName}`
+              ? schoolClassData.schoolClassName === " -- select an option -- "
+                ? `Confirmar exclusão`
+                : `Confirmar exclusão da ${schoolClassData.schoolClassName}`
               : `Confirmar exclusão`}
           </label>
         </div>

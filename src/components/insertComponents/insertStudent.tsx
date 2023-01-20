@@ -98,15 +98,6 @@ export function InsertStudent() {
 
   // EDIT ADDRESS STATE
   const [editAddress, setEditAddress] = useState(false);
-  const [address, setAddress] = useState({
-    cep: "",
-    street: "",
-    number: "",
-    neighborhood: "",
-    complement: "",
-    city: "",
-    state: "",
-  });
 
   // GET CEP (BRAZILIAN ZIP CODE) FUNCTION
   const getCep = async (data: string) => {
@@ -380,6 +371,21 @@ export function InsertStudent() {
     data
   ) => {
     setIsSubmitting(true);
+
+    // CHECK SCHOOL CLASS PICK
+    if (curriculumData.schoolClass === " -- select an option -- ") {
+      setIsSubmitting(false);
+      return toast.error(
+        `Por favor, verifique as opções de Colégio e Turma... ☑️`,
+        {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        }
+      );
+    }
     // CHECK INSERT CONFIRMATION
     if (!data.confirmInsert) {
       setIsSubmitting(false);
@@ -429,8 +435,9 @@ export function InsertStudent() {
       } else {
         // IF NOT EXISTS, CREATE
         const addStudent = async () => {
-          const newStudentId = uuidv4();
-          const newStudentRef = doc(db, "students", uuidv4());
+          const commonId = uuidv4();
+          const newStudentId = commonId;
+          const newStudentRef = doc(db, "students", commonId);
           const curriculumRef = collection(db, "curriculum");
           const q = query(curriculumRef, where("id", "==", data.curriculum));
           const querySnapshot = await getDocs(q);
@@ -607,9 +614,11 @@ export function InsertStudent() {
               maxDate={new DateObject().subtract(3, "years")}
               format="DD/MM/YYYY"
               value={studentData.birthDate}
-              onChange={(e) =>
-                setStudentData({ ...studentData, birthDate: e!.toString() })
-              }
+              onChange={(e) => {
+                e !== null
+                  ? setStudentData({ ...studentData, birthDate: e!.toString() })
+                  : null;
+              }}
             />
           </div>
         </div>
@@ -1326,7 +1335,7 @@ export function InsertStudent() {
               setCurriculumData({
                 ...curriculumData,
                 school: e.target.value,
-                schoolClass: "",
+                schoolClass: " -- select an option -- ",
               });
             }}
           >
@@ -1335,6 +1344,7 @@ export function InsertStudent() {
         </div>
 
         {/* SCHOOL CLASS SELECT */}
+
         <div className="flex gap-2 items-center">
           <label
             htmlFor="schoolClassSelect"
@@ -1347,8 +1357,8 @@ export function InsertStudent() {
             Selecione a Turma:{" "}
           </label>
           <select
-            defaultValue={" -- select an option -- "}
             disabled={curriculumData.school ? false : true}
+            defaultValue={" -- select an option -- "}
             className={
               curriculumData.school
                 ? errors.curriculum
@@ -1362,11 +1372,12 @@ export function InsertStudent() {
                 ...curriculumData,
                 schoolClass: e.target.value,
               });
+              setStudentData({ ...studentData, curriculum: "" });
             }}
           >
             {curriculumData.school ? (
               <>
-                <option disabled value={" -- select an option -- "}>
+                <option value={" -- select an option -- "}>
                   {" "}
                   -- Selecione --{" "}
                 </option>
@@ -1397,7 +1408,11 @@ export function InsertStudent() {
               <div className="flex flex-wrap gap-4 justify-center">
                 {curriculumCoursesData.map((c: any) => (
                   <div
-                    className="flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                    className={
+                      errors.curriculum
+                        ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                        : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                    }
                     key={c.id}
                   >
                     <input
