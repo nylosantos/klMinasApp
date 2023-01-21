@@ -18,6 +18,8 @@ import {
   deleteSchoolValidationSchema,
   deleteStudentValidationSchema,
   deleteTeacherValidationSchema,
+  editSchoolClassValidationSchema,
+  editSchoolValidationSchema,
   searchCurriculumValidationSchema,
 } from "../components/zodValidation";
 
@@ -74,6 +76,14 @@ export type DeleteCurriculumValidationZProps = z.infer<
 >;
 export type DeleteStudentValidationZProps = z.infer<
   typeof deleteStudentValidationSchema
+>;
+
+// EDIT VALIDATIONS
+export type EditSchoolValidationZProps = z.infer<
+  typeof editSchoolValidationSchema
+>;
+export type EditSchoolClassValidationZProps = z.infer<
+  typeof editSchoolClassValidationSchema
 >;
 
 // SEARCH VALIDATIONS
@@ -146,6 +156,7 @@ export interface SelectProps {
   schoolName?: string;
   schoolCourseName?: string;
   returnId?: boolean;
+  handleData?: (data: any) => void;
 }
 
 export interface HandleCurriculumNameNameProps {
@@ -268,4 +279,18 @@ export interface DataTypeArrayProps {
       timestamp: { nanoseconds: number; seconds: number };
     }
   ];
+}
+
+export interface SchoolSearchProps {
+  id: string;
+  name: string;
+  timestamp: Date;
+}
+
+export interface SchoolClassSearchProps {
+  name: string;
+  schoolName: string;
+  schoolId: string;
+  available: boolean;
+  timestamp: Date;
 }

@@ -2,6 +2,7 @@ import {
   collection,
   getDocs,
   getFirestore,
+  onSnapshot,
   orderBy,
   query,
   where,
@@ -18,6 +19,7 @@ export function SelectOptions({
   schoolName,
   schoolCourseName,
   returnId = false,
+  handleData,
 }: SelectProps) {
   // DATA STATE
   const [data, setData] = useState([]);
@@ -27,25 +29,43 @@ export function SelectOptions({
     if (schoolName && dataType === "schoolClasses") {
       const q = query(
         collection(db, dataType),
-        where("school", "==", schoolName),
+        where("schoolName", "==", schoolName),
         orderBy("name")
       );
-      const querySnapshot = await getDocs(q);
-      const promises: any = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data();
-        promises.push(promise);
+      const unsubscribe = onSnapshot(q, (querySnapShot) => {
+        const promises: any = [];
+        querySnapShot.forEach((doc) => {
+          const promise = doc.data();
+          promises.push(promise);
+        });
+        setData(promises);
       });
-      setData(promises);
     } else {
-      const q = query(collection(db, dataType), orderBy("name"));
-      const querySnapshot = await getDocs(q);
-      const promises: any = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data();
-        promises.push(promise);
-      });
-      setData(promises);
+      if (schoolName && dataType === "schoolClasses") {
+        const q = query(
+          collection(db, dataType),
+          where("school", "==", schoolName),
+          orderBy("name")
+        );
+        const unsubscribe = onSnapshot(q, (querySnapShot) => {
+          const promises: any = [];
+          querySnapShot.forEach((doc) => {
+            const promise = doc.data();
+            promises.push(promise);
+          });
+          setData(promises);
+        });
+      } else {
+        const q = query(collection(db, dataType), orderBy("name"));
+        const unsubscribe = onSnapshot(q, (querySnapShot) => {
+          const promises: any = [];
+          querySnapShot.forEach((doc) => {
+            const promise = doc.data();
+            promises.push(promise);
+          });
+          setData(promises);
+        });
+      }
     }
   };
 
@@ -53,6 +73,17 @@ export function SelectOptions({
     handleOptionData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataType]);
+
+  useEffect(() => {
+    handleOptionData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schoolName]);
+
+  useEffect(() => {
+    if (handleData) {
+      handleData(data)
+    }
+  }, [data]);
 
   return (
     <>
@@ -62,10 +93,7 @@ export function SelectOptions({
       </option>
       {data.map((option: any) => (
         <>
-          <option
-            key={option.id}
-            value={returnId ? option.id : option.name}
-          >
+          <option key={option.id} value={returnId ? option.id : option.name}>
             {option.name}
           </option>
         </>

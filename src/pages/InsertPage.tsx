@@ -2,21 +2,21 @@ import { Header } from "../components/Header";
 
 import { Fragment } from "react";
 import { Tab } from "@headlessui/react";
-import { DeleteSchool } from "../components/deleteComponents/deleteSchool";
-import { DeleteClass } from "../components/deleteComponents/deleteClass";
-import { DeleteCourse } from "../components/deleteComponents/deleteCourse";
-import { DeleteClassDays } from "../components/deleteComponents/deleteClassDays";
-import { DeleteSchedule } from "../components/deleteComponents/deleteSchedule";
-import { DeleteTeacher } from "../components/deleteComponents/deleteTeacher";
-import { DeleteSeed } from "../components/deleteComponents/deleteSeed";
-import { DeleteCurriculum } from "../components/deleteComponents/deleteCurriculum";
-import { DeleteStudent } from "../components/deleteComponents/deleteStudent";
+import { InsertSchool } from "../components/insertComponents/InsertSchool";
+import { InsertClass } from "../components/insertComponents/InsertClass";
+import { InsertCourse } from "../components/insertComponents/InsertCourse";
+import { InsertClassDays } from "../components/insertComponents/InsertClassDays";
+import { InsertSchedule } from "../components/insertComponents/InsertSchedule";
+import { InsertTeacher } from "../components/insertComponents/InsertTeacher";
+import { InsertCurriculum } from "../components/insertComponents/InsertCurriculum";
+import { InsertStudent } from "../components/insertComponents/InsertStudent";
+import { InsertSeed } from "../components/insertComponents/InsertSeed";
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function DeletePage() {
+export default function InsertPage() {
   return (
     <div className="w-screen flex flex-col justify-center items-center">
       <Header />
@@ -125,8 +125,12 @@ export default function DeletePage() {
                 classNames(
                   "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                   selected
-                    ? "bg-white/50 shadow dark:text-gray-800/50"
-                    : "text-gray-600/50 dark:text-gray-100/50 hover:bg-white/[0.17] dark:hover:bg-white/[0.03]"
+                    // IF DISABLED
+                    ?  "bg-white shadow dark:text-gray-800"
+                    : "text-gray-600/60 dark:text-gray-100/50 hover:bg-white/20 dark:hover:bg-white/[0.03]"
+                    // IF ENABLED
+                    // ? "bg-white shadow dark:text-gray-800"
+                    // : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
                 )
               }
             >
@@ -135,31 +139,31 @@ export default function DeletePage() {
           </Tab.List>
           <Tab.Panels className="mt-2 flex justify-center">
             <Tab.Panel as={Fragment}>
-              <DeleteSchool />
+              <InsertSchool />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <DeleteClass />
+              <InsertClass />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <DeleteCourse />
+              <InsertCourse />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <DeleteClassDays />
+              <InsertClassDays />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <DeleteSchedule />
+              <InsertSchedule />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <DeleteTeacher />
+              <InsertTeacher />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <DeleteCurriculum />
+              <InsertCurriculum />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <DeleteStudent />
+              <InsertStudent />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <DeleteSeed />
+              <InsertSeed />
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

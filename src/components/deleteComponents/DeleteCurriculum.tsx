@@ -410,8 +410,8 @@ export function DeleteCurriculum() {
           )
         ) : (
           <div className="pt-4">
-            "Selecione um colégio e uma turma para ver as modalidades
-            disponíveis."
+            Selecione um colégio e uma turma para ver as modalidades
+            disponíveis.
           </div>
         )}
 

@@ -189,6 +189,8 @@ export function InsertStudent() {
   const [schoolClassesData, setSchoolClassesData] = useState([]);
   const [schedulesDetailsData, setSchedulesDetailsData] = useState([]);
 
+  // ---------------------------- END OF FAMILY STUDENT VARIABLES, STATES AND FUNCTIONS ---------------------------- //
+
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
 

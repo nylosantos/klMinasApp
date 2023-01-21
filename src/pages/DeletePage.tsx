@@ -2,21 +2,20 @@ import { Header } from "../components/Header";
 
 import { Fragment } from "react";
 import { Tab } from "@headlessui/react";
-import { InsertSchool } from "../components/insertComponents/insertSchool";
-import { InsertClass } from "../components/insertComponents/insertClass";
-import { InsertCourse } from "../components/insertComponents/insertCourse";
-import { InsertClassDays } from "../components/insertComponents/insertClassDays";
-import { InsertSchedule } from "../components/insertComponents/insertSchedule";
-import { InsertTeacher } from "../components/insertComponents/insertTeacher";
-import { InsertSeed } from "../components/insertComponents/insertSeed";
-import { InsertCurriculum } from "../components/insertComponents/insertCurriculum";
-import { InsertStudent } from "../components/insertComponents/insertStudent";
+import { DeleteSchool } from "../components/deleteComponents/DeleteSchool";
+import { DeleteClass } from "../components/deleteComponents/DeleteClass";
+import { DeleteCourse } from "../components/deleteComponents/DeleteCourse";
+import { DeleteClassDays } from "../components/deleteComponents/DeleteClassDays";
+import { DeleteSchedule } from "../components/deleteComponents/DeleteSchedule";
+import { DeleteTeacher } from "../components/deleteComponents/DeleteTeacher";
+import { DeleteCurriculum } from "../components/deleteComponents/DeleteCurriculum";
+import { DeleteStudent } from "../components/deleteComponents/DeleteStudent";
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function InsertPage() {
+export default function DeletePage() {
   return (
     <div className="w-screen flex flex-col justify-center items-center">
       <Header />
@@ -119,47 +118,31 @@ export default function InsertPage() {
             >
               Aluno
             </Tab>
-            <Tab
-              
-              className={({ selected }) =>
-                classNames(
-                  "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
-                  selected
-                    ? "bg-white/50 shadow dark:text-gray-800/50"
-                    : "text-gray-600/50 dark:text-gray-100/50 hover:bg-white/[0.17] dark:hover:bg-white/[0.03]"
-                )
-              }
-            >
-              Seed (disabled)
-            </Tab>
           </Tab.List>
           <Tab.Panels className="mt-2 flex justify-center">
             <Tab.Panel as={Fragment}>
-              <InsertSchool />
+              <DeleteSchool />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <InsertClass />
+              <DeleteClass />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <InsertCourse />
+              <DeleteCourse />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <InsertClassDays />
+              <DeleteClassDays />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <InsertSchedule />
+              <DeleteSchedule />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <InsertTeacher />
+              <DeleteTeacher />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <InsertCurriculum />
+              <DeleteCurriculum />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <InsertStudent/>
-            </Tab.Panel>
-            <Tab.Panel as={Fragment}>
-              <InsertSeed />
+              <DeleteStudent />
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

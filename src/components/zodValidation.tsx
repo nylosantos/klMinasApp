@@ -157,6 +157,14 @@ export const deleteCurriculumValidationSchema = z.object ({
   curriculumId: z.string().min(1, {message: `Por favor, selecione o Currículo`}),
 })
 
+// EDIT VALIDATION SCHEMA
+export const editSchoolValidationSchema = z.object ({
+  name: z.string().min(1, {message: `Por favor, selecione a Escola`}),
+})
+export const editSchoolClassValidationSchema = z.object ({
+  name: z.string().min(1, {message: `Por favor, selecione a Escola`}),
+})
+
 // SEARCH VALIDATION SCHEMA
 export const searchCurriculumValidationSchema = z.object ({
   school: z.string().min(1, {message: `Por favor, escolha o Colégio`}),

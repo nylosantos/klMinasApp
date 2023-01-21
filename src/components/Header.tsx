@@ -12,8 +12,9 @@ export function Header() {
 
   const navigations = [
     { label: "Home", path: "/" },
-    { label: "Adicionar", path: "/insertPage" },
-    { label: "Excluir", path: "/deletePage" },
+    { label: "Adicionar", path: "/InsertPage" },
+    { label: "Editar", path: "/EditPage" },
+    { label: "Excluir", path: "/DeletePage" },
   ];
 
   const renderThemeChanger = () => {
