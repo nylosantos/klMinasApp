@@ -18,8 +18,12 @@ import {
   deleteSchoolValidationSchema,
   deleteStudentValidationSchema,
   deleteTeacherValidationSchema,
+  editClassDayValidationSchema,
+  editScheduleValidationSchema,
   editSchoolClassValidationSchema,
+  editSchoolCourseValidationSchema,
   editSchoolValidationSchema,
+  editTeacherValidationSchema,
   searchCurriculumValidationSchema,
 } from "../components/zodValidation";
 
@@ -84,6 +88,18 @@ export type EditSchoolValidationZProps = z.infer<
 >;
 export type EditSchoolClassValidationZProps = z.infer<
   typeof editSchoolClassValidationSchema
+>;
+export type EditSchoolCourseValidationZProps = z.infer<
+  typeof editSchoolCourseValidationSchema
+>;
+export type EditClassDayValidationZProps = z.infer<
+  typeof editClassDayValidationSchema
+>;
+export type EditScheduleValidationZProps = z.infer<
+  typeof editScheduleValidationSchema
+>;
+export type EditTeacherValidationZProps = z.infer<
+  typeof editTeacherValidationSchema
 >;
 
 // SEARCH VALIDATIONS
@@ -154,6 +170,7 @@ export interface SelectProps {
     | "curriculum"
     | "students";
   schoolName?: string;
+  schoolId?: string;
   schoolCourseName?: string;
   returnId?: boolean;
   handleData?: (data: any) => void;
@@ -207,7 +224,7 @@ export interface ClassDaysCompProps {
     friday: boolean;
     saturday: boolean;
     name: string;
-    confirmInsert: boolean;
+    confirmInsert?: boolean;
   };
   toggleClassDays: ({ day, value }: ToggleClassDaysFunctionProps) => void;
 }
@@ -288,9 +305,49 @@ export interface SchoolSearchProps {
 }
 
 export interface SchoolClassSearchProps {
+  id: string;
   name: string;
   schoolName: string;
   schoolId: string;
   available: boolean;
+  timestamp: Date;
+}
+
+export interface SchoolCourseSearchProps {
+  id: string;
+  name: string;
+  price: number;
+  timestamp: Date;
+}
+
+export interface ClassDaySearchProps {
+  id: string;
+  name: string;
+  sunday: boolean;
+  monday: boolean;
+  tuesday: boolean;
+  wednesday: boolean;
+  thursday: boolean;
+  friday: boolean;
+  saturday: boolean;
+  timestamp: Date;
+}
+
+export interface TeacherSearchProps {
+  id: string;
+  name: string;
+  timestamp: Date;
+}
+
+export interface ScheduleSearchProps {
+  id: string;
+  name: string;
+  transitionStart: boolean;
+  transitionEnd: boolean;
+  classStart: boolean;
+  classEnd: boolean;
+  exit: boolean;
+  schoolId: boolean;
+  schoolName: boolean;
   timestamp: Date;
 }

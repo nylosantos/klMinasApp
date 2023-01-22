@@ -14,62 +14,81 @@ import {
   where,
 } from "firebase/firestore";
 
-import { editTeacherValidationSchema } from "../zodValidation";
-import { EditTeacherValidationZProps, TeacherSearchProps } from "../../@types";
+import { editClassDayValidationSchema } from "../zodValidation";
+import {
+  EditClassDayValidationZProps,
+  ClassDaySearchProps,
+  ToggleClassDaysFunctionProps,
+} from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../SelectOptions";
+import { ClassDays } from "../ClassDays";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
-export function EditTeacher() {
-  // TEACHER DATA
-  const [teacherData, setTeacherData] = useState({
-    teacherId: "",
+export function EditClassDay() {
+  // CLASS DAY DATA
+  const [classDayData, setClassDayData] = useState({
+    classDayId: "",
   });
 
-  // TEACHER EDIT DATA
-  const [teacherEditData, setTeacherEditData] =
-    useState<EditTeacherValidationZProps>({
+  // CLASS DAY EDIT DATA
+  const [classDayEditData, setClassDayEditData] =
+    useState<EditClassDayValidationZProps>({
       name: "",
+      sunday: false,
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
     });
 
-  // TEACHER SELECTED AND EDIT ACTIVE STATES
+  // CLASS DAY SELECTED AND EDIT ACTIVE STATES
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
-  // TEACHER DATA ARRAY WITH ALL OPTIONS OF SELECT TEACHERS
-  const [teachersDataArray, setTeachersDataArray] =
-    useState<TeacherSearchProps[]>();
+  // CLASS DAY DATA ARRAY WITH ALL OPTIONS OF SELECT CLASS DAYS
+  const [classDaysDataArray, setClassDaysDataArray] =
+    useState<ClassDaySearchProps[]>();
 
-  // FUNCTION THAT WORKS WITH TEACHER SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleTeacherSelectedData = (data: TeacherSearchProps[]) => {
-    setTeachersDataArray(data);
+  // FUNCTION THAT WORKS WITH CLASS DAY SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleClassDaySelectedData = (data: ClassDaySearchProps[]) => {
+    setClassDaysDataArray(data);
   };
 
-  // TEACHER SELECTED STATE DATA
-  const [teacherSelectedData, setTeacherSelectedData] =
-    useState<TeacherSearchProps>();
+  // CLASS DAY SELECTED STATE DATA
+  const [classDaySelectedData, setClassDaySelectedData] =
+    useState<ClassDaySearchProps>();
 
-  // SET TEACHER SELECTED STATE WHEN SELECT TEACHER
+  // SET CLASS DAY SELECTED STATE WHEN SELECT CLASS DAY
   useEffect(() => {
     setIsEdit(false);
-    if (teacherData.teacherId !== "") {
-      setTeacherSelectedData(
-        teachersDataArray!.find(({ id }) => id === teacherData.teacherId)
+    if (classDayData.classDayId !== "") {
+      setClassDaySelectedData(
+        classDaysDataArray!.find(({ id }) => id === classDayData.classDayId)
       );
     } else {
-      setTeacherSelectedData(undefined);
+      setClassDaySelectedData(undefined);
     }
-  }, [teacherData.teacherId]);
+  }, [classDayData.classDayId]);
 
-  // SET TEACHER NAME TO TEACHER EDIT NAME
+  // SET CLASS DAY NAME AND PRICE TO CLASS DAY EDIT NAME AND PRICE
   useEffect(() => {
-    setTeacherEditData({
-      ...teacherEditData,
-      name: teacherSelectedData?.name!,
+    setClassDayEditData({
+      ...classDayEditData,
+      name: classDaySelectedData?.name!,
+      sunday: classDaySelectedData?.sunday!,
+      monday: classDaySelectedData?.monday!,
+      tuesday: classDaySelectedData?.tuesday!,
+      wednesday: classDaySelectedData?.wednesday!,
+      thursday: classDaySelectedData?.thursday!,
+      friday: classDaySelectedData?.friday!,
+      saturday: classDaySelectedData?.saturday!,
     });
-  }, [teacherSelectedData]);
+  }, [classDaySelectedData]);
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,36 +99,71 @@ export function EditTeacher() {
     reset,
     setValue,
     formState: { errors },
-  } = useForm<EditTeacherValidationZProps>({
-    resolver: zodResolver(editTeacherValidationSchema),
+  } = useForm<EditClassDayValidationZProps>({
+    resolver: zodResolver(editClassDayValidationSchema),
     defaultValues: {
       name: "",
+      sunday: false,
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
     },
   });
+
+  // TOGGLE CLASS DAYS VALUE FUNCTION
+  function toggleClassDays({ day, value }: ToggleClassDaysFunctionProps) {
+    setClassDayEditData({ ...classDayEditData, [day]: value });
+  }
 
   // RESET FORM FUNCTION
   const resetForm = () => {
     reset();
     (
-      document.getElementById("teacherSelect") as HTMLSelectElement
+      document.getElementById("classDaySelect") as HTMLSelectElement
     ).selectedIndex = 0;
     setIsSelected(false);
-    setTeacherData({
-      teacherId: "",
+    setClassDayData({
+      classDayId: "",
     });
-    setTeacherEditData({
+    setClassDayEditData({
       name: "",
+      sunday: false,
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
     });
   };
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
-    setValue("name", teacherEditData.name);
-  }, [teacherEditData]);
+    setValue("name", classDayEditData.name);
+    setValue("sunday", classDayEditData.sunday);
+    setValue("monday", classDayEditData.monday);
+    setValue("tuesday", classDayEditData.tuesday);
+    setValue("wednesday", classDayEditData.wednesday);
+    setValue("thursday", classDayEditData.thursday);
+    setValue("friday", classDayEditData.friday);
+    setValue("saturday", classDayEditData.saturday);
+  }, [classDayEditData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [errors.name];
+    const fullErrors = [
+      errors.name,
+      errors.sunday,
+      errors.monday,
+      errors.tuesday,
+      errors.wednesday,
+      errors.thursday,
+      errors.friday,
+      errors.saturday,
+    ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -122,14 +176,14 @@ export function EditTeacher() {
   }, [errors]);
 
   // SUBMIT DATA FUNCTION
-  const handleEditTeacher: SubmitHandler<EditTeacherValidationZProps> = async (
-    data
-  ) => {
+  const handleEditClassDay: SubmitHandler<
+    EditClassDayValidationZProps
+  > = async (data) => {
     setIsSubmitting(true);
 
-    // CHECKING IF TEACHER EXISTS ON DATABASE
-    const teacherRef = collection(db, "teachers");
-    const q = query(teacherRef, where("id", "==", teacherData.teacherId));
+    // CHECKING IF CLASS DAY EXISTS ON DATABASE
+    const classDayRef = collection(db, "classDays");
+    const q = query(classDayRef, where("id", "==", classDayData.classDayId));
     const querySnapshot = await getDocs(q);
     const promises: any = [];
     querySnapshot.forEach((doc) => {
@@ -141,7 +195,7 @@ export function EditTeacher() {
       if (results.length === 0) {
         return (
           setIsSubmitting(false),
-          toast.error(`Professor não existe no banco de dados... ❕`, {
+          toast.error(`Modalidade não existe no banco de dados... ❕`, {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
@@ -151,22 +205,26 @@ export function EditTeacher() {
         );
       } else {
         // IF EXISTS, EDIT
-        const editTeacher = async () => {
+        const editSchoolCourse = async () => {
           try {
-            await updateDoc(doc(db, "teachers", teacherData.teacherId), {
+            await updateDoc(doc(db, "classDays", classDayData.classDayId), {
               name: data.name,
+              sunday: data.sunday,
+              monday: data.monday,
+              tuesday: data.tuesday,
+              wednesday: data.wednesday,
+              thursday: data.thursday,
+              friday: data.friday,
+              saturday: data.saturday,
             });
             resetForm();
-            toast.success(
-              `Professor ${teacherEditData.name} alterado com sucesso! 👌`,
-              {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              }
-            );
+            toast.success(`${classDayEditData.name} alterado com sucesso! 👌`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
             setIsSubmitting(false);
           } catch (error) {
             console.log("ESSE É O ERROR", error);
@@ -180,7 +238,7 @@ export function EditTeacher() {
             setIsSubmitting(false);
           }
         };
-        editTeacher();
+        editSchoolCourse();
       }
     });
   };
@@ -189,47 +247,45 @@ export function EditTeacher() {
     <div className="flex flex-col container text-center">
       <ToastContainer limit={5} />
       <h1 className="font-bold text-2xl my-4">
-        {isEdit
-          ? `Editando Professor ${teacherEditData.name}`
-          : "Editar Professor"}
+        {isEdit ? `Editando ${classDayEditData.name}` : "Editar Dias de Aula"}
       </h1>
       <form
-        onSubmit={handleSubmit(handleEditTeacher)}
+        onSubmit={handleSubmit(handleEditClassDay)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
       >
-        {/* TEACHER SELECT */}
+        {/* CLASS DAY SELECT */}
         <div className="flex gap-2 items-center">
           <label
-            htmlFor="teacherSelect"
+            htmlFor="classDaySelect"
             className={
               errors.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right text-gray-900 dark:text-gray-100"
             }
           >
-            Selecione o Professor:{" "}
+            Selecione o Dia de Aula:{" "}
           </label>
           <select
-            id="teacherSelect"
+            id="classDaySelect"
             defaultValue={" -- select an option -- "}
             className={
               errors.name
                 ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                 : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
-            name="teacherSelect"
+            name="classDaySelect"
             onChange={(e) => {
-              setTeacherData({
-                ...teacherData,
-                teacherId: e.target.value,
+              setClassDayData({
+                ...classDayData,
+                classDayId: e.target.value,
               });
               setIsSelected(true);
             }}
           >
             <SelectOptions
               returnId
-              handleData={handleTeacherSelectedData}
-              dataType="teachers"
+              handleData={handleClassDaySelectedData}
+              dataType="classDays"
             />
           </select>
         </div>
@@ -256,7 +312,7 @@ export function EditTeacher() {
 
         {isEdit ? (
           <>
-            {/* TEACHER NAME */}
+            {/* CLASS DAY NAME */}
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="name"
@@ -274,23 +330,29 @@ export function EditTeacher() {
                 disabled={isSubmitting}
                 placeholder={
                   errors.name
-                    ? "É necessário inserir o Nome do Professor"
-                    : "Insira o nome do Professor"
+                    ? "É necessário inserir o Identificador dos dias de Aula"
+                    : "Insira o Identificador dos dias de Aula"
                 }
                 className={
                   errors.name
                     ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
-                value={teacherEditData.name}
+                value={classDayEditData.name}
                 onChange={(e) => {
-                  setTeacherEditData({
-                    ...teacherEditData,
+                  setClassDayEditData({
+                    ...classDayEditData,
                     name: e.target.value,
                   });
                 }}
               />
             </div>
+
+            {/* DAYS PICKER */}
+            <ClassDays
+              classDay={classDayEditData}
+              toggleClassDays={toggleClassDays}
+            />
 
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">

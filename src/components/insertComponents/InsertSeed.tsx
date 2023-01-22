@@ -391,6 +391,8 @@ export function InsertSeed() {
       classStart: "11:55",
       classEnd: "12:40",
       exit: "12:45",
+      schoolId: commonIdBernoulli,
+      schoolName: "Colégio Bernoulli",
     });
 
     const commonIdScheduleBernoulliFirstAndSecondPeriodAfternoon = uuidv4();
@@ -408,6 +410,8 @@ export function InsertSeed() {
       classStart: "17:55",
       classEnd: "18:40",
       exit: "18:45",
+      schoolId: commonIdBernoulli,
+      schoolName: "Colégio Bernoulli",
     });
 
     const commonIdScheduleBernoulliFirstAndSecondYearMorning = uuidv4();
@@ -425,6 +429,8 @@ export function InsertSeed() {
       classStart: "12:40",
       classEnd: "13:25",
       exit: "13:30",
+      schoolId: commonIdBernoulli,
+      schoolName: "Colégio Bernoulli",
     });
 
     const commonIdScheduleBernoulliFirstAndSecondYearAfternoon = uuidv4();
@@ -442,6 +448,8 @@ export function InsertSeed() {
       classStart: "18:40",
       classEnd: "19:25",
       exit: "19:30",
+      schoolId: commonIdBernoulli,
+      schoolName: "Colégio Bernoulli",
     });
 
     const commonIdScheduleBernoulliFirstAndSecondYearMorningBallet = uuidv4();
@@ -459,6 +467,8 @@ export function InsertSeed() {
       classStart: "12:40",
       classEnd: "13:15",
       exit: "13:20",
+      schoolId: commonIdBernoulli,
+      schoolName: "Colégio Bernoulli",
     });
 
     const commonIdScheduleBernoulliFirstAndSecondYearAfternoonBallet = uuidv4();
@@ -476,6 +486,8 @@ export function InsertSeed() {
       classStart: "18:40",
       classEnd: "19:15",
       exit: "19:20",
+      schoolId: commonIdBernoulli,
+      schoolName: "Colégio Bernoulli",
     });
 
     const commonIdScheduleBernoulliThirdToFifthYearMorning = uuidv4();
@@ -493,6 +505,8 @@ export function InsertSeed() {
       classStart: "12:15",
       classEnd: "13:00",
       exit: "13:05",
+      schoolId: commonIdBernoulli,
+      schoolName: "Colégio Bernoulli",
     });
 
     const commonIdScheduleBernoulliThirdToFifthYearAfternoon = uuidv4();
@@ -510,6 +524,8 @@ export function InsertSeed() {
       classStart: "18:15",
       classEnd: "19:00",
       exit: "19:05",
+      schoolId: commonIdBernoulli,
+      schoolName: "Colégio Bernoulli",
     });
 
     const commonIdScheduleBernoulliThirdToFifthYearMorningXadrez = uuidv4();
@@ -527,6 +543,8 @@ export function InsertSeed() {
       classStart: "12:15",
       classEnd: "12:50",
       exit: "12:55",
+      schoolId: commonIdBernoulli,
+      schoolName: "Colégio Bernoulli",
     });
 
     const commonIdScheduleBernoulliThirdToFifthYearAfternoonXadrez = uuidv4();
@@ -544,6 +562,8 @@ export function InsertSeed() {
       classStart: "18:15",
       classEnd: "18:50",
       exit: "18:55",
+      schoolId: commonIdBernoulli,
+      schoolName: "Colégio Bernoulli",
     });
 
     const commonIdScheduleVillaBuritis = uuidv4();
@@ -561,6 +581,8 @@ export function InsertSeed() {
       classStart: "17:50",
       classEnd: "18:40",
       exit: "18:45",
+      schoolId: commonIdVillaBuritis,
+      schoolName: "Colégio Villa Buritis",
     });
 
     const commonIdScheduleBilboqueGutierrezMorning = uuidv4();
@@ -578,6 +600,8 @@ export function InsertSeed() {
       classStart: "11:50",
       classEnd: "12:40",
       exit: "12:45",
+      schoolId: commonIdBilboqueGutierrez,
+      schoolName: "Colégio Bilboquê Gutierrez",
     });
 
     const commonIdScheduleBilboqueGutierrezAfternoon = uuidv4();
@@ -595,6 +619,8 @@ export function InsertSeed() {
       classStart: "17:50",
       classEnd: "18:40",
       exit: "18:45",
+      schoolId: commonIdBilboqueGutierrez,
+      schoolName: "Colégio Bilboquê Gutierrez",
     });
 
     const commonIdScheduleBilboqueBuritis = uuidv4();
@@ -612,6 +638,8 @@ export function InsertSeed() {
       classStart: "17:50",
       classEnd: "18:40",
       exit: "18:45",
+      schoolId: commonIdBilboqueBuritis,
+      schoolName: "Colégio Bilboquê Buritis",
     });
 
     const commonIdScheduleEdnaRoriz = uuidv4();
@@ -625,6 +653,8 @@ export function InsertSeed() {
       classStart: "12:00",
       classEnd: "13:00",
       exit: "13:05",
+      schoolId: commonIdEdnaRoriz,
+      schoolName: "Colégio Edna Roriz",
     });
 
     // CREATING TEACHER EXAMPLE

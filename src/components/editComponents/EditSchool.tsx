@@ -6,7 +6,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
-  deleteDoc,
   doc,
   getDocs,
   getFirestore,
@@ -16,7 +15,7 @@ import {
 } from "firebase/firestore";
 
 import { editSchoolValidationSchema } from "../zodValidation";
-import { EditSchoolValidationZProps } from "../../@types";
+import { EditSchoolValidationZProps, SchoolSearchProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../SelectOptions";
 
@@ -27,7 +26,6 @@ export function EditSchool() {
   // SCHOOL DATA
   const [schoolData, setSchoolData] = useState({
     schoolId: "",
-    schoolName: "",
   });
 
   // SCHOOL EDIT DATA
@@ -40,39 +38,38 @@ export function EditSchool() {
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
+  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
+  const [schoolsDataArray, setSchoolsDataArray] =
+    useState<SchoolSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
+    setSchoolsDataArray(data);
+  };
+
+  // SCHOOL SELECTED STATE DATA
+  const [schoolSelectedData, setSchoolSelectedData] =
+    useState<SchoolSearchProps>();
+
+  // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
+  useEffect(() => {
+    setIsEdit(false);
+    if (schoolData.schoolId !== "") {
+      setSchoolSelectedData(
+        schoolsDataArray!.find(({ id }) => id === schoolData.schoolId)
+      );
+    } else {
+      setSchoolSelectedData(undefined);
+    }
+  }, [schoolData.schoolId]);
+
   // SET SCHOOL NAME TO SCHOOL EDIT NAME
   useEffect(() => {
-    setSchoolEditData({ ...schoolEditData, name: schoolData.schoolName });
-  }, [schoolData]);
-
-  // RESET SCHOOL SELECTED AND EDIT ACTIVE STATES WHEN SCHOOL EDIT NAME === ""
-  useEffect(() => {
-    if (schoolEditData.name === "") {
-      setIsEdit(false);
-      setIsSelected(false);
-    }
-  }, [schoolEditData]);
+    setSchoolEditData({ ...schoolEditData, name: schoolSelectedData?.name! });
+  }, [schoolSelectedData]);
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // GET SCHOOL DATA FUNCTION
-  async function getSchoolData(id: string) {
-    setIsEdit(false);
-    const schoolRef = collection(db, "schools");
-    const q = query(schoolRef, where("id", "==", id));
-    const querySnapshot = await getDocs(q);
-    const schoolSchoolDataPromises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      schoolSchoolDataPromises.push(promise);
-    });
-    setSchoolData({
-      ...schoolData,
-      schoolName: schoolSchoolDataPromises[0].name,
-      schoolId: id,
-    });
-  }
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -93,6 +90,10 @@ export function EditSchool() {
     (
       document.getElementById("schoolSelect") as HTMLSelectElement
     ).selectedIndex = 0;
+    setIsSelected(false);
+    setSchoolData({
+      schoolId: "",
+    });
     setSchoolEditData({
       name: "",
     });
@@ -210,11 +211,18 @@ export function EditSchool() {
             }
             name="schoolSelect"
             onChange={(e) => {
-              getSchoolData(e.target.value);
+              setSchoolData({
+                ...schoolData,
+                schoolId: e.target.value,
+              });
               setIsSelected(true);
             }}
           >
-            <SelectOptions returnId dataType="schools" />
+            <SelectOptions
+              returnId
+              handleData={handleSchoolSelectedData}
+              dataType="schools"
+            />
           </select>
         </div>
 

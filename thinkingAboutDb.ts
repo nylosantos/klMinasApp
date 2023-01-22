@@ -88,5 +88,8 @@ export function DeleteSchool() {
 }
 
 // IMPLEMENTAR A EDITPAGE
+//  - Editar Currículo? Acho que não
+//  - Implementar "Editar Aluno"
+//    - ADICIONAR PARENTE? SIM -> USAR SELECT E FUNÇÃO QUE ESTÁ NA "insertStudent"
 
 // IMPLEMENTAR O AUTHENTICATION

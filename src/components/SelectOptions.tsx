@@ -16,8 +16,7 @@ const db = getFirestore(app);
 
 export function SelectOptions({
   dataType,
-  schoolName,
-  schoolCourseName,
+  schoolId,
   returnId = false,
   handleData,
 }: SelectProps) {
@@ -26,10 +25,10 @@ export function SelectOptions({
 
   // GET DATA
   const handleOptionData = async () => {
-    if (schoolName && dataType === "schoolClasses") {
+    if (schoolId) {
       const q = query(
         collection(db, dataType),
-        where("schoolName", "==", schoolName),
+        where("schoolId", "==", schoolId),
         orderBy("name")
       );
       const unsubscribe = onSnapshot(q, (querySnapShot) => {
@@ -41,48 +40,28 @@ export function SelectOptions({
         setData(promises);
       });
     } else {
-      if (schoolName && dataType === "schoolClasses") {
-        const q = query(
-          collection(db, dataType),
-          where("school", "==", schoolName),
-          orderBy("name")
-        );
-        const unsubscribe = onSnapshot(q, (querySnapShot) => {
-          const promises: any = [];
-          querySnapShot.forEach((doc) => {
-            const promise = doc.data();
-            promises.push(promise);
-          });
-          setData(promises);
+      const q = query(collection(db, dataType), orderBy("name"));
+      const unsubscribe = onSnapshot(q, (querySnapShot) => {
+        const promises: any = [];
+        querySnapShot.forEach((doc) => {
+          const promise = doc.data();
+          promises.push(promise);
         });
-      } else {
-        const q = query(collection(db, dataType), orderBy("name"));
-        const unsubscribe = onSnapshot(q, (querySnapShot) => {
-          const promises: any = [];
-          querySnapShot.forEach((doc) => {
-            const promise = doc.data();
-            promises.push(promise);
-          });
-          setData(promises);
-        });
-      }
+        setData(promises);
+      });
     }
   };
 
   useEffect(() => {
     handleOptionData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataType]);
-
-  useEffect(() => {
-    handleOptionData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schoolName]);
+  }, [dataType, schoolId]);
 
   useEffect(() => {
     if (handleData) {
-      handleData(data)
+      handleData(data);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   return (

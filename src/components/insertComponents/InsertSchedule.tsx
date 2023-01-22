@@ -19,8 +19,12 @@ import {
 } from "firebase/firestore";
 
 import { createScheduleValidationSchema } from "../zodValidation";
-import { CreateScheduleValidationZProps } from "../../@types";
+import {
+  CreateScheduleValidationZProps,
+  SchoolSearchProps,
+} from "../../@types";
 import { app } from "../../db/Firebase";
+import { SelectOptions } from "../SelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -35,8 +39,48 @@ export function InsertSchedule() {
       classStart: "",
       classEnd: "",
       exit: "",
+      schoolId: "",
+      schoolName: "",
       confirmInsert: false,
     });
+
+  // SCHOOL DATA
+  const [schoolData, setSchoolData] = useState({
+    schoolId: "",
+  });
+
+  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
+  const [schoolsDataArray, setSchoolsDataArray] =
+    useState<SchoolSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
+    setSchoolsDataArray(data);
+  };
+
+  // SCHOOL SELECTED STATE DATA
+  const [schoolSelectedData, setSchoolSelectedData] =
+    useState<SchoolSearchProps>();
+
+  // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
+  useEffect(() => {
+    if (schoolData.schoolId !== "") {
+      setSchoolSelectedData(
+        schoolsDataArray!.find(({ id }) => id === schoolData.schoolId)
+      );
+    } else {
+      setSchoolSelectedData(undefined);
+    }
+  }, [schoolData.schoolId]);
+
+  // SET SCHOOL DATA TO SCHEDULE DATA
+  useEffect(() => {
+    setScheduleData({
+      ...scheduleData,
+      schoolName: schoolSelectedData?.name!,
+      schoolId: schoolSelectedData?.id!,
+    });
+  }, [schoolSelectedData]);
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +100,8 @@ export function InsertSchedule() {
       classStart: "",
       classEnd: "",
       exit: "",
+      schoolId: "",
+      schoolName: "",
       confirmInsert: false,
     },
   });
@@ -69,6 +115,8 @@ export function InsertSchedule() {
       classStart: "",
       classEnd: "",
       exit: "",
+      schoolId: "",
+      schoolName: "",
       confirmInsert: false,
     });
     reset();
@@ -82,6 +130,8 @@ export function InsertSchedule() {
     setValue("classStart", scheduleData.classStart);
     setValue("classEnd", scheduleData.classEnd);
     setValue("exit", scheduleData.exit);
+    setValue("schoolId", scheduleData.schoolId);
+    setValue("schoolName", scheduleData.schoolName);
     setValue("confirmInsert", scheduleData.confirmInsert);
   }, [scheduleData]);
 
@@ -166,6 +216,8 @@ export function InsertSchedule() {
               classStart: data.classStart,
               classEnd: data.classEnd,
               exit: data.exit,
+              schoolId: data.schoolId,
+              schoolName: data.schoolName,
               timestamp: serverTimestamp(),
             });
             resetForm();
@@ -202,6 +254,42 @@ export function InsertSchedule() {
         onSubmit={handleSubmit(handleAddSchedule)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
       >
+        {/* SCHOOL SELECT */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="schoolSelect"
+            className={
+              errors.name
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
+          >
+            Selecione a Escola:{" "}
+          </label>
+          <select
+            id="schoolSelect"
+            defaultValue={" -- select an option -- "}
+            className={
+              errors.name
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            name="schoolSelect"
+            onChange={(e) => {
+              setSchoolData({
+                ...schoolData,
+                schoolId: e.target.value,
+              });
+            }}
+          >
+            <SelectOptions
+              returnId
+              handleData={handleSchoolSelectedData}
+              dataType="schools"
+            />
+          </select>
+        </div>
+
         {/* SCHEDULE IDENTIFIER */}
         <div className="flex gap-2 items-center">
           <label

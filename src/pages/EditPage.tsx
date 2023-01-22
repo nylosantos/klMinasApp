@@ -5,7 +5,7 @@ import { Tab } from "@headlessui/react";
 import { EditSchool } from "../components/editComponents/EditSchool";
 import { EditClass } from "../components/editComponents/EditClass";
 import { EditCourse } from "../components/editComponents/EditCourse";
-import { EditClassDays } from "../components/editComponents/EditClassDays";
+import { EditClassDay } from "../components/editComponents/EditClassDay";
 import { EditSchedule } from "../components/editComponents/EditSchedule";
 import { EditTeacher } from "../components/editComponents/EditTeacher";
 import { EditCurriculum } from "../components/editComponents/EditCurriculum";
@@ -130,7 +130,7 @@ export default function EditPage() {
               <EditCourse />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
-              <EditClassDays />
+              <EditClassDay />
             </Tab.Panel>
             <Tab.Panel as={Fragment}>
               <EditSchedule />

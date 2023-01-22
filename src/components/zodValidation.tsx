@@ -77,6 +77,8 @@ export const createScheduleValidationSchema = z.object ({
   classStart: z.string().min(1, {message: `Por favor, preencha o campo "Início da Aula"`}),
   classEnd: z.string().min(1, {message: `Por favor, preencha o campo "Fim da Aula"`}),
   exit: z.string().min(1, {message: `Por favor, preencha o campo "Saída"`}),
+  schoolId: z.string().min(1, {message: `Por favor, preencha o campo "Escola"`}),
+  schoolName: z.string().min(1, {message: `Por favor, preencha o campo "Escola"`}),
   confirmInsert: z.boolean()
 })
 
@@ -159,10 +161,35 @@ export const deleteCurriculumValidationSchema = z.object ({
 
 // EDIT VALIDATION SCHEMA
 export const editSchoolValidationSchema = z.object ({
-  name: z.string().min(1, {message: `Por favor, selecione a Escola`}),
+  name: z.string().min(1, {message: `Por favor, digite o nome da Escola`}),
 })
 export const editSchoolClassValidationSchema = z.object ({
-  name: z.string().min(1, {message: `Por favor, selecione a Escola`}),
+  name: z.string().min(1, {message: `Por favor, digite o nome da Turma`}),
+})
+export const editSchoolCourseValidationSchema = z.object ({
+  name: z.string().min(1, {message: `Por favor, digite o nome da Modalidade`}),
+  price: z.number().min(1, {message: `Por favor, digite o Preço`}),
+})
+export const editClassDayValidationSchema = z.object ({
+  name: z.string().min(1, {message: `Por favor, preencha o campo "Identificador"`}),
+  sunday: z.boolean(),
+  monday: z.boolean(),
+  tuesday: z.boolean(),
+  wednesday: z.boolean(),
+  thursday: z.boolean(),
+  friday: z.boolean(),
+  saturday: z.boolean(),
+})
+export const editScheduleValidationSchema = z.object ({
+  name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
+  transitionStart: z.string().min(1, {message: `Por favor, preencha o campo "Início da Transição"`}),
+  transitionEnd: z.string().min(1, {message: `Por favor, preencha o campo "Fim da Transição"`}),
+  classStart: z.string().min(1, {message: `Por favor, preencha o campo "Início da Aula"`}),
+  classEnd: z.string().min(1, {message: `Por favor, preencha o campo "Fim da Aula"`}),
+  exit: z.string().min(1, {message: `Por favor, preencha o campo "Saída"`}),
+})
+export const editTeacherValidationSchema = z.object ({
+  name: z.string().min(1, {message: `Por favor, digite o nome do Professor`}),
 })
 
 // SEARCH VALIDATION SCHEMA

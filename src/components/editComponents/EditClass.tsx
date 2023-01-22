@@ -6,16 +6,20 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
-  deleteDoc,
   doc,
   getDocs,
   getFirestore,
   query,
+  updateDoc,
   where,
 } from "firebase/firestore";
 
 import { editSchoolClassValidationSchema } from "../zodValidation";
-import { EditSchoolClassValidationZProps, SchoolClassSearchProps, SchoolSearchProps } from "../../@types";
+import {
+  EditSchoolClassValidationZProps,
+  SchoolClassSearchProps,
+  SchoolSearchProps,
+} from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../SelectOptions";
 
@@ -26,8 +30,7 @@ export function EditClass() {
   // CLASS DATA
   const [schoolClassData, setSchoolClassData] = useState({
     schoolClassId: "",
-    schoolClassName: "",
-    schoolName: "",
+    schoolId: "",
   });
 
   // CLASS EDIT DATA
@@ -36,12 +39,13 @@ export function EditClass() {
       name: "",
     });
 
-  // CLASS SELECTED AND EDIT ACTIVE STATES
+  // SCHOOL CLASS SELECTED AND EDIT ACTIVE STATES
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
   // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
-  const [schoolsDataArray, setSchoolsDataArray] = useState<SchoolSearchProps[]>();
+  const [schoolsDataArray, setSchoolsDataArray] =
+    useState<SchoolSearchProps[]>();
 
   // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
   const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
@@ -49,21 +53,26 @@ export function EditClass() {
   };
 
   // SCHOOL SELECTED STATE DATA
-  const [schoolSelectedData, setSchoolSelectedData] = useState<SchoolSearchProps>();
+  const [schoolSelectedData, setSchoolSelectedData] =
+    useState<SchoolSearchProps>();
 
   // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
   useEffect(() => {
-    if (schoolClassData.schoolName !== "") {
+    setIsEdit(false);
+    setIsSelected(false);
+    setSchoolClassSelectedData(undefined);
+    if (schoolClassData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolsDataArray!.find(({ name }) => name === schoolClassData.schoolName)
+        schoolsDataArray!.find(({ id }) => id === schoolClassData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
     }
-  }, [schoolClassData.schoolName]);
+  }, [schoolSelectedData]);
 
   // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
-  const [schoolClassesDataArray, setSchoolClassesDataArray] = useState<SchoolClassSearchProps[]>();
+  const [schoolClassesDataArray, setSchoolClassesDataArray] =
+    useState<SchoolClassSearchProps[]>();
 
   // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
   const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
@@ -71,24 +80,27 @@ export function EditClass() {
   };
 
   // SCHOOL CLASS SELECTED STATE DATA
-  const [schoolClassSelectedData, setSchoolClassSelectedData] = useState<SchoolClassSearchProps>();
+  const [schoolClassSelectedData, setSchoolClassSelectedData] =
+    useState<SchoolClassSearchProps>();
 
   // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
   useEffect(() => {
     if (schoolClassSelectedData !== undefined) {
+      setIsSelected(true);
+      setIsEdit(false);
       setSchoolClassEditData({
         ...schoolClassEditData,
         name: schoolClassSelectedData.name,
       });
     }
   }, [schoolClassSelectedData]);
-  console.log(schoolSelectedData)
+
   // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL
   useEffect(() => {
     if (schoolClassData.schoolClassId !== "") {
       setSchoolClassSelectedData(
         schoolClassesDataArray!.find(
-          ({ schoolId }) => schoolId === schoolClassData.schoolClassId
+          ({ id }) => id === schoolClassData.schoolClassId
         )
       );
     } else {
@@ -96,23 +108,17 @@ export function EditClass() {
     }
   }, [schoolClassData.schoolClassId]);
 
-  // RESET SCHOOL SELECTED AND EDIT ACTIVE STATES WHEN SCHOOL CLASS EDIT NAME === ""
-  useEffect(() => {
-    if (schoolClassEditData.name === "") {
-      setIsEdit(false);
-      setIsSelected(false);
-    }
-  }, [schoolClassEditData]);
-
-  // SUBMITTING STATE
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   // RESET SCHOOL CLASS SELECT TO INDEX 0 WHEN SCHOOL CHANGE
   useEffect(() => {
     (
       document.getElementById("schoolClassSelect") as HTMLSelectElement
     ).selectedIndex = 0;
-  }, [schoolClassData.schoolName]);
+    setIsEdit(false);
+    setIsSelected(false);
+  }, [schoolClassData.schoolId]);
+
+  // SUBMITTING STATE
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -129,13 +135,18 @@ export function EditClass() {
 
   // RESET FORM FUNCTION
   const resetForm = () => {
+    (
+      document.getElementById("schoolSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
     setSchoolClassEditData({
       name: "",
     });
     setSchoolClassData({
       schoolClassId: "",
-      schoolClassName: "",
-      schoolName: "",
+      schoolId: "",
     });
     reset();
   };
@@ -160,16 +171,16 @@ export function EditClass() {
   }, [errors]);
 
   // SUBMIT DATA FUNCTION
-  const handleAddClass: SubmitHandler<EditSchoolClassValidationZProps> = async (
+  const handleEditClass: SubmitHandler<EditSchoolClassValidationZProps> = async (
     data
   ) => {
     setIsSubmitting(true);
 
     // CHECKING IF SCHOOL EXISTS ON CURRRICULUM DATABASE
-    const schoolClassRef = collection(db, "curriculum");
+    const schoolClassRef = collection(db, "schoolClasses");
     const q = query(
       schoolClassRef,
-      where("schoolClass", "==", schoolClassData.schoolClassId)
+      where("id", "==", schoolClassData.schoolClassId)
     );
     const querySnapshot = await getDocs(q);
     const promises: any = [];
@@ -178,8 +189,8 @@ export function EditClass() {
       promises.push(promise);
     });
     Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
+      // IF NO EXISTS, RETURN ERROR
+      if (results.length === 0) {
         return (
           setIsSubmitting(false),
           toast.error(`Turma não existe no banco de dados...... ❕`, {
@@ -191,11 +202,14 @@ export function EditClass() {
           })
         );
       } else {
-        // IF NO EXISTS, DELETE
-        const deleteSchoolClass = async () => {
+        // IF EXISTS, EDIT
+        const editSchoolClass = async () => {
           try {
-            await deleteDoc(
-              doc(db, "schoolClasses", schoolClassData.schoolClassId)
+            await updateDoc(
+              doc(db, "schoolClasses", schoolClassData.schoolClassId),
+              {
+                name: data.name,
+              }
             );
             resetForm();
             toast.success(
@@ -221,7 +235,7 @@ export function EditClass() {
             setIsSubmitting(false);
           }
         };
-        deleteSchoolClass();
+        editSchoolClass();
       }
     });
   };
@@ -233,7 +247,7 @@ export function EditClass() {
         {isEdit ? `Editando ${schoolClassEditData.name}` : "Editar Turma"}
       </h1>
       <form
-        onSubmit={handleSubmit(handleAddClass)}
+        onSubmit={handleSubmit(handleEditClass)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
       >
         {/* SCHOOL SELECT */}
@@ -249,6 +263,7 @@ export function EditClass() {
             Selecione a Escola:{" "}
           </label>
           <select
+            id="schoolSelect"
             defaultValue={" -- select an option -- "}
             className={
               errors.name
@@ -259,11 +274,12 @@ export function EditClass() {
             onChange={(e) => {
               setSchoolClassData({
                 ...schoolClassData,
-                schoolName: e.target.value,
+                schoolId: e.target.value,
               });
             }}
           >
             <SelectOptions
+              returnId
               handleData={handleSchoolSelectedData}
               dataType="schools"
             />
@@ -285,9 +301,9 @@ export function EditClass() {
           <select
             id="schoolClassSelect"
             defaultValue={" -- select an option -- "}
-            disabled={schoolClassData.schoolName ? false : true}
+            disabled={schoolClassData.schoolId ? false : true}
             className={
-              schoolClassData.schoolName
+              schoolClassData.schoolId
                 ? errors.name
                   ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                   : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
@@ -306,7 +322,7 @@ export function EditClass() {
               returnId
               handleData={handleSchoolClassSelectedData}
               dataType="schoolClasses"
-              schoolName={schoolClassData.schoolName}
+              schoolId={schoolClassData.schoolId}
             />
           </select>
         </div>
@@ -333,7 +349,7 @@ export function EditClass() {
 
         {isEdit ? (
           <>
-            {/* SCHOOL NAME */}
+            {/* SCHOOL CLASS NAME */}
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="name"
@@ -351,8 +367,8 @@ export function EditClass() {
                 disabled={isSubmitting}
                 placeholder={
                   errors.name
-                    ? "É necessário inserir o Nome da Escola"
-                    : "Insira o nome da Escola"
+                    ? "É necessário inserir o nome da Turma"
+                    : "Insira o nome da Turma"
                 }
                 className={
                   errors.name

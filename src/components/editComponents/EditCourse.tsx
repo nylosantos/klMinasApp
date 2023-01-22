@@ -6,51 +6,81 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
-  deleteDoc,
   doc,
   getDocs,
   getFirestore,
   query,
+  updateDoc,
   where,
 } from "firebase/firestore";
 
-import { deleteSchoolCourseValidationSchema } from "../zodValidation";
-import { DeleteSchoolCourseValidationZProps } from "../../@types";
+import { editSchoolCourseValidationSchema } from "../zodValidation";
+import {
+  EditSchoolCourseValidationZProps,
+  SchoolCourseSearchProps,
+} from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../SelectOptions";
+import CurrencyInput from "react-currency-input-field";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditCourse() {
-  // COURSE DATA
-  const [courseData, setCourseData] =
-    useState<DeleteSchoolCourseValidationZProps>({
-      schoolCourseId: "",
-      schoolCourseName: "",
-      confirmDelete: false,
+  // SCHOOL COURSE DATA
+  const [schoolCourseData, setSchoolCourseData] = useState({
+    schoolCourseId: "",
+  });
+
+  // SCHOOL COURSE EDIT DATA
+  const [schoolCourseEditData, setSchoolCourseEditData] =
+    useState<EditSchoolCourseValidationZProps>({
+      name: "",
+      price: 0,
     });
+
+  // SCHOOL COURSE SELECTED AND EDIT ACTIVE STATES
+  const [isSelected, setIsSelected] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+
+  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
+  const [schoolCoursesDataArray, setSchoolCoursesDataArray] =
+    useState<SchoolCourseSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolCourseSelectedData = (data: SchoolCourseSearchProps[]) => {
+    setSchoolCoursesDataArray(data);
+  };
+
+  // SCHOOL COURSE SELECTED STATE DATA
+  const [schoolCourseSelectedData, setSchoolCourseSelectedData] =
+    useState<SchoolCourseSearchProps>();
+
+  // SET SCHOOL COURSE SELECTED STATE WHEN SELECT SCHOOL COURSE
+  useEffect(() => {
+    setIsEdit(false);
+    if (schoolCourseData.schoolCourseId !== "") {
+      setSchoolCourseSelectedData(
+        schoolCoursesDataArray!.find(
+          ({ id }) => id === schoolCourseData.schoolCourseId
+        )
+      );
+    } else {
+      setSchoolCourseSelectedData(undefined);
+    }
+  }, [schoolCourseData.schoolCourseId]);
+
+  // SET SCHOOL COURSE NAME AND PRICE TO SCHOOL COURSE EDIT NAME AND PRICE
+  useEffect(() => {
+    setSchoolCourseEditData({
+      ...schoolCourseEditData,
+      name: schoolCourseSelectedData?.name!,
+      price: schoolCourseSelectedData?.price!,
+    });
+  }, [schoolCourseSelectedData]);
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // GET SCHOOL COURSE DATA FUNCTION
-  async function getSchoolCourseData(id: string) {
-    const schoolCourseRef = collection(db, "schoolCourses");
-    const q = query(schoolCourseRef, where("id", "==", id));
-    const querySnapshot = await getDocs(q);
-    const schoolCourseDataPromises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      schoolCourseDataPromises.push(promise);
-    });
-    setCourseData({
-      ...courseData,
-      schoolCourseName: schoolCourseDataPromises[0].name,
-      schoolCourseId: id,
-      confirmDelete: false,
-    });
-  }
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -58,35 +88,39 @@ export function EditCourse() {
     reset,
     setValue,
     formState: { errors },
-  } = useForm<DeleteSchoolCourseValidationZProps>({
-    resolver: zodResolver(deleteSchoolCourseValidationSchema),
+  } = useForm<EditSchoolCourseValidationZProps>({
+    resolver: zodResolver(editSchoolCourseValidationSchema),
     defaultValues: {
-      schoolCourseId: "",
-      schoolCourseName: "",
-      confirmDelete: false,
+      name: "",
+      price: 0,
     },
   });
 
   // RESET FORM FUNCTION
   const resetForm = () => {
-    setCourseData({
-      schoolCourseId: "",
-      schoolCourseName: "",
-      confirmDelete: false,
-    });
     reset();
+    (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setIsSelected(false);
+    setSchoolCourseData({
+      schoolCourseId: "",
+    });
+    setSchoolCourseEditData({
+      name: "",
+      price: 0,
+    });
   };
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
-    setValue("schoolCourseId", courseData.schoolCourseId);
-    setValue("schoolCourseName", courseData.schoolCourseName);
-    setValue("confirmDelete", courseData.confirmDelete);
-  }, [courseData]);
+    setValue("name", schoolCourseEditData.name);
+    setValue("price", schoolCourseEditData.price / 100);
+  }, [schoolCourseEditData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [errors.schoolCourseId, errors.confirmDelete];
+    const fullErrors = [errors.name, errors.price];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -99,31 +133,16 @@ export function EditCourse() {
   }, [errors]);
 
   // SUBMIT DATA FUNCTION
-  const handleDeleteSchoolCourse: SubmitHandler<
-    DeleteSchoolCourseValidationZProps
+  const handleEditSchool: SubmitHandler<
+    EditSchoolCourseValidationZProps
   > = async (data) => {
     setIsSubmitting(true);
 
-    // CHECK DELETE CONFIRMATION
-    if (!data.confirmDelete) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir a Modalidade: ${data.schoolCourseName}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
     // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
-    const schoolCourseRef = collection(db, "curriculum");
+    const schoolCourseRef = collection(db, "schoolCourses");
     const q = query(
       schoolCourseRef,
-      where("schoolCourse", "==", data.schoolCourseName)
+      where("id", "==", schoolCourseData.schoolCourseId)
     );
     const querySnapshot = await getDocs(q);
     const promises: any = [];
@@ -132,38 +151,40 @@ export function EditCourse() {
       promises.push(promise);
     });
     Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
+      // IF NOT EXISTS, RETURN ERROR
+      if (results.length === 0) {
         return (
           setIsSubmitting(false),
-          toast.error(
-            `Modalidade incluída em ${results.length} ${
-              results.length === 1 ? "Currículo" : "Currículos"
-            }, exclua ou altere primeiramente ${
-              results.length === 1 ? "o Currículo" : "os Currículos"
-            } e depois exclua a Modalidade ${data.schoolCourseName}... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          )
+          toast.error(`Modalidade não existe no banco de dados... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
         );
       } else {
-        // IF NO EXISTS, DELETE
-        const deleteSchoolCourse = async () => {
+        // IF EXISTS, EDIT
+        const editSchoolCourse = async () => {
           try {
-            await deleteDoc(doc(db, "schoolCourses", data.schoolCourseId));
+            await updateDoc(
+              doc(db, "schoolCourses", schoolCourseData.schoolCourseId),
+              {
+                name: data.name,
+                price: data.price,
+              }
+            );
             resetForm();
-            toast.success(`Curso/Aula excluído com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
+            toast.success(
+              `${schoolCourseEditData.name} alterado com sucesso! 👌`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            );
             setIsSubmitting(false);
           } catch (error) {
             console.log("ESSE É O ERROR", error);
@@ -177,7 +198,7 @@ export function EditCourse() {
             setIsSubmitting(false);
           }
         };
-        deleteSchoolCourse();
+        editSchoolCourse();
       }
     });
   };
@@ -185,9 +206,11 @@ export function EditCourse() {
   return (
     <div className="flex flex-col container text-center">
       <ToastContainer limit={5} />
-      <h1 className="font-bold text-2xl my-4">Editar Modalidade</h1>
+      <h1 className="font-bold text-2xl my-4">
+        {isEdit ? `Editando ${schoolCourseEditData.name}` : "Editar Modalidade"}
+      </h1>
       <form
-        onSubmit={handleSubmit(handleDeleteSchoolCourse)}
+        onSubmit={handleSubmit(handleEditSchool)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
       >
         {/* SCHOOL COURSE SELECT */}
@@ -195,7 +218,7 @@ export function EditCourse() {
           <label
             htmlFor="schoolCourseSelect"
             className={
-              errors.schoolCourseId
+              errors.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right text-gray-900 dark:text-gray-100"
             }
@@ -203,68 +226,153 @@ export function EditCourse() {
             Selecione a Modalidade:{" "}
           </label>
           <select
+            id="schoolCourseSelect"
             defaultValue={" -- select an option -- "}
             className={
-              errors.schoolCourseId
+              errors.name
                 ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                 : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolCourseSelect"
             onChange={(e) => {
-              getSchoolCourseData(e.target.value);
+              setSchoolCourseData({
+                ...schoolCourseData,
+                schoolCourseId: e.target.value,
+              });
+              setIsSelected(true);
             }}
           >
-            <SelectOptions returnId dataType="schoolCourses" />
+            <SelectOptions
+              returnId
+              handleData={handleSchoolCourseSelectedData}
+              dataType="schoolCourses"
+            />
           </select>
         </div>
 
-        {/** CHECKBOX CONFIRM DELETE */}
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <input
-            type="checkbox"
-            name="confirmDelete"
-            className="ml-1 dark: text-green-500 dark:text-green-500 border-none "
-            checked={courseData.confirmDelete}
-            onChange={() => {
-              setCourseData({
-                ...courseData,
-                confirmDelete: !courseData.confirmDelete,
-              });
-            }}
-          />
-          <label
-            htmlFor="confirmDelete"
-            className="text-sm text-gray-600 dark:text-gray-100"
-          >
-            {courseData.schoolCourseName
-              ? `Confirmar exclusão de ${courseData.schoolCourseName}`
-              : `Confirmar exclusão`}
-          </label>
-        </div>
+        {isSelected ? (
+          <>
+            {/* EDIT BUTTON */}
+            <div className="flex gap-2 mt-4 justify-center">
+              <button
+                type="button"
+                disabled={isEdit}
+                className="w-3/4 border rounded-xl border-green-900/10 bg-green-500 disabled:bg-amber-500/70 disabled:dark:bg-amber-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50"
+                onClick={() => {
+                  setIsEdit(true);
+                }}
+              >
+                {!isEdit
+                  ? "Editar"
+                  : "Clique em CANCELAR para desfazer a Edição"}
+              </button>
+            </div>
+          </>
+        ) : null}
 
-        {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
-          {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
-          >
-            {!isSubmitting ? "Excluir" : "Excluindo"}
-          </button>
+        {isEdit ? (
+          <>
+            {/* SCHOOL COURSE NAME */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="name"
+                className={
+                  errors.name
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
+              >
+                Nome:{" "}
+              </label>
+              <input
+                type="text"
+                name="name"
+                disabled={isSubmitting}
+                placeholder={
+                  errors.name
+                    ? "É necessário inserir o nome da Modalidade"
+                    : "Insira o nome da Modalidade"
+                }
+                className={
+                  errors.name
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                value={schoolCourseEditData.name}
+                onChange={(e) => {
+                  setSchoolCourseEditData({
+                    ...schoolCourseEditData,
+                    name: e.target.value,
+                  });
+                }}
+              />
+            </div>
 
-          {/* RESET BUTTON */}
-          <button
-            type="reset"
-            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
-            disabled={isSubmitting}
-            onClick={() => {
-              resetForm();
-            }}
-          >
-            {isSubmitting ? "Aguarde" : "Limpar"}
-          </button>
-        </div>
+            {/* COURSE PRICE */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="price"
+                className={
+                  errors.price
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
+              >
+                Preço:{" "}
+              </label>
+              <CurrencyInput
+                name="input-name"
+                placeholder={
+                  errors.price
+                    ? "É necessário inserir o valor mensal do Curso / Aula"
+                    : "Insira o valor mensal do Curso / Aula"
+                }
+                defaultValue={schoolCourseEditData.price}
+                decimalsLimit={2}
+                decimalScale={2}
+                prefix="R$"
+                disableAbbreviations
+                onValueChange={(value, name) =>
+                  value
+                    ? setSchoolCourseEditData({
+                        ...schoolCourseEditData,
+                        price: +value.replace(/\D/g, ""),
+                      })
+                    : null
+                }
+                className={
+                  errors.price
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
+                }
+              />
+            </div>
+
+            {/* SUBMIT AND RESET BUTTONS */}
+            <div className="flex gap-2 mt-4">
+              {/* SUBMIT BUTTON */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+              >
+                {!isSubmitting ? "Salvar" : "Salvando"}
+              </button>
+
+              {/* RESET BUTTON */}
+              <button
+                type="reset"
+                className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+                disabled={isSubmitting}
+                onClick={() => {
+                  resetForm();
+                }}
+              >
+                {isSubmitting ? "Aguarde" : "Cancelar"}
+              </button>
+            </div>
+          </>
+        ) : null}
       </form>
     </div>
   );
