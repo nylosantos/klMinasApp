@@ -1,4 +1,5 @@
 import { UseControllerProps } from "react-hook-form";
+import { DateObject } from "react-multi-date-picker";
 import { z } from "zod";
 import {
   createClassDaysValidationSchema,
@@ -23,6 +24,7 @@ import {
   editSchoolClassValidationSchema,
   editSchoolCourseValidationSchema,
   editSchoolValidationSchema,
+  editStudentValidationSchema,
   editTeacherValidationSchema,
   searchCurriculumValidationSchema,
 } from "../components/zodValidation";
@@ -101,6 +103,9 @@ export type EditScheduleValidationZProps = z.infer<
 export type EditTeacherValidationZProps = z.infer<
   typeof editTeacherValidationSchema
 >;
+export type EditStudentValidationZProps = z.infer<
+  typeof editStudentValidationSchema
+>;
 
 // SEARCH VALIDATIONS
 export type SearchCurriculumValidationZProps = z.infer<
@@ -169,9 +174,14 @@ export interface SelectProps {
     | "teachers"
     | "curriculum"
     | "students";
-  schoolName?: string;
   schoolId?: string;
-  schoolCourseName?: string;
+  schoolClassId?: string;
+  schoolCourseId?: string;
+  classDayId?: string;
+  scheduleId?: string;
+  teacherId?: string;
+  curriculumId?: string;
+  studentId?: string;
   returnId?: boolean;
   handleData?: (data: any) => void;
 }
@@ -349,5 +359,50 @@ export interface ScheduleSearchProps {
   exit: boolean;
   schoolId: boolean;
   schoolName: boolean;
+  timestamp: Date;
+}
+
+export interface StudentSearchProps {
+  id: string;
+  name: string;
+  email: string;
+  birthDate: string;
+  address: {
+    street: string;
+    number: string;
+    complement: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    cep: string;
+  };
+  phone: string;
+  activePhoneSecondary: boolean;
+  phoneSecondary: string;
+  activePhoneTertiary: boolean;
+  phoneTertiary: string;
+  responsible: string;
+  financialResponsible: string;
+  familyAtSchool: [];
+  curriculum: [];
+  timestamp: Date;
+}
+
+export interface CurriculumSearchProps {
+  id: string;
+  name: string;
+  school: string;
+  schoolId: string;
+  schoolClass: string;
+  schoolClassId: string;
+  schoolCourse: string;
+  schoolCourseId: string;
+  classDay: string;
+  classDayId: string;
+  schedule: string;
+  scheduleId: string;
+  teacher: string;
+  teacherId: string;
+  students: [];
   timestamp: Date;
 }

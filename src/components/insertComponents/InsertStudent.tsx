@@ -632,6 +632,12 @@ export function InsertStudent() {
                     draggable: true,
                     autoClose: 3000,
                   });
+                  (
+                    document.getElementsByTagName(
+                      "select"
+                    ) as unknown as HTMLSelectElement
+                  ).selectedIndex = 0;
+                  resetForm();
                   setIsSubmitting(false);
                 } catch (error) {
                   console.log("ESSE É O ERROR", error);
@@ -645,6 +651,12 @@ export function InsertStudent() {
                       autoClose: 3000,
                     }
                   );
+                  (
+                    document.getElementsByTagName(
+                      "select"
+                    ) as unknown as HTMLSelectElement
+                  ).selectedIndex = 0;
+                  resetForm();
                   setIsSubmitting(false);
                 }
               } else {
@@ -679,6 +691,12 @@ export function InsertStudent() {
                   draggable: true,
                   autoClose: 3000,
                 });
+                (
+                  document.getElementsByTagName(
+                    "select"
+                  ) as unknown as HTMLSelectElement
+                ).selectedIndex = 0;
+                resetForm();
                 setIsSubmitting(false);
               }
             } catch (error) {
@@ -702,8 +720,6 @@ export function InsertStudent() {
               autoClose: 3000,
             });
             setIsSubmitting(false);
-          } finally {
-            resetForm();
           }
         };
         addStudent();
@@ -809,11 +825,14 @@ export function InsertStudent() {
                   : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
               }
               maxDate={new DateObject().subtract(3, "years")}
+              editable={false}
               format="DD/MM/YYYY"
-              value={studentData.birthDate}
-              onChange={(e) => {
+              onChange={(e: DateObject) => {
                 e !== null
-                  ? setStudentData({ ...studentData, birthDate: e!.toString() })
+                  ? setStudentData({
+                      ...studentData,
+                      birthDate: `${e.month}/${e.day}/${e.year}`,
+                    })
                   : null;
               }}
             />
@@ -1115,6 +1134,7 @@ export function InsertStudent() {
           <div className="flex w-2/4 gap-2">
             <div className="flex w-10/12 items-center gap-1">
               <select
+                id="phoneDDD"
                 defaultValue={"DDD"}
                 className={
                   errors.phone?.ddd
@@ -1201,6 +1221,7 @@ export function InsertStudent() {
             <div className="flex w-10/12 items-center gap-1">
               {/** NUMBER SECONDARY DDD */}
               <select
+                id="phoneSecondaryDDD"
                 disabled={!studentData.activePhoneSecondary}
                 defaultValue={"DDD"}
                 className={
@@ -1325,6 +1346,7 @@ export function InsertStudent() {
             <div className="flex w-10/12 items-center gap-1">
               {/** NUMBER TERTIARY DDD */}
               <select
+                id="phoneTertiaryDDD"
                 disabled={!studentData.activePhoneTertiary}
                 defaultValue={"DDD"}
                 className={
@@ -1521,6 +1543,7 @@ export function InsertStudent() {
             Selecione a Escola:{" "}
           </label>
           <select
+            id="schoolSelect"
             defaultValue={" -- select an option -- "}
             className={
               errors.curriculum
@@ -1553,6 +1576,7 @@ export function InsertStudent() {
             Selecione a Turma:{" "}
           </label>
           <select
+            id="schoolClassSelect"
             disabled={curriculumData.school ? false : true}
             defaultValue={" -- select an option -- "}
             className={
@@ -1658,6 +1682,7 @@ export function InsertStudent() {
             Algum parente estuda na escola?:{" "}
           </label>
           <select
+            id="familyAtSchoolSelect"
             defaultValue={"Não"}
             className={
               errors.familyAtSchool
@@ -1687,8 +1712,9 @@ export function InsertStudent() {
 
         {studentData.familyAtSchool ? (
           <div className="flex flex-col py-2 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
-            <h1 className="font-bold text-lg py-4">
-              Atenção, a seguir insira os dados do parente do Aluno:
+            <h1 className="font-bold text-lg py-4 text-yellow-500">
+              Atenção: a seguir insira os dados do aluno que estuda na KL Minas,
+              e é parente de {studentData.name}:
             </h1>
 
             {/* FAMILY SCHOOL SELECT */}

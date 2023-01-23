@@ -191,6 +191,41 @@ export const editScheduleValidationSchema = z.object ({
 export const editTeacherValidationSchema = z.object ({
   name: z.string().min(1, {message: `Por favor, digite o nome do Professor`}),
 })
+export const editStudentValidationSchema = z.object ({
+  name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
+  email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}),
+  birthDate: z.string().min(1, {message: `Por favor, selecione a Data de Nascimento`}),
+  address: z.object({
+    street: z.string().min(1, {message: `Por favor, preencha o campo "CEP" para buscar o endereço completo, ou insira manualmente`}),
+    number: z.string().min(1, {message: `Por favor, preencha o campo "Número"`}),
+    complement: z.string().min(1, {message: `Por favor, preencha o campo "CEP" para buscar o endereço completo, ou insira manualmente`}).optional().or(z.literal('')),
+    neighborhood: z.string().min(1, {message: `Por favor, preencha o campo "CEP" para buscar o endereço completo, ou insira manualmente`}),
+    city: z.string().min(1, {message: `Por favor, preencha o campo "CEP" para buscar o endereço completo, ou insira manualmente`}),
+    state: z.string().min(1, {message: `Por favor, preencha o campo "CEP" para buscar o endereço completo, ou insira manualmente`}),
+    cep: z.string().min(1, {message: `Por favor, preencha o campo "CEP" para buscar o endereço completo, ou insira manualmente`}),
+  }),
+  phone: z.object({
+    ddd: z.string().min(2, {message: `Por favor, escolha um DDD para o Telefone de contato`}),
+    prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone de contato`}),
+    suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato`}),
+  }),
+  activePhoneSecondary: z.boolean(),
+  phoneSecondary: z.object({
+    ddd: z.string().optional().or(z.literal('')),
+    prefix: z.string().optional().or(z.literal('')),
+    suffix: z.string().optional().or(z.literal('')),
+  }),
+  activePhoneTertiary: z.boolean(),
+  phoneTertiary: z.object({
+    ddd: z.string().optional().or(z.literal('')),
+    prefix: z.string().optional().or(z.literal('')),
+    suffix: z.string().optional().or(z.literal('')),
+  }),
+  responsible: z.string().min(1, {message: `Por favor, preencha o campo "Responsável"`}),
+  financialResponsible: z.string().min(1, {message: `Por favor, preencha o campo "Responsável Financeiro"`}),
+  familyAtSchool: z.array(z.string().optional().or(z.literal(''))),
+  curriculum: z.array(z.string().optional().or(z.literal(''))),
+})
 
 // SEARCH VALIDATION SCHEMA
 export const searchCurriculumValidationSchema = z.object ({

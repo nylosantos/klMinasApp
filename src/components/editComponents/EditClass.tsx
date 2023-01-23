@@ -83,7 +83,7 @@ export function EditClass() {
   const [schoolClassSelectedData, setSchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
 
-  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  // SET SCHOOL CLASS EDIT STATE WHEN SELECT SCHOOL CLASS
   useEffect(() => {
     if (schoolClassSelectedData !== undefined) {
       setIsSelected(true);
