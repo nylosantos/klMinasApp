@@ -17,7 +17,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { editStudentValidationSchema } from "../zodValidation";
+import { editStudentValidationSchema } from "../../@types/zodValidation";
 import {
   CurriculumSearchProps,
   EditStudentValidationZProps,

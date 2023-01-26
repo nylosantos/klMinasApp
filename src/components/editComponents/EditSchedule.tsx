@@ -15,7 +15,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { editScheduleValidationSchema } from "../zodValidation";
+import { editScheduleValidationSchema } from "../../@types/zodValidation";
 import {
   EditScheduleValidationZProps,
   ScheduleSearchProps,

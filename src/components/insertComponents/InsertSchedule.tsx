@@ -18,7 +18,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { createScheduleValidationSchema } from "../zodValidation";
+import { createScheduleValidationSchema } from "../../@types/zodValidation";
 import {
   CreateScheduleValidationZProps,
   SchoolSearchProps,

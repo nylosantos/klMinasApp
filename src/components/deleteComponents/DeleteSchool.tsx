@@ -14,7 +14,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { deleteSchoolValidationSchema } from "../zodValidation";
+import { deleteSchoolValidationSchema } from "../../@types/zodValidation";
 import { DeleteSchoolValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../SelectOptions";

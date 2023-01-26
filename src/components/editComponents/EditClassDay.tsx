@@ -14,7 +14,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { editClassDayValidationSchema } from "../zodValidation";
+import { editClassDayValidationSchema } from "../../@types/zodValidation";
 import {
   EditClassDayValidationZProps,
   ClassDaySearchProps,

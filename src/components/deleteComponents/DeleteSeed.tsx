@@ -12,7 +12,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 
-import { createSeedValidationSchema } from "../zodValidation";
+import { createSeedValidationSchema } from "../../@types/zodValidation";
 import { CreateSeedValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
 

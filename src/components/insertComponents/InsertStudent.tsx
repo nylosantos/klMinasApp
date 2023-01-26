@@ -20,7 +20,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { createStudentValidationSchema } from "../zodValidation";
+import { createStudentValidationSchema } from "../../@types/zodValidation";
 import {
   CreateStudentValidationZProps,
   SearchCurriculumValidationZProps,

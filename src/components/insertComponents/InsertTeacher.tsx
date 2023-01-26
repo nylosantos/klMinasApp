@@ -16,7 +16,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { createTeacherValidationSchema } from "../zodValidation";
+import { createTeacherValidationSchema } from "../../@types/zodValidation";
 import { CreateTeacherValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
 

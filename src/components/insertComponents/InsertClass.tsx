@@ -16,7 +16,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { createClassValidationSchema } from "../zodValidation";
+import { createClassValidationSchema } from "../../@types/zodValidation";
 import { CreateClassValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../SelectOptions";

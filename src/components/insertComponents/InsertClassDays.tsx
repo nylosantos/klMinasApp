@@ -16,7 +16,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { createClassDaysValidationSchema } from "../zodValidation";
+import { createClassDaysValidationSchema } from "../../@types/zodValidation";
 import {
   CreateClassDaysValidationZProps,
   ToggleClassDaysFunctionProps,

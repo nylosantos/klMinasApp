@@ -26,8 +26,26 @@ import {
   editSchoolValidationSchema,
   editStudentValidationSchema,
   editTeacherValidationSchema,
+  loginEmailAndPasswordValidationSchema,
   searchCurriculumValidationSchema,
-} from "../components/zodValidation";
+} from "./zodValidation";
+
+// LOGIN VALIDATIONS
+export type LoginWithEmailAndPasswordZProps = z.infer<
+  typeof loginEmailAndPasswordValidationSchema
+>;
+export interface UserFullDataProps {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  photo?: string;
+  role: "user" | "admin" | "editor";
+  timestamp: Date;
+}
+export interface UserRouterProps {
+  username: string;
+}
 
 // CREATE VALIDATIONS
 export type CreateStudentValidationZProps = z.infer<

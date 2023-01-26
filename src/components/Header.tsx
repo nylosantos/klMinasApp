@@ -1,21 +1,94 @@
+import { getAuth, User } from "firebase/auth";
+import {
+  collection,
+  getDocs,
+  getFirestore,
+  query,
+  where,
+} from "firebase/firestore";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { toast } from "react-toastify";
+import { UserFullDataProps } from "../@types";
+import { app, initFirebase } from "../db/Firebase";
+
+// INITIALIZING FIRESTORE DB
+const db = getFirestore(app);
 
 export function Header() {
+  // INITIALIZING FIREBASE
+  initFirebase();
+
+  // FIREBASE AUTH
+  const auth = getAuth();
+
+  // ROUTING USER
+  const router = useRouter();
+
+  // USER AUTH STATE
+  const [user, loading] = useAuthState(auth);
+
+  // THEME CHANGER HOOK
   const { systemTheme, theme, setTheme } = useTheme();
+
+  // WHAT IS THIS?
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // USER DATA STATE
+  const [userFullData, setUserFullData] = useState<UserFullDataProps>();
+
+  // HANDLE USER DATA FUNCTION
+  const handleUserFullData = async (user: User | null | undefined) => {
+    if (user !== null && user !== undefined) {
+      // CHECKING IF USER EXISTS ON DATABASE
+      const userRef = collection(db, "appUsers");
+      const q = query(userRef, where("id", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      const promises: any = [];
+      querySnapshot.forEach((doc) => {
+        const promise = doc.data();
+        promises.push(promise);
+      });
+      Promise.all(promises).then((results) => {
+        setUserFullData(results[0]);
+      });
+    } else
+      return (
+        console.log("User is undefined..."),
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        })
+      );
+  };
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/");
+    } else {
+      handleUserFullData(user);
+    }
+  }, [user]);
+
+  // HEADER NAVIGATION
   const navigations = [
-    { label: "Home", path: "/" },
+    { label: "Dashboard", path: "/Dashboard" },
     { label: "Adicionar", path: "/InsertPage" },
     { label: "Editar", path: "/EditPage" },
     { label: "Excluir", path: "/DeletePage" },
   ];
 
+  // THEME CHANGER FUNCTION
   const renderThemeChanger = () => {
     if (!mounted) return null;
     const currentTheme = theme === "system" ? systemTheme : theme;
@@ -49,18 +122,32 @@ export function Header() {
       </button>
     );
   };
+
   return (
     <div className="w-screen flex justify-center top-0 left-0 mb-4 bg-gray-100 dark:bg-gray-600">
       <div className="flex container justify-between items-center py-6">
+        {user ? <p>Olá, {userFullData?.name}</p> : null}
         <div className="flex gap-4">
-          {navigations.map((nav) => (
-            <div
-              key={nav.path}
-              className="flex border-b-2 border-gray-100 hover:border-black dark:border-gray-600 dark:hover:border-gray-100"
-            >
-              <Link href={nav.path}>{nav.label}</Link>
-            </div>
-          ))}
+          {user ? (
+            <>
+              {navigations.map((nav) => (
+                <div
+                  key={nav.path}
+                  className="flex border-b-2 border-gray-100 hover:border-black dark:border-gray-600 dark:hover:border-gray-100"
+                >
+                  <Link href={nav.path}>{nav.label}</Link>
+                </div>
+              ))}
+              <div
+                key={"logout"}
+                className="flex border-b-2 border-gray-100 hover:border-black dark:border-gray-600 dark:hover:border-gray-100"
+              >
+                <p className="cursor-pointer" onClick={() => auth.signOut()}>
+                  Sair
+                </p>
+              </div>
+            </>
+          ) : null}
         </div>
         {renderThemeChanger()}
       </div>

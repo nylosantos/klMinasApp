@@ -14,7 +14,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { editSchoolCourseValidationSchema } from "../zodValidation";
+import { editSchoolCourseValidationSchema } from "../../@types/zodValidation";
 import {
   EditSchoolCourseValidationZProps,
   SchoolCourseSearchProps,

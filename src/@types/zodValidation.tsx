@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+// LOGIN VALIDATION SCHEMA
+export const loginEmailAndPasswordValidationSchema = z.object({
+  name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}).optional().or(z.literal('')),
+  email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}),
+  password: z.string().min(1, {message: `Por favor, digite sua senha`})
+})
+
 // CREATE VALIDATION SCHEMA
 export const createStudentValidationSchema = z.object ({
   name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),

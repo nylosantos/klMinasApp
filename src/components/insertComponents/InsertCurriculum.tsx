@@ -16,7 +16,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { createCurriculumValidationSchema } from "../zodValidation";
+import { createCurriculumValidationSchema } from "../../@types/zodValidation";
 import {
   CreateCurriculumValidationZProps,
   HandleCurriculumNameNameProps,
