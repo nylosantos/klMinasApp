@@ -1712,7 +1712,7 @@ export function InsertStudent() {
 
         {studentData.familyAtSchool ? (
           <div className="flex flex-col py-2 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
-            <h1 className="font-bold text-lg py-4 text-yellow-500">
+            <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
               Atenção: a seguir insira os dados do aluno que estuda na KL Minas,
               e é parente de {studentData.name}:
             </h1>

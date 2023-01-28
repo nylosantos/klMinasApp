@@ -9,9 +9,6 @@ import { app } from "../db/Firebase";
 const db = getFirestore(app);
 
 export default function Dashboard() {
-  // GETTING ROUTE USERNAME PARAM
-  const username = useRouter().query.username
-
   // CURRICULUM DATA STATE
   const [curriculumData, setCurriculumData] = useState([]);
 

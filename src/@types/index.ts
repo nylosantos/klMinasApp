@@ -11,6 +11,7 @@ import {
   createSeedValidationSchema,
   createStudentValidationSchema,
   createTeacherValidationSchema,
+  createUserValidationSchema,
   deleteClassDaysValidationSchema,
   deleteClassValidationSchema,
   deleteCurriculumValidationSchema,
@@ -19,6 +20,7 @@ import {
   deleteSchoolValidationSchema,
   deleteStudentValidationSchema,
   deleteTeacherValidationSchema,
+  deleteUserValidationSchema,
   editClassDayValidationSchema,
   editScheduleValidationSchema,
   editSchoolClassValidationSchema,
@@ -26,28 +28,44 @@ import {
   editSchoolValidationSchema,
   editStudentValidationSchema,
   editTeacherValidationSchema,
+  editUserValidationSchema,
   loginEmailAndPasswordValidationSchema,
   searchCurriculumValidationSchema,
+  signUpEmailAndPasswordValidationSchema,
 } from "./zodValidation";
 
 // LOGIN VALIDATIONS
 export type LoginWithEmailAndPasswordZProps = z.infer<
   typeof loginEmailAndPasswordValidationSchema
 >;
+export type SignUpWithEmailAndPasswordZProps = z.infer<
+  typeof signUpEmailAndPasswordValidationSchema
+>;
+
 export interface UserFullDataProps {
   id: string;
   name: string;
   email: string;
   phone?: string;
   photo?: string;
-  role: "user" | "admin" | "editor";
+  role: "root" | "admin" | "editor" | "teacher" | "user";
   timestamp: Date;
 }
 export interface UserRouterProps {
   username: string;
 }
+// CREATE VALIDATIONS USERS
+export type CreateUserValidationZProps = z.infer<
+  typeof createUserValidationSchema
+>;
 
-// CREATE VALIDATIONS
+// EDIT VALIDATIONS USERS
+export type EditUserValidationZProps = z.infer<typeof editUserValidationSchema>;
+
+// DELETE VALIDATIONS USERS
+export type DeleteUserValidationZProps = z.infer<typeof deleteUserValidationSchema>;
+
+// CREATE VALIDATIONS SCHOOLS
 export type CreateStudentValidationZProps = z.infer<
   typeof createStudentValidationSchema
 >;
@@ -76,7 +94,7 @@ export type CreateSeedValidationZProps = z.infer<
   typeof createSeedValidationSchema
 >;
 
-// DELETE VALIDATIONS
+// DELETE VALIDATIONS SCHOOLS
 export type DeleteSchoolValidationZProps = z.infer<
   typeof deleteSchoolValidationSchema
 >;
@@ -102,7 +120,7 @@ export type DeleteStudentValidationZProps = z.infer<
   typeof deleteStudentValidationSchema
 >;
 
-// EDIT VALIDATIONS
+// EDIT VALIDATIONS SCHOOLS
 export type EditSchoolValidationZProps = z.infer<
   typeof editSchoolValidationSchema
 >;
@@ -125,7 +143,7 @@ export type EditStudentValidationZProps = z.infer<
   typeof editStudentValidationSchema
 >;
 
-// SEARCH VALIDATIONS
+// SEARCH VALIDATIONS SCHOOLS
 export type SearchCurriculumValidationZProps = z.infer<
   typeof searchCurriculumValidationSchema
 >;
@@ -191,7 +209,8 @@ export interface SelectProps {
     | "classDays"
     | "teachers"
     | "curriculum"
-    | "students";
+    | "students"
+    | "appUsers";
   schoolId?: string;
   schoolClassId?: string;
   schoolCourseId?: string;

@@ -2,12 +2,47 @@ import { z } from "zod";
 
 // LOGIN VALIDATION SCHEMA
 export const loginEmailAndPasswordValidationSchema = z.object({
-  name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}).optional().or(z.literal('')),
   email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}),
   password: z.string().min(1, {message: `Por favor, digite sua senha`})
 })
 
-// CREATE VALIDATION SCHEMA
+// SIGNUP VALIDATION SCHEMA
+export const signUpEmailAndPasswordValidationSchema = z.object({
+  name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
+  email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}),
+  password: z.string().min(1, {message: `Por favor, digite sua senha`}),
+  confirmPassword: z.string().min(1, {message: `Por favor, confirme a sua senha`})
+}).refine((data) => data.password === data.confirmPassword, {message: "As senhas não coincidem", path: ["confirmPassword"]})
+
+// CREATE VALIDATION SCHEMA USERS
+export const createUserValidationSchema = z.object ({
+  name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
+  email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}),
+  password: z.string().min(6, {message: `A senha precisa ter, no mínimo, 6 caracteres.`}),
+  confirmPassword: z.string().min(1, {message: `Por favor, confirme a sua senha`}),
+  role: z.literal("root").or(z.literal("admin")).or(z.literal("editor")).or(z.literal("teacher")).or(z.literal("user")),
+  phone: z.string().nullable(),
+  confirmInsert: z.boolean()
+}).refine((data) => data.password === data.confirmPassword, {message: "As senhas não coincidem", path: ["confirmPassword"]})
+
+// EDIT VALIDATION SCHEMA USERS
+export const editUserValidationSchema = z.object ({
+  name: z.string().min(1, {message: `Por favor, digite o nome do Usuário`}),
+  email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}),
+  changePassword: z.boolean(),
+  password: z.string().min(6, {message: `A senha precisa ter, no mínimo, 6 caracteres.`}).optional().or(z.string().nullable()),
+  confirmPassword: z.string().min(1, {message: `Por favor, confirme a sua senha`}).optional().or(z.string().nullable()),
+  phone: z.string().nullable(),
+  photo: z.string().min(1, {message: `Por favor, digite o nome do Usuário`}).optional().or(z.literal('')),
+  role: z.literal("root").or(z.literal("admin")).or(z.literal("editor")).or(z.literal("teacher")).or(z.literal("user")),
+})
+
+// EDIT VALIDATION SCHEMA USERS
+export const deleteUserValidationSchema = z.object ({
+  id: z.string().min(1, {message: `Por favor, selecione o Usuário`}),
+})
+
+// CREATE VALIDATION SCHEMA SCHOOLS
 export const createStudentValidationSchema = z.object ({
   name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
   email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}),
@@ -108,7 +143,7 @@ export const createSeedValidationSchema = z.object ({
   confirmInsert: z.boolean()
 })
 
-// DELETE VALIDATION SCHEMA
+// DELETE VALIDATION SCHEMA SCHOOLS
 export const deleteSchoolValidationSchema = z.object ({
   confirmDelete: z.boolean(),
   schoolId: z.string().min(1, {message: `Por favor, selecione a Escola`}),
@@ -166,7 +201,7 @@ export const deleteCurriculumValidationSchema = z.object ({
   curriculumId: z.string().min(1, {message: `Por favor, selecione o Currículo`}),
 })
 
-// EDIT VALIDATION SCHEMA
+// EDIT VALIDATION SCHEMA SCHOOLS
 export const editSchoolValidationSchema = z.object ({
   name: z.string().min(1, {message: `Por favor, digite o nome da Escola`}),
 })
@@ -234,7 +269,7 @@ export const editStudentValidationSchema = z.object ({
   curriculum: z.array(z.string().optional().or(z.literal(''))),
 })
 
-// SEARCH VALIDATION SCHEMA
+// SEARCH VALIDATION SCHEMA SCHOOLS
 export const searchCurriculumValidationSchema = z.object ({
   school: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
   schoolClass: z.string().min(1, {message: `Por favor, escolha a Turma`}),

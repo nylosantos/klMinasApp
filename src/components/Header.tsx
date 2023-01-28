@@ -83,9 +83,8 @@ export function Header() {
   // HEADER NAVIGATION
   const navigations = [
     { label: "Dashboard", path: "/Dashboard" },
-    { label: "Adicionar", path: "/InsertPage" },
-    { label: "Editar", path: "/EditPage" },
-    { label: "Excluir", path: "/DeletePage" },
+    { label: "Gerenciar Escolas", path: "/ManageSchools" },
+    { label: "Gerenciar Usuários", path: "/ManageUsers" },
   ];
 
   // THEME CHANGER FUNCTION
@@ -126,8 +125,10 @@ export function Header() {
   return (
     <div className="w-screen flex justify-center top-0 left-0 mb-4 bg-gray-100 dark:bg-gray-600">
       <div className="flex container justify-between items-center py-6">
-        {user ? <p>Olá, {userFullData?.name}</p> : null}
-        <div className="flex gap-4">
+        <div className="w-1/6">
+          {user ? <p>Olá, {user.displayName}</p> : null}
+        </div>
+        <div className="flex w-4/6 justify-center gap-10">
           {user ? (
             <>
               {navigations.map((nav) => (
@@ -149,7 +150,7 @@ export function Header() {
             </>
           ) : null}
         </div>
-        {renderThemeChanger()}
+        <div className="flex w-1/6 justify-end">{renderThemeChanger()}</div>
       </div>
     </div>
   );

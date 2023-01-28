@@ -7,7 +7,9 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 import { useEffect, useState } from "react";
+import { useHttpsCallable } from "react-firebase-hooks/functions";
 import { SelectProps } from "../@types";
 import { app } from "../db/Firebase";
 
@@ -29,6 +31,12 @@ export function SelectOptions({
 }: SelectProps) {
   // DATA STATE
   const [data, setData] = useState([]);
+
+  // GET ALL USERS CLOUD FUNCTION HOOK
+  const [getAppUsers, executing, error] = useHttpsCallable(
+    getFunctions(app),
+    "getAppUsers"
+  );
 
   // FIREBASE FILTER QUERIES
   const schoolWhereQuery = where("schoolId", "==", schoolId);
