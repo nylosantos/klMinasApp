@@ -92,10 +92,8 @@ export function DeleteSchool() {
 //  - Implementar "Editar Aluno"
 //    - ADICIONAR PARENTE? SIM -> USAR SELECT E FUNÇÃO QUE ESTÁ NA "insertStudent"
 
-// IMPLEMENTAR GERENCIAMENTO DE USUÁRIOS
-//  - Criar usuário
-//  - Editar usuário
-//  - Deletar usuário
+// MANAGE USERS:
+//  - Copiar LOADING do EDIT USERS para ADD e DELETE do Editar Usuário, mas apenas com o próprio usuário.
 
 // IMPLEMENTAR PERSONALIZAÇÃO
 

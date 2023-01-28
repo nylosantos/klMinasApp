@@ -77,11 +77,7 @@ export function FormLogin() {
   const handleSignInWithEmailAndPassword: SubmitHandler<
     LoginWithEmailAndPasswordZProps
   > = async (data) => {
-    const result = await signInWithEmailAndPassword(
-      auth,
-      data.email,
-      data.password
-    )
+    await signInWithEmailAndPassword(auth, data.email, data.password)
       .then(async (userCredential) => {
         // Signed in
         const user = userCredential.user;
@@ -97,14 +93,27 @@ export function FormLogin() {
             draggable: true,
             autoClose: 3000,
           });
-        } else {
-          toast.error(`Erro: ${errorMessage}...`, {
+        }
+        if (errorCode === "auth/wrong-password") {
+          toast.error(`Usuário e/ou Senha incorretos ou não encontrados...`, {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
             autoClose: 3000,
           });
+        } else {
+          toast.error(
+            // `Usuário e/ou Senha incorretos ou não encontrados, contate o suporte...`,
+            errorMessage,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
         }
       });
   };
@@ -175,7 +184,7 @@ export function FormLogin() {
   return (
     <>
       <ToastContainer limit={2} />
-      <div className="flex flex-col p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-gray-700/20 dark:bg-transparent">
+      <div className="flex flex-col w-96 p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-gray-700/20 dark:bg-transparent">
         <form
           onSubmit={handleSubmit(handleSignInWithEmailAndPassword)}
           className="flex flex-col w-full gap-8 justify-evenly"
@@ -229,7 +238,7 @@ export function FormLogin() {
         <button
           type="button"
           disabled={isSubmitting}
-          className="flex w-full px-4 py-2 gap-4 items-center border rounded-3xl border-red-900/10 bg-red-600 disabled:bg-red-600/70 disabled:dark:bg-red-600/70 disabled:border-red-900/10 font-bold text-sm text-white disabled:dark:text-white/50 uppercase"
+          className="flex w-full px-4 py-2 gap-4 items-center justify-center border rounded-3xl border-red-900/10 bg-red-600 disabled:bg-red-600/70 disabled:dark:bg-red-600/70 disabled:border-red-900/10 font-bold text-sm text-white disabled:dark:text-white/50 uppercase"
           onClick={handleSignInWithGoogle}
         >
           <AiOutlineGoogle size={24} />

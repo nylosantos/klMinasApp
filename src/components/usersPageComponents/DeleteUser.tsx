@@ -3,26 +3,20 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { useHttpsCallable } from "react-firebase-hooks/functions";
+import { getFunctions } from "firebase/functions";
+import { Dna } from "react-loader-spinner";
 import "react-toastify/dist/ReactToastify.css";
-import { getFirestore } from "firebase/firestore";
 
 import { deleteUserValidationSchema } from "../../@types/zodValidation";
 import { DeleteUserValidationZProps, UserFullDataProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../SelectOptions";
 import { BrazilianStateSelectOptions } from "../BrazilianStateSelectOptions";
-import { useHttpsCallable } from "react-firebase-hooks/functions";
-import { getFunctions } from "firebase/functions";
-
-// INITIALIZING FIRESTORE DB
-const db = getFirestore(app);
 
 export function DeleteUser() {
   // DELETE USER CLOUD FUNCTION HOOK
-  const [deleteAppUser, executing, error] = useHttpsCallable(
-    getFunctions(app),
-    "deleteAppUser"
-  );
+  const [deleteAppUser] = useHttpsCallable(getFunctions(app), "deleteAppUser");
 
   // USER DATA
   const [userData, setUserData] = useState<DeleteUserValidationZProps>({
@@ -131,10 +125,30 @@ export function DeleteUser() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* LOADING */}
+      {isSubmitting ? (
+        <div className="flex flex-col w-screen h-screen top-0 left-0 absolute items-center justify-center bg-gray-900/60 dark:bg-gray-800/50 transition-all duration-300">
+          <Dna
+            visible={true}
+            height="80"
+            width="80"
+            ariaLabel="dna-loading"
+            wrapperStyle={{}}
+            wrapperClass="dna-wrapper"
+          />
+          <h1 className="text-xl text-white mb-3">Loading...</h1>
+        </div>
+      ) : null}
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* TITLE */}
       <h1 className="font-bold text-2xl my-4">
         {isSelected ? `Excluindo ${userSelectedData?.name}` : "Excluir Usuário"}
       </h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleDeleteUser)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
@@ -179,9 +193,11 @@ export function DeleteUser() {
         {isSelected ? (
           <>
             <div className="flex flex-col pt-2 pb-6 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
+              {/* DETAILS TITLE */}
               <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
                 Dados do usuário a ser excluído:
               </h1>
+
               {/* USER NAME */}
               <div className="flex gap-2 items-center">
                 <label

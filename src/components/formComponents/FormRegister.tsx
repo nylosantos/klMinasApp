@@ -44,6 +44,9 @@ export function FormRegister() {
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // REGISTER CLOSED STATE
+  const [isRegisterClosed, setIsRegisterClosed] = useState(true);
+
   // REACT HOOK FORM SETTINGS
   const {
     handleSubmit,
@@ -91,6 +94,7 @@ export function FormRegister() {
   const handleSignUpWithEmailAndPassword: SubmitHandler<
     SignUpWithEmailAndPasswordZProps
   > = async (data) => {
+    setIsSubmitting(true);
     // SIGN UP FUNCTION
     const result = await createUserWithEmailAndPassword(
       auth,
@@ -100,7 +104,6 @@ export function FormRegister() {
       .then(async (userCredential) => {
         const user = userCredential.user;
         await updateProfile(user, { displayName: data.name });
-        console.log(user);
         // CHECKING IF USER EXISTS ON DATABASE
         const userRef = collection(db, "appUsers");
         const q = query(userRef, where("id", "==", user.uid));
@@ -117,11 +120,12 @@ export function FormRegister() {
               try {
                 await setDoc(doc(db, "appUsers", user.uid), {
                   id: user.uid,
+                  name: user.displayName,
+                  email: user.email,
+                  phone: null,
+                  photo: null,
                   role: "user",
                   timestamp: serverTimestamp(),
-                });
-                await addDoc(collection(db, "appUsers", user.uid, "details"), {
-                  data: "oi",
                 });
               } catch (error) {
                 console.log("ESSE É O ERROR", error);
@@ -137,6 +141,7 @@ export function FormRegister() {
             addUser();
           }
         });
+        setIsSubmitting(false);
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -150,6 +155,7 @@ export function FormRegister() {
             draggable: true,
             autoClose: 3000,
           });
+          setIsSubmitting(false);
         } else {
           toast.error(`Erro: ${errorMessage}...`, {
             theme: "colored",
@@ -158,6 +164,7 @@ export function FormRegister() {
             draggable: true,
             autoClose: 3000,
           });
+          setIsSubmitting(false);
         }
       });
   };
@@ -228,7 +235,7 @@ export function FormRegister() {
   return (
     <>
       <ToastContainer limit={4} />
-      <div className="flex flex-col p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-gray-700/20 dark:bg-transparent">
+      <div className="flex flex-col w-96 p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-gray-700/20 dark:bg-transparent">
         <form
           onSubmit={handleSubmit(handleSignUpWithEmailAndPassword)}
           className="flex flex-col w-full gap-8 justify-evenly"
@@ -238,12 +245,12 @@ export function FormRegister() {
             <input
               type="text"
               name="name"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isRegisterClosed}
               placeholder={errors.name ? "É necessário inserir o Nome" : "Nome"}
               className={
                 errors.name
                   ? "w-full px-4 pb-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
-                  : "w-full px-4 pb-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm"
+                  : "w-full px-4 pb-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
               }
               value={userSignUp.name}
               onChange={(e) => {
@@ -254,14 +261,14 @@ export function FormRegister() {
           <input
             type="text"
             name="email"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isRegisterClosed}
             placeholder={
               errors.email ? "É necessário inserir o E-mail" : "E-mail"
             }
             className={
               errors.email
                 ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
-                : "w-full px-4 py-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm"
+                : "w-full px-4 py-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
             }
             value={userSignUp.email}
             onChange={(e) => {
@@ -271,14 +278,14 @@ export function FormRegister() {
           <input
             type="password"
             name="password"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isRegisterClosed}
             placeholder={
               errors.password ? "É necessário inserir a Senha" : "Senha"
             }
             className={
               errors.password
                 ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
-                : "w-full px-4 py-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm"
+                : "w-full px-4 py-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
             }
             value={userSignUp.password}
             onChange={(e) => {
@@ -288,7 +295,7 @@ export function FormRegister() {
           <input
             type="password"
             name="confirmPassword"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isRegisterClosed}
             placeholder={
               errors.confirmPassword
                 ? "É necessário confirmar a Senha"
@@ -297,7 +304,7 @@ export function FormRegister() {
             className={
               errors.confirmPassword
                 ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
-                : "w-full px-4 py-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm"
+                : "w-full px-4 py-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
             }
             value={userSignUp.confirmPassword}
             onChange={(e) => {
@@ -308,17 +315,21 @@ export function FormRegister() {
           {/* SUBMIT BUTTON */}
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isRegisterClosed}
             className="w-full px-4 py-2 mt-4 border rounded-3xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 font-bold text-sm text-white disabled:dark:text-white/50 uppercase"
           >
-            {!isSubmitting ? "Criar Conta" : "Criando"}
+            {isSubmitting
+              ? "Criando"
+              : isRegisterClosed
+              ? "Registro temporariamente fechado"
+              : "Criar Conta"}
           </button>
         </form>
 
         <button
           type="button"
-          disabled={isSubmitting}
-          className="flex w-full px-4 py-2 gap-4 items-center border rounded-3xl border-red-900/10 bg-red-600 disabled:bg-red-600/70 disabled:dark:bg-red-600/70 disabled:border-red-900/10 font-bold text-sm text-white disabled:dark:text-white/50 uppercase"
+          disabled={isSubmitting || isRegisterClosed}
+          className="flex w-full px-4 py-2 gap-4 items-center justify-center border rounded-3xl border-red-900/10 bg-red-600 disabled:bg-red-600/70 disabled:dark:bg-red-600/70 disabled:border-red-900/10 font-bold text-sm text-white disabled:dark:text-white/50 uppercase"
           onClick={handleSignInWithGoogle}
         >
           <AiOutlineGoogle size={24} />

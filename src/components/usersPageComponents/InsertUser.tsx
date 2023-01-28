@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
+import { Dna } from "react-loader-spinner";
 import {
   collection,
   getDocs,
@@ -65,7 +66,7 @@ export function InsertUser() {
       setUserData({ ...userData, phone: null });
     }
   }, [phoneFormatted]);
-  
+
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -141,7 +142,7 @@ export function InsertUser() {
   }, [errors]);
 
   // SUBMIT DATA FUNCTION
-  const handleAddSchool: SubmitHandler<CreateUserValidationZProps> = async (
+  const handleAddUser: SubmitHandler<CreateUserValidationZProps> = async (
     data
   ) => {
     setIsSubmitting(true);
@@ -161,7 +162,7 @@ export function InsertUser() {
       );
     }
 
-    // CHECKING IF SCHOOL EXISTS ON DATABASE
+    // CHECKING IF USER EXISTS ON DATABASE
     const userRef = collection(db, "appUsers");
     const q = query(userRef, where("email", "==", data.email));
     const querySnapshot = await getDocs(q);
@@ -216,10 +217,30 @@ export function InsertUser() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* LOADING */}
+      {isSubmitting ? (
+        <div className="flex flex-col w-screen h-screen top-0 left-0 absolute items-center justify-center bg-gray-900/60 dark:bg-gray-800/50 transition-all duration-300">
+          <Dna
+            visible={true}
+            height="80"
+            width="80"
+            ariaLabel="dna-loading"
+            wrapperStyle={{}}
+            wrapperClass="dna-wrapper"
+          />
+          <h1 className="text-xl text-white mb-3">Loading...</h1>
+        </div>
+      ) : null}
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* TITLE */}
       <h1 className="font-bold text-2xl my-4">Adicionar Usuário</h1>
+
+      {/* FORM */}
       <form
-        onSubmit={handleSubmit(handleAddSchool)}
+        onSubmit={handleSubmit(handleAddUser)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
       >
         {/* USER NAME */}

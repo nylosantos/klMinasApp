@@ -19,6 +19,7 @@ import { UserFullDataProps } from "../@types";
 import { EditUser } from "../components/usersPageComponents/EditUser";
 import { InsertUser } from "../components/usersPageComponents/InsertUser";
 import { DeleteUser } from "../components/usersPageComponents/DeleteUser";
+import { EditMyUser } from "../components/usersPageComponents/EditMyUser";
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
@@ -95,43 +96,70 @@ export default function ManageUsers() {
                 )
               }
             >
-              Adicionar Usuário
+              Minhas Configurações
             </Tab>
-            <Tab
-              className={({ selected }) =>
-                classNames(
-                  "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
-                  selected
-                    ? "bg-white shadow dark:text-gray-800"
-                    : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
-                )
-              }
-            >
-              Editar Usuário
-            </Tab>
-            <Tab
-              className={({ selected }) =>
-                classNames(
-                  "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
-                  selected
-                    ? "bg-white shadow dark:text-gray-800"
-                    : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
-                )
-              }
-            >
-              Deletar Usuário
-            </Tab>
+            {userFullData?.role === "root" ||
+            userFullData?.role === "admin" ||
+            userFullData?.role === "editor" ? (
+              <>
+                <Tab
+                  className={({ selected }) =>
+                    classNames(
+                      "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
+                      selected
+                        ? "bg-white shadow dark:text-gray-800"
+                        : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                    )
+                  }
+                >
+                  Adicionar Usuário
+                </Tab>
+                <Tab
+                  className={({ selected }) =>
+                    classNames(
+                      "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
+                      selected
+                        ? "bg-white shadow dark:text-gray-800"
+                        : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                    )
+                  }
+                >
+                  Editar Usuário
+                </Tab>
+                <Tab
+                  className={({ selected }) =>
+                    classNames(
+                      "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
+                      selected
+                        ? "bg-white shadow dark:text-gray-800"
+                        : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                    )
+                  }
+                >
+                  Deletar Usuário
+                </Tab>
+              </>
+            ) : null}
           </Tab.List>
           <Tab.Panels className="mt-2 flex justify-center">
             <Tab.Panel as={Fragment}>
-              <InsertUser />
+              <EditMyUser />
             </Tab.Panel>
-            <Tab.Panel as={Fragment}>
-              <EditUser />
-            </Tab.Panel>
-            <Tab.Panel as={Fragment}>
-              <DeleteUser />
-            </Tab.Panel>
+            {userFullData?.role === "root" ||
+            userFullData?.role === "admin" ||
+            userFullData?.role === "editor" ? (
+              <>
+                <Tab.Panel as={Fragment}>
+                  <InsertUser />
+                </Tab.Panel>
+                <Tab.Panel as={Fragment}>
+                  <EditUser />
+                </Tab.Panel>
+                <Tab.Panel as={Fragment}>
+                  <DeleteUser />
+                </Tab.Panel>
+              </>
+            ) : null}
           </Tab.Panels>
         </Tab.Group>
       </div>

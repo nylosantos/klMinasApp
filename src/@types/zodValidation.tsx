@@ -27,15 +27,16 @@ export const createUserValidationSchema = z.object ({
 
 // EDIT VALIDATION SCHEMA USERS
 export const editUserValidationSchema = z.object ({
+  id: z.string().min(1, {message: `Por favor, selecione o Usuário`}),
   name: z.string().min(1, {message: `Por favor, digite o nome do Usuário`}),
   email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}),
   changePassword: z.boolean(),
-  password: z.string().min(6, {message: `A senha precisa ter, no mínimo, 6 caracteres.`}).optional().or(z.string().nullable()),
-  confirmPassword: z.string().min(1, {message: `Por favor, confirme a sua senha`}).optional().or(z.string().nullable()),
+  password: z.string().min(6, {message: `A senha precisa ter, no mínimo, 6 caracteres.`}).or(z.string().nullable()),
+  confirmPassword: z.string().min(1, {message: `Por favor, confirme a sua senha`}).or(z.string().nullable()),
   phone: z.string().nullable(),
   photo: z.string().min(1, {message: `Por favor, digite o nome do Usuário`}).optional().or(z.literal('')),
   role: z.literal("root").or(z.literal("admin")).or(z.literal("editor")).or(z.literal("teacher")).or(z.literal("user")),
-})
+}).refine((data) => data.password === data.confirmPassword, {message: "As senhas não coincidem", path: ["confirmPassword"]})
 
 // EDIT VALIDATION SCHEMA USERS
 export const deleteUserValidationSchema = z.object ({

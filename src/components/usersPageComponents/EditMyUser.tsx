@@ -5,15 +5,27 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
 import { getFunctions } from "firebase/functions";
 import { Dna } from "react-loader-spinner";
+import { useRouter } from "next/router";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { getAuth, User } from "firebase/auth";
+import {
+  collection,
+  getDocs,
+  getFirestore,
+  query,
+  where,
+} from "firebase/firestore";
 import "react-toastify/dist/ReactToastify.css";
 
 import { editUserValidationSchema } from "../../@types/zodValidation";
 import { EditUserValidationZProps, UserFullDataProps } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
 import { BrazilianStateSelectOptions } from "../BrazilianStateSelectOptions";
 
-export function EditUser() {
+// INITIALIZING FIRESTORE DB
+const db = getFirestore(app);
+
+export function EditMyUser() {
   // EDIT USER WITHOUT CHANGING PASSWORD CLOUD FUNCTION HOOK
   const [updateAppUserWithoutPassword] = useHttpsCallable(
     getFunctions(app),
@@ -25,6 +37,53 @@ export function EditUser() {
     getFunctions(app),
     "updateAppUserWithPassword"
   );
+
+  // INITIALIZING FIREBASE AUTH
+  const auth = getAuth();
+
+  // ROUTING USER
+  const router = useRouter();
+
+  // USER AUTH STATE
+  const [user, loading] = useAuthState(auth);
+
+  // USER DATA STATE
+  const [userFullData, setUserFullData] = useState<UserFullDataProps>();
+
+  // HANDLE USER DATA FUNCTION
+  const handleUserFullData = async (user: User | null | undefined) => {
+    if (user !== null && user !== undefined) {
+      // CHECKING IF USER EXISTS ON DATABASE
+      const userRef = collection(db, "appUsers");
+      const q = query(userRef, where("id", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      const promises: any = [];
+      querySnapshot.forEach((doc) => {
+        const promise = doc.data();
+        promises.push(promise);
+      });
+      Promise.all(promises).then((results) => {
+        setUserFullData(results[0]);
+      });
+    } else
+      return (
+        console.log("User is undefined..."),
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        })
+      );
+  };
+
+  // IF USER IS LOGGED, GET DATA
+  useEffect(() => {
+    if (user) {
+      handleUserFullData(user);
+    }
+  }, [user]);
 
   // USER EDIT DATA
   const [userEditData, setUserEditData] = useState<EditUserValidationZProps>({
@@ -62,55 +121,25 @@ export function EditUser() {
     }
   }, [phoneFormatted]);
 
-  // USER SELECTED AND EDIT ACTIVE STATES
-  const [isSelected, setIsSelected] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
-
-  // USER DATA ARRAY WITH ALL OPTIONS OF SELECT USERS
-  const [usersDataArray, setUsersDataArray] = useState<UserFullDataProps[]>();
-
-  // FUNCTION THAT WORKS WITH USER SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleUserSelectedData = (data: UserFullDataProps[]) => {
-    setUsersDataArray(data);
-  };
-
-  // USER SELECTED STATE DATA
-  const [userSelectedData, setUserSelectedData] = useState<UserFullDataProps>();
-
-  // SET USER SELECTED STATE WHEN SELECT USER
-  useEffect(() => {
-    setIsEdit(false);
-    if (userEditData.id !== "") {
-      setUserSelectedData(
-        usersDataArray!.find(({ id }) => id === userEditData.id)
-      );
-    } else {
-      setUserSelectedData(undefined);
-    }
-  }, [userEditData.id]);
-
   // SET USER NAME TO USER EDIT NAME
   useEffect(() => {
-    if (userSelectedData) {
+    if (userFullData) {
       setUserEditData({
         ...userEditData,
-        name: userSelectedData.name!,
-        email: userSelectedData.email!,
-        photo: userSelectedData.photo ? userSelectedData.photo : "",
-        role: userSelectedData.role,
+        id: userFullData.id,
+        name: userFullData.name,
+        email: userFullData.email,
+        photo: userFullData.photo ? userFullData.photo : "",
+        role: userFullData.role,
       });
       setPhoneFormatted({
         ...phoneFormatted,
-        ddd: userSelectedData.phone
-          ? userSelectedData.phone.slice(3, 5)
-          : "DDD",
-        prefix: userSelectedData.phone
-          ? userSelectedData.phone.slice(5, 10)
-          : "",
-        suffix: userSelectedData.phone ? userSelectedData.phone.slice(-4) : "",
+        ddd: userFullData.phone ? userFullData.phone.slice(3, 5) : "DDD",
+        prefix: userFullData.phone ? userFullData.phone.slice(5, 10) : "",
+        suffix: userFullData.phone ? userFullData.phone.slice(-4) : "",
       });
     }
-  }, [userSelectedData]);
+  }, [userFullData]);
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -139,10 +168,6 @@ export function EditUser() {
   // RESET FORM FUNCTION
   const resetForm = () => {
     reset();
-    (
-      document.getElementById("userSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    setIsSelected(false);
     setUserEditData({
       id: "",
       name: "",
@@ -206,8 +231,11 @@ export function EditUser() {
     data
   ) => {
     setIsSubmitting(true);
+
+    // CHANGE PASSWORD TEST
     if (data.changePassword) {
       if (!data.password || data.password?.length < 6) {
+        setIsSubmitting(false);
         setErrorPassword(true);
         toast.error(`A senha precisa ter, no mínimo, 6 caracteres.`, {
           theme: "colored",
@@ -218,7 +246,6 @@ export function EditUser() {
         });
       } else {
         setErrorPassword(false);
-        console.log("mudei senha");
         try {
           await updateAppUserWithPassword(data);
           resetForm();
@@ -230,6 +257,13 @@ export function EditUser() {
             autoClose: 3000,
           });
           setIsSubmitting(false);
+          router.push(
+            {
+              pathname: "/Dashboard",
+              query: { username: userFullData?.name },
+            },
+            "/Dashboard" // "as" argument
+          );
         } catch (error) {
           console.log("Erro: ", error);
           toast.error(`Ocorreu um erro... 🤯`, {
@@ -245,7 +279,6 @@ export function EditUser() {
       }
     } else {
       setErrorPassword(false);
-      console.log("não mudei senha");
       try {
         await updateAppUserWithoutPassword(data);
         resetForm();
@@ -257,6 +290,13 @@ export function EditUser() {
           autoClose: 3000,
         });
         setIsSubmitting(false);
+        router.push(
+          {
+            pathname: "/Dashboard",
+            query: { username: userFullData?.name },
+          },
+          "/Dashboard" // "as" argument
+        );
       } catch (error) {
         console.log("Erro: ", error);
         toast.error(`Ocorreu um erro... 🤯`, {
@@ -274,8 +314,8 @@ export function EditUser() {
 
   return (
     <div className="flex flex-col container text-center">
-      {/* LOADING */}
-      {isSubmitting ? (
+      {/* LOADING SUBMIT */}
+      {isSubmitting || loading ? (
         <div className="flex flex-col w-screen h-screen top-0 left-0 absolute items-center justify-center bg-gray-900/60 dark:bg-gray-800/50 transition-all duration-300">
           <Dna
             visible={true}
@@ -292,75 +332,31 @@ export function EditUser() {
       {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
 
-      {/* TITLE */}
-      <h1 className="font-bold text-2xl my-4">
-        {isEdit ? `Editando ${userEditData.name}` : "Editar Usuário"}
-      </h1>
-
-      {/* FORM */}
-      <form
-        onSubmit={handleSubmit(handleEditUser)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
-      >
-        {/* USER SELECT */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="userSelect"
-            className={
-              errors.name
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
-          >
-            Selecione o Usuário:{" "}
-          </label>
-          <select
-            id="userSelect"
-            defaultValue={" -- select an option -- "}
-            className={
-              errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
-            name="userSelect"
-            onChange={(e) => {
-              setUserEditData({
-                ...userEditData,
-                id: e.target.value,
-              });
-              setIsSelected(true);
-            }}
-          >
-            <SelectOptions
-              returnId
-              handleData={handleUserSelectedData}
-              dataType="appUsers"
-            />
-          </select>
+      {/* LOADING DATA */}
+      {!userFullData ? (
+        <div className="flex flex-col w-screen h-screen top-0 left-0 absolute items-center justify-center bg-gray-900/60 dark:bg-gray-800/50 transition-all duration-300">
+          <Dna
+            visible={true}
+            height="80"
+            width="80"
+            ariaLabel="dna-loading"
+            wrapperStyle={{}}
+            wrapperClass="dna-wrapper"
+          />
+          <h1 className="text-xl text-white mb-3">Loading...</h1>
         </div>
+      ) : (
+        <>
+          {/* TITLE */}
+          <h1 className="font-bold text-2xl my-4">
+            Editando {userEditData?.name}
+          </h1>
 
-        {isSelected ? (
-          <>
-            {/* EDIT BUTTON */}
-            <div className="flex gap-2 mt-4 justify-center">
-              <button
-                type="button"
-                disabled={isEdit}
-                className="w-3/4 border rounded-xl border-green-900/10 bg-green-500 disabled:bg-amber-500/70 disabled:dark:bg-amber-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50"
-                onClick={() => {
-                  setIsEdit(true);
-                }}
-              >
-                {!isEdit
-                  ? "Editar"
-                  : "Clique em CANCELAR para desfazer a Edição"}
-              </button>
-            </div>
-          </>
-        ) : null}
-
-        {isEdit ? (
-          <>
+          {/* FORM */}
+          <form
+            onSubmit={handleSubmit(handleEditUser)}
+            className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+          >
             {/* USER NAME */}
             <div className="flex gap-2 items-center">
               <label
@@ -433,7 +429,7 @@ export function EditUser() {
               />
             </div>
 
-            {/** CHECKBOX CONFIRM INSERT */}
+            {/** CHECKBOX CONFIRM CHANGE PASSWORD */}
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="password"
@@ -563,7 +559,9 @@ export function EditUser() {
                   <select
                     id="phoneDDD"
                     disabled={isSubmitting}
-                    defaultValue={userSelectedData?.phone?.slice(3, 5)}
+                    defaultValue={
+                      userFullData ? userFullData.phone?.slice(3, 5) : "DDD"
+                    }
                     className={
                       errors.phone
                         ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -585,7 +583,7 @@ export function EditUser() {
                     name="phoneInitial"
                     pattern="^[+ 0-9]{5}$"
                     maxLength={5}
-                    defaultValue={userSelectedData?.phone?.slice(5, 10)}
+                    defaultValue={userFullData?.phone?.slice(5, 10)}
                     placeholder={errors.phone ? "É necessário um" : "99999"}
                     className={
                       errors.phone
@@ -606,7 +604,7 @@ export function EditUser() {
                     name="phoneFinal"
                     pattern="^[+ 0-9]{4}$"
                     maxLength={4}
-                    defaultValue={userSelectedData?.phone?.slice(-4)}
+                    defaultValue={userFullData?.phone?.slice(-4)}
                     placeholder={errors.phone ? "telefone válido" : "9990"}
                     className={
                       errors.phone
@@ -623,50 +621,6 @@ export function EditUser() {
                 </div>
                 <div className="w-2/12"></div>
               </div>
-            </div>
-
-            {/* USER ROLE */}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="role"
-                className={
-                  errors.role
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-                }
-              >
-                Permissão:{" "}
-              </label>
-              <select
-                id="role"
-                disabled={isSubmitting}
-                value={userEditData.role}
-                className={
-                  errors.name
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                name="role"
-                onChange={(e) => {
-                  if (
-                    e.target.value === "admin" ||
-                    e.target.value === "editor" ||
-                    e.target.value === "teacher" ||
-                    e.target.value === "user"
-                  ) {
-                    setUserEditData({
-                      ...userEditData,
-                      role: e.target.value,
-                    });
-                  }
-                  setIsSelected(true);
-                }}
-              >
-                <option value="admin">Administrador</option>
-                <option value="editor">Editor</option>
-                <option value="teacher">Professor</option>
-                <option value="user">Usuário</option>
-              </select>
             </div>
 
             {/* SUBMIT AND RESET BUTTONS */}
@@ -692,9 +646,9 @@ export function EditUser() {
                 {isSubmitting ? "Aguarde" : "Cancelar"}
               </button>
             </div>
-          </>
-        ) : null}
-      </form>
+          </form>
+        </>
+      )}
     </div>
   );
 }

@@ -84,7 +84,7 @@ export function Header() {
   const navigations = [
     { label: "Dashboard", path: "/Dashboard" },
     { label: "Gerenciar Escolas", path: "/ManageSchools" },
-    { label: "Gerenciar Usuários", path: "/ManageUsers" },
+    { label: "Gerenciar Conta", path: "/ManageUsers" },
   ];
 
   // THEME CHANGER FUNCTION
