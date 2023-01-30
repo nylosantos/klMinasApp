@@ -22,7 +22,7 @@ import {
   SchoolSearchProps,
 } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
 import DatePicker from "react-multi-date-picker";
 import TimePicker from "react-multi-date-picker/plugins/time_picker";
 

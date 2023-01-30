@@ -15,9 +15,12 @@ import {
 } from "firebase/firestore";
 
 import { deleteScheduleValidationSchema } from "../../@types/zodValidation";
-import { DeleteScheduleValidationZProps } from "../../@types";
+import {
+  DeleteScheduleValidationZProps,
+  ScheduleSearchProps,
+} from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -28,29 +31,71 @@ export function DeleteSchedule() {
     useState<DeleteScheduleValidationZProps>({
       scheduleId: "",
       scheduleName: "",
+      schoolId: "",
       confirmDelete: false,
     });
 
+  // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL DATA STATE
+  const [school, setSchool] = useState({
+    id: "",
+  });
+
+  // RESET SCHOOL CLASS, SCHOOL COURSE AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
+  useEffect(() => {
+    (
+      document.getElementById("scheduleSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setScheduleData({
+      schoolId: school.id,
+      scheduleName: "",
+      scheduleId: "",
+      confirmDelete: false,
+    });
+  }, [school.id]);
+  // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
+  const [schedulesDataArray, setSchedulesDataArray] =
+    useState<ScheduleSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleScheduleSelectedData = (data: ScheduleSearchProps[]) => {
+    setSchedulesDataArray(data);
+  };
+
+  // SCHOOL CLASS SELECTED STATE DATA
+  const [scheduleSelectedData, setScheduleSelectedData] =
+    useState<ScheduleSearchProps>();
+
+  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  useEffect(() => {
+    if (scheduleData.scheduleId !== "") {
+      setScheduleSelectedData(
+        schedulesDataArray!.find(({ id }) => id === scheduleData.scheduleId)
+      );
+    } else {
+      setScheduleSelectedData(undefined);
+    }
+  }, [scheduleData.scheduleId]);
+
+  useEffect(() => {
+    if (scheduleSelectedData) {
+      setScheduleData({
+        ...scheduleData,
+        scheduleName: scheduleSelectedData.name,
+      });
+    }
+  }, [scheduleSelectedData]);
+
+  // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // TEACHER SELECTED AND EDIT ACTIVE STATES
+  const [isSelected, setIsSelected] = useState(false);
+
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // GET SCHEDULE DATA FUNCTION
-  async function getScheduleData(id: string) {
-    const scheduleRef = collection(db, "schedules");
-    const q = query(scheduleRef, where("id", "==", id));
-    const querySnapshot = await getDocs(q);
-    const scheduleDataPromises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      scheduleDataPromises.push(promise);
-    });
-    setScheduleData({
-      ...scheduleData,
-      scheduleName: scheduleDataPromises[0].name,
-      scheduleId: id,
-      confirmDelete: false
-    });
-  }
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -63,6 +108,7 @@ export function DeleteSchedule() {
     defaultValues: {
       scheduleId: "",
       scheduleName: "",
+      schoolId: "",
       confirmDelete: false,
     },
   });
@@ -72,8 +118,11 @@ export function DeleteSchedule() {
     setScheduleData({
       scheduleId: "",
       scheduleName: "",
+      schoolId: "",
       confirmDelete: false,
     });
+    setIsSelected(false);
+    setSchool({ id: "" });
     reset();
   };
 
@@ -191,6 +240,35 @@ export function DeleteSchedule() {
         onSubmit={handleSubmit(handleDeleteSchedule)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
       >
+        {/* SCHOOL SELECT */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="schoolSelect"
+            className={
+              errors.schoolId
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
+          >
+            Selecione a Escola:{" "}
+          </label>
+          <select
+            defaultValue={" -- select an option -- "}
+            className={
+              errors.schoolId
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            name="schoolSelect"
+            onChange={(e) => {
+              setSchool({ ...school, id: e.target.value });
+              setIsSelected(false);
+            }}
+          >
+            <SelectOptions returnId dataType="schools" />
+          </select>
+        </div>
+
         {/* SCHEDULE SELECT */}
         <div className="flex gap-2 items-center">
           <label
@@ -204,6 +282,8 @@ export function DeleteSchedule() {
             Identificador:{" "}
           </label>
           <select
+            id="scheduleSelect"
+            disabled={school.id ? false : true}
             defaultValue={" -- select an option -- "}
             className={
               errors.scheduleId
@@ -212,36 +292,172 @@ export function DeleteSchedule() {
             }
             name="scheduleSelect"
             onChange={(e) => {
-              getScheduleData(e.target.value);
+              setScheduleData({ ...scheduleData, scheduleId: e.target.value });
+              setIsSelected(true);
             }}
           >
-            <SelectOptions returnId dataType="schedules" />
+            <SelectOptions
+              returnId
+              dataType="schedules"
+              schoolId={scheduleData.schoolId}
+              handleData={handleScheduleSelectedData}
+            />
           </select>
         </div>
 
-        {/** CHECKBOX CONFIRM DELETE */}
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <input
-            type="checkbox"
-            name="confirmDelete"
-            className="ml-1 dark: text-green-500 dark:text-green-500 border-none "
-            checked={scheduleData.confirmDelete}
-            onChange={() => {
-              setScheduleData({
-                ...scheduleData,
-                confirmDelete: !scheduleData.confirmDelete,
-              });
-            }}
-          />
-          <label
-            htmlFor="confirmDelete"
-            className="text-sm text-gray-600 dark:text-gray-100"
-          >
-            {scheduleData.scheduleName
-              ? `Confirmar exclusão do ${scheduleData.scheduleName}`
-              : `Confirmar exclusão`}
-          </label>
-        </div>
+        {scheduleSelectedData !== undefined && isSelected ? (
+          <>
+            <div className="flex flex-col pt-2 pb-6 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
+              {/* DETAILS TITLE */}
+              <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+                Dados do Horário a ser excluído:
+              </h1>
+
+              {/* SCHOOL NAME */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="scheduleSchool"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Escola:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="scheduleSchool"
+                  disabled
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  value={scheduleSelectedData!.schoolName}
+                />
+              </div>
+
+              {/* SCHEDULE IDENTIFIER */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="scheduleName"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Identificador:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="scheduleName"
+                  disabled
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  value={scheduleSelectedData!.name}
+                />
+              </div>
+
+              {/* TRANSITION START */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="transitionStart"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Início da Transição:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="transitionStart"
+                  disabled
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  value={scheduleSelectedData!.transitionStart}
+                />
+              </div>
+
+              {/* TRANSITION END */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="transitionEnd"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Fim da Transição:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="transitionEnd"
+                  disabled
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  value={scheduleSelectedData!.transitionEnd}
+                />
+              </div>
+
+              {/* CLASS START */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="classStart"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Início da Aula:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="classStart"
+                  disabled
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  value={scheduleSelectedData!.classStart}
+                />
+              </div>
+
+              {/* CLASS END */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="classEnd"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Fim da Aula:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="classEnd"
+                  disabled
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  value={scheduleSelectedData!.classEnd}
+                />
+              </div>
+
+              {/* EXIT */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="exit"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Saída:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="exit"
+                  disabled
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  value={scheduleSelectedData!.exit}
+                />
+              </div>
+            </div>
+
+            {/** CHECKBOX CONFIRM DELETE */}
+            <div className="flex justify-center items-center gap-2 mt-6">
+              <input
+                type="checkbox"
+                name="confirmDelete"
+                className="ml-1 dark: text-green-500 dark:text-green-500 border-none "
+                checked={scheduleData.confirmDelete}
+                onChange={() => {
+                  setScheduleData({
+                    ...scheduleData,
+                    confirmDelete: !scheduleData.confirmDelete,
+                  });
+                }}
+              />
+              <label
+                htmlFor="confirmDelete"
+                className="text-sm text-gray-600 dark:text-gray-100"
+              >
+                {scheduleData.scheduleName
+                  ? `Confirmar exclusão do ${scheduleData.scheduleName}`
+                  : `Confirmar exclusão`}
+              </label>
+            </div>
+          </>
+        ) : null}
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4">

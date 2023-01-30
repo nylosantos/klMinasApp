@@ -1,17 +1,15 @@
 import {
   collection,
-  getDocs,
   getFirestore,
   onSnapshot,
   orderBy,
   query,
   where,
 } from "firebase/firestore";
-import { getFunctions } from "firebase/functions";
 import { useEffect, useState } from "react";
-import { useHttpsCallable } from "react-firebase-hooks/functions";
-import { SelectProps } from "../@types";
-import { app } from "../db/Firebase";
+
+import { SelectProps } from "../../@types";
+import { app } from "../../db/Firebase";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -31,12 +29,6 @@ export function SelectOptions({
 }: SelectProps) {
   // DATA STATE
   const [data, setData] = useState([]);
-
-  // GET ALL USERS CLOUD FUNCTION HOOK
-  const [getAppUsers, executing, error] = useHttpsCallable(
-    getFunctions(app),
-    "getAppUsers"
-  );
 
   // FIREBASE FILTER QUERIES
   const schoolWhereQuery = where("schoolId", "==", schoolId);
@@ -81,9 +73,9 @@ export function SelectOptions({
     });
   };
 
+  // CALLING FUNCTION EVERYTIME THAT ANY PROPS CHANGE
   useEffect(() => {
     handleOptionData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dataType,
     schoolId,
@@ -96,11 +88,11 @@ export function SelectOptions({
     studentId,
   ]);
 
+  // IF HAS A FUNCTION, SEND DATA FOR IT
   useEffect(() => {
     if (handleData) {
       handleData(data);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   return (

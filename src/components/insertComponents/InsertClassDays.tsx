@@ -21,7 +21,7 @@ import {
   CreateClassDaysValidationZProps,
   ToggleClassDaysFunctionProps,
 } from "../../@types";
-import { ClassDays } from "../ClassDays";
+import { ClassDays } from "../formComponents/ClassDays";
 import { app } from "../../db/Firebase";
 
 // INITIALIZING FIRESTORE DB

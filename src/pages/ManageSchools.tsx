@@ -1,4 +1,4 @@
-import { Header } from "../components/Header";
+import { Header } from "../components/layoutComponents/Header";
 
 import { Fragment, useEffect, useState } from "react";
 import { Tab } from "@headlessui/react";

@@ -19,6 +19,7 @@ import {
 import { createTeacherValidationSchema } from "../../@types/zodValidation";
 import { CreateTeacherValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
+import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -28,6 +29,12 @@ export function InsertTeacher() {
   const [teacherData, setTeacherData] = useState<CreateTeacherValidationZProps>(
     {
       name: "",
+      email: "",
+      phone: {
+        ddd: "",
+        prefix: "",
+        suffix: "",
+      },
       confirmInsert: false,
     }
   );
@@ -45,6 +52,12 @@ export function InsertTeacher() {
     resolver: zodResolver(createTeacherValidationSchema),
     defaultValues: {
       name: "",
+      email: "",
+      phone: {
+        ddd: "",
+        prefix: "",
+        suffix: "",
+      },
       confirmInsert: false,
     },
   });
@@ -53,6 +66,12 @@ export function InsertTeacher() {
   const resetForm = () => {
     setTeacherData({
       name: "",
+      email: "",
+      phone: {
+        ddd: "",
+        prefix: "",
+        suffix: "",
+      },
       confirmInsert: false,
     });
     reset();
@@ -61,12 +80,22 @@ export function InsertTeacher() {
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("name", teacherData.name);
+    setValue("email", teacherData.email);
+    setValue("phone.ddd", teacherData.phone.ddd);
+    setValue("phone.prefix", teacherData.phone.prefix);
+    setValue("phone.suffix", teacherData.phone.suffix);
     setValue("confirmInsert", teacherData.confirmInsert);
   }, [teacherData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [errors.name, errors.confirmInsert];
+    const fullErrors = [
+      errors.name,
+      errors.email,
+      errors.phone,
+      errors.name,
+      errors.confirmInsert,
+    ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -82,6 +111,42 @@ export function InsertTeacher() {
   const handleAddTeacher: SubmitHandler<CreateTeacherValidationZProps> = async (
     data
   ) => {
+    // ADD TEACHER FUNCTION
+    const addTeacher = async () => {
+      try {
+        const commonId = uuidv4();
+        await setDoc(doc(db, "teachers", commonId), {
+          id: commonId,
+          name: data.name,
+          email: data.email,
+          phone:
+            data.phone.ddd && data.phone.prefix && data.phone.suffix
+              ? `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`
+              : "",
+          timestamp: serverTimestamp(),
+        });
+        resetForm();
+        toast.success(`Professor ${data.name} criado com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
+
     setIsSubmitting(true);
 
     // CHECK INSERT CONFIRMATION
@@ -99,65 +164,98 @@ export function InsertTeacher() {
       );
     }
 
-    // CHECKING IF TEACHER EXISTS ON DATABASE
-    const teacherRef = collection(db, "teachers");
-    const q = query(teacherRef, where("name", "==", data.name));
-    const querySnapshot = await getDocs(q);
-    const promises: any = [];
-    querySnapshot.forEach((doc) => {
+    // FIREBASE DATABASE REFERENCE
+    const dataRef = collection(db, "appUsers");
+
+    // ---------- CHECKING IF PHONE EXISTS ON DATABASE ---------- //
+    const phoneQuery = query(
+      dataRef,
+      where(
+        "phone",
+        "==",
+        `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`
+      )
+    );
+    const phoneSnapshot = await getDocs(phoneQuery);
+    const promisesPhone: any = [];
+    phoneSnapshot.forEach((doc) => {
       const promise = doc.data();
-      promises.push(promise);
+      promisesPhone.push(promise);
     });
-    Promise.all(promises).then((results) => {
+    Promise.all(promisesPhone).then(async (results) => {
       // IF EXISTS, RETURN ERROR
       if (results.length !== 0) {
         return (
           setIsSubmitting(false),
-          toast.error(
-            `Professor ${data.name} já existe no nosso banco de dados... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          )
+          toast.error(`Telefone já registrado em nosso banco de dados... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
         );
       } else {
-        // IF NOT EXISTS, CREATE
-        const addTeacher = async () => {
-          try {
-            const commonId = uuidv4();
-            await setDoc(doc(db, "teachers", commonId), {
-              id: commonId,
-              name: data.name,
-              timestamp: serverTimestamp(),
+        // ---------- CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
+        const emailQuery = query(dataRef, where("email", "==", data.email));
+        const emailSnapshot = await getDocs(emailQuery);
+        const promisesEmail: any = [];
+        emailSnapshot.forEach((doc) => {
+          const promise = doc.data();
+          promisesEmail.push(promise);
+        });
+        Promise.all(promisesEmail).then(async (results) => {
+          // IF EXISTS, RETURN ERROR
+          if (results.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `E-mail já registrado em nosso banco de dados... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else {
+            // ---------- CHECKING IF NAME EXISTS ON DATABASE ---------- //
+            const q = query(dataRef, where("name", "==", data.name));
+            const querySnapshot = await getDocs(q);
+            const promises: any = [];
+            querySnapshot.forEach((doc) => {
+              const promise = doc.data();
+              promises.push(promise);
             });
-            resetForm();
-            toast.success(`Professor ${data.name} criado com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
+            Promise.all(promises).then((results) => {
+              // IF EXISTS, RETURN ERROR
+              if (results.length !== 0) {
+                return (
+                  setIsSubmitting(false),
+                  toast.error(
+                    `Professor ${data.name} já existe no nosso banco de dados... ❕`,
+                    {
+                      theme: "colored",
+                      closeOnClick: true,
+                      pauseOnHover: true,
+                      draggable: true,
+                      autoClose: 3000,
+                    }
+                  )
+                );
+              } else {
+                addTeacher();
+              }
             });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
+            // ---------- END OF CHECKING IF NAME EXISTS ON DATABASE ---------- //
           }
-        };
-        addTeacher();
+        });
+        // ---------- END OF CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
       }
     });
+    // ---------- END OF CHECKING IF PHONE EXISTS ON DATABASE ---------- //
   };
 
   return (
@@ -199,6 +297,123 @@ export function InsertTeacher() {
               setTeacherData({ ...teacherData, name: e.target.value });
             }}
           />
+        </div>
+
+        {/* E-MAIL */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="email"
+            className={
+              errors.email
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
+          >
+            E-mail:{" "}
+          </label>
+          <input
+            type="text"
+            name="email"
+            disabled={isSubmitting}
+            placeholder={
+              errors.email ? "É necessário inserir o e-mail" : "Insira o e-mail"
+            }
+            className={
+              errors.email
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            value={teacherData.email}
+            onChange={(e) => {
+              setTeacherData({ ...teacherData, email: e.target.value });
+            }}
+          />
+        </div>
+
+        {/* PHONE */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="address"
+            className={
+              errors.phone
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
+          >
+            Telefone:{" "}
+          </label>
+          <div className="flex w-2/4 gap-2">
+            <div className="flex w-10/12 items-center gap-1">
+              <select
+                id="phoneDDD"
+                defaultValue={"DDD"}
+                className={
+                  errors.phone?.ddd
+                    ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                name="DDD"
+                onChange={(e) => {
+                  setTeacherData({
+                    ...teacherData,
+                    phone: { ...teacherData.phone, ddd: e.target.value },
+                  });
+                }}
+              >
+                <BrazilianStateSelectOptions />
+              </select>
+              <input
+                type="text"
+                name="phoneInitial"
+                pattern="^[+ 0-9]{5}$"
+                maxLength={5}
+                value={teacherData.phone.prefix}
+                placeholder={errors.phone?.prefix ? "É necessário um" : "99999"}
+                className={
+                  errors.phone?.prefix
+                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                onChange={(e) => {
+                  setTeacherData({
+                    ...teacherData,
+                    phone: {
+                      ...teacherData.phone,
+                      prefix: e.target.value
+                        .replace(/[^0-9.]/g, "")
+                        .replace(/(\..*?)\..*/g, "$1"),
+                    },
+                  });
+                }}
+              />
+              -
+              <input
+                type="text"
+                name="phoneFinal"
+                pattern="^[+ 0-9]{4}$"
+                maxLength={4}
+                value={teacherData.phone.suffix}
+                placeholder={errors.phone?.suffix ? "telefone válido" : "9990"}
+                className={
+                  errors.phone?.suffix
+                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                onChange={(e) => {
+                  setTeacherData({
+                    ...teacherData,
+                    phone: {
+                      ...teacherData.phone,
+                      suffix: e.target.value
+                        .replace(/[^0-9.]/g, "")
+                        .replace(/(\..*?)\..*/g, "$1"),
+                    },
+                  });
+                }}
+              />
+            </div>
+            <div className="w-2/12"></div>
+          </div>
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}

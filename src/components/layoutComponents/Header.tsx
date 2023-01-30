@@ -12,8 +12,8 @@ import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { toast } from "react-toastify";
-import { UserFullDataProps } from "../@types";
-import { app, initFirebase } from "../db/Firebase";
+import { UserFullDataProps } from "../../@types";
+import { app, initFirebase } from "../../db/Firebase";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -84,7 +84,13 @@ export function Header() {
   const navigations = [
     { label: "Dashboard", path: "/Dashboard" },
     { label: "Gerenciar Escolas", path: "/ManageSchools" },
-    { label: "Gerenciar Conta", path: "/ManageUsers" },
+    {
+      label:
+        userFullData?.role === "root" || userFullData?.role === "admin"
+          ? "Gerenciar Contas"
+          : "Gerenciar Conta",
+      path: "/ManageUsers",
+    },
   ];
 
   // THEME CHANGER FUNCTION

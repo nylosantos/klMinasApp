@@ -19,17 +19,20 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import cep from "cep-promise";
+import DatePicker, { DateObject } from "react-multi-date-picker";
 
 import { createStudentValidationSchema } from "../../@types/zodValidation";
 import {
   CreateStudentValidationZProps,
+  SchoolClassSearchProps,
+  SchoolCourseSearchProps,
+  SchoolSearchProps,
   SearchCurriculumValidationZProps,
 } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
-import cep from "cep-promise";
-import DatePicker, { DateObject } from "react-multi-date-picker";
-import { BrazilianStateSelectOptions } from "../BrazilianStateSelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -184,12 +187,172 @@ export function InsertStudent() {
       schoolCourse: "",
     });
 
-  // CURRICULUM COURSES ARRAY STATE
-  const [curriculumCoursesData, setCurriculumCoursesData] = useState([]);
-  const [schoolClassesData, setSchoolClassesData] = useState([]);
+  // ---------------------------- END OF FAMILY STUDENT VARIABLES, STATES AND FUNCTIONS ---------------------------- //
+
+  // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
+  const [schoolsDataArray, setSchoolsDataArray] =
+    useState<SchoolSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
+    setSchoolsDataArray(data);
+  };
+
+  // SCHOOL SELECTED STATE DATA
+  const [schoolSelectedData, setSchoolSelectedData] =
+    useState<SchoolSearchProps>();
+
+  // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
+  useEffect(() => {
+    setSchoolClassSelectedData(undefined);
+    if (curriculumData.school !== "") {
+      setSchoolSelectedData(
+        schoolsDataArray!.find(({ id }) => id === curriculumData.school)
+      );
+    } else {
+      setSchoolSelectedData(undefined);
+    }
+  }, [curriculumData.school]);
+
+  // RESET SCHOOL CLASS, SCHOOL COURSE AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
+  useEffect(() => {
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+  }, [curriculumData.school]);
+  // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
+  const [schoolClassesDataArray, setSchoolClassesDataArray] =
+    useState<SchoolClassSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
+    setSchoolClassesDataArray(data);
+  };
+
+  // SCHOOL CLASS SELECTED STATE DATA
+  const [schoolClassSelectedData, setSchoolClassSelectedData] =
+    useState<SchoolClassSearchProps>();
+
+  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  useEffect(() => {
+    if (curriculumData.schoolClass !== "") {
+      setSchoolClassSelectedData(
+        schoolClassesDataArray!.find(
+          ({ id }) => id === curriculumData.schoolClass
+        )
+      );
+    } else {
+      setSchoolClassSelectedData(undefined);
+    }
+  }, [curriculumData.schoolClass]);
+
+  // RESET STUDENT SELECT TO INDEX 0 AND GET AVAILABLE COURSES DATA WHEN SCHOOL CLASS CHANGE
+  useEffect(() => {
+    (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    handleAvailableCoursesData();
+  }, [curriculumData.schoolClass]);
+  // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
+  const [schoolCoursesDataArray, setSchoolCoursesDataArray] =
+    useState<SchoolCourseSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolCourseSelectedData = (data: SchoolCourseSearchProps[]) => {
+    setSchoolCoursesDataArray(data);
+  };
+
+  // SCHOOL CLASS SELECTED STATE DATA
+  const [schoolCourseSelectedData, setSchoolCourseSelectedData] =
+    useState<SchoolCourseSearchProps>();
+
+  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  useEffect(() => {
+    if (curriculumData.schoolCourse !== "") {
+      setSchoolCourseSelectedData(
+        schoolCoursesDataArray!.find(
+          ({ id }) => id === curriculumData.schoolCourse
+        )
+      );
+    } else {
+      setSchoolCourseSelectedData(undefined);
+    }
+  }, [curriculumData.schoolCourse]);
+  // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
   const [schedulesDetailsData, setSchedulesDetailsData] = useState([]);
 
-  // ---------------------------- END OF FAMILY STUDENT VARIABLES, STATES AND FUNCTIONS ---------------------------- //
+  // GETTING SCHEDULES DATA
+  const handleSchedulesDetails = async () => {
+    const q = query(collection(db, "schedules"));
+    const querySnapshot = await getDocs(q);
+    const promises: any = [];
+    querySnapshot.forEach((doc) => {
+      const promise = doc.data();
+      promises.push(promise);
+    });
+    setSchedulesDetailsData(promises);
+  };
+
+  // GETTING SCHEDULES DETAILS
+  useEffect(() => {
+    handleSchedulesDetails();
+  }, []);
+  // -------------------------- END OF SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- CURRICULUM STATES AND FUNCTIONS -------------------------- //
+  const [curriculumCoursesData, setCurriculumCoursesData] = useState([]);
+
+  // GETTING CURRICULUM DATA
+  const handleAvailableCoursesData = async () => {
+    if (curriculumData.schoolCourse === "all") {
+      const q = query(
+        collection(db, "curriculum"),
+        where("schoolId", "==", curriculumData.school),
+        where("schoolClassId", "==", curriculumData.schoolClass),
+        orderBy("name")
+      );
+      const querySnapshot = await getDocs(q);
+      const promises: any = [];
+      querySnapshot.forEach((doc) => {
+        const promise = doc.data();
+        promises.push(promise);
+      });
+      setCurriculumCoursesData(promises);
+    } else {
+      const q = query(
+        collection(db, "curriculum"),
+        where("schoolId", "==", curriculumData.school),
+        where("schoolClassId", "==", curriculumData.schoolClass),
+        where("schoolCourseId", "==", curriculumData.schoolCourse),
+        orderBy("name")
+      );
+      const querySnapshot = await getDocs(q);
+      const promises: any = [];
+      querySnapshot.forEach((doc) => {
+        const promise = doc.data();
+        promises.push(promise);
+      });
+      setCurriculumCoursesData(promises);
+    }
+  };
+
+  // GET AVAILABLE COURSES DATA WHEN SCHOOL CLASS CHANGE
+  useEffect(() => {
+    handleAvailableCoursesData();
+  }, [curriculumData.schoolCourse]);
+  // -------------------------- END OF CURRICULUM STATES AND FUNCTIONS -------------------------- //
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -253,68 +416,6 @@ export function InsertStudent() {
   // ACTIVATING OPTIONAL PHONES STATES
   const [activePhoneSecondary, setActivePhoneSecondary] = useState(false);
   const [activePhoneTertiary, setActivePhoneTertiary] = useState(false);
-
-  // GETTING CURRICULUM DATA
-  const handleAvailableCoursesData = async () => {
-    const q = query(
-      collection(db, "curriculum"),
-      where("school", "==", curriculumData.school),
-      where("schoolClass", "==", curriculumData.schoolClass),
-      orderBy("name")
-    );
-    const querySnapshot = await getDocs(q);
-    const promises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    setCurriculumCoursesData(promises);
-  };
-
-  // GETTING CLASS DATA
-  const handleAvailableClassesData = async () => {
-    const q = query(
-      collection(db, "schoolClasses"),
-      where("schoolName", "==", curriculumData.school),
-      orderBy("name")
-    );
-    const querySnapshot = await getDocs(q);
-    const promises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    setSchoolClassesData(promises);
-  };
-
-  // GETTING SCHEDULES DATA
-  const handleSchedulesDetails = async () => {
-    const q = query(collection(db, "schedules"));
-    const querySnapshot = await getDocs(q);
-    const promises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    setSchedulesDetailsData(promises);
-  };
-
-  // SET CLASS DATA WHEN CHOOSE THE SCHOOL
-  useEffect(() => {
-    handleAvailableClassesData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [curriculumData.school]);
-
-  // SET CURRICULUM DATA WHEN CHOOSE CLASS
-  useEffect(() => {
-    handleAvailableCoursesData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [curriculumData.schoolClass]);
-
-  // GETTING SCHEDULES DETAILS
-  useEffect(() => {
-    handleSchedulesDetails();
-  }, []);
 
   // TOGGLE TO "SCHOOL" WHEN TOGGLE FAMILY AT SCHOOL
   useEffect(() => {
@@ -408,7 +509,16 @@ export function InsertStudent() {
       curriculum: "",
       confirmInsert: false,
     });
-    setCurriculumData({ ...curriculumData, school: "", schoolClass: "" });
+    setCurriculumData({ school: "", schoolClass: "", schoolCourse: "" });
+    (
+      document.getElementById("schoolSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
     reset();
   };
 
@@ -1553,13 +1663,17 @@ export function InsertStudent() {
             name="schoolSelect"
             onChange={(e) => {
               setCurriculumData({
-                ...curriculumData,
                 school: e.target.value,
-                schoolClass: " -- select an option -- ",
+                schoolClass: "",
+                schoolCourse: "",
               });
             }}
           >
-            <SelectOptions dataType="schools" />
+            <SelectOptions
+              returnId
+              dataType="schools"
+              handleData={handleSchoolSelectedData}
+            />
           </select>
         </div>
 
@@ -1591,38 +1705,73 @@ export function InsertStudent() {
               setCurriculumData({
                 ...curriculumData,
                 schoolClass: e.target.value,
+                schoolCourse: "",
               });
               setStudentData({ ...studentData, curriculum: "" });
             }}
           >
-            {curriculumData.school ? (
-              <>
-                <option value={" -- select an option -- "}>
-                  {" "}
-                  -- Selecione --{" "}
-                </option>
-                {schoolClassesData.map((option: any) => (
-                  <option key={option.id} value={option.name}>
-                    {option.name}
-                  </option>
-                ))}
-              </>
-            ) : (
-              <option disabled value={" -- select an option -- "}>
-                {" "}
-                -- Selecione uma escola para ver as turmas disponíveis --{" "}
-              </option>
-            )}
+            <SelectOptions
+              returnId
+              dataType="schoolClasses"
+              schoolId={curriculumData.school}
+              handleData={handleSchoolClassSelectedData}
+            />
+          </select>
+        </div>
+
+        {/* SCHOOL COURSE SELECT */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="schoolCourseSelect"
+            className={
+              errors.curriculum
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
+          >
+            Selecione a Modalidade:{" "}
+          </label>
+          <select
+            id="schoolCourseSelect"
+            disabled={curriculumData.schoolClass ? false : true}
+            defaultValue={" -- select an option -- "}
+            className={
+              curriculumData.schoolClass
+                ? errors.curriculum
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+            }
+            name="schoolCourseSelect"
+            onChange={(e) => {
+              setCurriculumData({
+                ...curriculumData,
+                schoolCourse: e.target.value,
+              });
+              setStudentData({ ...studentData, curriculum: "" });
+            }}
+          >
+            <SelectOptions
+              returnId
+              dataType="schoolCourses"
+              handleData={handleSchoolCourseSelectedData}
+            />
+            <option value={"all"}>Todas as Modalidades</option>
           </select>
         </div>
 
         {/* CURRICULUM SELECT */}
-        {curriculumData.school && curriculumData.schoolClass ? (
+        {curriculumData.school &&
+        curriculumData.schoolClass &&
+        curriculumData.schoolCourse ? (
           curriculumCoursesData.length !== 0 ? (
             <>
               <h1 className="font-bold text-2xl py-4">
-                Modalidades {curriculumData.school} -{" "}
-                {curriculumData.schoolClass}:
+                {schoolSelectedData?.name} - {schoolClassSelectedData?.name} -{" "}
+                {curriculumData.schoolCourse === "all"
+                  ? "Todas as Modalidades"
+                  : schoolCourseSelectedData?.name}
+                :
               </h1>
               <hr className="pb-4" />
               <div className="flex flex-wrap gap-4 justify-center">
@@ -1664,9 +1813,27 @@ export function InsertStudent() {
                 ))}
               </div>
             </>
-          ) : null
+          ) : (
+            <>
+              <h1 className="font-bold text-2xl py-4">
+                {schoolSelectedData?.name} - {schoolClassSelectedData?.name} -{" "}
+                {curriculumData.schoolCourse === "all"
+                  ? "Todas as Modalidades"
+                  : schoolCourseSelectedData?.name}
+                :
+              </h1>
+              <hr className="pb-4" />
+              <h1 className="font-bold text-2xl pb-10 text-red-600 dark:text-yellow-500">
+                Nenhuma vaga disponível com as opções selecionadas, tente
+                novamente.
+              </h1>
+            </>
+          )
         ) : (
-          "Selecione um colégio e uma turma para ver as modalidades disponíveis."
+          <p className="text-red-600 dark:text-yellow-500">
+            Selecione um colégio e uma turma para ver as modalidades
+            disponíveis.
+          </p>
         )}
 
         {/* FAMILY AT SCHOOL QUESTION */}

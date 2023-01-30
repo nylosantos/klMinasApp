@@ -1,4 +1,4 @@
-import { ClassDaysCompProps, DaysProps } from "../@types";
+import { ClassDaysCompProps, DaysProps } from "../../@types";
 import { v4 as uuidv4 } from "uuid";
 
 export function ClassDays({ classDay, toggleClassDays }: ClassDaysCompProps) {

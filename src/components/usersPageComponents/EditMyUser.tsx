@@ -20,7 +20,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { editUserValidationSchema } from "../../@types/zodValidation";
 import { EditUserValidationZProps, UserFullDataProps } from "../../@types";
 import { app } from "../../db/Firebase";
-import { BrazilianStateSelectOptions } from "../BrazilianStateSelectOptions";
+import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);

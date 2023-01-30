@@ -17,7 +17,7 @@ import {
 import { deleteClassValidationSchema } from "../../@types/zodValidation";
 import { DeleteClassValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);

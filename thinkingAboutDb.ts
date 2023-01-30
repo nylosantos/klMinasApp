@@ -86,15 +86,3 @@ export function DeleteSchool() {
     timestamp: "serverTimestamp()",
   };
 }
-
-// IMPLEMENTAR A EDITPAGE
-//  - Editar Currículo? Acho que não
-//  - Implementar "Editar Aluno"
-//    - ADICIONAR PARENTE? SIM -> USAR SELECT E FUNÇÃO QUE ESTÁ NA "insertStudent"
-
-// MANAGE USERS:
-//  - Copiar LOADING do EDIT USERS para ADD e DELETE do Editar Usuário, mas apenas com o próprio usuário.
-
-// IMPLEMENTAR PERSONALIZAÇÃO
-
-// IMPLEMENTAR A DESCRIÇÃO / DIVISÃO DAS FUNÇÕES DOS SELECTS NAS PÁGINAS, COMO FEITO NA INSERT STUDENTS

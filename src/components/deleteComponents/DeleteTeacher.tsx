@@ -15,9 +15,14 @@ import {
 } from "firebase/firestore";
 
 import { deleteTeacherValidationSchema } from "../../@types/zodValidation";
-import { DeleteTeacherValidationZProps } from "../../@types";
+import {
+  DeleteTeacherValidationZProps,
+  EditTeacherValidationZProps,
+  TeacherSearchProps,
+} from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -27,31 +32,79 @@ export function DeleteTeacher() {
   const [teacherData, setTeacherData] = useState<DeleteTeacherValidationZProps>(
     {
       teacherId: "",
-      teacherName: "",
       confirmDelete: false,
     }
   );
 
+  // TEACHER EDIT DATA
+  const [teacherFullData, setTeacherFullData] =
+    useState<EditTeacherValidationZProps>({
+      name: "",
+      email: "",
+      phone: "",
+    });
+
+  // PHONE FORMATTED STATE
+  const [phoneFormatted, setPhoneFormatted] = useState({
+    ddd: "DDD",
+    prefix: "",
+    suffix: "",
+  });
+
+  // SET PHONE NUMBER WHEN PHONE FORMATTED IS FULLY FILLED
+  useEffect(() => {
+    if (
+      phoneFormatted.ddd !== "DDD" &&
+      phoneFormatted.prefix !== "" &&
+      phoneFormatted.suffix !== ""
+    ) {
+      setTeacherFullData({
+        ...teacherFullData,
+        phone: `+55${phoneFormatted.ddd}${phoneFormatted.prefix}${phoneFormatted.suffix}`,
+      });
+    } else {
+      setTeacherFullData({ ...teacherFullData, phone: null });
+    }
+  }, [phoneFormatted]);
+
+  // TEACHER SELECTED AND EDIT ACTIVE STATES
+  const [isSelected, setIsSelected] = useState(false);
+
+  // TEACHER DATA ARRAY WITH ALL OPTIONS OF SELECT TEACHERS
+  const [teachersDataArray, setTeachersDataArray] =
+    useState<TeacherSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH TEACHER SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleTeacherSelectedData = (data: TeacherSearchProps[]) => {
+    setTeachersDataArray(data);
+  };
+
+  // TEACHER SELECTED STATE DATA
+  const [teacherSelectedData, setTeacherSelectedData] =
+    useState<TeacherSearchProps>();
+
+  // SET TEACHER SELECTED STATE WHEN SELECT TEACHER
+  useEffect(() => {
+    if (teacherData.teacherId !== "") {
+      setTeacherSelectedData(
+        teachersDataArray!.find(({ id }) => id === teacherData.teacherId)
+      );
+    } else {
+      setTeacherSelectedData(undefined);
+    }
+  }, [teacherData.teacherId]);
+
+  // SET TEACHER NAME TO TEACHER EDIT NAME
+  useEffect(() => {
+    setTeacherFullData({
+      ...teacherFullData,
+      name: teacherSelectedData?.name!,
+      email: teacherSelectedData?.email!,
+    });
+  }, [teacherSelectedData]);
+
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // GET TEACHER DATA FUNCTION
-  async function getTeacherData(id: string) {
-    const teacherRef = collection(db, "teachers");
-    const q = query(teacherRef, where("id", "==", id));
-    const querySnapshot = await getDocs(q);
-    const teacherDataPromises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      teacherDataPromises.push(promise);
-    });
-    setTeacherData({
-      ...teacherData,
-      teacherName: teacherDataPromises[0].name,
-      teacherId: id,
-      confirmDelete: false,
-    });
-  }
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -63,7 +116,6 @@ export function DeleteTeacher() {
     resolver: zodResolver(deleteTeacherValidationSchema),
     defaultValues: {
       teacherId: "",
-      teacherName: "",
       confirmDelete: false,
     },
   });
@@ -72,26 +124,21 @@ export function DeleteTeacher() {
   const resetForm = () => {
     setTeacherData({
       teacherId: "",
-      teacherName: "",
       confirmDelete: false,
     });
+    setIsSelected(false);
     reset();
   };
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("teacherId", teacherData.teacherId);
-    setValue("teacherName", teacherData.teacherName);
     setValue("confirmDelete", teacherData.confirmDelete);
   }, [teacherData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [
-      errors.teacherId,
-      errors.teacherName,
-      errors.confirmDelete,
-    ];
+    const fullErrors = [errors.teacherId, errors.confirmDelete];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -113,7 +160,7 @@ export function DeleteTeacher() {
     if (!data.confirmDelete) {
       setIsSubmitting(false);
       return toast.error(
-        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir o Professor ${data.teacherName}... ☑️`,
+        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir o Professor ${teacherFullData.name}... ☑️`,
         {
           theme: "colored",
           closeOnClick: true,
@@ -126,7 +173,7 @@ export function DeleteTeacher() {
 
     // CHECKING IF TEACHER EXISTS ON DATABASE
     const teacherRef = collection(db, "curriculum");
-    const q = query(teacherRef, where("teacher", "==", data.teacherName));
+    const q = query(teacherRef, where("teacher", "==", teacherFullData.name));
     const querySnapshot = await getDocs(q);
     const promises: any = [];
     querySnapshot.forEach((doc) => {
@@ -143,7 +190,7 @@ export function DeleteTeacher() {
               results.length === 1 ? "Currículo" : "Currículos"
             }, exclua ou altere primeiramente ${
               results.length === 1 ? "o Currículo" : "os Currículos"
-            } e depois exclua o Professor ${data.teacherName}... ❕`,
+            } e depois exclua o Professor ${teacherFullData.name}... ❕`,
             {
               theme: "colored",
               closeOnClick: true,
@@ -215,36 +262,129 @@ export function DeleteTeacher() {
             }
             name="teacherSelect"
             onChange={(e) => {
-              getTeacherData(e.target.value);
+              setTeacherData({
+                teacherId: e.target.value,
+                confirmDelete: false,
+              });
+              setIsSelected(true);
             }}
           >
-            <SelectOptions returnId dataType="teachers" />
+            <SelectOptions
+              returnId
+              dataType="teachers"
+              handleData={handleTeacherSelectedData}
+            />
           </select>
         </div>
 
-        {/** CHECKBOX CONFIRM DELETE */}
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <input
-            type="checkbox"
-            name="confirmDelete"
-            className="ml-1 dark: text-green-500 dark:text-green-500 border-none "
-            checked={teacherData.confirmDelete}
-            onChange={() => {
-              setTeacherData({
-                ...teacherData,
-                confirmDelete: !teacherData.confirmDelete,
-              });
-            }}
-          />
-          <label
-            htmlFor="confirmDelete"
-            className="text-sm text-gray-600 dark:text-gray-100"
-          >
-            {teacherData.teacherName
-              ? `Confirmar exclusão de ${teacherData.teacherName}`
-              : `Confirmar exclusão`}
-          </label>
-        </div>
+        {isSelected ? (
+          <>
+            <div className="flex flex-col pt-2 pb-6 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
+              {/* DETAILS TITLE */}
+              <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+                Dados do Professor a ser excluído:
+              </h1>
+
+              {/* TEACHER NAME */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="name"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Nome:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  disabled
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  value={teacherSelectedData?.name}
+                />
+              </div>
+
+              {/* TEACHER E-MAIL */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="email"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  E-mail:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  disabled
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  value={teacherSelectedData?.email}
+                />
+              </div>
+
+              {/* PHONE */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="phone"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Telefone:{" "}
+                </label>
+                <div className="flex w-2/4 gap-2">
+                  <div className="flex w-10/12 items-center gap-1">
+                    <select
+                      disabled
+                      id="phoneDDD"
+                      defaultValue={"DDD"}
+                      className="pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      name="DDD"
+                      value={teacherSelectedData?.phone?.slice(3, 5)}
+                    >
+                      <BrazilianStateSelectOptions />
+                    </select>
+                    <input
+                      disabled
+                      type="text"
+                      name="phoneInitial"
+                      value={teacherSelectedData?.phone?.slice(5, 10)}
+                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                    />
+                    -
+                    <input
+                      disabled
+                      type="text"
+                      name="phoneFinal"
+                      value={teacherSelectedData?.phone?.slice(-4)}
+                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                    />
+                  </div>
+                  <div className="w-2/12"></div>
+                </div>
+              </div>
+            </div>
+
+            {/** CHECKBOX CONFIRM DELETE */}
+            <div className="flex justify-center items-center gap-2 mt-6">
+              <input
+                type="checkbox"
+                name="confirmDelete"
+                className="ml-1 dark: text-green-500 dark:text-green-500 border-none "
+                checked={teacherData.confirmDelete}
+                onChange={() => {
+                  setTeacherData({
+                    ...teacherData,
+                    confirmDelete: !teacherData.confirmDelete,
+                  });
+                }}
+              />
+              <label
+                htmlFor="confirmDelete"
+                className="text-sm text-gray-600 dark:text-gray-100"
+              >
+                {teacherFullData.name
+                  ? `Confirmar exclusão de ${teacherFullData.name}`
+                  : `Confirmar exclusão`}
+              </label>
+            </div>
+          </>
+        ) : null}
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4">

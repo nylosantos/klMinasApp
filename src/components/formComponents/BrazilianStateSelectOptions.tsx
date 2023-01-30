@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { stateDataProps } from "../@types";
+import { stateDataProps } from "../../@types";
 
 const statesDdd = [
   { id: uuidv4(), ddd: "11", state: "SP" },

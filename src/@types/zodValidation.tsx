@@ -127,6 +127,12 @@ export const createScheduleValidationSchema = z.object ({
 
 export const createTeacherValidationSchema = z.object ({
   name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
+  email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}).or(z.literal("")),
+  phone: z.object({
+    ddd: z.string().min(2, {message: `Por favor, escolha um DDD para o Telefone de contato`}).or(z.literal("")),
+    prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone de contato`}).or(z.literal("")),
+    suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato`}).or(z.literal("")),
+  }),
   confirmInsert: z.boolean()
 })
 
@@ -180,6 +186,7 @@ export const deleteClassDaysValidationSchema = z.object ({
 
 export const deleteScheduleValidationSchema = z.object ({
   confirmDelete: z.boolean(),
+  schoolId: z.string().min(1, {message: `Por favor, selecione a Escola`}),
   scheduleId: z.string().min(1, {message: `Por favor, selecione o Identificador`}),
   scheduleName: z.string().min(1, {message: `Por favor, selecione o Identificador`}),
 })
@@ -187,7 +194,6 @@ export const deleteScheduleValidationSchema = z.object ({
 export const deleteTeacherValidationSchema = z.object ({
   confirmDelete: z.boolean(),
   teacherId: z.string().min(1, {message: `Por favor, selecione o Professor`}),
-  teacherName: z.string().min(1, {message: `Por favor, selecione o Professor`}),
 })
 
 export const deleteCurriculumValidationSchema = z.object ({
@@ -232,7 +238,9 @@ export const editScheduleValidationSchema = z.object ({
   exit: z.string().min(1, {message: `Por favor, preencha o campo "Saída"`}),
 })
 export const editTeacherValidationSchema = z.object ({
-  name: z.string().min(1, {message: `Por favor, digite o nome do Professor`}),
+  name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
+  email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}).or(z.literal("")),
+  phone: z.string().nullable(),
 })
 export const editStudentValidationSchema = z.object ({
   name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),

@@ -22,7 +22,7 @@ import {
   HandleCurriculumNameNameProps,
 } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -345,7 +345,11 @@ export function InsertCurriculum() {
               });
             }}
           >
-            <SelectOptions returnId dataType="schoolClasses" />
+            <SelectOptions
+              returnId
+              dataType="schoolClasses"
+              schoolId={curriculumData.school}
+            />
           </select>
         </div>
 
@@ -411,7 +415,11 @@ export function InsertCurriculum() {
               });
             }}
           >
-            <SelectOptions returnId dataType="schedules" />
+            <SelectOptions
+              returnId
+              dataType="schedules"
+              schoolId={curriculumData.school}
+            />
           </select>
         </div>
 

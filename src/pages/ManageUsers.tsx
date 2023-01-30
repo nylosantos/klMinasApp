@@ -1,4 +1,4 @@
-import { Header } from "../components/Header";
+import { Header } from "../components/layoutComponents/Header";
 
 import { Fragment, useEffect, useState } from "react";
 import { Tab } from "@headlessui/react";
@@ -98,9 +98,7 @@ export default function ManageUsers() {
             >
               Minhas Configurações
             </Tab>
-            {userFullData?.role === "root" ||
-            userFullData?.role === "admin" ||
-            userFullData?.role === "editor" ? (
+            {userFullData?.role === "root" || userFullData?.role === "admin" ? (
               <>
                 <Tab
                   className={({ selected }) =>
@@ -145,9 +143,7 @@ export default function ManageUsers() {
             <Tab.Panel as={Fragment}>
               <EditMyUser />
             </Tab.Panel>
-            {userFullData?.role === "root" ||
-            userFullData?.role === "admin" ||
-            userFullData?.role === "editor" ? (
+            {userFullData?.role === "root" || userFullData?.role === "admin" ? (
               <>
                 <Tab.Panel as={Fragment}>
                   <InsertUser />

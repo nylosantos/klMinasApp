@@ -383,19 +383,21 @@ export interface ClassDaySearchProps {
 export interface TeacherSearchProps {
   id: string;
   name: string;
+  email: string;
+  phone: string;
   timestamp: Date;
 }
 
 export interface ScheduleSearchProps {
   id: string;
   name: string;
-  transitionStart: boolean;
-  transitionEnd: boolean;
-  classStart: boolean;
-  classEnd: boolean;
-  exit: boolean;
-  schoolId: boolean;
-  schoolName: boolean;
+  transitionStart: string;
+  transitionEnd: string;
+  classStart: string;
+  classEnd: string;
+  exit: string;
+  schoolId: string;
+  schoolName: string;
   timestamp: Date;
 }
 

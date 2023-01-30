@@ -1,9 +1,9 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
+import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 import { Dna } from "react-loader-spinner";
 import "react-toastify/dist/ReactToastify.css";
@@ -11,8 +11,11 @@ import "react-toastify/dist/ReactToastify.css";
 import { deleteUserValidationSchema } from "../../@types/zodValidation";
 import { DeleteUserValidationZProps, UserFullDataProps } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
-import { BrazilianStateSelectOptions } from "../BrazilianStateSelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
+
+// INITIALIZING FIRESTORE DB
+const db = getFirestore(app);
 
 export function DeleteUser() {
   // DELETE USER CLOUD FUNCTION HOOK
@@ -99,16 +102,45 @@ export function DeleteUser() {
   ) => {
     setIsSubmitting(true);
     await deleteAppUser(data)
-      .then((result) => {
-        toast.success(`${userSelectedData?.name} excluído com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        resetForm();
-        setIsSubmitting(false);
+      .then(async (result) => {
+        if (userSelectedData?.role === "teacher") {
+          try {
+            // DELETE TEACHER ON SCHOOL DATABASE
+            await deleteDoc(doc(db, "teachers", data.id));
+            toast.success(`${userSelectedData.name} excluído com sucesso! 👌`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            resetForm();
+            setIsSubmitting(false);
+          } catch (error) {
+            toast.error(
+              `Usuário excluído, porém correu um erro ao excluir o professor no banco de dados da escola, contate o suporte... 🤯`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            );
+            resetForm();
+            setIsSubmitting(false);
+          }
+        } else {
+          toast.success(`${userSelectedData?.name} excluído com sucesso! 👌`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          resetForm();
+          setIsSubmitting(false);
+        }
       })
       .catch((error) => {
         console.log("ESSE É O ERROR", error);

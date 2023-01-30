@@ -20,7 +20,7 @@ import {
   SchoolCourseSearchProps,
 } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
 import CurrencyInput from "react-currency-input-field";
 
 // INITIALIZING FIRESTORE DB

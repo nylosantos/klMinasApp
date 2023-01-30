@@ -3,6 +3,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
+import {
+  deleteDoc,
+  doc,
+  getFirestore,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 import { Dna } from "react-loader-spinner";
 import "react-toastify/dist/ReactToastify.css";
@@ -10,8 +17,11 @@ import "react-toastify/dist/ReactToastify.css";
 import { editUserValidationSchema } from "../../@types/zodValidation";
 import { EditUserValidationZProps, UserFullDataProps } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
-import { BrazilianStateSelectOptions } from "../BrazilianStateSelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
+
+// INITIALIZING FIRESTORE DB
+const db = getFirestore(app);
 
 export function EditUser() {
   // EDIT USER WITHOUT CHANGING PASSWORD CLOUD FUNCTION HOOK
@@ -206,7 +216,10 @@ export function EditUser() {
     data
   ) => {
     setIsSubmitting(true);
+
+    // CHECKING IF THERE'S A PASSWORD CHANGE
     if (data.changePassword) {
+      // CHECKING IF PASSWORD IS FILLED AND HAVE MIN 6 CHARS
       if (!data.password || data.password?.length < 6) {
         setErrorPassword(true);
         toast.error(`A senha precisa ter, no mínimo, 6 caracteres.`, {
@@ -217,19 +230,57 @@ export function EditUser() {
           autoClose: 3000,
         });
       } else {
+        // UPDATING USER CHANGING PASSWORD
         setErrorPassword(false);
-        console.log("mudei senha");
         try {
           await updateAppUserWithPassword(data);
-          resetForm();
-          toast.success(`${data.name} editado com sucesso! 👌`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
-          setIsSubmitting(false);
+          // CHECKING IF USER IS WAS AND NOW ISN'T A TEACHER
+          if (
+            userSelectedData?.role === "teacher" &&
+            userEditData.role !== "teacher"
+          ) {
+            await deleteDoc(doc(db, "teachers", data.id));
+            toast.success(`${data.name} editado com sucesso! 👌`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            resetForm();
+            setIsSubmitting(false);
+          } else if (
+            // CHECKING IF USER IS WASN'T AND NOW IS A TEACHER
+            userSelectedData?.role !== "teacher" &&
+            userEditData.role === "teacher"
+          ) {
+            await setDoc(doc(db, "teachers", data.id), {
+              id: data.id,
+              name: data.name,
+              email: data.email,
+              phone: data.phone,
+              timestamp: serverTimestamp(),
+            });
+            toast.success(`${data.name} editado com sucesso! 👌`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            resetForm();
+            setIsSubmitting(false);
+          } else {
+            toast.success(`${data.name} editado com sucesso! 👌`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            resetForm();
+            setIsSubmitting(false);
+          }
         } catch (error) {
           console.log("Erro: ", error);
           toast.error(`Ocorreu um erro... 🤯`, {
@@ -244,19 +295,57 @@ export function EditUser() {
         }
       }
     } else {
+      // UPDATING USER WITHOUT CHANGE PASSWORD
       setErrorPassword(false);
-      console.log("não mudei senha");
       try {
         await updateAppUserWithoutPassword(data);
-        resetForm();
-        toast.success(`${data.name} editado com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
+        // CHECKING IF USER IS WAS AND NOW ISN'T A TEACHER
+        if (
+          userSelectedData?.role === "teacher" &&
+          userEditData.role !== "teacher"
+        ) {
+          await deleteDoc(doc(db, "teachers", data.id));
+          toast.success(`${data.name} editado com sucesso! 👌`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          resetForm();
+          setIsSubmitting(false);
+        } else if (
+          // CHECKING IF USER IS WASN'T AND NOW IS A TEACHER
+          userSelectedData?.role !== "teacher" &&
+          userEditData.role === "teacher"
+        ) {
+          await setDoc(doc(db, "teachers", data.id), {
+            id: data.id,
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            timestamp: serverTimestamp(),
+          });
+          toast.success(`${data.name} editado com sucesso! 👌`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          resetForm();
+          setIsSubmitting(false);
+        } else {
+          toast.success(`${data.name} editado com sucesso! 👌`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          resetForm();
+          setIsSubmitting(false);
+        }
       } catch (error) {
         console.log("Erro: ", error);
         toast.error(`Ocorreu um erro... 🤯`, {

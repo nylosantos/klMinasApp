@@ -17,12 +17,22 @@ import {
 import { editTeacherValidationSchema } from "../../@types/zodValidation";
 import { EditTeacherValidationZProps, TeacherSearchProps } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
+import { useHttpsCallable } from "react-firebase-hooks/functions";
+import { getFunctions } from "firebase/functions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditTeacher() {
+  // CREATE USER CLOUD FUNCTION HOOK
+  const [getAuthUser] = useHttpsCallable(getFunctions(app), "getAuthUser");
+  const [updateAppUserWithoutPassword] = useHttpsCallable(
+    getFunctions(app),
+    "updateAppUserWithoutPassword"
+  );
+
   // TEACHER DATA
   const [teacherData, setTeacherData] = useState({
     teacherId: "",
@@ -32,7 +42,32 @@ export function EditTeacher() {
   const [teacherEditData, setTeacherEditData] =
     useState<EditTeacherValidationZProps>({
       name: "",
+      email: "",
+      phone: "",
     });
+
+  // PHONE FORMATTED STATE
+  const [phoneFormatted, setPhoneFormatted] = useState({
+    ddd: "DDD",
+    prefix: "",
+    suffix: "",
+  });
+
+  // SET PHONE NUMBER WHEN PHONE FORMATTED IS FULLY FILLED
+  useEffect(() => {
+    if (
+      phoneFormatted.ddd !== "DDD" &&
+      phoneFormatted.prefix !== "" &&
+      phoneFormatted.suffix !== ""
+    ) {
+      setTeacherEditData({
+        ...teacherEditData,
+        phone: `+55${phoneFormatted.ddd}${phoneFormatted.prefix}${phoneFormatted.suffix}`,
+      });
+    } else {
+      setTeacherEditData({ ...teacherEditData, phone: null });
+    }
+  }, [phoneFormatted]);
 
   // TEACHER SELECTED AND EDIT ACTIVE STATES
   const [isSelected, setIsSelected] = useState(false);
@@ -68,6 +103,8 @@ export function EditTeacher() {
     setTeacherEditData({
       ...teacherEditData,
       name: teacherSelectedData?.name!,
+      email: teacherSelectedData?.email!,
+      phone: teacherSelectedData?.phone!,
     });
   }, [teacherSelectedData]);
 
@@ -84,6 +121,8 @@ export function EditTeacher() {
     resolver: zodResolver(editTeacherValidationSchema),
     defaultValues: {
       name: "",
+      email: "",
+      phone: "",
     },
   });
 
@@ -99,13 +138,28 @@ export function EditTeacher() {
     });
     setTeacherEditData({
       name: "",
+      email: "",
+      phone: "",
     });
   };
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("name", teacherEditData.name);
-  }, [teacherEditData]);
+    setValue("email", teacherEditData.email);
+    setValue(
+      "phone",
+      phoneFormatted.ddd === "DDD" &&
+        phoneFormatted.prefix === "" &&
+        phoneFormatted.suffix === ""
+        ? teacherSelectedData?.phone === ""
+          ? teacherEditData.phone
+          : teacherSelectedData === undefined
+          ? ""
+          : teacherSelectedData!.phone
+        : teacherEditData.phone
+    );
+  }, [teacherSelectedData, teacherData, teacherEditData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
@@ -125,40 +179,65 @@ export function EditTeacher() {
   const handleEditTeacher: SubmitHandler<EditTeacherValidationZProps> = async (
     data
   ) => {
-    setIsSubmitting(true);
-
-    // CHECKING IF TEACHER EXISTS ON DATABASE
-    const teacherRef = collection(db, "teachers");
-    const q = query(teacherRef, where("id", "==", teacherData.teacherId));
-    const querySnapshot = await getDocs(q);
-    const promises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF NOT EXISTS, RETURN ERROR
-      if (results.length === 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`Professor não existe no banco de dados... ❕`, {
+    console.log("DATA: ", data);
+    console.log("TEACHER: ", teacherEditData);
+    // EDIT TEACHER FUNCTION
+    const editTeacher = async () => {
+      try {
+        await updateDoc(doc(db, "teachers", teacherData.teacherId), {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+        });
+        resetForm();
+        toast.success(
+          `Professor ${teacherEditData.name} alterado com sucesso! 👌`,
+          {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
             autoClose: 3000,
-          })
+          }
         );
-      } else {
-        // IF EXISTS, EDIT
-        const editTeacher = async () => {
-          try {
-            await updateDoc(doc(db, "teachers", teacherData.teacherId), {
-              name: data.name,
-            });
-            resetForm();
-            toast.success(
-              `Professor ${teacherEditData.name} alterado com sucesso! 👌`,
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
+
+    setIsSubmitting(true);
+
+    // CHECK IF THIS THEACHER HAVE A AUTH USER
+    const user: any = await getAuthUser(teacherData.teacherId);
+    // IF YES, EDIT ALSO
+    if (user !== undefined) {
+      // FIREBASE DATABASE REFERENCE
+      const dataRef = collection(db, "appUsers");
+
+      // ---------- CHECKING IF PHONE EXISTS ON DATABASE ---------- //
+      const phoneQuery = query(dataRef, where("phone", "==", data.phone));
+      const phoneSnapshot = await getDocs(phoneQuery);
+      const promisesPhone: any = [];
+      phoneSnapshot.forEach((doc) => {
+        const promise = doc.data();
+        promisesPhone.push(promise);
+      });
+      Promise.all(promisesPhone).then(async (results) => {
+        // IF EXISTS, RETURN ERROR
+        if (results.length !== 0 && teacherSelectedData?.phone !== data.phone) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Telefone já registrado em nosso banco de dados... ❕`,
               {
                 theme: "colored",
                 closeOnClick: true,
@@ -166,23 +245,117 @@ export function EditTeacher() {
                 draggable: true,
                 autoClose: 3000,
               }
-            );
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
-        editTeacher();
-      }
-    });
+            )
+          );
+        } else {
+          // ---------- CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
+          const emailQuery = query(dataRef, where("email", "==", data.email));
+          const emailSnapshot = await getDocs(emailQuery);
+          const promisesEmail: any = [];
+          emailSnapshot.forEach((doc) => {
+            const promise = doc.data();
+            promisesEmail.push(promise);
+          });
+          Promise.all(promisesEmail).then(async (results) => {
+            // IF EXISTS, RETURN ERROR
+            if (
+              results.length !== 0 &&
+              teacherSelectedData?.email !== data.email
+            ) {
+              return (
+                setIsSubmitting(false),
+                toast.error(
+                  `E-mail já registrado em nosso banco de dados... ❕`,
+                  {
+                    theme: "colored",
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    autoClose: 3000,
+                  }
+                )
+              );
+            } else {
+              const dataForAuth = {
+                ...data,
+                role: "teacher",
+                id: user.data.uid,
+              };
+              await updateAppUserWithoutPassword(dataForAuth);
+              // EDIT CALL
+              await editTeacher();
+            }
+          });
+          // ---------- END OF CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
+        }
+      });
+      // ---------- END OF CHECKING IF PHONE EXISTS ON DATABASE ---------- //
+    } else {
+      // FIREBASE DATABASE REFERENCE
+      const dataRef = collection(db, "appUsers");
+
+      // ---------- CHECKING IF PHONE EXISTS ON DATABASE ---------- //
+      const phoneQuery = query(dataRef, where("phone", "==", data.phone));
+      const phoneSnapshot = await getDocs(phoneQuery);
+      const promisesPhone: any = [];
+      phoneSnapshot.forEach((doc) => {
+        const promise = doc.data();
+        promisesPhone.push(promise);
+      });
+      Promise.all(promisesPhone).then(async (results) => {
+        // IF EXISTS, RETURN ERROR
+        if (results.length !== 0 && teacherSelectedData?.phone !== data.phone) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Telefone já registrado em nosso banco de dados... ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            )
+          );
+        } else {
+          // ---------- CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
+          const emailQuery = query(dataRef, where("email", "==", data.email));
+          const emailSnapshot = await getDocs(emailQuery);
+          const promisesEmail: any = [];
+          emailSnapshot.forEach((doc) => {
+            const promise = doc.data();
+            promisesEmail.push(promise);
+          });
+          Promise.all(promisesEmail).then(async (results) => {
+            // IF EXISTS, RETURN ERROR
+            if (
+              results.length !== 0 &&
+              teacherSelectedData?.email !== data.email
+            ) {
+              return (
+                setIsSubmitting(false),
+                toast.error(
+                  `E-mail já registrado em nosso banco de dados... ❕`,
+                  {
+                    theme: "colored",
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    autoClose: 3000,
+                  }
+                )
+              );
+            } else {
+              // EDIT CALL
+              await editTeacher();
+            }
+          });
+          // ---------- END OF CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
+        }
+      });
+      // ---------- END OF CHECKING IF PHONE EXISTS ON DATABASE ---------- //
+    }
   };
 
   return (
@@ -290,6 +463,125 @@ export function EditTeacher() {
                   });
                 }}
               />
+            </div>
+
+            {/* TEACHER E-MAIL */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="email"
+                className={
+                  errors.email
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
+              >
+                E-mail:{" "}
+              </label>
+              <input
+                type="text"
+                name="email"
+                disabled={isSubmitting}
+                placeholder={
+                  errors.email
+                    ? "É necessário inserir o E-mail do Usuário"
+                    : "Insira o E-mail do Usuário"
+                }
+                className={
+                  errors.email
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                value={teacherEditData.email}
+                onChange={(e) => {
+                  setTeacherEditData({
+                    ...teacherEditData,
+                    email: e.target.value,
+                  });
+                }}
+              />
+            </div>
+
+            {/* PHONE */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="phone"
+                className={
+                  errors.phone
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
+              >
+                Telefone:{" "}
+              </label>
+              <div className="flex w-2/4 gap-2">
+                <div className="flex w-10/12 items-center gap-1">
+                  <select
+                    id="phoneDDD"
+                    disabled={isSubmitting}
+                    defaultValue={
+                      teacherSelectedData?.phone
+                        ? teacherSelectedData?.phone?.slice(3, 5)
+                        : "DDD"
+                    }
+                    className={
+                      errors.phone
+                        ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    name="DDD"
+                    onChange={(e) => {
+                      setPhoneFormatted({
+                        ...phoneFormatted,
+                        ddd: e.target.value,
+                      });
+                    }}
+                  >
+                    <BrazilianStateSelectOptions />
+                  </select>
+                  <input
+                    type="text"
+                    disabled={isSubmitting}
+                    name="phoneInitial"
+                    pattern="^[+ 0-9]{5}$"
+                    maxLength={5}
+                    defaultValue={teacherSelectedData?.phone?.slice(5, 10)}
+                    placeholder={errors.phone ? "É necessário um" : "99999"}
+                    className={
+                      errors.phone
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    onChange={(e) => {
+                      setPhoneFormatted({
+                        ...phoneFormatted,
+                        prefix: e.target.value,
+                      });
+                    }}
+                  />
+                  -
+                  <input
+                    type="text"
+                    disabled={isSubmitting}
+                    name="phoneFinal"
+                    pattern="^[+ 0-9]{4}$"
+                    maxLength={4}
+                    defaultValue={teacherSelectedData?.phone?.slice(-4)}
+                    placeholder={errors.phone ? "telefone válido" : "9990"}
+                    className={
+                      errors.phone
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    onChange={(e) => {
+                      setPhoneFormatted({
+                        ...phoneFormatted,
+                        suffix: e.target.value,
+                      });
+                    }}
+                  />
+                </div>
+                <div className="w-2/12"></div>
+              </div>
             </div>
 
             {/* SUBMIT AND RESET BUTTONS */}

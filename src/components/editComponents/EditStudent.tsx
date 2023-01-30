@@ -28,10 +28,10 @@ import {
   StudentSearchProps,
 } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
 import DatePicker, { DateObject } from "react-multi-date-picker";
 import cep from "cep-promise";
-import { BrazilianStateSelectOptions } from "../BrazilianStateSelectOptions";
+import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);

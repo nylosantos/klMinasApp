@@ -1,7 +1,7 @@
 import { collection, getDocs, getFirestore } from "firebase/firestore";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { Header } from "../components/Header";
+import { Header } from "../components/layoutComponents/Header";
 import { customerFullName } from "../custom";
 import { app } from "../db/Firebase";
 

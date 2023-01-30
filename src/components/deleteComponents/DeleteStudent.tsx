@@ -18,9 +18,14 @@ import {
 } from "firebase/firestore";
 
 import { deleteStudentValidationSchema } from "../../@types/zodValidation";
-import { DeleteStudentValidationZProps } from "../../@types";
+import {
+  CurriculumSearchProps,
+  DeleteStudentValidationZProps,
+  SchoolClassSearchProps,
+  SchoolSearchProps,
+} from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
+import { SelectOptions } from "../formComponents/SelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -37,52 +42,124 @@ export function DeleteStudent() {
     }
   );
 
-  // SUBMITTING STATE
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // STUDENT SELECTED ACTIVE STATES
+  const [isSelected, setIsSelected] = useState(false);
 
-  // DATA ARRAY STATES
-  const [schoolClassesData, setSchoolClassesData] = useState([]);
-  const [curriculumsData, setCurriculumsData] = useState([]);
+  // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
+  const [schoolsDataArray, setSchoolsDataArray] =
+    useState<SchoolSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
+    setSchoolsDataArray(data);
+  };
+
+  // SCHOOL SELECTED STATE DATA
+  const [schoolSelectedData, setSchoolSelectedData] =
+    useState<SchoolSearchProps>();
+
+  // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
+  useEffect(() => {
+    setIsSelected(false);
+    setSchoolClassSelectedData(undefined);
+    setCurriculumSelectedData(undefined);
+    if (studentData.schoolId !== "") {
+      setSchoolSelectedData(
+        schoolsDataArray!.find(({ id }) => id === studentData.schoolId)
+      );
+    } else {
+      setSchoolSelectedData(undefined);
+    }
+  }, [schoolSelectedData]);
+
+  // RESET SCHOOL CLASS, SCHOOL COURSE AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
+  useEffect(() => {
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("curriculumSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setIsSelected(false);
+  }, [studentData.schoolId]);
+  // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
+  const [schoolClassesDataArray, setSchoolClassesDataArray] =
+    useState<SchoolClassSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
+    setSchoolClassesDataArray(data);
+  };
+
+  // SCHOOL CLASS SELECTED STATE DATA
+  const [schoolClassSelectedData, setSchoolClassSelectedData] =
+    useState<SchoolClassSearchProps>();
+
+  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  useEffect(() => {
+    setIsSelected(false);
+    setCurriculumSelectedData(undefined);
+    if (studentData.schoolClassId !== "") {
+      setSchoolSelectedData(
+        schoolClassesDataArray!.find(
+          ({ id }) => id === studentData.schoolClassId
+        )
+      );
+    } else {
+      setSchoolClassSelectedData(undefined);
+    }
+  }, [schoolClassSelectedData]);
+
+  // RESET STUDENT SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
+  useEffect(() => {
+    (
+      document.getElementById("curriculumSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setIsSelected(false);
+  }, [studentData.schoolClassId]);
+  // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
+  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT STUDENTS
+  const [curriculumDataArray, setCurriculumDataArray] =
+    useState<CurriculumSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH CURRICULUM SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleCurriculumSelectedData = (data: CurriculumSearchProps[]) => {
+    setCurriculumDataArray(data);
+  };
+
+  // CURRICULUM SELECTED STATE DATA
+  const [curriculumSelectedData, setCurriculumSelectedData] =
+    useState<CurriculumSearchProps>();
+
+  // SET CURRICULUM SELECTED STATE WHEN SELECT CURRICULUM
+  useEffect(() => {
+    if (studentData.curriculumId !== "") {
+      setIsSelected(true);
+      setCurriculumSelectedData(
+        curriculumDataArray!.find(({ id }) => id === studentData.curriculumId)
+      );
+    } else {
+      setCurriculumSelectedData(undefined);
+    }
+  }, [curriculumSelectedData]);
+
+  // GET AVAILABLE STUDENTS WHEN CURRICULUM CHANGE
+  useEffect(() => {
+    if (studentData.curriculumId) {
+      setIsSelected(true);
+      handleAvailableStudentsData();
+    }
+  }, [studentData.curriculumId]);
+  // -------------------------- END OF CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- STUDENTS SELECT STATES AND FUNCTIONS -------------------------- //
   const [studentsArrayData, setStudentsArrayData] = useState([]);
-
-  // DISABLE SELECT STATE
-  const [toggleSelect, setToggleSelect] = useState<
-    "school" | "class" | "course"
-  >("school");
-
-  // GET SCHOOL CLASS DATA FUNCTION
-  async function getSchoolClassData(id: string) {
-    setToggleSelect("class");
-    const schoolClassRef = collection(db, "schoolClasses");
-    const q = query(schoolClassRef, where("schoolId", "==", id));
-    const querySnapshot = await getDocs(q);
-    const schoolClassDataPromises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      schoolClassDataPromises.push(promise);
-    });
-    setStudentData({ ...studentData, schoolId: id, confirmDelete: false });
-    setSchoolClassesData(schoolClassDataPromises);
-  }
-
-  // GET SCHOOL COURSE DATA FUNCTION
-  async function getSchoolCourseData(id: string) {
-    setToggleSelect("course");
-    const schoolCourseRef = collection(db, "curriculum");
-    const q = query(
-      schoolCourseRef,
-      where("schoolClassId", "==", id),
-      where("schoolId", "==", studentData.schoolId)
-    );
-    const querySnapshot = await getDocs(q);
-    const curriculumDataPromises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      curriculumDataPromises.push(promise);
-    });
-    setStudentData({ ...studentData, schoolClassId: id, confirmDelete: false });
-    setCurriculumsData(curriculumDataPromises);
-  }
 
   // GETTING STUDENTS AVAILABLE DATA
   const handleAvailableStudentsData = async () => {
@@ -99,11 +176,10 @@ export function DeleteStudent() {
     });
     setStudentsArrayData(promises);
   };
+  // -------------------------- END OF STUDENTS SELECT STATES AND FUNCTIONS -------------------------- //
 
-  // SET AVAILABLE STUDENTS DATA WHEN CHOOSE COURSE
-  useEffect(() => {
-    handleAvailableStudentsData();
-  }, [studentData.curriculumId]);
+  // SUBMITTING STATE
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -131,7 +207,7 @@ export function DeleteStudent() {
       schoolClassId: "",
       confirmDelete: false,
     });
-    setToggleSelect("school");
+    setIsSelected(false);
     reset();
   };
 
@@ -301,7 +377,6 @@ export function DeleteStudent() {
           </label>
           <select
             defaultValue={" -- select an option -- "}
-            disabled={toggleSelect !== "school" ? true : false}
             className={
               errors.schoolId
                 ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -309,10 +384,14 @@ export function DeleteStudent() {
             }
             name="schoolSelect"
             onChange={(e) => {
-              getSchoolClassData(e.target.value);
+              setStudentData({ ...studentData, schoolId: e.target.value });
             }}
           >
-            <SelectOptions returnId dataType="schools" />
+            <SelectOptions
+              returnId
+              dataType="schools"
+              handleData={handleSchoolSelectedData}
+            />
           </select>
         </div>
 
@@ -329,8 +408,9 @@ export function DeleteStudent() {
             Selecione a Turma:{" "}
           </label>
           <select
+            id="schoolClassSelect"
+            disabled={studentData.schoolId ? false : true}
             defaultValue={" -- select an option -- "}
-            disabled={toggleSelect !== "class" ? true : false}
             className={
               studentData.schoolId
                 ? errors.schoolClassId
@@ -340,21 +420,16 @@ export function DeleteStudent() {
             }
             name="schoolClassSelect"
             onChange={(e) => {
-              getSchoolCourseData(e.target.value);
+              setStudentData({ ...studentData, schoolClassId: e.target.value });
             }}
           >
             {studentData.schoolId ? (
-              <>
-                <option disabled value={" -- select an option -- "}>
-                  {" "}
-                  -- Selecione --{" "}
-                </option>
-                {schoolClassesData.map((option: any) => (
-                  <option key={option.id} value={option.id}>
-                    {option.name}
-                  </option>
-                ))}
-              </>
+              <SelectOptions
+                returnId
+                dataType="schoolClasses"
+                schoolId={studentData.schoolId}
+                handleData={handleSchoolClassSelectedData}
+              />
             ) : (
               <option disabled value={" -- select an option -- "}>
                 {" "}
@@ -364,10 +439,10 @@ export function DeleteStudent() {
           </select>
         </div>
 
-        {/* SCHOOL COURSE SELECT */}
+        {/* CURRICULUM SELECT */}
         <div className="flex gap-2 items-center">
           <label
-            htmlFor="schoolCourseSelect"
+            htmlFor="curriculumSelect"
             className={
               errors.curriculumId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
@@ -377,8 +452,8 @@ export function DeleteStudent() {
             Selecione a Modalidade:{" "}
           </label>
           <select
+            id="curriculumSelect"
             defaultValue={" -- select an option -- "}
-            disabled={toggleSelect !== "course" ? true : false}
             className={
               studentData.schoolClassId
                 ? errors.curriculumId
@@ -386,7 +461,7 @@ export function DeleteStudent() {
                   : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             }
-            name="schoolCourseSelect"
+            name="curriculumSelect"
             onChange={(e) => {
               setStudentData({
                 ...studentData,
@@ -396,17 +471,13 @@ export function DeleteStudent() {
             }}
           >
             {studentData.schoolClassId ? (
-              <>
-                <option disabled value={" -- select an option -- "}>
-                  {" "}
-                  -- Selecione --{" "}
-                </option>
-                {curriculumsData.map((option: any) => (
-                  <option key={option.id} value={option.id}>
-                    {option.schoolCourse} | {option.schedule}
-                  </option>
-                ))}
-              </>
+              <SelectOptions
+                returnId
+                dataType="curriculum"
+                schoolId={studentData.schoolId}
+                schoolClassId={studentData.schoolClassId}
+                handleData={handleCurriculumSelectedData}
+              />
             ) : (
               <option disabled value={" -- select an option -- "}>
                 {" "}
@@ -417,12 +488,10 @@ export function DeleteStudent() {
         </div>
 
         {/* STUDENT SELECT */}
-        {studentData.schoolId &&
-        studentData.schoolClassId &&
-        studentData.curriculumId ? (
+        {isSelected ? (
           studentsArrayData.length !== 0 ? (
             <>
-              <h1 className="font-bold text-lg py-4">
+              <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
                 Escolha o aluno a ser excluído:
               </h1>
               <hr className="pb-4" />
@@ -447,54 +516,91 @@ export function DeleteStudent() {
                         }
                       />
                       <label htmlFor={c.id} className="flex flex-col gap-4">
-                        <p>Nome: {c.name}</p>
-                        <p>E-mail: {c.email}</p>
-                        <p>Responsável: {c.responsible}</p>
-                        <p>Responsável Financeiro: {c.financialResponsible}</p>
-                        <p>Telefone: {c.phone}</p>
+                        <p>
+                          Nome:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.name}
+                          </span>
+                        </p>
+                        <p>
+                          E-mail:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.email}
+                          </span>
+                        </p>
+                        <p>
+                          Responsável:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.responsible}
+                          </span>
+                        </p>
+                        <p>
+                          Responsável Financeiro:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.financialResponsible}
+                          </span>
+                        </p>
+                        <p>
+                          Telefone:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.phone}
+                          </span>
+                        </p>
                         {c.phoneSecondary !== " -" ? (
-                          <p>Telefone 2: {c.phoneSecondary}</p>
+                          <p>
+                            Telefone 2:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.phoneSecondary}
+                            </span>
+                          </p>
                         ) : null}
                         {c.phoneTertiary !== " -" ? (
-                          <p>Telefone 3: {c.phoneTertiary}</p>
+                          <p>
+                            Telefone 3:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.phoneTertiary}
+                            </span>
+                          </p>
                         ) : null}
                       </label>
                     </div>
                   </>
                 ))}
               </div>
+
+              {/** CHECKBOX CONFIRM DELETE */}
+              <div className="flex justify-center items-center gap-2 mt-6">
+                <input
+                  type="checkbox"
+                  name="confirmDelete"
+                  className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
+                  checked={studentData.confirmDelete}
+                  onChange={() => {
+                    setStudentData({
+                      ...studentData,
+                      confirmDelete: !studentData.confirmDelete,
+                    });
+                  }}
+                />
+                <label
+                  htmlFor="confirmDelete"
+                  className="text-sm text-gray-600 dark:text-gray-100"
+                >
+                  Confirmar exclusão do Aluno
+                </label>
+              </div>
             </>
           ) : (
-            <div className="pt-4">Nenhum aluno encontrado.</div>
+            <div className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+              Nenhum aluno encontrado.
+            </div>
           )
         ) : (
-          <div className="pt-4">
+          <div className="pt-4 text-red-600 dark:text-yellow-500">
             Selecione Colégio, Turma e Modalidade para ver os alunos
             cadastrados.
           </div>
         )}
-
-        {/** CHECKBOX CONFIRM DELETE */}
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <input
-            type="checkbox"
-            name="confirmDelete"
-            className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
-            checked={studentData.confirmDelete}
-            onChange={() => {
-              setStudentData({
-                ...studentData,
-                confirmDelete: !studentData.confirmDelete,
-              });
-            }}
-          />
-          <label
-            htmlFor="confirmDelete"
-            className="text-sm text-gray-600 dark:text-gray-100"
-          >
-            Confirmar exclusão do Aluno
-          </label>
-        </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4">

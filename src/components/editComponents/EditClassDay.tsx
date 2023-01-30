@@ -21,8 +21,8 @@ import {
   ToggleClassDaysFunctionProps,
 } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../SelectOptions";
-import { ClassDays } from "../ClassDays";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { ClassDays } from "../formComponents/ClassDays";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);

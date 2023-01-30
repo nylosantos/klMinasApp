@@ -37,10 +37,10 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { app, initFirebase } from "../db/Firebase";
-import { Header } from "../components/Header";
+import { Header } from "../components/layoutComponents/Header";
 import { customerFullName } from "../custom";
-import { FormLogin } from "../components/formComponents/FormLogin";
-import { FormRegister } from "../components/formComponents/FormRegister";
+import { FormLogin } from "../components/signComponents/FormLogin";
+import { FormRegister } from "../components/signComponents/FormRegister";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);

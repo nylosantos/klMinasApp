@@ -7,9 +7,12 @@ import "react-toastify/dist/ReactToastify.css";
 import { Dna } from "react-loader-spinner";
 import {
   collection,
+  doc,
   getDocs,
   getFirestore,
   query,
+  serverTimestamp,
+  setDoc,
   where,
 } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
@@ -18,7 +21,7 @@ import { useHttpsCallable } from "react-firebase-hooks/functions";
 import { createUserValidationSchema } from "../../@types/zodValidation";
 import { CreateUserValidationZProps } from "../../@types";
 import { app, initFirebase } from "../../db/Firebase";
-import { BrazilianStateSelectOptions } from "../BrazilianStateSelectOptions";
+import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -28,7 +31,7 @@ export function InsertUser() {
   initFirebase();
 
   // CREATE USER CLOUD FUNCTION HOOK
-  const [createAppUser, executing, error] = useHttpsCallable(
+  const [createAppUser, executing, errorCreateAppUser] = useHttpsCallable(
     getFunctions(app),
     "createAppUser"
   );
@@ -162,16 +165,16 @@ export function InsertUser() {
       );
     }
 
-    // CHECKING IF USER EXISTS ON DATABASE
+    // CHECKING IF EMAIL EXISTS ON DATABASE
     const userRef = collection(db, "appUsers");
     const q = query(userRef, where("email", "==", data.email));
     const querySnapshot = await getDocs(q);
-    const promises: any = [];
+    const promisesMail: any = [];
     querySnapshot.forEach((doc) => {
       const promise = doc.data();
-      promises.push(promise);
+      promisesMail.push(promise);
     });
-    Promise.all(promises).then(async (results) => {
+    Promise.all(promisesMail).then(async (results) => {
       // IF EXISTS, RETURN ERROR
       if (results.length !== 0) {
         return (
@@ -188,29 +191,106 @@ export function InsertUser() {
           )
         );
       } else {
-        await createAppUser(data)
-          .then((result) => {
-            toast.success(`Usuário ${data.name} criado com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            resetForm();
-            setIsSubmitting(false);
-          })
-          .catch((error) => {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          });
+        // CHECKING IF PHONE EXISTS ON DATABASE
+        const userRef = collection(db, "appUsers");
+        const q = query(userRef, where("phone", "==", data.phone));
+        const querySnapshot = await getDocs(q);
+        const promisesPhone: any = [];
+        querySnapshot.forEach((doc) => {
+          const promise = doc.data();
+          promisesPhone.push(promise);
+        });
+        Promise.all(promisesPhone).then(async (results) => {
+          // IF EXISTS, RETURN ERROR
+          if (results.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Já existe um usuário com este número de telefone em nosso banco de dados... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else {
+            // IF NOT EXISTS, CREATE
+            try {
+              await createAppUser(data).then(async (result) => {
+                if (result?.data) {
+                  // CHECKING IF NEW USER IS A TEACHER
+                  if (data.role === "teacher") {
+                    // GET USER ID FROM FIREBASE CLOUD FUNCTIONS
+                    const userUid: any = result.data;
+                    try {
+                      // CREATE TEACHER ON SCHOOL DATABASE
+                      await setDoc(doc(db, "teachers", userUid), {
+                        id: userUid,
+                        name: data.name,
+                        email: data.email,
+                        phone: data.phone,
+                        timestamp: serverTimestamp(),
+                      });
+                      toast.success(
+                        `Usuário ${data.name} criado com sucesso! 👌`,
+                        {
+                          theme: "colored",
+                          closeOnClick: true,
+                          pauseOnHover: true,
+                          draggable: true,
+                          autoClose: 3000,
+                        }
+                      );
+                      resetForm();
+                      setIsSubmitting(false);
+                    } catch (error) {
+                      console.log(error);
+                      toast.error(
+                        `Usuário criado, porém correu um erro ao criar o professor no banco de dados da escola, contate o suporte... 🤯`,
+                        {
+                          theme: "colored",
+                          closeOnClick: true,
+                          pauseOnHover: true,
+                          draggable: true,
+                          autoClose: 3000,
+                        }
+                      );
+                      resetForm();
+                      setIsSubmitting(false);
+                    }
+                  } else {
+                    toast.success(
+                      `Usuário ${data.name} criado com sucesso! 👌`,
+                      {
+                        theme: "colored",
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        autoClose: 3000,
+                      }
+                    );
+                    resetForm();
+                    setIsSubmitting(false);
+                  }
+                }
+              });
+            } catch (e) {
+              console.error("CONSOLE.ERROR: ", e);
+              console.log("ESSE É O ERROR", e);
+              toast.error(`Ocorreu um erro... 🤯`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+              setIsSubmitting(false);
+            }
+          }
+        });
       }
     });
   };
@@ -294,7 +374,7 @@ export function InsertUser() {
           </label>
           <input
             type="text"
-            name="name"
+            name="email"
             disabled={isSubmitting}
             placeholder={
               errors.email
