@@ -22,6 +22,7 @@ import {
   deleteTeacherValidationSchema,
   deleteUserValidationSchema,
   editClassDayValidationSchema,
+  editCurriculumValidationSchema,
   editScheduleValidationSchema,
   editSchoolClassValidationSchema,
   editSchoolCourseValidationSchema,
@@ -139,8 +140,11 @@ export type EditScheduleValidationZProps = z.infer<
 export type EditTeacherValidationZProps = z.infer<
   typeof editTeacherValidationSchema
 >;
+export type EditCurriculumValidationZProps = z.infer<
+  typeof editCurriculumValidationSchema
+>;
 export type EditStudentValidationZProps = z.infer<
-  typeof editStudentValidationSchema
+typeof editStudentValidationSchema
 >;
 
 // SEARCH VALIDATIONS SCHOOLS
@@ -221,6 +225,10 @@ export interface SelectProps {
   studentId?: string;
   returnId?: boolean;
   handleData?: (data: any) => void;
+}
+
+export interface CurriculumReadInputProps {
+  curriculumArray: Array<string>
 }
 
 export interface HandleCurriculumNameNameProps {

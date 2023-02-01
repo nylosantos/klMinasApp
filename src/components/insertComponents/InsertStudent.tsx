@@ -313,7 +313,7 @@ export function InsertStudent() {
 
   // -------------------------- CURRICULUM STATES AND FUNCTIONS -------------------------- //
   const [curriculumCoursesData, setCurriculumCoursesData] = useState([]);
-
+  console.log(curriculumCoursesData)
   // GETTING CURRICULUM DATA
   const handleAvailableCoursesData = async () => {
     if (curriculumData.schoolCourse === "all") {
@@ -600,6 +600,37 @@ export function InsertStudent() {
     data
   ) => {
     setIsSubmitting(true);
+    // CHEKING VALID SECONDARY PHONE
+    if (studentData.activePhoneSecondary) {
+      if (studentData.phoneSecondary.ddd === "DDD"){
+        return (
+          setIsSubmitting(false),
+          toast.error(`Preencha o número de telefone 2 ou desmarque a opção "incluir"...... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
+        );
+      }
+    }
+
+    // CHEKING VALID TERTIARY PHONE
+    if (studentData.activePhoneTertiary) {
+      if (studentData.phoneTertiary.ddd === "DDD"){
+        return (
+          setIsSubmitting(false),
+          toast.error(`Preencha o número de telefone 3 ou desmarque a opção "incluir"...... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
+        );
+      }
+    }
 
     // CHECK FAMILY AT SCHOOL DETAILS
     if (studentData.familyAtSchool) {
@@ -721,9 +752,9 @@ export function InsertStudent() {
                     state: data.address.state,
                     cep: data.address.cep,
                   },
-                  phone: `${data.phone.ddd} ${data.phone.prefix}-${data.phone.suffix}`,
-                  phoneSecondary: `${data.phoneSecondary.ddd} ${data.phoneSecondary.prefix}-${data.phoneSecondary.suffix}`,
-                  phoneTertiary: `${data.phoneTertiary.ddd} ${data.phoneTertiary.prefix}-${data.phoneTertiary.suffix}`,
+                  phone: `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`,
+                  phoneSecondary: activePhoneSecondary ? `+55${data.phoneSecondary.ddd}${data.phoneSecondary.prefix}${data.phoneSecondary.suffix}` : "",
+                  phoneTertiary: activePhoneTertiary ? `+55${data.phoneTertiary.ddd}${data.phoneTertiary.prefix}${data.phoneTertiary.suffix}` : "",
                   responsible: data.responsible,
                   financialResponsible: data.financialResponsible,
                   curriculum: [data.curriculum],
@@ -785,9 +816,9 @@ export function InsertStudent() {
                     state: data.address.state,
                     cep: data.address.cep,
                   },
-                  phone: `${data.phone.ddd} ${data.phone.prefix}-${data.phone.suffix}`,
-                  phoneSecondary: `${data.phoneSecondary.ddd} ${data.phoneSecondary.prefix}-${data.phoneSecondary.suffix}`,
-                  phoneTertiary: `${data.phoneTertiary.ddd} ${data.phoneTertiary.prefix}-${data.phoneTertiary.suffix}`,
+                  phone: `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`,
+                  phoneSecondary: activePhoneSecondary ? `+55${data.phoneSecondary.ddd}${data.phoneSecondary.prefix}${data.phoneSecondary.suffix}` : "",
+                  phoneTertiary: activePhoneTertiary ? `+55${data.phoneTertiary.ddd}${data.phoneTertiary.prefix}${data.phoneTertiary.suffix}` : "",
                   responsible: data.responsible,
                   financialResponsible: data.financialResponsible,
                   curriculum: [data.curriculum],
@@ -1789,12 +1820,13 @@ export function InsertStudent() {
                       id={c.id}
                       name="age"
                       value={c.id}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        console.log("ID: ", c.id, "- Nome: ", c.name),
                         setStudentData({
                           ...studentData,
                           curriculum: e.target.value,
                         })
-                      }
+                      }}
                     />
                     <label htmlFor={c.id} className="flex flex-col gap-4">
                       {curriculumData.school === "Colégio Bernoulli" ? (

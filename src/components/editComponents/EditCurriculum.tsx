@@ -6,17 +6,24 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
-  deleteDoc,
   doc,
   getDocs,
   getFirestore,
-  orderBy,
   query,
+  updateDoc,
   where,
 } from "firebase/firestore";
 
-import { deleteCurriculumValidationSchema } from "../../@types/zodValidation";
-import { DeleteCurriculumValidationZProps } from "../../@types";
+import { editCurriculumValidationSchema } from "../../@types/zodValidation";
+import {
+  CurriculumSearchProps,
+  EditCurriculumValidationZProps,
+  SchoolClassSearchProps,
+  SchoolSearchProps,
+  ScheduleSearchProps,
+  ClassDaySearchProps,
+  TeacherSearchProps,
+} from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 
@@ -24,10 +31,10 @@ import { SelectOptions } from "../formComponents/SelectOptions";
 const db = getFirestore(app);
 
 export function EditCurriculum() {
-  // CURRICULUM DATA
-  const [curriculumData, setCurriculumData] =
-    useState<DeleteCurriculumValidationZProps>({
-      curriculum: "",
+  // STUDENT DATA
+  const [curriculumEditData, setCurriculumEditData] =
+    useState<EditCurriculumValidationZProps>({
+      name: "",
       curriculumId: "",
       school: "",
       schoolId: "",
@@ -35,77 +42,304 @@ export function EditCurriculum() {
       schoolClassId: "",
       schoolCourse: "",
       schoolCourseId: "",
-      confirmDelete: false,
+      schedule: "",
+      scheduleId: "",
+      classDay: "",
+      classDayId: "",
+      teacher: "",
+      teacherId: "",
     });
+
+  // CURRICULUM NAME FORMATTED STATE
+  const [curriculumName, setCurriculumName] = useState({
+    name: "",
+  });
+
+  // SET CURRICULUM FORMATTED NAME WHEN CHANGE CURRICULUM EDIT SELECT
+  useEffect(() => {
+    setCurriculumName({
+      name: `${curriculumEditData.school} | ${
+        curriculumEditData.schoolCourse
+      } | ${
+        scheduleSelectedData
+          ? scheduleSelectedData.name
+          : curriculumEditData.schedule
+      } | ${curriculumEditData.classDay} | Professor: ${
+        curriculumEditData.teacher
+      }`,
+    });
+  }, [curriculumEditData]);
+
+  // SET CURRICULUM EDIT DATA NAME WHEN CHANGE CURRICULUM FORMATTED NAME
+  useEffect(() => {
+    setCurriculumEditData({
+      ...curriculumEditData,
+      name: curriculumName.name,
+    });
+  }, [curriculumName.name]);
+
+  // CURRICULUM SELECTED AND EDIT ACTIVE STATES
+  const [isSelected, setIsSelected] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+
+  // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
+  const [schoolsDataArray, setSchoolsDataArray] =
+    useState<SchoolSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
+    setSchoolsDataArray(data);
+  };
+
+  // SCHOOL SELECTED STATE DATA
+  const [schoolSelectedData, setSchoolSelectedData] =
+    useState<SchoolSearchProps>();
+
+  // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
+  useEffect(() => {
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("curriculumSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setIsSelected(false);
+    setIsEdit(false);
+    setSchoolClassSelectedData(undefined);
+    setCurriculumSelectedData(undefined);
+    if (curriculumEditData.schoolId !== "") {
+      setSchoolSelectedData(
+        schoolsDataArray!.find(({ id }) => id === curriculumEditData.schoolId)
+      );
+    } else {
+      setSchoolSelectedData(undefined);
+    }
+  }, [curriculumEditData.schoolId]);
+
+  // RESET SCHOOL CLASS, SCHOOL COURSE AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
+  useEffect(() => {
+    setCurriculumEditData({
+      ...curriculumEditData,
+      school: schoolSelectedData ? schoolSelectedData.name : "",
+    });
+  }, [schoolSelectedData]);
+  // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
+  const [schoolClassesDataArray, setSchoolClassesDataArray] =
+    useState<SchoolClassSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
+    setSchoolClassesDataArray(data);
+  };
+
+  // SCHOOL CLASS SELECTED STATE DATA
+  const [schoolClassSelectedData, setSchoolClassSelectedData] =
+    useState<SchoolClassSearchProps>();
+
+  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  useEffect(() => {
+    (
+      document.getElementById("curriculumSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setIsSelected(false);
+    setIsEdit(false);
+    setCurriculumSelectedData(undefined);
+    if (curriculumEditData.schoolClassId !== "") {
+      setSchoolClassSelectedData(
+        schoolClassesDataArray!.find(
+          ({ id }) => id === curriculumEditData.schoolClassId
+        )
+      );
+    } else {
+      setSchoolClassSelectedData(undefined);
+    }
+  }, [curriculumEditData.schoolClassId]);
+
+  // RESET CURRICULUM SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
+  useEffect(() => {
+    setCurriculumEditData({
+      ...curriculumEditData,
+      schoolClass: schoolClassSelectedData ? schoolClassSelectedData.name : "",
+    });
+  }, [schoolClassSelectedData]);
+  // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
+  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT STUDENTS
+  const [curriculumDataArray, setCurriculumDataArray] =
+    useState<CurriculumSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH CURRICULUM SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleCurriculumSelectedData = (data: CurriculumSearchProps[]) => {
+    setCurriculumDataArray(data);
+  };
+
+  // CURRICULUM SELECTED STATE DATA
+  const [curriculumSelectedData, setCurriculumSelectedData] =
+    useState<CurriculumSearchProps>();
+
+  // SET CURRICULUM SELECTED STATE WHEN SELECT CURRICULUM
+  useEffect(() => {
+    if (curriculumEditData.curriculumId !== "") {
+      setIsSelected(true);
+      setIsEdit(false);
+      setCurriculumSelectedData(
+        curriculumDataArray!.find(
+          ({ id }) => id === curriculumEditData.curriculumId
+        )
+      );
+    } else {
+      setCurriculumSelectedData(undefined);
+    }
+  }, [curriculumEditData.curriculumId]);
+
+  // RESET CURRICULUM SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
+  useEffect(() => {
+    setCurriculumEditData({
+      ...curriculumEditData,
+      schoolCourseId: curriculumSelectedData
+        ? curriculumSelectedData.schoolCourseId
+        : "",
+      schoolCourse: curriculumSelectedData
+        ? curriculumSelectedData.schoolCourse
+        : "",
+      scheduleId: curriculumSelectedData
+        ? curriculumSelectedData.scheduleId
+        : "",
+      schedule: curriculumSelectedData ? curriculumSelectedData.schedule : "",
+      classDayId: curriculumSelectedData
+        ? curriculumSelectedData.classDayId
+        : "",
+      classDay: curriculumSelectedData ? curriculumSelectedData.classDay : "",
+      teacherId: curriculumSelectedData ? curriculumSelectedData.teacherId : "",
+      teacher: curriculumSelectedData ? curriculumSelectedData.teacher : "",
+    });
+  }, [curriculumSelectedData]);
+  // -------------------------- END OF CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHEDULE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHEDULES
+  const [schedulesDataArray, setSchedulesDataArray] =
+    useState<ScheduleSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHEDULE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleScheduleSelectedData = (data: ScheduleSearchProps[]) => {
+    setSchedulesDataArray(data);
+  };
+
+  // SCHEDULE SELECTED STATE DATA
+  const [scheduleSelectedData, setScheduleSelectedData] =
+    useState<ScheduleSearchProps>();
+
+  // SET SCHEDULE SELECTED STATE WHEN SELECT SCHEDULE
+  useEffect(() => {
+    if (schedulesDataArray) {
+      if (curriculumEditData.scheduleId !== "") {
+        setScheduleSelectedData(
+          schedulesDataArray!.find(
+            ({ id }) => id === curriculumEditData.scheduleId
+          )
+        );
+      } else {
+        setScheduleSelectedData(undefined);
+      }
+    }
+  }, [schedulesDataArray, curriculumEditData.scheduleId]);
+
+  // RESET CURRICULUM SELECT TO INDEX 0 WHEN SCHEDULE CHANGE
+  useEffect(() => {
+    setCurriculumEditData({
+      ...curriculumEditData,
+      schedule: scheduleSelectedData ? scheduleSelectedData.name : "",
+      scheduleId: scheduleSelectedData ? scheduleSelectedData.id : "",
+    });
+  }, [scheduleSelectedData]);
+  // -------------------------- END OF SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
+  // CLASS DAY DATA ARRAY WITH ALL OPTIONS OF SELECT CLASS DAYS
+  const [classDaysDataArray, setClassDaysDataArray] =
+    useState<ClassDaySearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleClassDaySelectedData = (data: ClassDaySearchProps[]) => {
+    setClassDaysDataArray(data);
+  };
+
+  // SCHOOL CLASS SELECTED STATE DATA
+  const [classDaySelectedData, setClassDaySelectedData] =
+    useState<ClassDaySearchProps>();
+
+  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  useEffect(() => {
+    if (classDaysDataArray) {
+      if (curriculumEditData.classDayId !== "") {
+        setClassDaySelectedData(
+          classDaysDataArray!.find(
+            ({ id }) => id === curriculumEditData.classDayId
+          )
+        );
+      } else {
+        setClassDaySelectedData(undefined);
+      }
+    }
+  }, [classDaysDataArray, curriculumEditData.classDayId]);
+
+  // RESET CURRICULUM SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
+  useEffect(() => {
+    setCurriculumEditData({
+      ...curriculumEditData,
+      classDay: classDaySelectedData ? classDaySelectedData.name : "",
+      classDayId: classDaySelectedData ? classDaySelectedData.id : "",
+    });
+  }, [classDaySelectedData]);
+  // -------------------------- END OF SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- TEACHER SELECT STATES AND FUNCTIONS -------------------------- //
+  // TEACHER DATA ARRAY WITH ALL OPTIONS OF SELECT TEACHERS
+  const [teachersDataArray, setTeachersDataArray] =
+    useState<TeacherSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH TEACHER SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleTeacherSelectedData = (data: TeacherSearchProps[]) => {
+    setTeachersDataArray(data);
+  };
+
+  // TEACHER SELECTED STATE DATA
+  const [teacherSelectedData, setTeacherSelectedData] =
+    useState<TeacherSearchProps>();
+
+  // SET TEACHER SELECTED STATE WHEN SELECT TEACHER
+  useEffect(() => {
+    if (teachersDataArray) {
+      if (curriculumEditData.teacherId !== "") {
+        setTeacherSelectedData(
+          teachersDataArray!.find(
+            ({ id }) => id === curriculumEditData.teacherId
+          )
+        );
+      } else {
+        setTeacherSelectedData(undefined);
+      }
+    }
+  }, [teachersDataArray, curriculumEditData.teacherId]);
+
+  // RESET CURRICULUM SELECT TO INDEX 0 WHEN TEACHER CHANGE
+  useEffect(() => {
+    setCurriculumEditData({
+      ...curriculumEditData,
+      teacher: teacherSelectedData ? teacherSelectedData.name : "",
+      teacherId: teacherSelectedData ? teacherSelectedData.id : "",
+    });
+  }, [teacherSelectedData]);
+  // -------------------------- END OF TEACHER SELECT STATES AND FUNCTIONS -------------------------- //
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // SCHOOL CLASSES ARRAY STATE
-  const [schoolClassesData, setSchoolClassesData] = useState([]);
-  const [schedulesDetailsData, setSchedulesDetailsData] = useState([]);
-  const [curriculumCoursesId, setCurriculumCoursesId] = useState([]);
-  const [toggleSchoolAndClass, setToggleSchoolAndClass] = useState<
-    "school" | "class"
-  >("school");
-
-  // GET SCHOOL CLASS DATA FUNCTION
-  async function getSchoolClassData(name: string) {
-    setToggleSchoolAndClass("class");
-    const schoolClassRef = collection(db, "schoolClasses");
-    const q = query(schoolClassRef, where("schoolName", "==", name));
-    const querySnapshot = await getDocs(q);
-    const schoolClassDataPromises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      schoolClassDataPromises.push(promise);
-    });
-    setCurriculumData({
-      ...curriculumData,
-      school: name,
-      confirmDelete: false,
-    });
-    setSchoolClassesData(schoolClassDataPromises);
-  }
-
-  // GETTING SCHEDULES DATA
-  const handleSchedulesDetails = async () => {
-    const q = query(collection(db, "schedules"));
-    const querySnapshot = await getDocs(q);
-    const promises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    setSchedulesDetailsData(promises);
-  };
-
-  // GETTING SCHEDULES DETAILS
-  useEffect(() => {
-    handleSchedulesDetails();
-  }, []);
-
-  // GETTING CURRICULUM DATA
-  const handleAvailableCoursesData = async () => {
-    const q = query(
-      collection(db, "curriculum"),
-      where("school", "==", curriculumData.school),
-      where("schoolClass", "==", curriculumData.schoolClass),
-      orderBy("name")
-    );
-    const querySnapshot = await getDocs(q);
-    const promises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    setCurriculumCoursesId(promises);
-  };
-
-  // SET CURRICULUM DATA WHEN CHOOSE CLASS
-  useEffect(() => {
-    handleAvailableCoursesData();
-  }, [curriculumData.schoolClass]);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -113,10 +347,10 @@ export function EditCurriculum() {
     reset,
     setValue,
     formState: { errors },
-  } = useForm<DeleteCurriculumValidationZProps>({
-    resolver: zodResolver(deleteCurriculumValidationSchema),
+  } = useForm<EditCurriculumValidationZProps>({
+    resolver: zodResolver(editCurriculumValidationSchema),
     defaultValues: {
-      curriculum: "",
+      name: "",
       curriculumId: "",
       school: "",
       schoolId: "",
@@ -124,14 +358,22 @@ export function EditCurriculum() {
       schoolClassId: "",
       schoolCourse: "",
       schoolCourseId: "",
-      confirmDelete: false,
+      schedule: "",
+      scheduleId: "",
+      classDay: "",
+      classDayId: "",
+      teacher: "",
+      teacherId: "",
     },
   });
 
   // RESET FORM FUNCTION
   const resetForm = () => {
-    setCurriculumData({
-      curriculum: "",
+    (
+      document.getElementById("schoolSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setCurriculumEditData({
+      name: "",
       curriculumId: "",
       school: "",
       schoolId: "",
@@ -139,29 +381,40 @@ export function EditCurriculum() {
       schoolClassId: "",
       schoolCourse: "",
       schoolCourseId: "",
-      confirmDelete: false,
+      schedule: "",
+      scheduleId: "",
+      classDay: "",
+      classDayId: "",
+      teacher: "",
+      teacherId: "",
     });
-    setToggleSchoolAndClass("school");
+    setIsSelected(false);
+    setIsEdit(false);
     reset();
   };
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
-    setValue("curriculum", curriculumData.curriculum);
-    setValue("curriculumId", curriculumData.curriculumId);
-    setValue("school", curriculumData.school);
-    setValue("schoolId", curriculumData.schoolId);
-    setValue("schoolClass", curriculumData.schoolClass);
-    setValue("schoolClassId", curriculumData.schoolClassId);
-    setValue("schoolCourse", curriculumData.schoolCourse);
-    setValue("schoolCourseId", curriculumData.schoolCourseId);
-    setValue("confirmDelete", curriculumData.confirmDelete);
-  }, [curriculumData]);
+    setValue("name", curriculumEditData.name);
+    setValue("curriculumId", curriculumEditData.curriculumId);
+    setValue("school", curriculumEditData.school);
+    setValue("schoolId", curriculumEditData.schoolId);
+    setValue("schoolClass", curriculumEditData.schoolClass);
+    setValue("schoolClassId", curriculumEditData.schoolClassId);
+    setValue("schoolCourse", curriculumEditData.schoolCourse);
+    setValue("schoolCourseId", curriculumEditData.schoolCourseId);
+    setValue("schedule", curriculumEditData.schedule);
+    setValue("scheduleId", curriculumEditData.scheduleId);
+    setValue("classDay", curriculumEditData.classDay);
+    setValue("classDayId", curriculumEditData.classDayId);
+    setValue("teacher", curriculumEditData.teacher);
+    setValue("teacherId", curriculumEditData.teacherId);
+  }, [curriculumEditData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
     const fullErrors = [
-      errors.curriculum,
+      errors.name,
       errors.curriculumId,
       errors.school,
       errors.schoolId,
@@ -169,7 +422,12 @@ export function EditCurriculum() {
       errors.schoolClassId,
       errors.schoolCourse,
       errors.schoolCourseId,
-      errors.confirmDelete,
+      errors.schedule,
+      errors.scheduleId,
+      errors.classDay,
+      errors.classDayId,
+      errors.teacher,
+      errors.teacherId,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -183,31 +441,52 @@ export function EditCurriculum() {
   }, [errors]);
 
   // SUBMIT DATA FUNCTION
-  const handleDeleteCurriculum: SubmitHandler<
-    DeleteCurriculumValidationZProps
+  const handleEditCurriculum: SubmitHandler<
+    EditCurriculumValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
-
-    // CHECK DELETE CONFIRMATION
-    if (!data.confirmDelete) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir o Currículo... ☑️`,
-        {
+    // EDIT CURRICULUM FUNCTION
+    const editCurriculum = async () => {
+      try {
+        await updateDoc(
+          doc(db, "curriculum", curriculumEditData.curriculumId),
+          {
+            schedule: data.schedule,
+            scheduleId: data.scheduleId,
+            classDay: data.classDay,
+            classDayId: data.classDayId,
+            teacher: data.teacher,
+            teacherId: data.teacherId,
+          }
+        );
+        resetForm();
+        toast.success(`Currículo alterado com sucesso! 👌`, {
           theme: "colored",
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
           autoClose: 3000,
-        }
-      );
-    }
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
 
-    // CHECKING IF CURRICULUM CONTAINS STUDENTS
-    const curriculumRef = collection(db, "students");
+    setIsSubmitting(true);
+
+    // CHECKING IF CURRICULUM EXISTS ON DATABASE
+    const curriculumRef = collection(db, "curriculum");
     const q = query(
       curriculumRef,
-      where("curriculum", "array-contains-any", [data.curriculumId])
+      where("id", "==", curriculumEditData.curriculumId)
     );
     const querySnapshot = await getDocs(q);
     const promises: any = [];
@@ -216,53 +495,21 @@ export function EditCurriculum() {
       promises.push(promise);
     });
     Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        console.log(results)
+      // IF NOT EXISTS, RETURN ERROR
+      if (results.length === 0) {
         return (
           setIsSubmitting(false),
-          toast.error(
-            `Currículo incluído em ${results.length} ${
-              results.length === 1 ? "cadastro de aluno" : "cadastros de alunos"
-            }, exclua ou altere primeiramente ${
-              results.length === 1 ? "o aluno" : "os alunos"
-            } e depois exclua o currículo... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          )
+          toast.error(`Currículo não existe no banco de dados... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
         );
       } else {
-        // IF NO EXISTS, DELETE
-        const deleteCurriculum = async () => {
-          try {
-            await deleteDoc(doc(db, "curriculum", data.curriculumId));
-            resetForm();
-            toast.success(`Currículo excluído com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
-        deleteCurriculum();
+        // IF EXISTS, EDIT
+        editCurriculum();
       }
     });
   };
@@ -272,7 +519,7 @@ export function EditCurriculum() {
       <ToastContainer limit={5} />
       <h1 className="font-bold text-2xl my-4">Editar Currículo</h1>
       <form
-        onSubmit={handleSubmit(handleDeleteCurriculum)}
+        onSubmit={handleSubmit(handleEditCurriculum)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
       >
         {/* SCHOOL SELECT */}
@@ -280,7 +527,7 @@ export function EditCurriculum() {
           <label
             htmlFor="schoolSelect"
             className={
-              errors.school
+              errors.schoolId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right text-gray-900 dark:text-gray-100"
             }
@@ -288,19 +535,26 @@ export function EditCurriculum() {
             Selecione a Escola:{" "}
           </label>
           <select
+            id="schoolSelect"
             defaultValue={" -- select an option -- "}
-            disabled={toggleSchoolAndClass === "class" ? true : false}
             className={
-              errors.school
+              errors.schoolId
                 ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                 : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolSelect"
             onChange={(e) => {
-              getSchoolClassData(e.target.value);
+              setCurriculumEditData({
+                ...curriculumEditData,
+                schoolId: e.target.value,
+              });
             }}
           >
-            <SelectOptions dataType="schools" />
+            <SelectOptions
+              returnId
+              dataType="schools"
+              handleData={handleSchoolSelectedData}
+            />
           </select>
         </div>
 
@@ -309,7 +563,7 @@ export function EditCurriculum() {
           <label
             htmlFor="schoolClassSelect"
             className={
-              errors.schoolClass
+              errors.schoolClassId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right text-gray-900 dark:text-gray-100"
             }
@@ -317,36 +571,31 @@ export function EditCurriculum() {
             Selecione a Turma:{" "}
           </label>
           <select
+            id="schoolClassSelect"
+            disabled={curriculumEditData.schoolId ? false : true}
             defaultValue={" -- select an option -- "}
-            disabled={curriculumData.school ? false : true}
             className={
-              curriculumData.school
-                ? errors.schoolClass
+              curriculumEditData.schoolId
+                ? errors.schoolClassId
                   ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                   : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             }
             name="schoolClassSelect"
             onChange={(e) => {
-              setCurriculumData({
-                ...curriculumData,
-                schoolClass: e.target.value,
-                confirmDelete: false,
+              setCurriculumEditData({
+                ...curriculumEditData,
+                schoolClassId: e.target.value,
               });
             }}
           >
-            {curriculumData.school ? (
-              <>
-                <option disabled value={" -- select an option -- "}>
-                  {" "}
-                  -- Selecione --{" "}
-                </option>
-                {schoolClassesData.map((option: any) => (
-                  <option key={option.id} value={option.name}>
-                    {option.name}
-                  </option>
-                ))}
-              </>
+            {curriculumEditData.schoolId ? (
+              <SelectOptions
+                returnId
+                dataType="schoolClasses"
+                schoolId={curriculumEditData.schoolId}
+                handleData={handleSchoolClassSelectedData}
+              />
             ) : (
               <option disabled value={" -- select an option -- "}>
                 {" "}
@@ -357,109 +606,400 @@ export function EditCurriculum() {
         </div>
 
         {/* CURRICULUM SELECT */}
-        {curriculumData.school && curriculumData.schoolClass ? (
-          curriculumCoursesId.length !== 0 ? (
-            <>
-              <h1 className="font-bold text-lg py-4">
-                Modalidades {curriculumData.school} -{" "}
-                {curriculumData.schoolClass}:
-              </h1>
-              <hr className="pb-4" />
-              <div className="flex flex-wrap gap-4 justify-center">
-                {curriculumCoursesId.map((c: any) => (
-                  <>
-                    <div
-                      className="flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                      key={c.id}
-                    >
-                      <input
-                        type="radio"
-                        id={c.id}
-                        name="age"
-                        value={c.id}
-                        onChange={(e) =>
-                          setCurriculumData({
-                            ...curriculumData,
-                            curriculumId: e.target.value,
-                            schoolCourse: c.schoolCourse,
-                            curriculum: c.name,
-                            confirmDelete: false,
-                          })
-                        }
-                      />
-                      <label htmlFor={c.id} className="flex flex-col gap-4">
-                        {curriculumData.school === "Colégio Bernoulli" ? (
-                          <p>Turma: {c.schoolClass}</p>
-                        ) : null}
-                        <p>Modalidade: {c.schoolCourse}</p>
-                        {schedulesDetailsData.map((details: any) =>
-                          details.name === c.schedule
-                            ? `Horário: De ${details.classStart} a ${details.classEnd} hrs`
-                            : null
-                        )}
-                        <p>Dias: {c.classDay}</p>
-                        <p>Professor: {c.teacher}</p>
-                      </label>
-                    </div>
-                  </>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="pt-4">Nenhum currículo encontrado.</div>
-          )
-        ) : (
-          <div className="pt-4">
-            Selecione um colégio e uma turma para ver as modalidades
-            disponíveis.
-          </div>
-        )}
-
-        {/** CHECKBOX CONFIRM DELETE */}
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <input
-            type="checkbox"
-            name="confirmDelete"
-            className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
-            checked={curriculumData.confirmDelete}
-            onChange={() => {
-              setCurriculumData({
-                ...curriculumData,
-                confirmDelete: !curriculumData.confirmDelete,
-              });
-            }}
-          />
+        <div className="flex gap-2 items-center">
           <label
-            htmlFor="confirmDelete"
-            className="text-sm text-gray-600 dark:text-gray-100"
+            htmlFor="curriculumSelect"
+            className={
+              errors.curriculumId
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
-            Confirmar exclusão do Currículo
+            Selecione o Currículo:{" "}
           </label>
-        </div>
-
-        {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
-          {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
-          >
-            {!isSubmitting ? "Excluir" : "Excluindo"}
-          </button>
-
-          {/* RESET BUTTON */}
-          <button
-            type="reset"
-            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
-            disabled={isSubmitting}
-            onClick={() => {
-              resetForm();
+          <select
+            id="curriculumSelect"
+            defaultValue={" -- select an option -- "}
+            className={
+              curriculumEditData.schoolClassId
+                ? errors.curriculumId
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+            }
+            name="curriculumSelect"
+            onChange={(e) => {
+              setCurriculumEditData({
+                ...curriculumEditData,
+                curriculumId: e.target.value,
+              });
+              setIsSelected(true);
             }}
           >
-            {isSubmitting ? "Aguarde" : "Limpar"}
-          </button>
+            {curriculumEditData.schoolClassId ? (
+              <SelectOptions
+                returnId
+                dataType="curriculum"
+                schoolId={curriculumEditData.schoolId}
+                schoolClassId={curriculumEditData.schoolClassId}
+                handleData={handleCurriculumSelectedData}
+              />
+            ) : (
+              <option disabled value={" -- select an option -- "}>
+                {" "}
+                -- Selecione uma Turma para ver os currículos disponíveis --{" "}
+              </option>
+            )}
+          </select>
         </div>
+
+        {isSelected ? (
+          <>
+            {/* EDIT BUTTON */}
+            <div className="flex gap-2 mt-4 justify-center">
+              <button
+                type="button"
+                disabled={isEdit}
+                className="w-3/4 border rounded-xl border-green-900/10 bg-green-500 disabled:bg-amber-500/70 disabled:dark:bg-amber-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50"
+                onClick={() => {
+                  setIsEdit(true);
+                }}
+              >
+                {!isEdit
+                  ? "Editar"
+                  : "Clique em CANCELAR para desfazer a Edição"}
+              </button>
+            </div>
+          </>
+        ) : null}
+
+        {isEdit ? (
+          <>
+            {/* CURRICULUM NAME */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="name"
+                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+              >
+                Nome:{" "}
+              </label>
+              <input
+                type="text"
+                name="name"
+                disabled
+                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                value={curriculumName.name}
+              />
+            </div>
+
+            {/* SCHOOL NAME */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="schoolName"
+                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+              >
+                Colégio:{" "}
+              </label>
+              <input
+                type="text"
+                name="schoolName"
+                disabled
+                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                value={curriculumEditData.school}
+              />
+            </div>
+
+            {/* SCHOOL CLASS NAME */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="schoolClass"
+                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+              >
+                Turma:{" "}
+              </label>
+              <input
+                type="text"
+                name="schoolClass"
+                disabled
+                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                value={curriculumEditData.schoolClass}
+              />
+            </div>
+
+            {/* SCHOOL COURSE NAME */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="schoolCourse"
+                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+              >
+                Modalidade:{" "}
+              </label>
+              <input
+                type="text"
+                name="schoolCourse"
+                disabled
+                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                value={curriculumEditData.schoolCourse}
+              />
+            </div>
+
+            {/* EDIT SCHEDULE TITLE */}
+            <div className="flex gap-2 items-center">
+              <div className="w-1/4"></div>
+              <div className="w-3/4">
+                <h1 className="text-start font-bold text-lg py-2 text-red-600 dark:text-yellow-500">
+                  Altere o Horário:
+                </h1>
+              </div>
+            </div>
+
+            {/* SCHEDULE SELECT */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="scheduleSelect"
+                className={
+                  errors.scheduleId
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
+              >
+                Horário:{" "}
+              </label>
+              <select
+                id="scheduleSelect"
+                disabled={isSubmitting}
+                value={
+                  scheduleSelectedData?.id === curriculumEditData.scheduleId
+                    ? scheduleSelectedData.id
+                    : curriculumEditData.scheduleId
+                }
+                className={
+                  errors.scheduleId
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                name="scheduleSelect"
+                onChange={(e) => {
+                  setCurriculumEditData({
+                    ...curriculumEditData,
+                    scheduleId: e.target.value,
+                    schedule: scheduleSelectedData!.name,
+                  });
+                }}
+              >
+                <SelectOptions
+                  returnId
+                  dataType="schedules"
+                  schoolId={curriculumEditData.schoolId}
+                  handleData={handleScheduleSelectedData}
+                />
+              </select>
+            </div>
+
+            {/* TRANSITION START */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="transitionStart"
+                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+              >
+                Início da Transição:{" "}
+              </label>
+              <input
+                type="text"
+                name="transitionStart"
+                disabled
+                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                value={scheduleSelectedData?.transitionStart}
+              />
+            </div>
+
+            {/* TRANSITION END */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="transitionEnd"
+                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+              >
+                Fim da Transição:{" "}
+              </label>
+              <input
+                type="text"
+                name="transitionEnd"
+                disabled
+                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                value={scheduleSelectedData?.transitionEnd}
+              />
+            </div>
+
+            {/* CLASS START */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="classStart"
+                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+              >
+                Início da Aula:{" "}
+              </label>
+              <input
+                type="text"
+                name="classStart"
+                disabled
+                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                value={scheduleSelectedData?.classStart}
+              />
+            </div>
+
+            {/* CLASS END */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="classEnd"
+                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+              >
+                Fim da Aula:{" "}
+              </label>
+              <input
+                type="text"
+                name="classEnd"
+                disabled
+                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                value={scheduleSelectedData?.classEnd}
+              />
+            </div>
+
+            {/* EXIT */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="exit"
+                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+              >
+                Saída:{" "}
+              </label>
+              <input
+                type="text"
+                name="exit"
+                disabled
+                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                value={scheduleSelectedData?.exit}
+              />
+            </div>
+
+            {/* EDIT CLASS DAY TITLE */}
+            <div className="flex gap-2 items-center">
+              <div className="w-1/4"></div>
+              <div className="w-3/4">
+                <h1 className="text-start font-bold text-lg py-2 text-red-600 dark:text-yellow-500">
+                  Altere os Dias de Aula:
+                </h1>
+              </div>
+            </div>
+
+            {/* CLASS DAY SELECT */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="classDaySelect"
+                className={
+                  errors.classDayId
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
+              >
+                Dias de Aula:{" "}
+              </label>
+              <select
+                id="classDaySelect"
+                disabled={isSubmitting}
+                value={curriculumEditData.classDayId}
+                className={
+                  errors.classDayId
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                name="classDaySelect"
+                onChange={(e) => {
+                  setCurriculumEditData({
+                    ...curriculumEditData,
+                    classDayId: e.target.value,
+                  });
+                }}
+              >
+                <SelectOptions
+                  returnId
+                  dataType="classDays"
+                  handleData={handleClassDaySelectedData}
+                />
+              </select>
+            </div>
+
+            {/* EDIT TEACHER TITLE */}
+            <div className="flex gap-2 items-center">
+              <div className="w-1/4"></div>
+              <div className="w-3/4">
+                <h1 className="text-start font-bold text-lg py-2 text-red-600 dark:text-yellow-500">
+                  Altere o Professor:
+                </h1>
+              </div>
+            </div>
+
+            {/* TEACHER SELECT */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="teacherSelect"
+                className={
+                  errors.teacherId
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
+              >
+                Professor:{" "}
+              </label>
+              <select
+                id="teacherSelect"
+                disabled={isSubmitting}
+                value={curriculumEditData.teacherId}
+                className={
+                  errors.teacherId
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                name="teacherSelect"
+                onChange={(e) => {
+                  setCurriculumEditData({
+                    ...curriculumEditData,
+                    teacherId: e.target.value,
+                  });
+                }}
+              >
+                <SelectOptions
+                  returnId
+                  dataType="teachers"
+                  handleData={handleTeacherSelectedData}
+                />
+              </select>
+            </div>
+
+            {/* SUBMIT AND RESET BUTTONS */}
+            <div className="flex gap-2 mt-4">
+              {/* SUBMIT BUTTON */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+              >
+                {!isSubmitting ? "Salvar" : "Salvando"}
+              </button>
+
+              {/* RESET BUTTON */}
+              <button
+                type="reset"
+                className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+                disabled={isSubmitting}
+                onClick={() => {
+                  resetForm();
+                }}
+              >
+                {isSubmitting ? "Aguarde" : "Cancelar"}
+              </button>
+            </div>
+          </>
+        ) : null}
       </form>
     </div>
   );

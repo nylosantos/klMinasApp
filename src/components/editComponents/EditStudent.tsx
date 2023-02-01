@@ -13,6 +13,7 @@ import {
   onSnapshot,
   query,
   serverTimestamp,
+  Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -250,33 +251,33 @@ export function EditStudent() {
             cep: studentSelectedData.address.cep,
           },
           phone: {
-            ddd: studentSelectedData.phone.slice(0, 2),
-            prefix: studentSelectedData.phone.slice(3, 8),
+            ddd: studentSelectedData.phone.slice(3, 5),
+            prefix: studentSelectedData.phone.slice(5, 10),
             suffix: studentSelectedData.phone.slice(-4),
           },
           activePhoneSecondary:
-            studentSelectedData?.phoneSecondary !== " -" ? true : false,
+            studentSelectedData?.phoneSecondary !== "" ? true : false,
           phoneSecondary: {
-            ddd: studentEditData.activePhoneSecondary
-              ? studentSelectedData.phoneSecondary.slice(0, 2)
+            ddd: studentSelectedData?.phoneSecondary
+              ? studentSelectedData.phoneSecondary.slice(3, 5)
               : "DDD",
-            prefix: studentEditData.activePhoneSecondary
-              ? studentSelectedData.phoneSecondary.slice(3, 8)
+            prefix: studentSelectedData?.phoneSecondary
+              ? studentSelectedData.phoneSecondary.slice(5, 10)
               : "",
-            suffix: studentEditData.activePhoneSecondary
+            suffix: studentSelectedData?.phoneSecondary
               ? studentSelectedData.phoneSecondary.slice(-4)
               : "",
           },
           activePhoneTertiary:
-            studentSelectedData?.phoneTertiary !== " -" ? true : false,
+            studentSelectedData?.phoneTertiary !== "" ? true : false,
           phoneTertiary: {
-            ddd: studentEditData.activePhoneTertiary
-              ? studentSelectedData.phoneTertiary.slice(0, 2)
+            ddd: studentSelectedData?.phoneTertiary
+              ? studentSelectedData.phoneTertiary.slice(3, 5)
               : "DDD",
-            prefix: studentEditData.activePhoneTertiary
-              ? studentSelectedData.phoneTertiary.slice(3, 8)
+            prefix: studentSelectedData?.phoneTertiary
+              ? studentSelectedData.phoneTertiary.slice(5, 10)
               : "",
-            suffix: studentEditData.activePhoneTertiary
+            suffix: studentSelectedData?.phoneTertiary
               ? studentSelectedData.phoneTertiary.slice(-4)
               : "",
           },
@@ -289,43 +290,58 @@ export function EditStudent() {
     }
   }, [studentSelectedData]);
 
+  // HAVE CURRICULUM STATE
+  const [haveCurriculum, setHaveCurriculum] = useState(false);
+
+  // IF STUDENT HAVE CURRICULUM SET STATE AND SHOW INPUTS
+  useEffect(() => {
+    if (studentEditData.curriculum.length > 0) {
+      setHaveCurriculum(true);
+      // for (let index = 0; index < studentEditData.curriculum.length; index++) {
+      //   setExcludeCurriculum({[index + 1]: false });
+      // }
+    } else {
+      setHaveCurriculum(false);
+    }
+  }, [studentEditData.curriculum]);
+
+  // INCLUDE / EXLUDE CURRICULUM STATES
+  const [excludeCurriculum, setExcludeCurriculum] = useState({});
+
   // SET PHONE FORMATTED
   useEffect(() => {
     if (studentSelectedData !== undefined) {
-      if (studentSelectedData!.phoneSecondary !== " -") {
-        setStudentEditData({
-          ...studentEditData,
-          phoneSecondary: {
-            ...studentEditData.phoneSecondary,
-            ddd: studentEditData.activePhoneSecondary
-              ? studentSelectedData.phoneSecondary.slice(0, 2)
-              : "DDD",
-            prefix: studentEditData.activePhoneSecondary
-              ? studentSelectedData.phoneSecondary.slice(3, 8)
-              : "",
-            suffix: studentEditData.activePhoneSecondary
-              ? studentSelectedData.phoneSecondary.slice(-4)
-              : "",
-          },
-        });
-      }
-      if (studentSelectedData!.phoneTertiary !== " -") {
-        setStudentEditData({
-          ...studentEditData,
-          phoneTertiary: {
-            ...studentEditData.phoneTertiary,
-            ddd: studentEditData.activePhoneTertiary
-              ? studentSelectedData.phoneTertiary.slice(0, 2)
-              : "DDD",
-            prefix: studentEditData.activePhoneTertiary
-              ? studentSelectedData.phoneTertiary.slice(3, 8)
-              : "",
-            suffix: studentEditData.activePhoneTertiary
-              ? studentSelectedData.phoneTertiary.slice(-4)
-              : "",
-          },
-        });
-      }
+      setStudentEditData({
+        ...studentEditData,
+        phoneSecondary: {
+          ...studentEditData.phoneSecondary,
+          ddd: studentEditData.activePhoneSecondary
+            ? studentSelectedData.phoneSecondary !== ""
+              ? studentSelectedData.phoneSecondary.slice(3, 5)
+              : "DDD"
+            : "DDD",
+          prefix: studentEditData.activePhoneSecondary
+            ? studentSelectedData.phoneSecondary.slice(5, 10)
+            : "",
+          suffix: studentEditData.activePhoneSecondary
+            ? studentSelectedData.phoneSecondary.slice(-4)
+            : "",
+        },
+        phoneTertiary: {
+          ...studentEditData.phoneTertiary,
+          ddd: studentEditData.activePhoneTertiary
+            ? studentSelectedData.phoneTertiary !== ""
+              ? studentSelectedData.phoneTertiary.slice(3, 5)
+              : "DDD"
+            : "DDD",
+          prefix: studentEditData.activePhoneTertiary
+            ? studentSelectedData.phoneTertiary.slice(5, 10)
+            : "",
+          suffix: studentEditData.activePhoneTertiary
+            ? studentSelectedData.phoneTertiary.slice(-4)
+            : "",
+        },
+      });
     }
   }, [
     studentEditData.activePhoneSecondary,
@@ -365,6 +381,9 @@ export function EditStudent() {
   // DATE STRING STATE
   const [dateToString, setDateToString] = useState("");
 
+  // DATE SUBMIT STRING STATE
+  const [dateSubmitToString, setDateSubmitToString] = useState("");
+
   // TRANSFORM FIREBASE TIMESTAMP DATE TO STRING AND SET TO STATE
   useEffect(() => {
     setDateToString(
@@ -372,6 +391,18 @@ export function EditStudent() {
       studentSelectedData?.birthDate.toDate().toLocaleDateString()
     );
   }, [studentSelectedData]);
+
+  // TRANSFORM DATE TO FORMAT OF FIREBASE MM/DD/YYYY
+  useEffect(() => {
+    if (dateToString) {
+      setDateSubmitToString(
+        `${dateToString.slice(3, 5)}/${dateToString.slice(
+          0,
+          2
+        )}/${dateToString.slice(-4)}`
+      );
+    }
+  }, [dateToString]);
 
   // CEP SUBMITTING STATE
   const [cepSubmitting, setCepSubmitting] = useState(false);
@@ -652,7 +683,7 @@ export function EditStudent() {
   useEffect(() => {
     setValue("name", studentEditData.name);
     setValue("email", studentEditData.email);
-    setValue("birthDate", studentEditData.birthDate);
+    setValue("birthDate", dateToString);
     setValue("address.street", studentEditData.address.street);
     setValue("address.number", studentEditData.address.number);
     setValue("address.complement", studentEditData.address.complement);
@@ -675,7 +706,7 @@ export function EditStudent() {
     setValue("financialResponsible", studentEditData.financialResponsible);
     setValue("familyAtSchool", studentEditData.familyAtSchool);
     setValue("curriculum", studentEditData.curriculum);
-  }, [studentEditData]);
+  }, [studentEditData, dateToString]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
@@ -723,6 +754,44 @@ export function EditStudent() {
   ) => {
     setIsSubmitting(true);
 
+    // CHEKING VALID SECONDARY PHONE
+    if (studentEditData.activePhoneSecondary) {
+      if (studentEditData.phoneSecondary.ddd === "DDD") {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Preencha o número de telefone 2 ou desmarque a opção "incluir"...... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      }
+    }
+
+    // CHEKING VALID TERTIARY PHONE
+    if (studentEditData.activePhoneTertiary) {
+      if (studentEditData.phoneTertiary.ddd === "DDD") {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Preencha o número de telefone 3 ou desmarque a opção "incluir"...... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      }
+    }
+
     // CHECKING IF STUDENT EXISTS ON CURRRICULUM DATABASE
     const studentRef = collection(db, "students");
     const q = query(studentRef, where("id", "==", studentData.studentId));
@@ -752,7 +821,7 @@ export function EditStudent() {
             await updateDoc(doc(db, "students", studentData.studentId), {
               name: studentEditData.name,
               email: studentEditData.email,
-              birthDate: studentEditData.birthDate,
+              birthDate: Timestamp.fromDate(new Date(dateSubmitToString)),
               "address.street": studentEditData.address.street,
               "address.number": studentEditData.address.number,
               "address.complement": studentEditData.address.complement,
@@ -760,13 +829,19 @@ export function EditStudent() {
               "address.city": studentEditData.address.city,
               "address.state": studentEditData.address.state,
               "address.cep": studentEditData.address.cep,
-              phone: `${studentEditData.phone.ddd} ${studentEditData.phone.prefix}-${studentEditData.phone.suffix}`,
-              phoneSecondary: `${studentEditData.phoneSecondary.ddd} ${studentEditData.phoneSecondary.prefix}-${studentEditData.phoneSecondary.suffix}`,
-              phoneTertiary: `${studentEditData.phoneTertiary.ddd} ${studentEditData.phoneTertiary.prefix}-${studentEditData.phoneTertiary.suffix}`,
+              phone: `+55${studentEditData.phone.ddd}${studentEditData.phone.prefix}${studentEditData.phone.suffix}`,
+              phoneSecondary:
+                studentEditData.phoneSecondary.ddd === "DDD"
+                  ? ""
+                  : `+55${studentEditData.phoneSecondary.ddd}${studentEditData.phoneSecondary.prefix}${studentEditData.phoneSecondary.suffix}`,
+              phoneTertiary:
+                studentEditData.phoneTertiary.ddd === "DDD"
+                  ? ""
+                  : `+55${studentEditData.phoneTertiary.ddd}${studentEditData.phoneTertiary.prefix}${studentEditData.phoneTertiary.suffix}`,
               responsible: studentEditData.responsible,
               financialResponsible: studentEditData.financialResponsible,
               // familyAtSchool: arrayUnion(studentEditData.familyAtSchoolId),
-              curriculum: arrayUnion(studentEditData.curriculum),
+              // curriculum: arrayUnion(studentEditData.curriculum),
             });
             resetForm();
             toast.success(`${studentEditData.name} alterado com sucesso! 👌`, {
@@ -1088,17 +1163,17 @@ export function EditStudent() {
                   format="DD/MM/YYYY"
                   value={dateToString}
                   onChange={(e: DateObject) => {
-                    setStudentEditData({
-                      ...studentEditData,
-                      birthDate: new Date(
-                        `${e.month}/${e.day}/${e.year}`
-                      ).toLocaleDateString(),
-                    });
-                    setDateToString(
-                      new Date(
-                        `${e.month}/${e.day}/${e.year}`
-                      ).toLocaleDateString()
-                    );
+                    if (e !== null) {
+                      setStudentEditData({
+                        ...studentEditData,
+                        birthDate: `${e.month}/${e.day}/${e.year}`,
+                      }),
+                        setDateToString(
+                          `${e.day < 10 ? `0${e.day}` : e.day}/${
+                            e.month.number < 10 ? `0${e.month.number}` : e.month
+                          }/${e.year}`
+                        );
+                    }
                   }}
                 />
               </div>
@@ -1818,6 +1893,57 @@ export function EditStudent() {
                 }
               />
             </div>
+
+            {/* CURRICULUM INCLUDE / EXCLUDE */}
+            {haveCurriculum
+              ? studentEditData.curriculum.map((curriculum, index) => (
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="name"
+                      className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    >
+                      Aula {index + 1}:{" "}
+                    </label>
+                    <div className="flex w-3/4 gap-2">
+                      <div className="w-10/12">
+                        <input
+                          type="text"
+                          name="name"
+                          disabled={isSubmitting}
+                          className={
+                            excludeCurriculum[`${index + 1}`]
+                              ? "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          }
+                          value={curriculum}
+                          readOnly
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        disabled={isSubmitting}
+                        className={
+                          excludeCurriculum[`${index + 1}`]
+                            ? "border rounded-2xl border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-2/12"
+                            : "border rounded-2xl border-red-900 bg-red-600 disabled:bg-red-400 text-white w-2/12"
+                        }
+                        onClick={() => {
+                          setExcludeCurriculum({
+                            ...excludeCurriculum,
+                            [index + 1]: !excludeCurriculum[`${index + 1}`],
+                          });
+                        }}
+                      >
+                        {isSubmitting
+                          ? "Salvando..."
+                          : excludeCurriculum[`${index + 1}`]
+                          ? "Cancelar Exclusão"
+                          : "Excluir"}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              : null}
 
             {/* FAMILY AT SCHOOL ? NAME : NULL */}
             <div className="flex gap-2 items-center">
