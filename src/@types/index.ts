@@ -64,7 +64,9 @@ export type CreateUserValidationZProps = z.infer<
 export type EditUserValidationZProps = z.infer<typeof editUserValidationSchema>;
 
 // DELETE VALIDATIONS USERS
-export type DeleteUserValidationZProps = z.infer<typeof deleteUserValidationSchema>;
+export type DeleteUserValidationZProps = z.infer<
+  typeof deleteUserValidationSchema
+>;
 
 // CREATE VALIDATIONS SCHOOLS
 export type CreateStudentValidationZProps = z.infer<
@@ -144,7 +146,7 @@ export type EditCurriculumValidationZProps = z.infer<
   typeof editCurriculumValidationSchema
 >;
 export type EditStudentValidationZProps = z.infer<
-typeof editStudentValidationSchema
+  typeof editStudentValidationSchema
 >;
 
 // SEARCH VALIDATIONS SCHOOLS
@@ -228,7 +230,7 @@ export interface SelectProps {
 }
 
 export interface CurriculumReadInputProps {
-  curriculumArray: Array<string>
+  curriculumArray: Array<string>;
 }
 
 export interface HandleCurriculumNameNameProps {
@@ -452,4 +454,14 @@ export interface CurriculumSearchProps {
   teacherId: string;
   students: [];
   timestamp: Date;
+}
+
+export interface ExcludeCurriculumProps {
+  exclude: boolean;
+  id: string;
+}
+
+export interface ExcludeFamilyProps {
+  exclude: boolean;
+  id: string;
 }

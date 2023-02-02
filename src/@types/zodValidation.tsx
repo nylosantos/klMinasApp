@@ -292,6 +292,8 @@ export const editStudentValidationSchema = z.object ({
   financialResponsible: z.string().min(1, {message: `Por favor, preencha o campo "Responsável Financeiro"`}),
   familyAtSchool: z.array(z.string().optional().or(z.literal(''))),
   curriculum: z.array(z.string().optional().or(z.literal(''))),
+  addCurriculum: z.boolean(),
+  addFamily: z.boolean(),
 })
 
 // SEARCH VALIDATION SCHEMA SCHOOLS

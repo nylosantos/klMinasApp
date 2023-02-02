@@ -522,10 +522,10 @@ export function EditUser() {
               />
             </div>
 
-            {/** CHECKBOX CONFIRM INSERT */}
+            {/** CHECKBOX CHANGE PASSWORD */}
             <div className="flex gap-2 items-center">
               <label
-                htmlFor="password"
+                htmlFor="changePassword"
                 className={
                   errors.password
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
