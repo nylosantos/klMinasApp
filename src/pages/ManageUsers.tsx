@@ -91,7 +91,7 @@ export default function ManageUsers() {
                 classNames(
                   "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                   selected
-                    ? "bg-white shadow dark:text-gray-800"
+                    ? "bg-white shadow dark:text-gray-800 cursor-default"
                     : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
                 )
               }
@@ -105,7 +105,7 @@ export default function ManageUsers() {
                     classNames(
                       "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                       selected
-                        ? "bg-white shadow dark:text-gray-800"
+                        ? "bg-white shadow dark:text-gray-800 cursor-default"
                         : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
                     )
                   }
@@ -117,7 +117,7 @@ export default function ManageUsers() {
                     classNames(
                       "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                       selected
-                        ? "bg-white shadow dark:text-gray-800"
+                        ? "bg-white shadow dark:text-gray-800 cursor-default"
                         : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
                     )
                   }
@@ -129,7 +129,7 @@ export default function ManageUsers() {
                     classNames(
                       "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                       selected
-                        ? "bg-white shadow dark:text-gray-800"
+                        ? "bg-white shadow dark:text-gray-800 cursor-default"
                         : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
                     )
                   }

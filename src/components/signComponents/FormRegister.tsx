@@ -1,13 +1,13 @@
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast, ToastContainer } from "react-toastify";
+import { SubmitHandler, useForm } from "react-hook-form";
 import {
   createUserWithEmailAndPassword,
   getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
   updateProfile,
 } from "firebase/auth";
 import {
-  addDoc,
   collection,
   doc,
   getDocs,
@@ -17,13 +17,24 @@ import {
   setDoc,
   where,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { AiOutlineGoogle } from "react-icons/ai";
-import { toast, ToastContainer } from "react-toastify";
-import { SignUpWithEmailAndPasswordZProps } from "../../@types";
-import { signUpEmailAndPasswordValidationSchema } from "../../@types/zodValidation";
+
 import { app } from "../../db/Firebase";
+import { systemSignUpClosed } from "../../custom";
+import { SignUpWithEmailAndPasswordZProps } from "../../@types";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import { ButtonSignSubmit } from "../layoutComponents/ButtonSignSubmit";
+import { ButtonSignInGoogle } from "../layoutComponents/ButtonSignInGoogle";
+import { signUpEmailAndPasswordValidationSchema } from "../../@types/zodValidation";
+import {
+  divSignMaster,
+  divSignUpContainer,
+  formSignMaster,
+  inputSignError,
+  inputSignOk,
+  inputSignUpNameError,
+  inputSignUpNameOk,
+  signTitleH1,
+} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -44,13 +55,9 @@ export function FormRegister() {
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // REGISTER CLOSED STATE
-  const [isRegisterClosed, setIsRegisterClosed] = useState(true);
-
   // REACT HOOK FORM SETTINGS
   const {
     handleSubmit,
-    reset,
     setValue,
     formState: { errors },
   } = useForm<SignUpWithEmailAndPasswordZProps>({
@@ -116,6 +123,7 @@ export function FormRegister() {
         Promise.all(promises).then((results) => {
           // IF USER NOT EXISTS, CREATE
           if (!results.length) {
+            // ADD USER FUNCTION
             const addUser = async () => {
               try {
                 await setDoc(doc(db, "appUsers", user.uid), {
@@ -169,143 +177,79 @@ export function FormRegister() {
       });
   };
 
-  // FIREBASE AUTH
-  const googleProvider = new GoogleAuthProvider();
-
-  // SIGN IN/UP WITH GOOGLE FUNCTION
-  const handleSignInWithGoogle = async () => {
-    const result = await signInWithPopup(auth, googleProvider).catch(
-      (error) => {
-        toast.error(
-          `Não foi possível com Google? Tente com seu usuário e senha...`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        );
-      }
-    );
-    if (result) {
-      // CREATE USER ON FIRESTORE TO CREATE APP ACCESS LEVELS
-      // CHECKING IF USER EXISTS ON DATABASE
-      const userRef = collection(db, "appUsers");
-      const q = query(userRef, where("id", "==", result.user.uid));
-      const querySnapshot = await getDocs(q);
-      const promises: any = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data();
-        promises.push(promise);
-      });
-      Promise.all(promises).then((results) => {
-        // IF USER NOT EXISTS, CREATE
-        if (results.length === 0) {
-          const addUser = async () => {
-            try {
-              const commonId = result.user.uid;
-              await setDoc(doc(db, "appUsers", commonId), {
-                id: commonId,
-                name: result.user.displayName,
-                email: result.user.email,
-                photo: result.user.photoURL,
-                phone: result.user.phoneNumber,
-                role: "user",
-                timestamp: serverTimestamp(),
-              });
-            } catch (error) {
-              console.log("ESSE É O ERROR", error);
-              toast.error(`Ocorreu um erro... 🤯`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
-            }
-          };
-          addUser();
-        }
-      });
-      console.log(result.user);
-    } else return;
-  };
-
   return (
     <>
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={4} />
-      <div className="flex flex-col w-96 p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-gray-700/20 dark:bg-transparent">
+
+      <div className={divSignMaster}>
+        {/* SUBMIT LOADING */}
+        <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="logando" />
+
+        {/* SIGN REGISTER TITLE */}
+        <h1 className={signTitleH1}>Criar uma conta</h1>
+
+        {/* FORM */}
         <form
           onSubmit={handleSubmit(handleSignUpWithEmailAndPassword)}
-          className="flex flex-col w-full gap-8 justify-evenly"
+          className={formSignMaster}
         >
-          <h1 className="font-bold text-xl">Criar uma conta</h1>
-          <div className="flex flex-col items-start">
+          <div className={divSignUpContainer}>
+            {/* NAME */}
             <input
               type="text"
               name="name"
-              disabled={isSubmitting || isRegisterClosed}
+              disabled={systemSignUpClosed ? true : isSubmitting}
               placeholder={errors.name ? "É necessário inserir o Nome" : "Nome"}
-              className={
-                errors.name
-                  ? "w-full px-4 pb-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
-                  : "w-full px-4 pb-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
-              }
+              className={errors.name ? inputSignUpNameError : inputSignUpNameOk}
               value={userSignUp.name}
               onChange={(e) => {
                 setUserSignUp({ ...userSignUp, name: e.target.value });
               }}
             />
           </div>
+
+          {/* E-MAIL */}
           <input
             type="text"
             name="email"
-            disabled={isSubmitting || isRegisterClosed}
+            disabled={systemSignUpClosed ? true : isSubmitting}
             placeholder={
               errors.email ? "É necessário inserir o E-mail" : "E-mail"
             }
-            className={
-              errors.email
-                ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
-                : "w-full px-4 py-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
-            }
+            className={errors.email ? inputSignError : inputSignOk}
             value={userSignUp.email}
             onChange={(e) => {
               setUserSignUp({ ...userSignUp, email: e.target.value });
             }}
           />
+
+          {/* PASSWORD */}
           <input
             type="password"
             name="password"
-            disabled={isSubmitting || isRegisterClosed}
+            disabled={systemSignUpClosed ? true : isSubmitting}
             placeholder={
               errors.password ? "É necessário inserir a Senha" : "Senha"
             }
-            className={
-              errors.password
-                ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
-                : "w-full px-4 py-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
-            }
+            className={errors.password ? inputSignError : inputSignOk}
             value={userSignUp.password}
             onChange={(e) => {
               setUserSignUp({ ...userSignUp, password: e.target.value });
             }}
           />
+
+          {/* CONFIRM PASSWORD */}
           <input
             type="password"
             name="confirmPassword"
-            disabled={isSubmitting || isRegisterClosed}
+            disabled={systemSignUpClosed ? true : isSubmitting}
             placeholder={
               errors.confirmPassword
                 ? "É necessário confirmar a Senha"
                 : "Confirme a Senha"
             }
-            className={
-              errors.confirmPassword
-                ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
-                : "w-full px-4 py-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
-            }
+            className={errors.confirmPassword ? inputSignError : inputSignOk}
             value={userSignUp.confirmPassword}
             onChange={(e) => {
               setUserSignUp({ ...userSignUp, confirmPassword: e.target.value });
@@ -313,28 +257,19 @@ export function FormRegister() {
           />
 
           {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            disabled={isSubmitting || isRegisterClosed}
-            className="w-full px-4 py-2 mt-4 border rounded-3xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 font-bold text-sm text-white disabled:dark:text-white/50 uppercase"
-          >
-            {isSubmitting
-              ? "Criando"
-              : isRegisterClosed
-              ? "Registro temporariamente fechado"
-              : "Criar Conta"}
-          </button>
+          <ButtonSignSubmit
+            isSubmitting={isSubmitting}
+            isClosed={systemSignUpClosed}
+            signType="signUp"
+          />
         </form>
 
-        <button
-          type="button"
-          disabled={isSubmitting || isRegisterClosed}
-          className="flex w-full px-4 py-2 gap-4 items-center justify-center border rounded-3xl border-red-900/10 bg-red-600 disabled:bg-red-600/70 disabled:dark:bg-red-600/70 disabled:border-red-900/10 font-bold text-sm text-white disabled:dark:text-white/50 uppercase"
-          onClick={handleSignInWithGoogle}
-        >
-          <AiOutlineGoogle size={24} />
-          <p>Entrar com conta Google</p>
-        </button>
+        {/* SIGN UP WITH GOOGLE BUTTON */}
+        <ButtonSignInGoogle
+          isSubmitting={isSubmitting}
+          isClosed={systemSignUpClosed}
+          signType="signUp"
+        />
       </div>
     </>
   );

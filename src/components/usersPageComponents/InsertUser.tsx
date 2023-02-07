@@ -1,10 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
+import { getFunctions } from "firebase/functions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
-import { Dna } from "react-loader-spinner";
+import { useHttpsCallable } from "react-firebase-hooks/functions";
 import {
   collection,
   doc,
@@ -15,13 +16,35 @@ import {
   setDoc,
   where,
 } from "firebase/firestore";
-import { getFunctions } from "firebase/functions";
-import { useHttpsCallable } from "react-firebase-hooks/functions";
 
-import { createUserValidationSchema } from "../../@types/zodValidation";
-import { CreateUserValidationZProps } from "../../@types";
 import { app, initFirebase } from "../../db/Firebase";
+import { CreateUserValidationZProps } from "../../@types";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import { createUserValidationSchema } from "../../@types/zodValidation";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
+import {
+  buttonReset,
+  buttonSubmit,
+  divCheckboxItem,
+  divItemsForm,
+  divMasterPage,
+  divPhoneMaster,
+  divPhoneNumber,
+  divSubmitResetItems,
+  divWithDoubleItemsRight,
+  formMaster,
+  inputCheckbox,
+  inputError,
+  inputOk,
+  inputWithButtonError,
+  inputWithButtonOk,
+  labelCheckbox,
+  labelTextError,
+  labelTextOk,
+  pageTitleH1,
+  selectDDDError,
+  selectDDDOk,
+} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -149,6 +172,21 @@ export function InsertUser() {
     data
   ) => {
     setIsSubmitting(true);
+
+    // CHECK PHONE IS NOT EMPTY
+    if (!userData.phone) {
+      setIsSubmitting(false);
+      return toast.error(
+        `Por favor, insira um número de telefone para o usuário ${data.name}... ☑️`,
+        {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        }
+      );
+    }
 
     // CHECK INSERT CONFIRMATION
     if (!data.confirmInsert) {
@@ -296,42 +334,23 @@ export function InsertUser() {
   };
 
   return (
-    <div className="flex flex-col container text-center">
-      {/* LOADING */}
-      {isSubmitting ? (
-        <div className="flex flex-col w-screen h-screen top-0 left-0 absolute items-center justify-center bg-gray-900/60 dark:bg-gray-800/50 transition-all duration-300">
-          <Dna
-            visible={true}
-            height="80"
-            width="80"
-            ariaLabel="dna-loading"
-            wrapperStyle={{}}
-            wrapperClass="dna-wrapper"
-          />
-          <h1 className="text-xl text-white mb-3">Loading...</h1>
-        </div>
-      ) : null}
+    <div className={divMasterPage}>
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
       {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
 
-      {/* TITLE */}
-      <h1 className="font-bold text-2xl my-4">Adicionar Usuário</h1>
+      {/* PAGE TITLE */}
+      <h1 className={pageTitleH1}>Adicionar Usuário</h1>
 
       {/* FORM */}
-      <form
-        onSubmit={handleSubmit(handleAddUser)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
-      >
+      <form onSubmit={handleSubmit(handleAddUser)} className={formMaster}>
         {/* USER NAME */}
-        <div className="flex gap-2 items-center">
+        <div className={divItemsForm}>
           <label
             htmlFor="name"
-            className={
-              errors.name
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.name ? labelTextError : labelTextOk}
           >
             Nome:{" "}
           </label>
@@ -344,11 +363,7 @@ export function InsertUser() {
                 ? "É necessário inserir o Nome do Usuário"
                 : "Insira o nome do Usuário"
             }
-            className={
-              errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
+            className={errors.name ? inputError : inputOk}
             value={userData.name}
             onChange={(e) => {
               setUserData({
@@ -361,14 +376,10 @@ export function InsertUser() {
         </div>
 
         {/* USER E-MAIL */}
-        <div className="flex gap-2 items-center">
+        <div className={divItemsForm}>
           <label
             htmlFor="email"
-            className={
-              errors.email
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.email ? labelTextError : labelTextOk}
           >
             E-mail:{" "}
           </label>
@@ -381,11 +392,7 @@ export function InsertUser() {
                 ? "É necessário inserir o E-mail do Usuário"
                 : "Insira o E-mail do Usuário"
             }
-            className={
-              errors.email
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
+            className={errors.email ? inputError : inputOk}
             value={userData.email}
             onChange={(e) => {
               setUserData({
@@ -398,14 +405,10 @@ export function InsertUser() {
         </div>
 
         {/* PASSWORD */}
-        <div className="flex gap-2 items-center">
+        <div className={divItemsForm}>
           <label
             htmlFor="password"
-            className={
-              errors.password
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.password ? labelTextError : labelTextOk}
           >
             Senha:{" "}
           </label>
@@ -416,11 +419,7 @@ export function InsertUser() {
             placeholder={
               errors.password ? "É necessário inserir a Senha" : "Senha"
             }
-            className={
-              errors.password
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
+            className={errors.password ? inputError : inputOk}
             value={userData.password}
             onChange={(e) => {
               setUserData({
@@ -433,14 +432,10 @@ export function InsertUser() {
         </div>
 
         {/* CONFIRM PASSWORD */}
-        <div className="flex gap-2 items-center">
+        <div className={divItemsForm}>
           <label
             htmlFor="confirmPassword"
-            className={
-              errors.confirmPassword
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.confirmPassword ? labelTextError : labelTextOk}
           >
             Confirme a Senha:{" "}
           </label>
@@ -453,11 +448,7 @@ export function InsertUser() {
                 ? "É necessário confirmar a Senha"
                 : "Confirme a Senha"
             }
-            className={
-              errors.confirmPassword
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
+            className={errors.confirmPassword ? inputError : inputOk}
             value={userData.confirmPassword}
             onChange={(e) => {
               setUserData({
@@ -470,27 +461,19 @@ export function InsertUser() {
         </div>
 
         {/* PHONE */}
-        <div className="flex gap-2 items-center">
+        <div className={divItemsForm}>
           <label
             htmlFor="phone"
-            className={
-              errors.phone
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.phone ? labelTextError : labelTextOk}
           >
             Telefone:{" "}
           </label>
-          <div className="flex w-2/4 gap-2">
-            <div className="flex w-10/12 items-center gap-1">
+          <div className={divPhoneMaster}>
+            <div className={divPhoneNumber}>
               <select
                 id="phoneDDD"
                 defaultValue={"DDD"}
-                className={
-                  errors.phone
-                    ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
+                className={errors.phone ? selectDDDError : selectDDDOk}
                 name="DDD"
                 value={phoneFormatted.ddd}
                 onChange={(e) => {
@@ -511,9 +494,7 @@ export function InsertUser() {
                 value={phoneFormatted.prefix}
                 placeholder={errors.phone ? "É necessário um" : "99999"}
                 className={
-                  errors.phone
-                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                  errors.phone ? inputWithButtonError : inputWithButtonOk
                 }
                 onChange={(e) => {
                   setPhoneFormatted({
@@ -534,9 +515,7 @@ export function InsertUser() {
                 value={phoneFormatted.suffix}
                 placeholder={errors.phone ? "telefone válido" : "9990"}
                 className={
-                  errors.phone
-                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                  errors.phone ? inputWithButtonError : inputWithButtonOk
                 }
                 onChange={(e) => {
                   setPhoneFormatted({
@@ -549,30 +528,22 @@ export function InsertUser() {
                 }}
               />
             </div>
-            <div className="w-2/12"></div>
+            <div className={divWithDoubleItemsRight}></div>
           </div>
         </div>
 
         {/* USER ROLE */}
-        <div className="flex gap-2 items-center">
+        <div className={divItemsForm}>
           <label
             htmlFor="role"
-            className={
-              errors.role
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.role ? labelTextError : labelTextOk}
           >
             Permissão:{" "}
           </label>
           <select
             id="role"
             value={userData.role}
-            className={
-              errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
+            className={errors.name ? inputError : inputOk}
             name="role"
             onChange={(e) => {
               if (
@@ -597,11 +568,11 @@ export function InsertUser() {
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
+        <div className={divCheckboxItem}>
           <input
             type="checkbox"
             name="confirmInsert"
-            className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
+            className={inputCheckbox}
             checked={userData.confirmInsert}
             onChange={() => {
               setUserData({
@@ -610,10 +581,7 @@ export function InsertUser() {
               });
             }}
           />
-          <label
-            htmlFor="confirmInsert"
-            className="text-sm text-gray-600 dark:text-gray-100"
-          >
+          <label htmlFor="confirmInsert" className={labelCheckbox}>
             {userData.name
               ? `Confirmar criação do Usuário: ${userData.name}`
               : `Confirmar criação`}
@@ -621,12 +589,12 @@ export function InsertUser() {
         </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
+        <div className={divSubmitResetItems}>
           {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+            className={buttonSubmit}
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>
@@ -634,7 +602,7 @@ export function InsertUser() {
           {/* RESET BUTTON */}
           <button
             type="reset"
-            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+            className={buttonReset}
             disabled={isSubmitting}
             onClick={() => {
               resetForm();

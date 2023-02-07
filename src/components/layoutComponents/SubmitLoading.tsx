@@ -1,4 +1,5 @@
 import { Dna } from "react-loader-spinner";
+
 import { SubmitLoadingProps } from "../../@types";
 import {
   divSubmitLoadingCard,
@@ -14,6 +15,7 @@ export function SubmitLoading({
     <>
       {isSubmitting ? (
         <div className={divSubmitLoadingMaster}>
+          {/* SUBMIT LOADING CARD */}
           <div className={divSubmitLoadingCard}>
             <Dna
               visible={true}

@@ -1,4 +1,10 @@
+import Link from "next/link";
+import { useTheme } from "next-themes";
+import { toast } from "react-toastify";
+import { useRouter } from "next/router";
+import { useState, useEffect } from "react";
 import { getAuth, User } from "firebase/auth";
+import { useAuthState } from "react-firebase-hooks/auth";
 import {
   collection,
   getDocs,
@@ -6,14 +12,18 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { useTheme } from "next-themes";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { toast } from "react-toastify";
+
 import { UserFullDataProps } from "../../@types";
 import { app, initFirebase } from "../../db/Firebase";
+import {
+  buttonThemeChanger,
+  divHeaderCenter,
+  divHeaderContainer,
+  divHeaderItemNavigation,
+  divHeaderLeft,
+  divHeaderMaster,
+  divHeaderRight,
+} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -34,9 +44,10 @@ export function Header() {
   // THEME CHANGER HOOK
   const { systemTheme, theme, setTheme } = useTheme();
 
-  // WHAT IS THIS?
+  // MOUNTED PAGE
   const [mounted, setMounted] = useState(false);
 
+  // MOUNTED AFTER PAGE IS LOADED
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -72,6 +83,7 @@ export function Header() {
       );
   };
 
+  // IF NO USER REDIRECT, IF USER GET DATA
   useEffect(() => {
     if (!user) {
       router.push("/");
@@ -98,8 +110,9 @@ export function Header() {
     if (!mounted) return null;
     const currentTheme = theme === "system" ? systemTheme : theme;
     return (
+      /* BUTTON THEME CHANGER */
       <button
-        className="bg-gray-100 text-slate-800 dark:bg-gray-700 dark:text-yellow-500 p-2 rounded-md hover:ring-2 hover:ring-gray-300"
+        className={buttonThemeChanger}
         onClick={() => setTheme(currentTheme === "light" ? "dark" : "light")}
       >
         <svg
@@ -111,12 +124,14 @@ export function Header() {
           className="w-6 h-6"
         >
           {currentTheme === "light" ? (
+            /* BUTTON THEME CHANGER TO DARK */
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
               d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"
             />
           ) : (
+            /* BUTTON THEME CHANGER TO LIGHT */
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -129,26 +144,24 @@ export function Header() {
   };
 
   return (
-    <div className="w-screen flex justify-center top-0 left-0 mb-4 bg-gray-100 dark:bg-gray-600">
-      <div className="flex container justify-between items-center py-6">
-        <div className="w-1/6">
+    <div className={divHeaderMaster}>
+      <div className={divHeaderContainer}>
+        {/* 'HI USER' LEFT */}
+        <div className={divHeaderLeft}>
           {user ? <p>Olá, {user.displayName}</p> : null}
         </div>
-        <div className="flex w-4/6 justify-center gap-10">
+
+        {/* NAVIGATION DISPLAY CENTER */}
+        <div className={divHeaderCenter}>
           {user ? (
             <>
               {navigations.map((nav) => (
-                <div
-                  key={nav.path}
-                  className="flex border-b-2 border-gray-100 hover:border-black dark:border-gray-600 dark:hover:border-gray-100"
-                >
+                <div key={nav.path} className={divHeaderItemNavigation}>
                   <Link href={nav.path}>{nav.label}</Link>
                 </div>
               ))}
-              <div
-                key={"logout"}
-                className="flex border-b-2 border-gray-100 hover:border-black dark:border-gray-600 dark:hover:border-gray-100"
-              >
+              {/* NAVIGATION LOGOUT ITEM */}
+              <div key={"logout"} className={divHeaderItemNavigation}>
                 <p className="cursor-pointer" onClick={() => auth.signOut()}>
                   Sair
                 </p>
@@ -156,7 +169,9 @@ export function Header() {
             </>
           ) : null}
         </div>
-        <div className="flex w-1/6 justify-end">{renderThemeChanger()}</div>
+
+        {/* BUTTON THEME CHANGE RIGHT */}
+        <div className={divHeaderRight}>{renderThemeChanger()}</div>
       </div>
     </div>
   );

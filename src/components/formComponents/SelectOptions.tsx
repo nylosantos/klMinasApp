@@ -26,6 +26,7 @@ export function SelectOptions({
   studentId,
   returnId = false,
   displaySchoolCourseAndSchedule = false,
+  displayAdmins = false,
   handleData,
 }: SelectProps) {
   // DATA STATE
@@ -34,7 +35,16 @@ export function SelectOptions({
   // GET DATA
   const handleOptionData = async () => {
     const q =
-      dataType === "schoolClasses" && schoolId
+      dataType === "appUsers" && displayAdmins
+        ? // QUERY FOR SEARCH APP USERS, "ROOT" USERS
+          query(collection(db, dataType), where("role", "!=", "root"))
+        : dataType === "appUsers"
+        ? // QUERY FOR SEARCH APP USERS, EXCEPT "ADMIN" AND "ROOT" USERS
+          query(
+            collection(db, dataType),
+            where("role", "not-in", ["admin", "root"])
+          )
+        : dataType === "schoolClasses" && schoolId
         ? // QUERY FOR SEARCH ONLY SCHOOL CLASSES AVAILABLE OF SCHOOL ID
           query(
             collection(db, dataType),

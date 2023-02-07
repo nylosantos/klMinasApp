@@ -58,7 +58,7 @@ import {
   labelTextRight,
   divWithDoubleItemsLeftExtended,
   divWithDoubleItemsRightExtended,
-  buttonEdit,
+  buttonEditAddress,
   divPhoneMaster,
   divPhoneNumber,
   selectDDDError,
@@ -1450,7 +1450,7 @@ export function InsertStudent() {
             type="button"
             name="editAddressButton"
             disabled={editAddress}
-            className={buttonEdit}
+            className={buttonEditAddress}
             onClick={() => setEditAddress(true)}
           >
             {editAddress

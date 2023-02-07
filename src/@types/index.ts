@@ -226,6 +226,7 @@ export interface SelectProps {
   studentId?: string;
   returnId?: boolean;
   displaySchoolCourseAndSchedule?: boolean;
+  displayAdmins?: boolean;
   handleData?: (data: any) => void;
 }
 
@@ -410,4 +411,10 @@ export interface ExcludeFamilyProps {
 export interface SubmitLoadingProps {
   isSubmitting: boolean;
   whatsGoingOn: string;
+}
+
+export interface ButtonSignProps {
+  isSubmitting: boolean;
+  signType: 'signIn' | 'signUp'
+  isClosed?: boolean;
 }

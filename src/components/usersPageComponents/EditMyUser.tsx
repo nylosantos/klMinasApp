@@ -21,6 +21,7 @@ import { editUserValidationSchema } from "../../@types/zodValidation";
 import { EditUserValidationZProps, UserFullDataProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -332,26 +333,17 @@ export function EditMyUser() {
       {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
 
+      {/* TITLE */}
+      <h1 className="font-bold text-2xl my-4">Editando {userEditData?.name}</h1>
+
       {/* LOADING DATA */}
       {!userFullData ? (
-        <div className="flex flex-col w-screen h-screen top-0 left-0 absolute items-center justify-center bg-gray-900/60 dark:bg-gray-800/50 transition-all duration-300">
-          <Dna
-            visible={true}
-            height="80"
-            width="80"
-            ariaLabel="dna-loading"
-            wrapperStyle={{}}
-            wrapperClass="dna-wrapper"
-          />
-          <h1 className="text-xl text-white mb-3">Loading...</h1>
-        </div>
+        <SubmitLoading
+          isSubmitting={userFullData ? false : true}
+          whatsGoingOn="carregando"
+        />
       ) : (
         <>
-          {/* TITLE */}
-          <h1 className="font-bold text-2xl my-4">
-            Editando {userEditData?.name}
-          </h1>
-
           {/* FORM */}
           <form
             onSubmit={handleSubmit(handleEditUser)}
@@ -560,7 +552,9 @@ export function EditMyUser() {
                     id="phoneDDD"
                     disabled={isSubmitting}
                     defaultValue={
-                      userFullData ? userFullData.phone?.slice(3, 5) : "DDD"
+                      userFullData.phone
+                        ? userFullData.phone?.slice(3, 5)
+                        : "DDD"
                     }
                     className={
                       errors.phone

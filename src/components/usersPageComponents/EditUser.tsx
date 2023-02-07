@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
+import { getFunctions } from "firebase/functions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -10,15 +12,39 @@ import {
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
-import { getFunctions } from "firebase/functions";
-import { Dna } from "react-loader-spinner";
-import "react-toastify/dist/ReactToastify.css";
 
-import { editUserValidationSchema } from "../../@types/zodValidation";
-import { EditUserValidationZProps, UserFullDataProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import { editUserValidationSchema } from "../../@types/zodValidation";
+import { EditUserValidationZProps, UserFullDataProps } from "../../@types";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
+import {
+  buttonEdit,
+  buttonReset,
+  buttonSubmit,
+  divEditButton,
+  divItemsForm,
+  divMasterPage,
+  divPhoneMaster,
+  divPhoneNumber,
+  divSubmitResetItems,
+  divWithDoubleItems,
+  divWithDoubleItemsRight,
+  formMaster,
+  inputCheckbox,
+  inputError,
+  inputOk,
+  inputWithButtonError,
+  inputWithButtonOk,
+  labelTextError,
+  labelTextOk,
+  pageTitleH1,
+  selectDDDError,
+  selectDDDOk,
+  selectError,
+  selectOk,
+} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -36,6 +62,7 @@ export function EditUser() {
     "updateAppUserWithPassword"
   );
 
+  // ---------------------------- USER VARIABLES, STATES AND FUNCTIONS ---------------------------- //
   // USER EDIT DATA
   const [userEditData, setUserEditData] = useState<EditUserValidationZProps>({
     id: "",
@@ -76,6 +103,7 @@ export function EditUser() {
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
+  // -------------------------- USER SELECT STATES AND FUNCTIONS -------------------------- //
   // USER DATA ARRAY WITH ALL OPTIONS OF SELECT USERS
   const [usersDataArray, setUsersDataArray] = useState<UserFullDataProps[]>();
 
@@ -121,6 +149,8 @@ export function EditUser() {
       });
     }
   }, [userSelectedData]);
+  // -------------------------- END OF USER SELECT STATES AND FUNCTIONS -------------------------- //
+  // ---------------------------- END OF USER VARIABLES, STATES AND FUNCTIONS ---------------------------- //
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -233,12 +263,14 @@ export function EditUser() {
         // UPDATING USER CHANGING PASSWORD
         setErrorPassword(false);
         try {
+          // UPDATE USER WITH PASSWORD FUNCTION
           await updateAppUserWithPassword(data);
           // CHECKING IF USER IS WAS AND NOW ISN'T A TEACHER
           if (
             userSelectedData?.role === "teacher" &&
             userEditData.role !== "teacher"
           ) {
+            // DELETE TEACHER FROM TEACHERS DATABASE FUNCTION
             await deleteDoc(doc(db, "teachers", data.id));
             toast.success(`${data.name} editado com sucesso! 👌`, {
               theme: "colored",
@@ -254,6 +286,7 @@ export function EditUser() {
             userSelectedData?.role !== "teacher" &&
             userEditData.role === "teacher"
           ) {
+            // ADD TEACHER FROM TEACHERS DATABASE FUNCTION
             await setDoc(doc(db, "teachers", data.id), {
               id: data.id,
               name: data.name,
@@ -298,12 +331,14 @@ export function EditUser() {
       // UPDATING USER WITHOUT CHANGE PASSWORD
       setErrorPassword(false);
       try {
+        // UPDATE USER WITHOUT PASSWORD FUNCTION
         await updateAppUserWithoutPassword(data);
         // CHECKING IF USER IS WAS AND NOW ISN'T A TEACHER
         if (
           userSelectedData?.role === "teacher" &&
           userEditData.role !== "teacher"
         ) {
+          // DELETE TEACHER FROM TEACHERS DATABASE FUNCTION
           await deleteDoc(doc(db, "teachers", data.id));
           toast.success(`${data.name} editado com sucesso! 👌`, {
             theme: "colored",
@@ -319,6 +354,7 @@ export function EditUser() {
           userSelectedData?.role !== "teacher" &&
           userEditData.role === "teacher"
         ) {
+          // ADD TEACHER FROM TEACHERS DATABASE FUNCTION
           await setDoc(doc(db, "teachers", data.id), {
             id: data.id,
             name: data.name,
@@ -362,55 +398,32 @@ export function EditUser() {
   };
 
   return (
-    <div className="flex flex-col container text-center">
-      {/* LOADING */}
-      {isSubmitting ? (
-        <div className="flex flex-col w-screen h-screen top-0 left-0 absolute items-center justify-center bg-gray-900/60 dark:bg-gray-800/50 transition-all duration-300">
-          <Dna
-            visible={true}
-            height="80"
-            width="80"
-            ariaLabel="dna-loading"
-            wrapperStyle={{}}
-            wrapperClass="dna-wrapper"
-          />
-          <h1 className="text-xl text-white mb-3">Loading...</h1>
-        </div>
-      ) : null}
+    <div className={divMasterPage}>
+      {/* SUBMITING LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="editando" />
 
       {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
 
-      {/* TITLE */}
-      <h1 className="font-bold text-2xl my-4">
+      {/* PAGE TITLE */}
+      <h1 className={pageTitleH1}>
         {isEdit ? `Editando ${userEditData.name}` : "Editar Usuário"}
       </h1>
 
       {/* FORM */}
-      <form
-        onSubmit={handleSubmit(handleEditUser)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
-      >
+      <form onSubmit={handleSubmit(handleEditUser)} className={formMaster}>
         {/* USER SELECT */}
-        <div className="flex gap-2 items-center">
+        <div className={divItemsForm}>
           <label
             htmlFor="userSelect"
-            className={
-              errors.name
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.name ? labelTextError : labelTextOk}
           >
             Selecione o Usuário:{" "}
           </label>
           <select
             id="userSelect"
             defaultValue={" -- select an option -- "}
-            className={
-              errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
+            className={errors.name ? selectError : selectOk}
             name="userSelect"
             onChange={(e) => {
               setUserEditData({
@@ -431,11 +444,11 @@ export function EditUser() {
         {isSelected ? (
           <>
             {/* EDIT BUTTON */}
-            <div className="flex gap-2 mt-4 justify-center">
+            <div className={divEditButton}>
               <button
                 type="button"
                 disabled={isEdit}
-                className="w-3/4 border rounded-xl border-green-900/10 bg-green-500 disabled:bg-amber-500/70 disabled:dark:bg-amber-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50"
+                className={buttonEdit}
                 onClick={() => {
                   setIsEdit(true);
                 }}
@@ -451,14 +464,10 @@ export function EditUser() {
         {isEdit ? (
           <>
             {/* USER NAME */}
-            <div className="flex gap-2 items-center">
+            <div className={divItemsForm}>
               <label
                 htmlFor="name"
-                className={
-                  errors.name
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-                }
+                className={errors.name ? labelTextError : labelTextOk}
               >
                 Nome:{" "}
               </label>
@@ -471,11 +480,7 @@ export function EditUser() {
                     ? "É necessário inserir o Nome do Usuário"
                     : "Insira o nome do Usuário"
                 }
-                className={
-                  errors.name
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
+                className={errors.name ? inputError : inputOk}
                 value={userEditData.name}
                 onChange={(e) => {
                   setUserEditData({
@@ -487,14 +492,10 @@ export function EditUser() {
             </div>
 
             {/* USER E-MAIL */}
-            <div className="flex gap-2 items-center">
+            <div className={divItemsForm}>
               <label
                 htmlFor="email"
-                className={
-                  errors.email
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-                }
+                className={errors.email ? labelTextError : labelTextOk}
               >
                 E-mail:{" "}
               </label>
@@ -507,11 +508,7 @@ export function EditUser() {
                     ? "É necessário inserir o E-mail do Usuário"
                     : "Insira o E-mail do Usuário"
                 }
-                className={
-                  errors.email
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
+                className={errors.email ? inputError : inputOk}
                 value={userEditData.email}
                 onChange={(e) => {
                   setUserEditData({
@@ -523,22 +520,18 @@ export function EditUser() {
             </div>
 
             {/** CHECKBOX CHANGE PASSWORD */}
-            <div className="flex gap-2 items-center">
+            <div className={divItemsForm}>
               <label
                 htmlFor="changePassword"
-                className={
-                  errors.password
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-                }
+                className={errors.password ? labelTextError : labelTextOk}
               >
                 Alterar Senha ?{" "}
               </label>
-              <div className="w-3/4 flex items-center gap-2">
+              <div className={`${divWithDoubleItems} items-center`}>
                 <input
                   type="checkbox"
                   name="changePassword"
-                  className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
+                  className={inputCheckbox}
                   checked={userEditData.changePassword}
                   onChange={() => {
                     setUserEditData({
@@ -552,15 +545,15 @@ export function EditUser() {
             {userEditData.changePassword ? (
               <>
                 {/* PASSWORD */}
-                <div className="flex gap-2 items-center">
+                <div className={divItemsForm}>
                   <label
                     htmlFor="password"
                     className={
                       !errorPassword
                         ? errors.password
-                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                          : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-                        : "w-1/4 text-right text-red-500 dark:text-red-400"
+                          ? labelTextError
+                          : labelTextOk
+                        : labelTextError
                     }
                   >
                     Senha:{" "}
@@ -579,9 +572,9 @@ export function EditUser() {
                     className={
                       !errorPassword
                         ? errors.password
-                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          ? inputError
+                          : inputOk
+                        : inputError
                     }
                     onChange={(e) => {
                       setUserEditData({
@@ -593,15 +586,15 @@ export function EditUser() {
                 </div>
 
                 {/* CONFIRM PASSWORD */}
-                <div className="flex gap-2 items-center">
+                <div className={divItemsForm}>
                   <label
                     htmlFor="confirmPassword"
                     className={
                       !errorPassword
                         ? errors.confirmPassword
-                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                          : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-                        : "w-1/4 text-right text-red-500 dark:text-red-400"
+                          ? labelTextError
+                          : labelTextOk
+                        : labelTextError
                     }
                   >
                     Confirme a Senha:{" "}
@@ -620,9 +613,9 @@ export function EditUser() {
                     className={
                       !errorPassword
                         ? errors.confirmPassword
-                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          ? inputError
+                          : inputOk
+                        : inputError
                     }
                     onChange={(e) => {
                       setUserEditData({
@@ -636,28 +629,24 @@ export function EditUser() {
             ) : null}
 
             {/* PHONE */}
-            <div className="flex gap-2 items-center">
+            <div className={divItemsForm}>
               <label
                 htmlFor="phone"
-                className={
-                  errors.phone
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-                }
+                className={errors.phone ? labelTextError : labelTextOk}
               >
                 Telefone:{" "}
               </label>
-              <div className="flex w-2/4 gap-2">
-                <div className="flex w-10/12 items-center gap-1">
+              <div className={divPhoneMaster}>
+                <div className={divPhoneNumber}>
                   <select
                     id="phoneDDD"
                     disabled={isSubmitting}
-                    defaultValue={userSelectedData?.phone?.slice(3, 5)}
-                    className={
-                      errors.phone
-                        ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    defaultValue={
+                      userSelectedData?.phone
+                        ? userSelectedData?.phone?.slice(3, 5)
+                        : "DDD"
                     }
+                    className={errors.phone ? selectDDDError : selectDDDOk}
                     name="DDD"
                     onChange={(e) => {
                       setPhoneFormatted({
@@ -677,9 +666,7 @@ export function EditUser() {
                     defaultValue={userSelectedData?.phone?.slice(5, 10)}
                     placeholder={errors.phone ? "É necessário um" : "99999"}
                     className={
-                      errors.phone
-                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      errors.phone ? inputWithButtonError : inputWithButtonOk
                     }
                     onChange={(e) => {
                       setPhoneFormatted({
@@ -698,9 +685,7 @@ export function EditUser() {
                     defaultValue={userSelectedData?.phone?.slice(-4)}
                     placeholder={errors.phone ? "telefone válido" : "9990"}
                     className={
-                      errors.phone
-                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      errors.phone ? inputWithButtonError : inputWithButtonOk
                     }
                     onChange={(e) => {
                       setPhoneFormatted({
@@ -710,19 +695,15 @@ export function EditUser() {
                     }}
                   />
                 </div>
-                <div className="w-2/12"></div>
+                <div className={divWithDoubleItemsRight}></div>
               </div>
             </div>
 
             {/* USER ROLE */}
-            <div className="flex gap-2 items-center">
+            <div className={divItemsForm}>
               <label
                 htmlFor="role"
-                className={
-                  errors.role
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-                }
+                className={errors.role ? labelTextError : labelTextOk}
               >
                 Permissão:{" "}
               </label>
@@ -730,11 +711,7 @@ export function EditUser() {
                 id="role"
                 disabled={isSubmitting}
                 value={userEditData.role}
-                className={
-                  errors.name
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
+                className={errors.name ? selectError : selectOk}
                 name="role"
                 onChange={(e) => {
                   if (
@@ -759,12 +736,12 @@ export function EditUser() {
             </div>
 
             {/* SUBMIT AND RESET BUTTONS */}
-            <div className="flex gap-2 mt-4">
+            <div className={divSubmitResetItems}>
               {/* SUBMIT BUTTON */}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+                className={buttonSubmit}
               >
                 {!isSubmitting ? "Salvar" : "Salvando"}
               </button>
@@ -772,7 +749,7 @@ export function EditUser() {
               {/* RESET BUTTON */}
               <button
                 type="reset"
-                className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+                className={buttonReset}
                 disabled={isSubmitting}
                 onClick={() => {
                   resetForm();

@@ -1,7 +1,15 @@
-import { ClassDaysCompProps, DaysProps } from "../../@types";
 import { v4 as uuidv4 } from "uuid";
 
+import { ClassDaysCompProps, DaysProps } from "../../@types";
+import {
+  classDayTitleP,
+  divClassDayCard,
+  divClassDayCardMaster,
+  inputCheckbox,
+} from "../../styles/tailwindConstants";
+
 export function ClassDays({ classDay, toggleClassDays }: ClassDaysCompProps) {
+  // DAYS DATA
   const days: DaysProps = {
     sunday: "Domingo",
     monday: "Segunda",
@@ -13,8 +21,11 @@ export function ClassDays({ classDay, toggleClassDays }: ClassDaysCompProps) {
   };
   return (
     <>
-      <p className="mt-4 mb-2">Selecione os dias de aula</p>
-      <div className="flex w-full justify-evenly items-center mb-4">
+      {/* CLASS DAY SECTION TITLE */}
+      <p className={classDayTitleP}>Selecione os dias de aula</p>
+
+      {/* CLASS DAY CARD */}
+      <div className={divClassDayCardMaster}>
         {Object.keys(classDay).map((item) => {
           if (
             item !== "sunday" &&
@@ -28,12 +39,11 @@ export function ClassDays({ classDay, toggleClassDays }: ClassDaysCompProps) {
             return null;
           }
           return (
-            <div
-              key={uuidv4()}
-              className="flex flex-col w-24 items-center gap-2 bg-white/50 dark:bg-gray-800 py-2 pt-4 rounded-xl"
-            >
+            <div key={uuidv4()} className={divClassDayCard}>
               <input
+                key={uuidv4()}
                 type="checkbox"
+                className={inputCheckbox}
                 id={item}
                 name={item}
                 checked={classDay[item]}
@@ -41,7 +51,10 @@ export function ClassDays({ classDay, toggleClassDays }: ClassDaysCompProps) {
                   toggleClassDays({ day: item, value: !classDay[item] })
                 }
               />
-              <label htmlFor={item}> {days[item as keyof DaysProps]}</label>
+              <label key={uuidv4()} htmlFor={item}>
+                {" "}
+                {days[item as keyof DaysProps]}
+              </label>
             </div>
           );
         })}
