@@ -1,11 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import CurrencyInput from "react-currency-input-field";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
   doc,
@@ -17,15 +17,32 @@ import {
   where,
 } from "firebase/firestore";
 
-import { createCourseValidationSchema } from "../../@types/zodValidation";
-import { CreateCourseValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
+import { CreateCourseValidationZProps } from "../../@types";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import { createCourseValidationSchema } from "../../@types/zodValidation";
+import {
+  buttonReset,
+  buttonSubmit,
+  divCheckboxItem,
+  divItemsForm,
+  divMasterPage,
+  divSubmitResetItems,
+  formMaster,
+  inputCheckbox,
+  inputError,
+  inputOk,
+  labelCheckbox,
+  labelTextError,
+  labelTextOk,
+  pageTitleH1,
+} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertCourse() {
-  // COURSE DATA
+  // SCHOOL COURSE DATA
   const [courseData, setCourseData] = useState<CreateCourseValidationZProps>({
     name: "",
     price: 0,
@@ -81,6 +98,7 @@ export function InsertCourse() {
     });
   }, [errors]);
 
+  // SUBMIT DATA FUNCTION
   const handleAddCourse: SubmitHandler<CreateCourseValidationZProps> = async (
     data
   ) => {
@@ -101,7 +119,39 @@ export function InsertCourse() {
       );
     }
 
-    // CHECKING IF COURSE EXISTS ON DATABASE
+    // ADD SCHOOL COURSE FUNCTION
+    const addCourse = async () => {
+      try {
+        const commonId = uuidv4();
+        await setDoc(doc(db, "schoolCourses", commonId), {
+          id: commonId,
+          name: data.name,
+          price: data.price,
+          timestamp: serverTimestamp(),
+        });
+        resetForm();
+        toast.success(`${data.name} criado com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
+
+    // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
     const courseRef = collection(db, "schoolCourses");
     const q = query(courseRef, where("name", "==", data.name));
     const querySnapshot = await getDocs(q);
@@ -125,58 +175,29 @@ export function InsertCourse() {
         );
       } else {
         // IF NOT EXISTS, CREATE
-        const addCourse = async () => {
-          try {
-            const commonId = uuidv4();
-            await setDoc(doc(db, "schoolCourses", commonId), {
-              id: commonId,
-              name: data.name,
-              price: data.price,
-              timestamp: serverTimestamp(),
-            });
-            resetForm();
-            toast.success(`${data.name} criado com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
         addCourse();
       }
     });
   };
 
   return (
-    <div className="flex flex-col container text-center">
+    <div className={divMasterPage}>
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
-      <h1 className="font-bold text-2xl my-4">Adicionar Curso / Aula</h1>
-      <form
-        onSubmit={handleSubmit(handleAddCourse)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
-      >
-        {/* COURSE NAME */}
-        <div className="flex gap-2 items-center">
+
+      {/* PAGE TITLE */}
+      <h1 className={pageTitleH1}>Adicionar Curso / Aula</h1>
+
+      {/* FORM */}
+      <form onSubmit={handleSubmit(handleAddCourse)} className={formMaster}>
+        {/* SCHOOL COURSE NAME */}
+        <div className={divItemsForm}>
           <label
             htmlFor="name"
-            className={
-              errors.name
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.name ? labelTextError : labelTextOk}
           >
             Modalidade:{" "}
           </label>
@@ -189,11 +210,7 @@ export function InsertCourse() {
                 ? "É necessário inserir o nome do Curso"
                 : "Insira o nome do Curso"
             }
-            className={
-              errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
+            className={errors.name ? inputError : inputOk}
             value={courseData.name}
             onChange={(e) => {
               setCourseData({ ...courseData, name: e.target.value });
@@ -201,20 +218,16 @@ export function InsertCourse() {
           />
         </div>
 
-        {/* COURSE PRICE */}
-        <div className="flex gap-2 items-center">
+        {/* SCHOOL COURSE PRICE */}
+        <div className={divItemsForm}>
           <label
             htmlFor="price"
-            className={
-              errors.price
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.price ? labelTextError : labelTextOk}
           >
             Preço:{" "}
           </label>
           <CurrencyInput
-            name="input-name"
+            name="price"
             placeholder={
               errors.price
                 ? "É necessário inserir o valor mensal do Curso / Aula"
@@ -233,20 +246,16 @@ export function InsertCourse() {
                   })
                 : null
             }
-            className={
-              errors.price
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
-            }
+            className={errors.price ? inputError : inputOk}
           />
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
+        <div className={divCheckboxItem}>
           <input
             type="checkbox"
             name="confirmInsert"
-            className="ml-1 dark: text-green-500 dark:text-green-500 border-none "
+            className={inputCheckbox}
             checked={courseData.confirmInsert}
             onChange={() => {
               setCourseData({
@@ -255,10 +264,7 @@ export function InsertCourse() {
               });
             }}
           />
-          <label
-            htmlFor="confirmDelete"
-            className="text-sm text-gray-600 dark:text-gray-100"
-          >
+          <label htmlFor="confirmInsert" className={labelCheckbox}>
             {courseData.name
               ? `Confirmar criação da modalidade ${courseData.name}`
               : `Confirmar criação`}
@@ -266,12 +272,12 @@ export function InsertCourse() {
         </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
+        <div className={divSubmitResetItems}>
           {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+            className={buttonSubmit}
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>
@@ -279,7 +285,7 @@ export function InsertCourse() {
           {/* RESET BUTTON */}
           <button
             type="reset"
-            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+            className={buttonReset}
             disabled={isSubmitting}
             onClick={() => {
               resetForm();

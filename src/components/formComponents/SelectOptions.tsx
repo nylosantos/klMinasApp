@@ -25,26 +25,25 @@ export function SelectOptions({
   curriculumId,
   studentId,
   returnId = false,
+  displaySchoolCourseAndSchedule = false,
   handleData,
 }: SelectProps) {
   // DATA STATE
   const [data, setData] = useState([]);
 
-  // FIREBASE FILTER QUERIES
-  const schoolWhereQuery = where("schoolId", "==", schoolId);
-  const schoolClassWhereQuery = where("schoolClassId", "==", schoolClassId);
-  const schoolCourseWhereQuery = where("schoolCourseId", "==", schoolCourseId);
-  const classDayWhereQuery = where("classDayId", "==", classDayId);
-  const scheduleWhereQuery = where("schFeduleId", "==", scheduleId);
-  const teacherWhereQuery = where("teacherId", "==", teacherId);
-  const curriculumWhereQuery = where("curriculumId", "==", curriculumId);
-  const studentWhereQuery = where("studentId", "==", studentId);
-
   // GET DATA
   const handleOptionData = async () => {
     const q =
-      schoolId && schoolClassId && curriculumId
-        ? // QUERY FOR SEARCH ALL STUDENTS WITH SELECTED CURRICULUM FILTER
+      dataType === "schoolClasses" && schoolId
+        ? // QUERY FOR SEARCH ONLY SCHOOL CLASSES AVAILABLE OF SCHOOL ID
+          query(
+            collection(db, dataType),
+            where("schoolId", "==", schoolId),
+            where("available", "==", true),
+            orderBy("name")
+          )
+        : schoolId && schoolClassId && curriculumId
+        ? // QUERY FOR SEARCH ALL STUDENTS WITH SELECTED CURRICULUM ID FILTER
           query(
             collection(db, dataType),
             where("curriculum", "array-contains", curriculumId),
@@ -54,13 +53,13 @@ export function SelectOptions({
         ? // QUERY SEARCH SOMETHING WITH SELECTED SCHOOL AND SCHOOL CLASS FILTERS (CURRICULUM - SCHEDULE)
           query(
             collection(db, dataType),
-            schoolWhereQuery,
-            schoolClassWhereQuery,
+            where("schoolId", "==", schoolId),
+            where("schoolClassId", "==", schoolClassId),
             orderBy("name")
           )
         : schoolId
         ? // QUERY SEARCH SOMETHING WITH SELECTED SCHOOL FILTER
-          query(collection(db, dataType), schoolWhereQuery)
+          query(collection(db, dataType), where("schoolId", "==", schoolId))
         : // QUERY ONLY FOR DATATYPE
           query(collection(db, dataType), orderBy("name"));
     const unsubscribe = onSnapshot(q, (querySnapShot) => {
@@ -96,6 +95,7 @@ export function SelectOptions({
   }, [data]);
 
   return (
+    // DYNAMIC OPTIONS
     <>
       <option disabled value={" -- select an option -- "}>
         {" "}
@@ -104,7 +104,9 @@ export function SelectOptions({
       {data.map((option: any) => (
         <>
           <option key={option.id} value={returnId ? option.id : option.name}>
-            {option.name}
+            {displaySchoolCourseAndSchedule
+              ? `${option.schoolCourse} | ${option.schedule}`
+              : option.name}
           </option>
         </>
       ))}

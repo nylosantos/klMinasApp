@@ -184,17 +184,17 @@ export default function InsertPage() {
           </Tab>
           {userFullData?.role === "root" ? (
             <Tab
-              disabled
+              // disabled
               className={({ selected }) =>
                 classNames(
                   "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                   selected
                     ? // IF DISABLED
-                      "bg-white shadow dark:text-gray-800"
-                    : "text-gray-600/60 dark:text-gray-100/50 hover:bg-white/20 dark:hover:bg-white/[0.03]"
+                      // "bg-white shadow dark:text-gray-800"
+                    // : "text-gray-600/60 dark:text-gray-100/50 hover:bg-white/20 dark:hover:bg-white/[0.03]"
                   // IF ENABLED
-                  // ? "bg-white shadow dark:text-gray-800"
-                  // : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                  "bg-white shadow dark:text-gray-800"
+                  : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
                 )
               }
             >
@@ -227,7 +227,7 @@ export default function InsertPage() {
           <Tab.Panel as={Fragment}>
             <InsertStudent />
           </Tab.Panel>
-          {userFullData?.role === "admin" ? (
+          {userFullData?.role === "root" ? (
             <Tab.Panel as={Fragment}>
               <InsertSeed />
             </Tab.Panel>

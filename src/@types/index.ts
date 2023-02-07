@@ -1,5 +1,4 @@
 import { UseControllerProps } from "react-hook-form";
-import { DateObject } from "react-multi-date-picker";
 import { z } from "zod";
 import {
   createClassDaysValidationSchema,
@@ -226,6 +225,7 @@ export interface SelectProps {
   curriculumId?: string;
   studentId?: string;
   returnId?: boolean;
+  displaySchoolCourseAndSchedule?: boolean;
   handleData?: (data: any) => void;
 }
 
@@ -294,65 +294,6 @@ export interface GetCurriculumNameProps {
     classDayName: string;
     teacherName: string;
   };
-}
-
-export interface DataTypeArrayProps {
-  schools: [
-    {
-      id: string;
-      name: string;
-      timestamp: { nanoseconds: number; seconds: number };
-    }
-  ];
-  schoolClasses: [
-    {
-      id: string;
-      name: string;
-      timestamp: { nanoseconds: number; seconds: number };
-    }
-  ];
-  schoolCourses: [
-    {
-      id: string;
-      name: string;
-      timestamp: { nanoseconds: number; seconds: number };
-    }
-  ];
-  schedules: [
-    {
-      id: string;
-      name: string;
-      timestamp: { nanoseconds: number; seconds: number };
-    }
-  ];
-  classDays: [
-    {
-      id: string;
-      name: string;
-      timestamp: { nanoseconds: number; seconds: number };
-    }
-  ];
-  teachers: [
-    {
-      id: string;
-      name: string;
-      timestamp: { nanoseconds: number; seconds: number };
-    }
-  ];
-  curriculum: [
-    {
-      id: string;
-      name: string;
-      timestamp: { nanoseconds: number; seconds: number };
-    }
-  ];
-  students: [
-    {
-      id: string;
-      name: string;
-      timestamp: { nanoseconds: number; seconds: number };
-    }
-  ];
 }
 
 export interface SchoolSearchProps {
@@ -464,4 +405,9 @@ export interface ExcludeCurriculumProps {
 export interface ExcludeFamilyProps {
   exclude: boolean;
   id: string;
+}
+
+export interface SubmitLoadingProps {
+  isSubmitting: boolean;
+  whatsGoingOn: string;
 }

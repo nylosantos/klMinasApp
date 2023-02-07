@@ -1,10 +1,9 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
   doc,
@@ -16,16 +15,35 @@ import {
   where,
 } from "firebase/firestore";
 
-import { createClassValidationSchema } from "../../@types/zodValidation";
-import { CreateClassValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import { createClassValidationSchema } from "../../@types/zodValidation";
+import { CreateClassValidationZProps, SchoolSearchProps } from "../../@types";
+import {
+  buttonReset,
+  buttonSubmit,
+  divCheckboxItem,
+  divItemsForm,
+  divMasterPage,
+  divSubmitResetItems,
+  formMaster,
+  inputCheckbox,
+  inputError,
+  inputOk,
+  labelCheckbox,
+  labelTextError,
+  labelTextOk,
+  pageTitleH1,
+  selectError,
+  selectOk,
+} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertClass() {
-  // CLASS DATA
+  // SCHOOL CLASS DATA
   const [classData, setClassData] = useState<CreateClassValidationZProps>({
     name: "",
     schoolName: "",
@@ -34,25 +52,40 @@ export function InsertClass() {
     confirmInsert: false,
   });
 
+  // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL
+  const [schoolDataArray, setSchoolDataArray] = useState<SchoolSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
+    setSchoolDataArray(data);
+  };
+
+  // SCHOOL SELECTED STATE DATA
+  const [schoolSelectedData, setSchoolSelectedData] =
+    useState<SchoolSearchProps>();
+
+  // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
+  useEffect(() => {
+    if (classData.schoolId !== "") {
+      setSchoolSelectedData(
+        schoolDataArray!.find(({ id }) => id === classData.schoolId)
+      );
+    } else {
+      setSchoolSelectedData(undefined);
+    }
+  }, [classData.schoolId]);
+
+  // SET SCHOOL NAME WITH SCHOOL SELECTED DATA WHEN SELECT SCHOOL
+  useEffect(() => {
+    if (schoolSelectedData !== undefined) {
+      setClassData({ ...classData, schoolName: schoolSelectedData!.name });
+    }
+  }, [schoolSelectedData]);
+  // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // GET SCHOOL DATA FUNCTION
-  async function getSchoolData(id: string) {
-    const schoolRef = collection(db, "schools");
-    const q = query(schoolRef, where("id", "==", id));
-    const querySnapshot = await getDocs(q);
-    const schoolDataPromises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      schoolDataPromises.push(promise);
-    });
-    setClassData({
-      ...classData,
-      schoolId: id,
-      schoolName: schoolDataPromises[0].name,
-    });
-  }
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -80,7 +113,10 @@ export function InsertClass() {
       available: false,
       confirmInsert: false,
     });
-    reset();
+    ((
+      document.getElementById("schoolSelect") as HTMLSelectElement
+    ).selectedIndex = 0),
+      reset();
   };
 
   // SET REACT HOOK FORM VALUES
@@ -132,7 +168,41 @@ export function InsertClass() {
       );
     }
 
-    // CHECKING IF CLASS EXISTS ON DATABASE
+    // ADD SCHOOL CLASS FUNCTION
+    const addClass = async () => {
+      try {
+        const commonId = uuidv4();
+        await setDoc(doc(db, "schoolClasses", commonId), {
+          id: commonId,
+          name: `Turma ${data.name}`,
+          schoolName: data.schoolName,
+          schoolId: data.schoolId,
+          available: data.available,
+          timestamp: serverTimestamp(),
+        });
+        resetForm();
+        toast.success(`Turma ${data.name} criado com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
+
+    // CHECKING IF SCHOOL CLASS EXISTS ON DATABASE
     const classRef = collection(db, "schoolClasses");
     const q = query(classRef, where("name", "==", `Turma ${data.name}`));
     const querySnapshot = await getDocs(q);
@@ -159,60 +229,33 @@ export function InsertClass() {
         );
       } else {
         // IF NOT EXISTS, CREATE
-        const addClass = async () => {
-          try {
-            const commonId = uuidv4();
-            await setDoc(doc(db, "schoolClasses", commonId), {
-              id: commonId,
-              name: `Turma ${data.name}`,
-              schoolName: data.schoolName,
-              schoolId: data.schoolId,
-              available: data.available,
-              timestamp: serverTimestamp(),
-            });
-            resetForm();
-            toast.success(`Turma ${data.name} criado com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
         addClass();
       }
     });
   };
 
   return (
-    <div className="flex flex-col container text-center">
+    <div className={divMasterPage}>
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
-      <h1 className="font-bold text-2xl my-4">Adicionar Turma</h1>
-      <form
-        onSubmit={handleSubmit(handleAddClass)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
-      >
+
+      {/* PAGE TITLE */}
+      <h1 className={pageTitleH1}>
+        {classData.name
+          ? `Adicionando Turma ${classData.name}`
+          : "Adicionar Turma"}
+      </h1>
+
+      {/* FORM */}
+      <form onSubmit={handleSubmit(handleAddClass)} className={formMaster}>
         {/* CLASS NAME */}
-        <div className="flex gap-2 items-center">
+        <div className={divItemsForm}>
           <label
             htmlFor="name"
-            className={
-              errors.name
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.name ? labelTextError : labelTextOk}
           >
             Nome:{" "}
           </label>
@@ -225,11 +268,7 @@ export function InsertClass() {
                 ? "É necessário inserir o Nome da Turma"
                 : "Insira o nome da Turma"
             }
-            className={
-              errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
+            className={errors.name ? inputError : inputOk}
             value={classData.name}
             onChange={(e) => {
               setClassData({ ...classData, name: e.target.value });
@@ -238,46 +277,44 @@ export function InsertClass() {
         </div>
 
         {/* SCHOOL SELECT */}
-        <div className="flex gap-2 items-center">
+        <div className={divItemsForm}>
           <label
             htmlFor="schoolSelect"
-            className={
-              errors.schoolId
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.schoolId ? labelTextError : labelTextOk}
           >
             Selecione a Escola:{" "}
           </label>
           <select
+            id="schoolSelect"
             defaultValue={" -- select an option -- "}
-            className={
-              errors.schoolId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
+            className={errors.schoolId ? selectError : selectOk}
             name="schoolSelect"
             onChange={(e) => {
-              getSchoolData(e.target.value);
+              setClassData({
+                ...classData,
+                schoolId: e.target.value,
+                confirmInsert: false,
+              });
             }}
           >
-            <SelectOptions returnId dataType="schools" />
+            <SelectOptions
+              returnId
+              dataType="schools"
+              handleData={handleSchoolSelectedData}
+            />
           </select>
         </div>
 
-        {/* CLASS AVAILABILITY */}
-        <div className="flex gap-2 items-center">
+        {/* SCHOOL CLASS AVAILABILITY */}
+        <div className={divItemsForm}>
           <label
             htmlFor="available"
-            className={
-              errors.available
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
-            }
+            className={errors.available ? labelTextError : labelTextOk}
           >
             Disponibilidade:{" "}
           </label>
           <select
+            name="available"
             defaultValue={"closed"}
             onChange={(e) => {
               e.target.value === "opened"
@@ -285,12 +322,9 @@ export function InsertClass() {
                 : e.target.value === "closed"
                 ? setClassData({ ...classData, available: false })
                 : null;
+              setClassData({ ...classData, confirmInsert: false });
             }}
-            className={
-              errors.available
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
-            }
+            className={errors.available ? selectError : selectOk}
           >
             <option disabled value={" -- select an option -- "}>
               {" "}
@@ -302,11 +336,11 @@ export function InsertClass() {
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
+        <div className={divCheckboxItem}>
           <input
             type="checkbox"
             name="confirmInsert"
-            className="ml-1 dark: text-green-500 dark:text-green-500 border-none "
+            className={inputCheckbox}
             checked={classData.confirmInsert}
             onChange={() => {
               setClassData({
@@ -315,10 +349,7 @@ export function InsertClass() {
               });
             }}
           />
-          <label
-            htmlFor="confirmDelete"
-            className="text-sm text-gray-600 dark:text-gray-100"
-          >
+          <label htmlFor="confirmInsert" className={labelCheckbox}>
             {classData.name
               ? `Confirmar criação de Turma ${classData.name}`
               : `Confirmar criação`}
@@ -326,12 +357,12 @@ export function InsertClass() {
         </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
+        <div className={divSubmitResetItems}>
           {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+            className={buttonSubmit}
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>
@@ -339,7 +370,7 @@ export function InsertClass() {
           {/* RESET BUTTON */}
           <button
             type="reset"
-            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+            className={buttonReset}
             disabled={isSubmitting}
             onClick={() => {
               resetForm();

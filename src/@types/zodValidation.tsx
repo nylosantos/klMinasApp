@@ -137,12 +137,18 @@ export const createTeacherValidationSchema = z.object ({
 })
 
 export const createCurriculumValidationSchema = z.object ({
-  school: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
-  schoolClass: z.string().min(1, {message: `Por favor, escolha a Turma`}),
-  schoolCourse: z.string().min(1, {message: `Por favor, escolha a Modalade`}),
-  schedule: z.string().min(1, {message: `Por favor, escolha o Horário`}),
-  classDay: z.string().min(1, {message: `Por favor, escolha os Dias de Aula`}),
-  teacher: z.string().min(1, {message: `Por favor, escolha o Professor`}),
+  schoolId: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
+  schoolName: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
+  schoolClassId: z.string().min(1, {message: `Por favor, escolha a Turma`}),
+  schoolClassName: z.string().min(1, {message: `Por favor, escolha a Turma`}),
+  schoolCourseId: z.string().min(1, {message: `Por favor, escolha a Modalade`}),
+  schoolCourseName: z.string().min(1, {message: `Por favor, escolha a Modalade`}),
+  scheduleId: z.string().min(1, {message: `Por favor, escolha o Horário`}),
+  scheduleName: z.string().min(1, {message: `Por favor, escolha o Horário`}),
+  classDayId: z.string().min(1, {message: `Por favor, escolha os Dias de Aula`}),
+  classDayName: z.string().min(1, {message: `Por favor, escolha os Dias de Aula`}),
+  teacherId: z.string().min(1, {message: `Por favor, escolha o Professor`}),
+  teacherName: z.string().min(1, {message: `Por favor, escolha o Professor`}),
   confirmInsert: z.boolean()
 })
 
@@ -298,7 +304,10 @@ export const editStudentValidationSchema = z.object ({
 
 // SEARCH VALIDATION SCHEMA SCHOOLS
 export const searchCurriculumValidationSchema = z.object ({
-  school: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
-  schoolClass: z.string().min(1, {message: `Por favor, escolha a Turma`}),
-  schoolCourse: z.string().min(1, {message: `Por favor, escolha a Modalidade`})
+  schoolId: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
+  schoolName: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
+  schoolClassId: z.string().min(1, {message: `Por favor, escolha a Turma`}),
+  schoolClassName: z.string().min(1, {message: `Por favor, escolha a Turma`}),
+  schoolCourseId: z.string().min(1, {message: `Por favor, escolha a Modalidade`}),
+  schoolCourseName: z.string().min(1, {message: `Por favor, escolha a Modalidade`})
 })

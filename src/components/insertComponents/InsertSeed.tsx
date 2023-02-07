@@ -1,10 +1,9 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   doc,
   getFirestore,
@@ -12,9 +11,20 @@ import {
   writeBatch,
 } from "firebase/firestore";
 
-import { createSeedValidationSchema } from "../../@types/zodValidation";
-import { CreateSeedValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
+import { CreateSeedValidationZProps } from "../../@types";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import { createSeedValidationSchema } from "../../@types/zodValidation";
+import {
+  buttonSubmitFull,
+  divCheckboxItem,
+  divMasterPage,
+  divSubmitResetItems,
+  formMaster,
+  inputCheckbox,
+  labelCheckbox,
+  pageTitleH1,
+} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -31,7 +41,6 @@ export function InsertSeed() {
   // REACT HOOK FORM SETTINGS
   const {
     handleSubmit,
-    reset,
     setValue,
     formState: { errors },
   } = useForm<CreateSeedValidationZProps>({
@@ -40,14 +49,6 @@ export function InsertSeed() {
       confirmInsert: false,
     },
   });
-
-  // RESET FORM FUNCTION
-  const resetForm = () => {
-    setSeedData({
-      confirmInsert: false,
-    });
-    reset();
-  };
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
@@ -662,6 +663,8 @@ export function InsertSeed() {
     const teacherExample = doc(db, "teachers", commonIdteacherExample);
     batch.set(teacherExample, {
       name: "Natália Peruzzo Costa",
+      email: "natalia@teste.com",
+      phone: "+5511111111111",
       id: commonIdteacherExample,
       timestamp: serverTimestamp(),
     });
@@ -1825,19 +1828,24 @@ export function InsertSeed() {
   };
 
   return (
-    <div className="flex flex-col container text-center">
+    <div className={divMasterPage}>
+      {/** SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando seed" />
+
+      {/** TOAST CONTAINER */}
       <ToastContainer limit={5} />
-      <h1 className="font-bold text-2xl my-4">Adicionar Seed</h1>
-      <form
-        onSubmit={handleSubmit(handleAddSeed)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
-      >
+
+      {/** PAGE TITLE */}
+      <h1 className={pageTitleH1}>Adicionar Seed</h1>
+
+      {/** FORM */}
+      <form onSubmit={handleSubmit(handleAddSeed)} className={formMaster}>
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
+        <div className={divCheckboxItem}>
           <input
             type="checkbox"
-            name="confirmDelete"
-            className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
+            name="confirmInsert"
+            className={inputCheckbox}
             checked={seedData.confirmInsert}
             onChange={() => {
               setSeedData({
@@ -1846,21 +1854,18 @@ export function InsertSeed() {
               });
             }}
           />
-          <label
-            htmlFor="confirmInsert"
-            className="text-sm text-gray-600 dark:text-gray-100"
-          >
+          <label htmlFor="confirmInsert" className={labelCheckbox}>
             Confirmar criação de todo o SEED
           </label>
         </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
+        <div className={divSubmitResetItems}>
           {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-full"
+            className={buttonSubmitFull}
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>
