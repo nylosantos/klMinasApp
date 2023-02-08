@@ -173,7 +173,7 @@ export function InsertCourse() {
       <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Adicionar Curso / Aula</h1>
+      <h1 className="font-bold text-2xl my-4">Adicionar Modalidade</h1>
 
       {/* FORM */}
       <form
