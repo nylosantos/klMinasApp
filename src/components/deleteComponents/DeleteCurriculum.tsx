@@ -408,7 +408,6 @@ export function DeleteCurriculum() {
     Promise.all(promises).then((results) => {
       // IF EXISTS, RETURN ERROR
       if (results.length !== 0) {
-        console.log(results);
         return (
           setIsSubmitting(false),
           toast.error(

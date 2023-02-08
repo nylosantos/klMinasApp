@@ -86,7 +86,6 @@ export function ButtonSignInGoogle({
           addUser();
         }
       });
-      console.log(result.user);
     } else return;
   };
   return (
