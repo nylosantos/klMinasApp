@@ -122,7 +122,7 @@ export default function InsertPage() {
               )
             }
           >
-            Curso / Aula
+            Modalidade
           </Tab>
           <Tab
             className={({ selected }) =>

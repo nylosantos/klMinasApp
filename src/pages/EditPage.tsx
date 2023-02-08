@@ -53,7 +53,7 @@ export default function EditPage() {
               )
             }
           >
-            Curso / Aula
+            Modalidade
           </Tab>
           <Tab
             className={({ selected }) =>

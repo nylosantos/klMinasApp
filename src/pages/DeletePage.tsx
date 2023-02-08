@@ -53,7 +53,7 @@ export default function DeletePage() {
               )
             }
           >
-            Curso / Aula
+            Modalidade
           </Tab>
           <Tab
             className={({ selected }) =>
