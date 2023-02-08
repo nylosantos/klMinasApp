@@ -1,13 +1,14 @@
 import { Fragment } from "react";
 import { Tab } from "@headlessui/react";
-import { EditSchool } from "../components/editComponents/EditSchool";
+
 import { EditClass } from "../components/editComponents/EditClass";
+import { EditSchool } from "../components/editComponents/EditSchool";
 import { EditCourse } from "../components/editComponents/EditCourse";
+import { EditStudent } from "../components/editComponents/EditStudent";
+import { EditTeacher } from "../components/editComponents/EditTeacher";
 import { EditClassDay } from "../components/editComponents/EditClassDay";
 import { EditSchedule } from "../components/editComponents/EditSchedule";
-import { EditTeacher } from "../components/editComponents/EditTeacher";
 import { EditCurriculum } from "../components/editComponents/EditCurriculum";
-import { EditStudent } from "../components/editComponents/EditStudent";
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
@@ -23,7 +24,7 @@ export default function EditPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -35,7 +36,7 @@ export default function EditPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -47,7 +48,7 @@ export default function EditPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -59,7 +60,7 @@ export default function EditPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -71,7 +72,7 @@ export default function EditPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -83,7 +84,7 @@ export default function EditPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -95,7 +96,7 @@ export default function EditPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -107,7 +108,7 @@ export default function EditPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }

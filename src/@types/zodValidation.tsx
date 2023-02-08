@@ -182,6 +182,7 @@ export const deleteSchoolCourseValidationSchema = z.object ({
   confirmDelete: z.boolean(),
   schoolCourseId: z.string().min(1, {message: `Por favor, selecione o Curso`}),
   schoolCourseName: z.string().min(1, {message: `Por favor, selecione o Curso`}),
+  price: z.number().min(1, {message: `Por favor, preencha o campo "Preço"`}),
 })
 
 export const deleteClassDaysValidationSchema = z.object ({
@@ -210,7 +211,6 @@ export const deleteCurriculumValidationSchema = z.object ({
   schoolClassId: z.string().optional(),
   schoolCourse: z.string().min(1, {message: `Por favor, selecione a Modalidade`}),
   schoolCourseId: z.string().optional(),
-  curriculum: z.string().min(1, {message: `Por favor, selecione o Currículo`}).optional(),
   curriculumId: z.string().min(1, {message: `Por favor, selecione o Currículo`}),
 })
 

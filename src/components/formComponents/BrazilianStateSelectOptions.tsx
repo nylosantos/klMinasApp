@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { stateDataProps } from "../../@types";
+import { StateDataProps } from "../../@types";
 
 const statesDdd = [
   { id: uuidv4(), ddd: "11", state: "SP" },
@@ -82,7 +82,7 @@ export function BrazilianStateSelectOptions() {
       <option disabled value={"DDD"}>
         -
       </option>
-      {statesDdd.map((data: stateDataProps) => (
+      {statesDdd.map((data: StateDataProps) => (
         <option key={data.id} value={data.ddd}>
           {data.ddd}
         </option>

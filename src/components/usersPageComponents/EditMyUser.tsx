@@ -1,13 +1,13 @@
+import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
+import { getAuth, User } from "firebase/auth";
+import "react-toastify/dist/ReactToastify.css";
+import { getFunctions } from "firebase/functions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { useHttpsCallable } from "react-firebase-hooks/functions";
-import { getFunctions } from "firebase/functions";
-import { Dna } from "react-loader-spinner";
-import { useRouter } from "next/router";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { getAuth, User } from "firebase/auth";
+import { useHttpsCallable } from "react-firebase-hooks/functions";
 import {
   collection,
   getDocs,
@@ -15,7 +15,6 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import "react-toastify/dist/ReactToastify.css";
 
 import { editUserValidationSchema } from "../../@types/zodValidation";
 import { EditUserValidationZProps, UserFullDataProps } from "../../@types";
@@ -248,6 +247,7 @@ export function EditMyUser() {
       } else {
         setErrorPassword(false);
         try {
+          // UPDATE APP USER CHANGING PASSWORD FUNCTION
           await updateAppUserWithPassword(data);
           resetForm();
           toast.success(`${data.name} editado com sucesso! 👌`, {
@@ -281,6 +281,7 @@ export function EditMyUser() {
     } else {
       setErrorPassword(false);
       try {
+        // UPDATE APP USER NOT CHANGING PASSWORD FUNCTION
         await updateAppUserWithoutPassword(data);
         resetForm();
         toast.success(`${data.name} editado com sucesso! 👌`, {
@@ -315,25 +316,13 @@ export function EditMyUser() {
 
   return (
     <div className="flex flex-col container text-center">
-      {/* LOADING SUBMIT */}
-      {isSubmitting || loading ? (
-        <div className="flex flex-col w-screen h-screen top-0 left-0 absolute items-center justify-center bg-gray-900/60 dark:bg-gray-800/50 transition-all duration-300">
-          <Dna
-            visible={true}
-            height="80"
-            width="80"
-            ariaLabel="dna-loading"
-            wrapperStyle={{}}
-            wrapperClass="dna-wrapper"
-          />
-          <h1 className="text-xl text-white mb-3">Loading...</h1>
-        </div>
-      ) : null}
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="editando" />
 
       {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
 
-      {/* TITLE */}
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Editando {userEditData?.name}</h1>
 
       {/* LOADING DATA */}
@@ -424,7 +413,7 @@ export function EditMyUser() {
             {/** CHECKBOX CONFIRM CHANGE PASSWORD */}
             <div className="flex gap-2 items-center">
               <label
-                htmlFor="password"
+                htmlFor="changePassword"
                 className={
                   errors.password
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"

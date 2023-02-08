@@ -1,5 +1,4 @@
 import { ButtonSignProps } from "../../@types";
-import { buttonSignIn } from "../../styles/tailwindConstants";
 
 export function ButtonSignSubmit({
   isSubmitting,
@@ -11,7 +10,7 @@ export function ButtonSignSubmit({
     <button
       type="submit"
       disabled={isClosed ? true : isSubmitting}
-      className={buttonSignIn}
+      className="w-full px-4 py-2 mt-4 border rounded-3xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 font-bold text-sm text-white disabled:dark:text-white/50 uppercase"
     >
       {isClosed
         ? signType === "signIn"

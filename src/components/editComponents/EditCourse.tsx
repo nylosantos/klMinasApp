@@ -1,9 +1,9 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
+import CurrencyInput from "react-currency-input-field";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
   doc,
@@ -14,14 +14,14 @@ import {
   where,
 } from "firebase/firestore";
 
+import { app } from "../../db/Firebase";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { editSchoolCourseValidationSchema } from "../../@types/zodValidation";
 import {
   EditSchoolCourseValidationZProps,
   SchoolCourseSearchProps,
 } from "../../@types";
-import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
-import CurrencyInput from "react-currency-input-field";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -43,11 +43,11 @@ export function EditCourse() {
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
+  // SCHOOL COURSE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL COURSES
   const [schoolCoursesDataArray, setSchoolCoursesDataArray] =
     useState<SchoolCourseSearchProps[]>();
 
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  // FUNCTION THAT WORKS WITH SCHOOL COURSE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
   const handleSchoolCourseSelectedData = (data: SchoolCourseSearchProps[]) => {
     setSchoolCoursesDataArray(data);
   };
@@ -70,7 +70,7 @@ export function EditCourse() {
     }
   }, [schoolCourseData.schoolCourseId]);
 
-  // SET SCHOOL COURSE NAME AND PRICE TO SCHOOL COURSE EDIT NAME AND PRICE
+  // SET SCHOOL COURSE NAME AND PRICE TO SCHOOL COURSE EDIT DATA
   useEffect(() => {
     setSchoolCourseEditData({
       ...schoolCourseEditData,
@@ -138,6 +138,38 @@ export function EditCourse() {
   > = async (data) => {
     setIsSubmitting(true);
 
+    // EDIT SCHOOL COURSE FUNCTION
+    const editSchoolCourse = async () => {
+      try {
+        await updateDoc(
+          doc(db, "schoolCourses", schoolCourseData.schoolCourseId),
+          {
+            name: data.name,
+            price: data.price,
+          }
+        );
+        resetForm();
+        toast.success(`${schoolCourseEditData.name} alterado com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
+
     // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
     const schoolCourseRef = collection(db, "schoolCourses");
     const q = query(
@@ -165,39 +197,6 @@ export function EditCourse() {
         );
       } else {
         // IF EXISTS, EDIT
-        const editSchoolCourse = async () => {
-          try {
-            await updateDoc(
-              doc(db, "schoolCourses", schoolCourseData.schoolCourseId),
-              {
-                name: data.name,
-                price: data.price,
-              }
-            );
-            resetForm();
-            toast.success(
-              `${schoolCourseEditData.name} alterado com sucesso! 👌`,
-              {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              }
-            );
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
         editSchoolCourse();
       }
     });
@@ -205,10 +204,18 @@ export function EditCourse() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">
         {isEdit ? `Editando ${schoolCourseEditData.name}` : "Editar Modalidade"}
       </h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditSchool)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
@@ -308,7 +315,7 @@ export function EditCourse() {
               />
             </div>
 
-            {/* COURSE PRICE */}
+            {/* SCHOOL COURSE PRICE */}
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="price"
@@ -318,10 +325,10 @@ export function EditCourse() {
                     : "w-1/4 text-right text-gray-900 dark:text-gray-100"
                 }
               >
-                Preço:{" "}
+                Valor da Mensalidade:{" "}
               </label>
               <CurrencyInput
-                name="input-name"
+                name="price"
                 placeholder={
                   errors.price
                     ? "É necessário inserir o valor mensal do Curso / Aula"

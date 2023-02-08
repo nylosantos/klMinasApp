@@ -1,9 +1,10 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
+import { getFunctions } from "firebase/functions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
+import { useHttpsCallable } from "react-firebase-hooks/functions";
 import {
   collection,
   doc,
@@ -14,13 +15,12 @@ import {
   where,
 } from "firebase/firestore";
 
-import { editTeacherValidationSchema } from "../../@types/zodValidation";
-import { EditTeacherValidationZProps, TeacherSearchProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import { editTeacherValidationSchema } from "../../@types/zodValidation";
+import { EditTeacherValidationZProps, TeacherSearchProps } from "../../@types";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
-import { useHttpsCallable } from "react-firebase-hooks/functions";
-import { getFunctions } from "firebase/functions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -98,7 +98,7 @@ export function EditTeacher() {
     }
   }, [teacherData.teacherId]);
 
-  // SET TEACHER NAME TO TEACHER EDIT NAME
+  // SET TEACHER DATA TO TEACHER EDIT DATA
   useEffect(() => {
     setTeacherEditData({
       ...teacherEditData,
@@ -179,8 +179,6 @@ export function EditTeacher() {
   const handleEditTeacher: SubmitHandler<EditTeacherValidationZProps> = async (
     data
   ) => {
-    console.log("DATA: ", data);
-    console.log("TEACHER: ", teacherEditData);
     // EDIT TEACHER FUNCTION
     const editTeacher = async () => {
       try {
@@ -281,6 +279,7 @@ export function EditTeacher() {
                 role: "teacher",
                 id: user.data.uid,
               };
+              // EDIT FIREBASE AUTH DATA ONLY WITHOUT CHANGE PASSWORD -> FOR EDIT PASSWORD GO TO EDITUSER
               await updateAppUserWithoutPassword(dataForAuth);
               // EDIT CALL
               await editTeacher();
@@ -360,12 +359,20 @@ export function EditTeacher() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">
         {isEdit
           ? `Editando Professor ${teacherEditData.name}`
           : "Editar Professor"}
       </h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditTeacher)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"

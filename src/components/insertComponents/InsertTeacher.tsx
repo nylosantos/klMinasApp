@@ -21,29 +21,6 @@ import { CreateTeacherValidationZProps } from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { createTeacherValidationSchema } from "../../@types/zodValidation";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
-import {
-  buttonReset,
-  buttonSubmit,
-  divCheckboxItem,
-  divItemsForm,
-  divMasterPage,
-  divPhoneMaster,
-  divPhoneNumber,
-  divSubmitResetItems,
-  divWithDoubleItemsRight,
-  formMaster,
-  inputCheckbox,
-  inputError,
-  inputOk,
-  inputWithButtonError,
-  inputWithButtonOk,
-  labelCheckbox,
-  labelTextError,
-  labelTextOk,
-  pageTitleH1,
-  selectDDDError,
-  selectDDDOk,
-} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -285,7 +262,7 @@ export function InsertTeacher() {
   };
 
   return (
-    <div className={divMasterPage}>
+    <div className="flex flex-col container text-center">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
@@ -293,15 +270,22 @@ export function InsertTeacher() {
       <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
-      <h1 className={pageTitleH1}>Adicionar Professor</h1>
+      <h1 className="font-bold text-2xl my-4">Adicionar Professor</h1>
 
       {/* FORM */}
-      <form onSubmit={handleSubmit(handleAddTeacher)} className={formMaster}>
+      <form
+        onSubmit={handleSubmit(handleAddTeacher)}
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+      >
         {/* TEACHER NAME */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="teacherName"
-            className={errors.name ? labelTextError : labelTextOk}
+            className={
+              errors.name
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Nome:{" "}
           </label>
@@ -314,7 +298,11 @@ export function InsertTeacher() {
                 ? "É necessário inserir o Nome do Professor"
                 : "Insira o nome do Professor"
             }
-            className={errors.name ? inputError : inputOk}
+            className={
+              errors.name
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
             value={teacherData.name}
             onChange={(e) => {
               setTeacherData({ ...teacherData, name: e.target.value });
@@ -323,10 +311,14 @@ export function InsertTeacher() {
         </div>
 
         {/* E-MAIL */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="email"
-            className={errors.email ? labelTextError : labelTextOk}
+            className={
+              errors.email
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             E-mail:{" "}
           </label>
@@ -337,7 +329,11 @@ export function InsertTeacher() {
             placeholder={
               errors.email ? "É necessário inserir o e-mail" : "Insira o e-mail"
             }
-            className={errors.email ? inputError : inputOk}
+            className={
+              errors.email
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
             value={teacherData.email}
             onChange={(e) => {
               setTeacherData({ ...teacherData, email: e.target.value });
@@ -346,19 +342,27 @@ export function InsertTeacher() {
         </div>
 
         {/* PHONE */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="phone"
-            className={errors.phone ? labelTextError : labelTextOk}
+            className={
+              errors.phone
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Telefone:{" "}
           </label>
-          <div className={divPhoneMaster}>
-            <div className={divPhoneNumber}>
+          <div className="flex w-2/4 gap-2">
+            <div className="flex w-10/12 items-center gap-1">
               <select
                 id="phoneDDD"
                 defaultValue={"DDD"}
-                className={errors.phone?.ddd ? selectDDDError : selectDDDOk}
+                className={
+                  errors.phone?.ddd
+                    ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
                 name="DDD"
                 onChange={(e) => {
                   setTeacherData({
@@ -378,8 +382,8 @@ export function InsertTeacher() {
                 placeholder={errors.phone?.prefix ? "É necessário um" : "99999"}
                 className={
                   errors.phone?.prefix
-                    ? inputWithButtonError
-                    : inputWithButtonOk
+                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 onChange={(e) => {
                   setTeacherData({
@@ -403,8 +407,8 @@ export function InsertTeacher() {
                 placeholder={errors.phone?.suffix ? "telefone válido" : "9990"}
                 className={
                   errors.phone?.suffix
-                    ? inputWithButtonError
-                    : inputWithButtonOk
+                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 onChange={(e) => {
                   setTeacherData({
@@ -419,16 +423,16 @@ export function InsertTeacher() {
                 }}
               />
             </div>
-            <div className={divWithDoubleItemsRight}></div>
+            <div className="flex w-2/12 items-center gap-2"></div>
           </div>
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className={divCheckboxItem}>
+        <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
             name="confirmInsert"
-            className={inputCheckbox}
+            className="ml-1 text-green-500 dark:text-green-500 border-none"
             checked={teacherData.confirmInsert}
             onChange={() => {
               setTeacherData({
@@ -437,7 +441,10 @@ export function InsertTeacher() {
               });
             }}
           />
-          <label htmlFor="confirmInsert" className={labelCheckbox}>
+          <label
+            htmlFor="confirmInsert"
+            className="text-sm text-gray-600 dark:text-gray-100"
+          >
             {teacherData.name
               ? `Confirmar criação de ${teacherData.name}`
               : `Confirmar criação`}
@@ -445,12 +452,12 @@ export function InsertTeacher() {
         </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
-        <div className={divSubmitResetItems}>
+        <div className="flex gap-2 mt-4">
           {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className={buttonSubmit}
+            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>
@@ -458,7 +465,7 @@ export function InsertTeacher() {
           {/* RESET BUTTON */}
           <button
             type="reset"
-            className={buttonReset}
+            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
             disabled={isSubmitting}
             onClick={() => {
               resetForm();

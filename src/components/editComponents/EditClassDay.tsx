@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
   doc,
@@ -14,15 +14,16 @@ import {
   where,
 } from "firebase/firestore";
 
+import { app } from "../../db/Firebase";
+import { ClassDays } from "../formComponents/ClassDays";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { editClassDayValidationSchema } from "../../@types/zodValidation";
 import {
   EditClassDayValidationZProps,
   ClassDaySearchProps,
   ToggleClassDaysFunctionProps,
 } from "../../@types";
-import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
-import { ClassDays } from "../formComponents/ClassDays";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -181,6 +182,41 @@ export function EditClassDay() {
   > = async (data) => {
     setIsSubmitting(true);
 
+    // EDIT CLASS DAY FUNCTION
+    const editClassDay = async () => {
+      try {
+        await updateDoc(doc(db, "classDays", classDayData.classDayId), {
+          name: data.name,
+          sunday: data.sunday,
+          monday: data.monday,
+          tuesday: data.tuesday,
+          wednesday: data.wednesday,
+          thursday: data.thursday,
+          friday: data.friday,
+          saturday: data.saturday,
+        });
+        resetForm();
+        toast.success(`${classDayEditData.name} alterado com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
+
     // CHECKING IF CLASS DAY EXISTS ON DATABASE
     const classDayRef = collection(db, "classDays");
     const q = query(classDayRef, where("id", "==", classDayData.classDayId));
@@ -205,50 +241,25 @@ export function EditClassDay() {
         );
       } else {
         // IF EXISTS, EDIT
-        const editSchoolCourse = async () => {
-          try {
-            await updateDoc(doc(db, "classDays", classDayData.classDayId), {
-              name: data.name,
-              sunday: data.sunday,
-              monday: data.monday,
-              tuesday: data.tuesday,
-              wednesday: data.wednesday,
-              thursday: data.thursday,
-              friday: data.friday,
-              saturday: data.saturday,
-            });
-            resetForm();
-            toast.success(`${classDayEditData.name} alterado com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
-        editSchoolCourse();
+        editClassDay();
       }
     });
   };
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">
         {isEdit ? `Editando ${classDayEditData.name}` : "Editar Dias de Aula"}
       </h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditClassDay)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"

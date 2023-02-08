@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
   doc,
@@ -14,26 +14,27 @@ import {
   where,
 } from "firebase/firestore";
 
+import { app } from "../../db/Firebase";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { editSchoolClassValidationSchema } from "../../@types/zodValidation";
 import {
   EditSchoolClassValidationZProps,
   SchoolClassSearchProps,
   SchoolSearchProps,
 } from "../../@types";
-import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditClass() {
-  // CLASS DATA
+  // SCHOOL CLASS DATA
   const [schoolClassData, setSchoolClassData] = useState({
     schoolClassId: "",
     schoolId: "",
   });
 
-  // CLASS EDIT DATA
+  // SCHOOL CLASS EDIT DATA
   const [schoolClassEditData, setSchoolClassEditData] =
     useState<EditSchoolClassValidationZProps>({
       name: "",
@@ -43,6 +44,7 @@ export function EditClass() {
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
+  // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
   const [schoolsDataArray, setSchoolsDataArray] =
     useState<SchoolSearchProps[]>();
@@ -69,7 +71,9 @@ export function EditClass() {
       setSchoolSelectedData(undefined);
     }
   }, [schoolSelectedData]);
+  // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
+  // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
   const [schoolClassesDataArray, setSchoolClassesDataArray] =
     useState<SchoolClassSearchProps[]>();
@@ -116,6 +120,7 @@ export function EditClass() {
     setIsEdit(false);
     setIsSelected(false);
   }, [schoolClassData.schoolId]);
+  // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -171,10 +176,41 @@ export function EditClass() {
   }, [errors]);
 
   // SUBMIT DATA FUNCTION
-  const handleEditClass: SubmitHandler<EditSchoolClassValidationZProps> = async (
-    data
-  ) => {
+  const handleEditClass: SubmitHandler<
+    EditSchoolClassValidationZProps
+  > = async (data) => {
     setIsSubmitting(true);
+
+    // EDIT SCHOOL CLASS FUNCTION
+    const editSchoolClass = async () => {
+      try {
+        await updateDoc(
+          doc(db, "schoolClasses", schoolClassData.schoolClassId),
+          {
+            name: data.name,
+          }
+        );
+        resetForm();
+        toast.success(`${schoolClassEditData.name} alterado com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
 
     // CHECKING IF SCHOOL EXISTS ON CURRRICULUM DATABASE
     const schoolClassRef = collection(db, "schoolClasses");
@@ -203,38 +239,6 @@ export function EditClass() {
         );
       } else {
         // IF EXISTS, EDIT
-        const editSchoolClass = async () => {
-          try {
-            await updateDoc(
-              doc(db, "schoolClasses", schoolClassData.schoolClassId),
-              {
-                name: data.name,
-              }
-            );
-            resetForm();
-            toast.success(
-              `${schoolClassEditData.name} alterado com sucesso! 👌`,
-              {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              }
-            );
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
         editSchoolClass();
       }
     });
@@ -242,10 +246,18 @@ export function EditClass() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">
         {isEdit ? `Editando ${schoolClassEditData.name}` : "Editar Turma"}
       </h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditClass)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"

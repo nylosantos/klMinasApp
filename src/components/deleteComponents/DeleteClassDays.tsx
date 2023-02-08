@@ -1,9 +1,8 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
   deleteDoc,
@@ -14,10 +13,14 @@ import {
   where,
 } from "firebase/firestore";
 
-import { deleteClassDaysValidationSchema } from "../../@types/zodValidation";
-import { DeleteClassDaysValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import { deleteClassDaysValidationSchema } from "../../@types/zodValidation";
+import {
+  ClassDaySearchProps,
+  DeleteClassDaysValidationZProps,
+} from "../../@types";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -31,26 +34,46 @@ export function DeleteClassDays() {
       confirmDelete: false,
     });
 
-  // SUBMITTING STATE
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // -------------------------- CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
+  // CLASS DAY DATA ARRAY WITH ALL OPTIONS OF SELECT CLASS DAY
+  const [classDayDataArray, setClassDayDataArray] =
+    useState<ClassDaySearchProps[]>();
 
-  // GET CLASS DAYS DATA FUNCTION
-  async function getClassDaysData(id: string) {
-    const classDayRef = collection(db, "classDays");
-    const q = query(classDayRef, where("id", "==", id));
-    const querySnapshot = await getDocs(q);
-    const schoolClassDayPromises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      schoolClassDayPromises.push(promise);
-    });
-    setClassDaysData({
-      ...classDaysData,
-      classDayName: schoolClassDayPromises[0].name,
-      classDayId: id,
-      confirmDelete: false,
-    });
-  }
+  // FUNCTION THAT WORKS WITH CLASS DAY SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleClassDaySelectedData = (data: ClassDaySearchProps[]) => {
+    setClassDayDataArray(data);
+  };
+
+  // CLASS DAY SELECTED STATE DATA
+  const [classDaySelectedData, setClassDaySelectedData] =
+    useState<ClassDaySearchProps>();
+
+  // SET CLASS DAY SELECTED STATE WHEN SELECT CLASS DAY
+  useEffect(() => {
+    if (classDaysData.classDayId !== "") {
+      setIsSelected(true);
+      setClassDaySelectedData(
+        classDayDataArray!.find(({ id }) => id === classDaysData.classDayId)
+      );
+    } else {
+      setClassDaySelectedData(undefined);
+    }
+  }, [classDaysData.classDayId]);
+
+  // SET CLASS DAY NAME WITH CLASS DAY SELECTED DATA WHEN SELECT CLASS DAY
+  useEffect(() => {
+    if (classDaySelectedData !== undefined) {
+      setClassDaysData({
+        ...classDaysData,
+        classDayName: classDaySelectedData!.name,
+      });
+    }
+  }, [classDaySelectedData]);
+  // -------------------------- END OF CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // SUBMITTING AND SELECTED STATE
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -69,6 +92,10 @@ export function DeleteClassDays() {
 
   // RESET FORM FUNCTION
   const resetForm = () => {
+    (
+      document.getElementById("classDaySelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setIsSelected(false);
     setClassDaysData({
       classDayId: "",
       classDayName: "",
@@ -107,6 +134,32 @@ export function DeleteClassDays() {
     DeleteClassDaysValidationZProps
   > = async (data) => {
     setIsSubmitting(true);
+
+    // DELETE CLASS DAY FUNCTION
+    const deleteClassDay = async () => {
+      try {
+        await deleteDoc(doc(db, "classDays", data.classDayId));
+        resetForm();
+        toast.success(`Dia de Aula excluído com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
 
     // CHECK DELETE CONFIRMATION
     if (!data.confirmDelete) {
@@ -154,30 +207,6 @@ export function DeleteClassDays() {
         );
       } else {
         // IF NO EXISTS, DELETE
-        const deleteClassDay = async () => {
-          try {
-            await deleteDoc(doc(db, "classDays", data.classDayId));
-            resetForm();
-            toast.success(`Dia de Aula excluído com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
         deleteClassDay();
       }
     });
@@ -185,8 +214,16 @@ export function DeleteClassDays() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="excluindo" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Excluir Dias de Aula</h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleDeleteClassDays)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
@@ -204,6 +241,7 @@ export function DeleteClassDays() {
             Selecione o Dia de Aula:{" "}
           </label>
           <select
+            id="classDaySelect"
             defaultValue={" -- select an option -- "}
             className={
               errors.classDayId
@@ -212,60 +250,71 @@ export function DeleteClassDays() {
             }
             name="classDaySelect"
             onChange={(e) => {
-              getClassDaysData(e.target.value);
+              setClassDaysData({
+                ...classDaysData,
+                classDayId: e.target.value,
+              });
             }}
           >
-            <SelectOptions returnId dataType="classDays" />
+            <SelectOptions
+              returnId
+              dataType="classDays"
+              handleData={handleClassDaySelectedData}
+            />
           </select>
         </div>
 
-        {/** CHECKBOX CONFIRM DELETE */}
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <input
-            type="checkbox"
-            name="confirmDelete"
-            className="ml-1 dark: text-green-500 dark:text-green-500 border-none "
-            checked={classDaysData.confirmDelete}
-            onChange={() => {
-              setClassDaysData({
-                ...classDaysData,
-                confirmDelete: !classDaysData.confirmDelete,
-              });
-            }}
-          />
-          <label
-            htmlFor="confirmDelete"
-            className="text-sm text-gray-600 dark:text-gray-100"
-          >
-            {classDaysData.classDayName
-              ? `Confirmar exclusão de ${classDaysData.classDayName}`
-              : `Confirmar exclusão`}
-          </label>
-        </div>
+        {isSelected ? (
+          <>
+            {/** CHECKBOX CONFIRM DELETE */}
+            <div className="flex justify-center items-center gap-2 mt-6">
+              <input
+                type="checkbox"
+                name="confirmDelete"
+                className="ml-1 dark: text-green-500 dark:text-green-500 border-none "
+                checked={classDaysData.confirmDelete}
+                onChange={() => {
+                  setClassDaysData({
+                    ...classDaysData,
+                    confirmDelete: !classDaysData.confirmDelete,
+                  });
+                }}
+              />
+              <label
+                htmlFor="confirmDelete"
+                className="text-sm text-gray-600 dark:text-gray-100"
+              >
+                {classDaysData.classDayName
+                  ? `Confirmar exclusão de ${classDaysData.classDayName}`
+                  : `Confirmar exclusão`}
+              </label>
+            </div>
 
-        {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
-          {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
-          >
-            {!isSubmitting ? "Excluir" : "Excluindo"}
-          </button>
+            {/* SUBMIT AND RESET BUTTONS */}
+            <div className="flex gap-2 mt-4">
+              {/* SUBMIT BUTTON */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+              >
+                {!isSubmitting ? "Excluir" : "Excluindo"}
+              </button>
 
-          {/* RESET BUTTON */}
-          <button
-            type="reset"
-            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
-            disabled={isSubmitting}
-            onClick={() => {
-              resetForm();
-            }}
-          >
-            {isSubmitting ? "Aguarde" : "Limpar"}
-          </button>
-        </div>
+              {/* RESET BUTTON */}
+              <button
+                type="reset"
+                className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+                disabled={isSubmitting}
+                onClick={() => {
+                  resetForm();
+                }}
+              >
+                {isSubmitting ? "Aguarde" : "Limpar"}
+              </button>
+            </div>
+          </>
+        ) : null}
       </form>
     </div>
   );

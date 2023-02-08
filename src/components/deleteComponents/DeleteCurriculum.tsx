@@ -1,9 +1,8 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
   deleteDoc,
@@ -15,10 +14,16 @@ import {
   where,
 } from "firebase/firestore";
 
-import { deleteCurriculumValidationSchema } from "../../@types/zodValidation";
-import { DeleteCurriculumValidationZProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import { deleteCurriculumValidationSchema } from "../../@types/zodValidation";
+import {
+  DeleteCurriculumValidationZProps,
+  SchoolClassSearchProps,
+  SchoolCourseSearchProps,
+  SchoolSearchProps,
+} from "../../@types";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -27,7 +32,6 @@ export function DeleteCurriculum() {
   // CURRICULUM DATA
   const [curriculumData, setCurriculumData] =
     useState<DeleteCurriculumValidationZProps>({
-      curriculum: "",
       curriculumId: "",
       school: "",
       schoolId: "",
@@ -38,35 +42,120 @@ export function DeleteCurriculum() {
       confirmDelete: false,
     });
 
-  // SUBMITTING STATE
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL
+  const [schoolDataArray, setSchoolDataArray] = useState<SchoolSearchProps[]>();
 
-  // SCHOOL CLASSES ARRAY STATE
-  const [schoolClassesData, setSchoolClassesData] = useState([]);
+  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
+    setSchoolDataArray(data);
+  };
+
+  // SCHOOL SELECTED STATE DATA
+  const [schoolSelectedData, setSchoolSelectedData] =
+    useState<SchoolSearchProps>();
+
+  // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
+  useEffect(() => {
+    if (curriculumData.schoolId !== "") {
+      setSchoolSelectedData(
+        schoolDataArray!.find(({ id }) => id === curriculumData.schoolId)
+      );
+    } else {
+      setSchoolSelectedData(undefined);
+    }
+  }, [curriculumData.schoolId]);
+
+  // SET SCHOOL NAME WITH SCHOOL SELECTED DATA WHEN SELECT SCHOOL
+  useEffect(() => {
+    if (schoolSelectedData !== undefined) {
+      setCurriculumData({
+        ...curriculumData,
+        school: schoolSelectedData!.name,
+      });
+    }
+  }, [schoolSelectedData]);
+  // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASS
+  const [schoolClassDataArray, setSchoolClassDataArray] =
+    useState<SchoolClassSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
+    setSchoolClassDataArray(data);
+  };
+
+  // SCHOOL CLASS SELECTED STATE DATA
+  const [schoolClassSelectedData, setSchoolClassSelectedData] =
+    useState<SchoolClassSearchProps>();
+
+  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  useEffect(() => {
+    if (curriculumData.schoolClassId !== "") {
+      setSchoolClassSelectedData(
+        schoolClassDataArray!.find(
+          ({ id }) => id === curriculumData.schoolClassId
+        )
+      );
+    } else {
+      setSchoolClassSelectedData(undefined);
+    }
+  }, [curriculumData.schoolClassId]);
+
+  // SET SCHOOL CLASS NAME WITH SCHOOL CLASS SELECTED DATA WHEN SELECT SCHOOL CLASS
+  useEffect(() => {
+    if (schoolClassSelectedData !== undefined) {
+      setCurriculumData({
+        ...curriculumData,
+        schoolClass: schoolClassSelectedData!.name,
+      });
+    }
+  }, [schoolClassSelectedData]);
+  // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHOOL COURSE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL COURSE
+  const [schoolCourseDataArray, setSchoolCourseDataArray] =
+    useState<SchoolCourseSearchProps[]>();
+
+  // FUNCTION THAT WORKS WITH SCHOOL COURSE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  const handleSchoolCourseSelectedData = (data: SchoolCourseSearchProps[]) => {
+    setSchoolCourseDataArray(data);
+  };
+
+  // SCHOOL COURSE SELECTED STATE DATA
+  const [schoolCourseSelectedData, setSchoolCourseSelectedData] =
+    useState<SchoolCourseSearchProps>();
+
+  // SET SCHOOL COURSE SELECTED STATE WHEN SELECT SCHOOL COURSE
+  useEffect(() => {
+    if (curriculumData.schoolCourseId !== "") {
+      setSchoolCourseSelectedData(
+        schoolCourseDataArray!.find(
+          ({ id }) => id === curriculumData.schoolCourseId
+        )
+      );
+    } else {
+      setSchoolCourseSelectedData(undefined);
+    }
+  }, [curriculumData.schoolCourseId]);
+
+  // SET SCHOOL COURSE NAME WITH SCHOOL COURSE SELECTED DATA WHEN SELECT SCHOOL COURSE
+  useEffect(() => {
+    if (schoolCourseSelectedData !== undefined) {
+      setCurriculumData({
+        ...curriculumData,
+        schoolCourse: schoolCourseSelectedData!.name,
+      });
+    }
+  }, [schoolCourseSelectedData]);
+  // -------------------------- END OF SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHEDULE DATA ARRAY WITH ALL OPTIONS OF SCHEDULES
   const [schedulesDetailsData, setSchedulesDetailsData] = useState([]);
-  const [curriculumCoursesId, setCurriculumCoursesId] = useState([]);
-  const [toggleSchoolAndClass, setToggleSchoolAndClass] = useState<
-    "school" | "class"
-  >("school");
-
-  // GET SCHOOL CLASS DATA FUNCTION
-  async function getSchoolClassData(name: string) {
-    setToggleSchoolAndClass("class");
-    const schoolClassRef = collection(db, "schoolClasses");
-    const q = query(schoolClassRef, where("schoolName", "==", name));
-    const querySnapshot = await getDocs(q);
-    const schoolClassDataPromises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      schoolClassDataPromises.push(promise);
-    });
-    setCurriculumData({
-      ...curriculumData,
-      school: name,
-      confirmDelete: false,
-    });
-    setSchoolClassesData(schoolClassDataPromises);
-  }
 
   // GETTING SCHEDULES DATA
   const handleSchedulesDetails = async () => {
@@ -85,27 +174,97 @@ export function DeleteCurriculum() {
     handleSchedulesDetails();
   }, []);
 
+  // SET IS SELECTED WHEN SCHOOL, SCHOOL CLASS AND SCHOOL COURSE ARE CHOSEN
+  useEffect(() => {
+    if (
+      curriculumData.schoolId !== "" &&
+      curriculumData.schoolClassId !== "" &&
+      curriculumData.schoolCourseId !== ""
+    ) {
+      setIsSelected(true);
+    }
+  }, [curriculumData]);
+
+  // -------------------------- END OF SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- CURRICULUM STATES AND FUNCTIONS -------------------------- //
+  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF CURRICULUM
+  const [curriculumCoursesData, setCurriculumCoursesData] = useState([]);
+
   // GETTING CURRICULUM DATA
   const handleAvailableCoursesData = async () => {
-    const q = query(
-      collection(db, "curriculum"),
-      where("school", "==", curriculumData.school),
-      where("schoolClass", "==", curriculumData.schoolClass),
-      orderBy("name")
-    );
-    const querySnapshot = await getDocs(q);
-    const promises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    setCurriculumCoursesId(promises);
+    if (curriculumData.schoolCourseId === "all") {
+      const q = query(
+        collection(db, "curriculum"),
+        where("schoolId", "==", curriculumData.schoolId),
+        where("schoolClassId", "==", curriculumData.schoolClassId),
+        orderBy("name")
+      );
+      const querySnapshot = await getDocs(q);
+      const promises: any = [];
+      querySnapshot.forEach((doc) => {
+        const promise = doc.data();
+        promises.push(promise);
+      });
+      setCurriculumCoursesData(promises);
+    } else {
+      const q = query(
+        collection(db, "curriculum"),
+        where("schoolId", "==", curriculumData.schoolId),
+        where("schoolClassId", "==", curriculumData.schoolClassId),
+        where("schoolCourseId", "==", curriculumData.schoolCourseId),
+        orderBy("name")
+      );
+      const querySnapshot = await getDocs(q);
+      const promises: any = [];
+      querySnapshot.forEach((doc) => {
+        const promise = doc.data();
+        promises.push(promise);
+      });
+      setCurriculumCoursesData(promises);
+    }
   };
 
-  // SET CURRICULUM DATA WHEN CHOOSE CLASS
+  // GET AVAILABLE COURSES DATA WHEN SCHOOL COURSE CHANGE
   useEffect(() => {
     handleAvailableCoursesData();
-  }, [curriculumData.schoolClass]);
+  }, [curriculumData.schoolCourseId]);
+  // -------------------------- END OF CURRICULUM STATES AND FUNCTIONS -------------------------- //
+
+  // -------------------------- RESET SELECTS -------------------------- //
+  // RESET ALL UNDER SCHOOL SELECT WHEN CHANGE SCHOOL
+  useEffect(() => {
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setCurriculumData({
+      ...curriculumData,
+      schoolClassId: "",
+      schoolClass: "",
+      schoolCourseId: "",
+      schoolCourse: "",
+    });
+  }, [curriculumData.schoolId]);
+
+  // RESET ALL UNDER SCHOOL CLASS SELECT WHEN CHANGE SCHOOL CLASS
+  useEffect(() => {
+    (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setCurriculumData({
+      ...curriculumData,
+      schoolCourseId: "",
+      schoolCourse: "",
+    });
+  }, [curriculumData.schoolClassId]);
+  // -------------------------- END OF RESET SELECTS -------------------------- //
+
+  // SUBMITTING AND SELECTED STATE
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -116,7 +275,6 @@ export function DeleteCurriculum() {
   } = useForm<DeleteCurriculumValidationZProps>({
     resolver: zodResolver(deleteCurriculumValidationSchema),
     defaultValues: {
-      curriculum: "",
       curriculumId: "",
       school: "",
       schoolId: "",
@@ -130,8 +288,17 @@ export function DeleteCurriculum() {
 
   // RESET FORM FUNCTION
   const resetForm = () => {
+    (
+      document.getElementById("schoolSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setIsSelected(false);
     setCurriculumData({
-      curriculum: "",
       curriculumId: "",
       school: "",
       schoolId: "",
@@ -141,13 +308,11 @@ export function DeleteCurriculum() {
       schoolCourseId: "",
       confirmDelete: false,
     });
-    setToggleSchoolAndClass("school");
     reset();
   };
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
-    setValue("curriculum", curriculumData.curriculum);
     setValue("curriculumId", curriculumData.curriculumId);
     setValue("school", curriculumData.school);
     setValue("schoolId", curriculumData.schoolId);
@@ -161,7 +326,6 @@ export function DeleteCurriculum() {
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
     const fullErrors = [
-      errors.curriculum,
       errors.curriculumId,
       errors.school,
       errors.schoolId,
@@ -187,6 +351,32 @@ export function DeleteCurriculum() {
     DeleteCurriculumValidationZProps
   > = async (data) => {
     setIsSubmitting(true);
+
+    // DELETE CURRICULUM FUNCTION
+    const deleteCurriculum = async () => {
+      try {
+        await deleteDoc(doc(db, "curriculum", data.curriculumId));
+        resetForm();
+        toast.success(`Currículo excluído com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
 
     // CHECK DELETE CONFIRMATION
     if (!data.confirmDelete) {
@@ -218,7 +408,7 @@ export function DeleteCurriculum() {
     Promise.all(promises).then((results) => {
       // IF EXISTS, RETURN ERROR
       if (results.length !== 0) {
-        console.log(results)
+        console.log(results);
         return (
           setIsSubmitting(false),
           toast.error(
@@ -238,30 +428,6 @@ export function DeleteCurriculum() {
         );
       } else {
         // IF NO EXISTS, DELETE
-        const deleteCurriculum = async () => {
-          try {
-            await deleteDoc(doc(db, "curriculum", data.curriculumId));
-            resetForm();
-            toast.success(`Currículo excluído com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
         deleteCurriculum();
       }
     });
@@ -269,8 +435,16 @@ export function DeleteCurriculum() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="excluindo" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Excluir Currículo</h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleDeleteCurriculum)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
@@ -280,7 +454,7 @@ export function DeleteCurriculum() {
           <label
             htmlFor="schoolSelect"
             className={
-              errors.school
+              errors.schoolId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right text-gray-900 dark:text-gray-100"
             }
@@ -288,19 +462,26 @@ export function DeleteCurriculum() {
             Selecione a Escola:{" "}
           </label>
           <select
+            id="schoolSelect"
             defaultValue={" -- select an option -- "}
-            disabled={toggleSchoolAndClass === "class" ? true : false}
             className={
-              errors.school
+              errors.schoolId
                 ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                 : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolSelect"
             onChange={(e) => {
-              getSchoolClassData(e.target.value);
+              setCurriculumData({
+                ...curriculumData,
+                schoolId: e.target.value,
+              });
             }}
           >
-            <SelectOptions dataType="schools" />
+            <SelectOptions
+              returnId
+              dataType="schools"
+              handleData={handleSchoolSelectedData}
+            />
           </select>
         </div>
 
@@ -309,7 +490,7 @@ export function DeleteCurriculum() {
           <label
             htmlFor="schoolClassSelect"
             className={
-              errors.schoolClass
+              errors.schoolClassId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right text-gray-900 dark:text-gray-100"
             }
@@ -317,11 +498,12 @@ export function DeleteCurriculum() {
             Selecione a Turma:{" "}
           </label>
           <select
+            id="schoolClassSelect"
+            disabled={curriculumData.schoolId ? false : true}
             defaultValue={" -- select an option -- "}
-            disabled={curriculumData.school ? false : true}
             className={
-              curriculumData.school
-                ? errors.schoolClass
+              curriculumData.schoolId
+                ? errors.schoolClassId
                   ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                   : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
@@ -330,65 +512,106 @@ export function DeleteCurriculum() {
             onChange={(e) => {
               setCurriculumData({
                 ...curriculumData,
-                schoolClass: e.target.value,
-                confirmDelete: false,
+                schoolClassId: e.target.value,
               });
             }}
           >
-            {curriculumData.school ? (
-              <>
-                <option disabled value={" -- select an option -- "}>
-                  {" "}
-                  -- Selecione --{" "}
-                </option>
-                {schoolClassesData.map((option: any) => (
-                  <option key={option.id} value={option.name}>
-                    {option.name}
-                  </option>
-                ))}
-              </>
-            ) : (
-              <option disabled value={" -- select an option -- "}>
-                {" "}
-                -- Selecione uma escola para ver as turmas disponíveis --{" "}
-              </option>
-            )}
+            <SelectOptions
+              returnId
+              dataType="schoolClasses"
+              schoolId={curriculumData.schoolId}
+              handleData={handleSchoolClassSelectedData}
+            />
+          </select>
+        </div>
+
+        {/* SCHOOL COURSE SELECT */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="schoolCourseSelect"
+            className={
+              errors.schoolCourseId
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
+          >
+            Selecione a Modalidade:{" "}
+          </label>
+          <select
+            id="schoolCourseSelect"
+            disabled={curriculumData.schoolClassId ? false : true}
+            defaultValue={" -- select an option -- "}
+            className={
+              curriculumData.schoolClassId
+                ? errors.schoolCourseId
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+            }
+            name="schoolCourseSelect"
+            onChange={(e) => {
+              setCurriculumData({
+                ...curriculumData,
+                schoolCourseId: e.target.value,
+              });
+            }}
+          >
+            <SelectOptions
+              returnId
+              dataType="schoolCourses"
+              handleData={handleSchoolCourseSelectedData}
+            />
+            <option value={"all"}>Todas as Modalidades</option>
           </select>
         </div>
 
         {/* CURRICULUM SELECT */}
-        {curriculumData.school && curriculumData.schoolClass ? (
-          curriculumCoursesId.length !== 0 ? (
-            <>
-              <h1 className="font-bold text-lg py-4">
-                Modalidades {curriculumData.school} -{" "}
-                {curriculumData.schoolClass}:
-              </h1>
-              <hr className="pb-4" />
-              <div className="flex flex-wrap gap-4 justify-center">
-                {curriculumCoursesId.map((c: any) => (
-                  <>
+        {curriculumData.schoolId &&
+        curriculumData.schoolClassId &&
+        curriculumData.schoolCourseId ? (
+          <>
+            {/* CURRICULUM CARD SECTION TITLE */}
+            <h1 className="font-bold text-2xl my-4">
+              {schoolSelectedData?.name} - {schoolClassSelectedData?.name} -{" "}
+              {curriculumData.schoolCourseId === "all"
+                ? "Todas as Modalidades"
+                : schoolCourseSelectedData?.name}
+              :
+            </h1>
+
+            {/* SEPARATOR */}
+            <hr className="pb-4" />
+
+            {curriculumCoursesData.length !== 0 ? (
+              <>
+                {/* CURRICULUM CARD */}
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {curriculumCoursesData.map((c: any) => (
                     <div
-                      className="flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                      className={
+                        errors.curriculumId
+                          ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                          : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                      }
                       key={c.id}
                     >
                       <input
                         type="radio"
                         id={c.id}
-                        name="age"
+                        name="curriculumSelect"
                         value={c.id}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setCurriculumData({
                             ...curriculumData,
                             curriculumId: e.target.value,
-                            schoolCourse: c.schoolCourse,
-                            curriculum: c.name,
-                            confirmDelete: false,
-                          })
-                        }
+                          });
+                        }}
                       />
-                      <label htmlFor={c.id} className="flex flex-col gap-4">
-                        {curriculumData.school === "Colégio Bernoulli" ? (
+                      <label
+                        htmlFor="curriculumSelect"
+                        className="flex flex-col gap-4"
+                      >
+                        {schoolSelectedData?.name === "Colégio Bernoulli" ? (
                           <p>Turma: {c.schoolClass}</p>
                         ) : null}
                         <p>Modalidade: {c.schoolCourse}</p>
@@ -401,65 +624,80 @@ export function DeleteCurriculum() {
                         <p>Professor: {c.teacher}</p>
                       </label>
                     </div>
-                  </>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="pt-4">Nenhum currículo encontrado.</div>
-          )
-        ) : (
-          <div className="pt-4">
-            Selecione um colégio e uma turma para ver as modalidades
-            disponíveis.
-          </div>
-        )}
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* CURRICULUM CARD EMPTY SUBTITLE */}
+                <h1 className="font-bold text-2xl pb-10 text-red-600 dark:text-yellow-500">
+                  Nenhum currículo disponível com as opções selecionadas, tente
+                  novamente.
+                </h1>
+              </>
+            )}
+          </>
+        ) : null}
 
-        {/** CHECKBOX CONFIRM DELETE */}
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <input
-            type="checkbox"
-            name="confirmDelete"
-            className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
-            checked={curriculumData.confirmDelete}
-            onChange={() => {
-              setCurriculumData({
-                ...curriculumData,
-                confirmDelete: !curriculumData.confirmDelete,
-              });
-            }}
-          />
-          <label
-            htmlFor="confirmDelete"
-            className="text-sm text-gray-600 dark:text-gray-100"
-          >
-            Confirmar exclusão do Currículo
-          </label>
-        </div>
+        {isSelected ? (
+          <>
+            {curriculumCoursesData.length !== 0 ? (
+              <>
+                {/** CHECKBOX CONFIRM DELETE */}
+                <div className="flex justify-center items-center gap-2 mt-6">
+                  <input
+                    type="checkbox"
+                    name="confirmDelete"
+                    className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
+                    checked={curriculumData.confirmDelete}
+                    onChange={() => {
+                      setCurriculumData({
+                        ...curriculumData,
+                        confirmDelete: !curriculumData.confirmDelete,
+                      });
+                    }}
+                  />
+                  <label
+                    htmlFor="confirmDelete"
+                    className="text-sm text-gray-600 dark:text-gray-100"
+                  >
+                    Confirmar exclusão do Currículo
+                  </label>
+                </div>
+              </>
+            ) : null}
 
-        {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
-          {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
-          >
-            {!isSubmitting ? "Excluir" : "Excluindo"}
-          </button>
+            {/* SUBMIT AND RESET BUTTONS */}
+            <div className="flex gap-2 mt-4">
+              {/* SUBMIT BUTTON */}
+              <button
+                type="submit"
+                disabled={
+                  curriculumCoursesData.length === 0 ? true : isSubmitting
+                }
+                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+              >
+                {curriculumCoursesData.length === 0
+                  ? "Nenhum currículo encontrado"
+                  : !isSubmitting
+                  ? "Excluir"
+                  : "Excluindo"}
+              </button>
 
-          {/* RESET BUTTON */}
-          <button
-            type="reset"
-            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
-            disabled={isSubmitting}
-            onClick={() => {
-              resetForm();
-            }}
-          >
-            {isSubmitting ? "Aguarde" : "Limpar"}
-          </button>
-        </div>
+              {/* RESET BUTTON */}
+              <button
+                type="reset"
+                className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+                disabled={isSubmitting}
+                onClick={() => {
+                  resetForm();
+                }}
+              >
+                {isSubmitting ? "Aguarde" : "Limpar"}
+              </button>
+            </div>
+          </>
+        ) : null}
       </form>
     </div>
   );

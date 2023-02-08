@@ -1,11 +1,8 @@
-import { Header } from "../components/layoutComponents/Header";
-
-import { Fragment, useEffect, useState } from "react";
-import { Tab } from "@headlessui/react";
-import { InsertCourse } from "../components/insertComponents/InsertCourse";
+import { toast } from "react-toastify";
 import { useRouter } from "next/router";
-import { app, initFirebase } from "../db/Firebase";
+import { Tab } from "@headlessui/react";
 import { getAuth, User } from "firebase/auth";
+import { Fragment, useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
   collection,
@@ -14,8 +11,10 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { toast } from "react-toastify";
+
 import { UserFullDataProps } from "../@types";
+import { app, initFirebase } from "../db/Firebase";
+import { Header } from "../components/layoutComponents/Header";
 import { EditUser } from "../components/usersPageComponents/EditUser";
 import { InsertUser } from "../components/usersPageComponents/InsertUser";
 import { DeleteUser } from "../components/usersPageComponents/DeleteUser";
@@ -72,6 +71,7 @@ export default function ManageUsers() {
       );
   };
 
+  // IF LOGGED GET DATA, IF NOT LOGGED SEND TO LOGIN
   useEffect(() => {
     if (!user) {
       router.push("/");

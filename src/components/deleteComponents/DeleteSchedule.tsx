@@ -1,9 +1,8 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
   deleteDoc,
@@ -14,13 +13,14 @@ import {
   where,
 } from "firebase/firestore";
 
+import { app } from "../../db/Firebase";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteScheduleValidationSchema } from "../../@types/zodValidation";
 import {
   DeleteScheduleValidationZProps,
   ScheduleSearchProps,
 } from "../../@types";
-import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -91,7 +91,7 @@ export function DeleteSchedule() {
 
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
-  // TEACHER SELECTED AND EDIT ACTIVE STATES
+  // SCHEDULE SELECTED STATE
   const [isSelected, setIsSelected] = useState(false);
 
   // SUBMITTING STATE
@@ -115,6 +115,12 @@ export function DeleteSchedule() {
 
   // RESET FORM FUNCTION
   const resetForm = () => {
+    (
+      document.getElementById("schoolSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("scheduleSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
     setScheduleData({
       scheduleId: "",
       scheduleName: "",
@@ -156,6 +162,32 @@ export function DeleteSchedule() {
     DeleteScheduleValidationZProps
   > = async (data) => {
     setIsSubmitting(true);
+
+    // DELETE SCHEDULE FUNCTION
+    const deleteSchedule = async () => {
+      try {
+        await deleteDoc(doc(db, "schedules", data.scheduleId));
+        resetForm();
+        toast.success(`Horário excluído com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
 
     // CHECK DELETE CONFIRMATION
     if (!data.confirmDelete) {
@@ -203,30 +235,6 @@ export function DeleteSchedule() {
         );
       } else {
         // IF NO EXISTS, DELETE
-        const deleteSchedule = async () => {
-          try {
-            await deleteDoc(doc(db, "schedules", data.scheduleId));
-            resetForm();
-            toast.success(`Horário excluído com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
         deleteSchedule();
       }
     });
@@ -234,8 +242,16 @@ export function DeleteSchedule() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="excluindo" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Excluir Horário</h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleDeleteSchedule)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
@@ -253,6 +269,7 @@ export function DeleteSchedule() {
             Selecione a Escola:{" "}
           </label>
           <select
+            id="schoolSelect"
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolId
@@ -305,6 +322,7 @@ export function DeleteSchedule() {
           </select>
         </div>
 
+        {/* SCHEDULE SELECTED DETAILS */}
         {scheduleSelectedData !== undefined && isSelected ? (
           <>
             <div className="flex flex-col pt-2 pb-6 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
@@ -456,32 +474,32 @@ export function DeleteSchedule() {
                   : `Confirmar exclusão`}
               </label>
             </div>
+
+            {/* SUBMIT AND RESET BUTTONS */}
+            <div className="flex gap-2 mt-4">
+              {/* SUBMIT BUTTON */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+              >
+                {!isSubmitting ? "Excluir" : "Excluindo"}
+              </button>
+
+              {/* RESET BUTTON */}
+              <button
+                type="reset"
+                className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+                disabled={isSubmitting}
+                onClick={() => {
+                  resetForm();
+                }}
+              >
+                {isSubmitting ? "Aguarde" : "Limpar"}
+              </button>
+            </div>
           </>
         ) : null}
-
-        {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
-          {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
-          >
-            {!isSubmitting ? "Excluir" : "Excluindo"}
-          </button>
-
-          {/* RESET BUTTON */}
-          <button
-            type="reset"
-            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
-            disabled={isSubmitting}
-            onClick={() => {
-              resetForm();
-            }}
-          >
-            {isSubmitting ? "Aguarde" : "Limpar"}
-          </button>
-        </div>
       </form>
     </div>
   );

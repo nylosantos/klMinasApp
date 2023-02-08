@@ -1,9 +1,8 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
   deleteDoc,
@@ -14,15 +13,16 @@ import {
   where,
 } from "firebase/firestore";
 
+import { app } from "../../db/Firebase";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteTeacherValidationSchema } from "../../@types/zodValidation";
+import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 import {
   DeleteTeacherValidationZProps,
   EditTeacherValidationZProps,
   TeacherSearchProps,
 } from "../../@types";
-import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
-import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -67,7 +67,7 @@ export function DeleteTeacher() {
     }
   }, [phoneFormatted]);
 
-  // TEACHER SELECTED AND EDIT ACTIVE STATES
+  // TEACHER SELECTED STATE
   const [isSelected, setIsSelected] = useState(false);
 
   // TEACHER DATA ARRAY WITH ALL OPTIONS OF SELECT TEACHERS
@@ -122,6 +122,9 @@ export function DeleteTeacher() {
 
   // RESET FORM FUNCTION
   const resetForm = () => {
+    (
+      document.getElementById("teacherSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
     setTeacherData({
       teacherId: "",
       confirmDelete: false,
@@ -235,8 +238,16 @@ export function DeleteTeacher() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="excluindo" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Excluir Professor</h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleDeleteTeacher)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
@@ -254,6 +265,7 @@ export function DeleteTeacher() {
             Selecione o Professor:{" "}
           </label>
           <select
+            id="teacherSelect"
             defaultValue={" -- select an option -- "}
             className={
               errors.teacherId
@@ -277,6 +289,7 @@ export function DeleteTeacher() {
           </select>
         </div>
 
+        {/* TEACHER DETAILS SECTION */}
         {isSelected ? (
           <>
             <div className="flex flex-col pt-2 pb-6 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
@@ -312,7 +325,7 @@ export function DeleteTeacher() {
                 </label>
                 <input
                   type="text"
-                  name="name"
+                  name="email"
                   disabled
                   className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={teacherSelectedData?.email}
@@ -335,7 +348,11 @@ export function DeleteTeacher() {
                       defaultValue={"DDD"}
                       className="pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                       name="DDD"
-                      value={teacherSelectedData?.phone?.slice(3, 5)}
+                      value={
+                        teacherSelectedData?.phone
+                          ? teacherSelectedData?.phone?.slice(3, 5)
+                          : "DDD"
+                      }
                     >
                       <BrazilianStateSelectOptions />
                     </select>
@@ -383,32 +400,32 @@ export function DeleteTeacher() {
                   : `Confirmar exclusão`}
               </label>
             </div>
+
+            {/* SUBMIT AND RESET BUTTONS */}
+            <div className="flex gap-2 mt-4">
+              {/* SUBMIT BUTTON */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+              >
+                {!isSubmitting ? "Excluir" : "Excluindo"}
+              </button>
+
+              {/* RESET BUTTON */}
+              <button
+                type="reset"
+                className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+                disabled={isSubmitting}
+                onClick={() => {
+                  resetForm();
+                }}
+              >
+                {isSubmitting ? "Aguarde" : "Limpar"}
+              </button>
+            </div>
           </>
         ) : null}
-
-        {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
-          {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
-          >
-            {!isSubmitting ? "Excluir" : "Excluindo"}
-          </button>
-
-          {/* RESET BUTTON */}
-          <button
-            type="reset"
-            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
-            disabled={isSubmitting}
-            onClick={() => {
-              resetForm();
-            }}
-          >
-            {isSubmitting ? "Aguarde" : "Limpar"}
-          </button>
-        </div>
       </form>
     </div>
   );

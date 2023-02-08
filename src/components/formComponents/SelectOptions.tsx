@@ -52,6 +52,14 @@ export function SelectOptions({
             where("available", "==", true),
             orderBy("name")
           )
+        : schoolId && schoolClassId && curriculumId && studentId
+        ? // QUERY FOR SEARCH ALL STUDENTS WITH SELECTED CURRICULUM ID FILTER EXCLUDING ITSELF
+          query(
+            collection(db, dataType),
+            where("curriculum", "array-contains", curriculumId),
+            where("id", "!=", studentId),
+            orderBy("id")
+          )
         : schoolId && schoolClassId && curriculumId
         ? // QUERY FOR SEARCH ALL STUDENTS WITH SELECTED CURRICULUM ID FILTER
           query(

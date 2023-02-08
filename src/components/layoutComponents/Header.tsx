@@ -15,15 +15,6 @@ import {
 
 import { UserFullDataProps } from "../../@types";
 import { app, initFirebase } from "../../db/Firebase";
-import {
-  buttonThemeChanger,
-  divHeaderCenter,
-  divHeaderContainer,
-  divHeaderItemNavigation,
-  divHeaderLeft,
-  divHeaderMaster,
-  divHeaderRight,
-} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -112,7 +103,7 @@ export function Header() {
     return (
       /* BUTTON THEME CHANGER */
       <button
-        className={buttonThemeChanger}
+        className="bg-gray-100 text-slate-800 dark:bg-gray-700 dark:text-yellow-500 p-2 rounded-md hover:ring-2 hover:ring-gray-300"
         onClick={() => setTheme(currentTheme === "light" ? "dark" : "light")}
       >
         <svg
@@ -144,24 +135,30 @@ export function Header() {
   };
 
   return (
-    <div className={divHeaderMaster}>
-      <div className={divHeaderContainer}>
+    <div className="w-screen flex justify-center top-0 left-0 mb-4 bg-gray-100 dark:bg-gray-600">
+      <div className="flex container justify-between items-center py-6">
         {/* 'HI USER' LEFT */}
-        <div className={divHeaderLeft}>
+        <div className="w-1/6">
           {user ? <p>Olá, {user.displayName}</p> : null}
         </div>
 
         {/* NAVIGATION DISPLAY CENTER */}
-        <div className={divHeaderCenter}>
+        <div className="flex w-4/6 justify-center gap-10">
           {user ? (
             <>
               {navigations.map((nav) => (
-                <div key={nav.path} className={divHeaderItemNavigation}>
+                <div
+                  key={nav.path}
+                  className="flex border-b-2 border-gray-100 hover:border-black dark:border-gray-600 dark:hover:border-gray-100"
+                >
                   <Link href={nav.path}>{nav.label}</Link>
                 </div>
               ))}
               {/* NAVIGATION LOGOUT ITEM */}
-              <div key={"logout"} className={divHeaderItemNavigation}>
+              <div
+                key={"logout"}
+                className="flex border-b-2 border-gray-100 hover:border-black dark:border-gray-600 dark:hover:border-gray-100"
+              >
                 <p className="cursor-pointer" onClick={() => auth.signOut()}>
                   Sair
                 </p>
@@ -171,7 +168,7 @@ export function Header() {
         </div>
 
         {/* BUTTON THEME CHANGE RIGHT */}
-        <div className={divHeaderRight}>{renderThemeChanger()}</div>
+        <div className="flex w-1/6 justify-end">{renderThemeChanger()}</div>
       </div>
     </div>
   );

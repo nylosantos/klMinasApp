@@ -15,16 +15,6 @@ import { app } from "../../db/Firebase";
 import { CreateSeedValidationZProps } from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { createSeedValidationSchema } from "../../@types/zodValidation";
-import {
-  buttonSubmitFull,
-  divCheckboxItem,
-  divMasterPage,
-  divSubmitResetItems,
-  formMaster,
-  inputCheckbox,
-  labelCheckbox,
-  pageTitleH1,
-} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -1828,7 +1818,7 @@ export function InsertSeed() {
   };
 
   return (
-    <div className={divMasterPage}>
+    <div className="flex flex-col container text-center">
       {/** SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando seed" />
 
@@ -1836,16 +1826,19 @@ export function InsertSeed() {
       <ToastContainer limit={5} />
 
       {/** PAGE TITLE */}
-      <h1 className={pageTitleH1}>Adicionar Seed</h1>
+      <h1 className="font-bold text-2xl my-4">Adicionar Seed</h1>
 
       {/** FORM */}
-      <form onSubmit={handleSubmit(handleAddSeed)} className={formMaster}>
+      <form
+        onSubmit={handleSubmit(handleAddSeed)}
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+      >
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className={divCheckboxItem}>
+        <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
             name="confirmInsert"
-            className={inputCheckbox}
+            className="ml-1 text-green-500 dark:text-green-500 border-none"
             checked={seedData.confirmInsert}
             onChange={() => {
               setSeedData({
@@ -1854,18 +1847,21 @@ export function InsertSeed() {
               });
             }}
           />
-          <label htmlFor="confirmInsert" className={labelCheckbox}>
+          <label
+            htmlFor="confirmInsert"
+            className="text-sm text-gray-600 dark:text-gray-100"
+          >
             Confirmar criação de todo o SEED
           </label>
         </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
-        <div className={divSubmitResetItems}>
+        <div className="flex gap-2 mt-4">
           {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className={buttonSubmitFull}
+            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-full"
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>

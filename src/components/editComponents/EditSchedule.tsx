@@ -1,10 +1,11 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
+import DatePicker from "react-multi-date-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
+import TimePicker from "react-multi-date-picker/plugins/time_picker";
 import {
   collection,
   doc,
@@ -15,16 +16,15 @@ import {
   where,
 } from "firebase/firestore";
 
+import { app } from "../../db/Firebase";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { editScheduleValidationSchema } from "../../@types/zodValidation";
 import {
   EditScheduleValidationZProps,
   ScheduleSearchProps,
   SchoolSearchProps,
 } from "../../@types";
-import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
-import DatePicker from "react-multi-date-picker";
-import TimePicker from "react-multi-date-picker/plugins/time_picker";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -51,6 +51,7 @@ export function EditSchedule() {
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
+  // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
   const [schoolsDataArray, setSchoolsDataArray] =
     useState<SchoolSearchProps[]>();
@@ -77,7 +78,9 @@ export function EditSchedule() {
       setSchoolSelectedData(undefined);
     }
   }, [schoolSelectedData]);
+  // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
+  // -------------------------- SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHEDULE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHEDULES
   const [schedulesDataArray, setSchedulesDataArray] =
     useState<ScheduleSearchProps[]>();
@@ -99,6 +102,11 @@ export function EditSchedule() {
       setScheduleEditData({
         ...scheduleEditData,
         name: scheduleSelectedData.name,
+        transitionStart: scheduleSelectedData.transitionStart,
+        transitionEnd: scheduleSelectedData.transitionEnd,
+        classStart: scheduleSelectedData.classStart,
+        classEnd: scheduleSelectedData.classEnd,
+        exit: scheduleSelectedData.exit,
       });
     }
   }, [scheduleSelectedData]);
@@ -122,6 +130,7 @@ export function EditSchedule() {
     setIsEdit(false);
     setIsSelected(false);
   }, [scheduleData.schoolId]);
+  // -------------------------- END OF SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -204,6 +213,39 @@ export function EditSchedule() {
   > = async (data) => {
     setIsSubmitting(true);
 
+    // EDIT SCHEDULE FUNCTION
+    const editSchedule = async () => {
+      try {
+        await updateDoc(doc(db, "schedules", scheduleData.scheduleId), {
+          name: data.name,
+          transitionStart: data.transitionStart,
+          transitionEnd: data.transitionEnd,
+          classStart: data.classStart,
+          classEnd: data.classEnd,
+          exit: data.exit,
+        });
+        resetForm();
+        toast.success(`${scheduleEditData.name} alterado com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
+
     // CHECKING IF SCHEDULE EXISTS ON DATABASE
     const scheduleRef = collection(db, "schedules");
     const q = query(scheduleRef, where("id", "==", scheduleData.scheduleId));
@@ -228,37 +270,6 @@ export function EditSchedule() {
         );
       } else {
         // IF EXISTS, EDIT
-        const editSchedule = async () => {
-          try {
-            await updateDoc(doc(db, "schedules", scheduleData.scheduleId), {
-              name: data.name,
-              transitionStart: data.transitionStart,
-              transitionEnd: data.transitionEnd,
-              classStart: data.classStart,
-              classEnd: data.classEnd,
-              exit: data.exit,
-            });
-            resetForm();
-            toast.success(`${scheduleEditData.name} alterado com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
         editSchedule();
       }
     });
@@ -266,10 +277,18 @@ export function EditSchedule() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">
         {isEdit ? `Editando ${scheduleEditData.name}` : "Editar Horário"}
       </h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditSchedule)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
@@ -373,6 +392,121 @@ export function EditSchedule() {
 
         {isEdit ? (
           <>
+            {/* SCHEDULE OLD DETAILS */}
+            <div className="flex flex-col pt-2 pb-6 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
+              {/* OLD DATA TITLE */}
+              <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+                Dados anteriores do horário:
+              </h1>
+
+              {/* OLD SCHEDULE NAME */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="oldName"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Nome:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="oldName"
+                  disabled
+                  defaultValue={scheduleSelectedData?.name}
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                />
+              </div>
+
+              {/* OLD TRANSITION START */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="oldTransitionStart"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Início da Transição:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="oldTransitionStart"
+                  disabled
+                  defaultValue={scheduleSelectedData?.transitionStart}
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                />
+              </div>
+
+              {/* OLD TRANSITION END */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="oldTransitionEnd"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Fim da Transição:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="oldTransitionEnd"
+                  disabled
+                  defaultValue={scheduleSelectedData?.transitionEnd}
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                />
+              </div>
+
+              {/* OLD CLASS START */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="oldClassStart"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Início da Aula:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="oldClassStart"
+                  disabled
+                  defaultValue={scheduleSelectedData?.classStart}
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                />
+              </div>
+
+              {/* OLD CLASS END */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="oldClassEnd"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Fim da Aula:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="oldClassEnd"
+                  disabled
+                  defaultValue={scheduleSelectedData?.classEnd}
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                />
+              </div>
+
+              {/* OLD EXIT */}
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="oldExit"
+                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                >
+                  Saída:{" "}
+                </label>
+                <input
+                  type="text"
+                  name="oldExit"
+                  disabled
+                  defaultValue={scheduleSelectedData?.exit}
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                />
+              </div>
+            </div>
+
+            {/* EDITED DATA TITLE */}
+            <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+              Insira os novos dados para o horário:
+            </h1>
+
             {/* SCHEDULE NAME */}
             <div className="flex gap-2 items-center">
               <label
@@ -424,6 +558,7 @@ export function EditSchedule() {
               <div className="flex w-3/4">
                 <DatePicker
                   disableDayPicker
+                  editable={false}
                   format="HH:mm"
                   plugins={[<TimePicker hideSeconds key={uuidv4()} />]}
                   inputClass={
@@ -456,6 +591,7 @@ export function EditSchedule() {
               <div className="flex w-3/4">
                 <DatePicker
                   disableDayPicker
+                  editable={false}
                   format="HH:mm"
                   plugins={[<TimePicker hideSeconds key={uuidv4()} />]}
                   inputClass={
@@ -488,6 +624,7 @@ export function EditSchedule() {
               <div className="flex w-3/4">
                 <DatePicker
                   disableDayPicker
+                  editable={false}
                   format="HH:mm"
                   plugins={[<TimePicker hideSeconds key={uuidv4()} />]}
                   inputClass={
@@ -520,6 +657,7 @@ export function EditSchedule() {
               <div className="flex w-3/4">
                 <DatePicker
                   disableDayPicker
+                  editable={false}
                   format="HH:mm"
                   plugins={[<TimePicker hideSeconds key={uuidv4()} />]}
                   inputClass={
@@ -552,6 +690,7 @@ export function EditSchedule() {
               <div className="flex w-3/4">
                 <DatePicker
                   disableDayPicker
+                  editable={false}
                   format="HH:mm"
                   plugins={[<TimePicker hideSeconds key={uuidv4()} />]}
                   inputClass={

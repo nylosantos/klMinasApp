@@ -51,9 +51,7 @@ export interface UserFullDataProps {
   role: "root" | "admin" | "editor" | "teacher" | "user";
   timestamp: Date;
 }
-export interface UserRouterProps {
-  username: string;
-}
+
 // CREATE VALIDATIONS USERS
 export type CreateUserValidationZProps = z.infer<
   typeof createUserValidationSchema
@@ -153,7 +151,7 @@ export type SearchCurriculumValidationZProps = z.infer<
   typeof searchCurriculumValidationSchema
 >;
 
-export interface stateDataProps {
+export interface StateDataProps {
   id: string;
   ddd: string;
   state: string;
@@ -167,42 +165,6 @@ export interface DaysProps {
   thursday: String;
   friday: String;
   saturday: String;
-}
-
-export interface FormValues {
-  name: string;
-  email: string;
-  birthDate: string;
-  addressStreet: string;
-  addressNumber: string;
-  addressComplement: string;
-  addressNeighborhood: string;
-  addressCity: string;
-  addressState: string;
-  addressCep: string;
-  phone: string;
-  phoneSecondary?: string;
-  phoneTertiary?: string;
-  responsible: string;
-  financialResponsible: string;
-  schoolId: string;
-  schoolClassId: string;
-  schoolCourseId: string;
-  scheduleId: string;
-}
-
-export interface InputStateProps extends UseControllerProps<FormValues> {
-  inputValue?: string;
-  handleGetCep: (c: string) => void;
-}
-
-export interface CurriculumProps {
-  name: string;
-  schoolId: string;
-  schoolClassId: string;
-  schoolCourseId: string;
-  scheduleId: string;
-  classDayId: string;
 }
 
 export interface SelectProps {
@@ -230,43 +192,6 @@ export interface SelectProps {
   handleData?: (data: any) => void;
 }
 
-export interface CurriculumReadInputProps {
-  curriculumArray: Array<string>;
-}
-
-export interface HandleCurriculumNameNameProps {
-  id: string;
-  idName:
-    | "schoolId"
-    | "schoolClassId"
-    | "schoolCourseId"
-    | "scheduleId"
-    | "classDayId"
-    | "teacherId";
-  fieldName:
-    | "school"
-    | "schoolClass"
-    | "schoolCourse"
-    | "schedule"
-    | "classDay"
-    | "teacher";
-  dataType:
-    | "schools"
-    | "schoolClasses"
-    | "schoolCourses"
-    | "schedules"
-    | "classDays"
-    | "teachers"
-    | "curriculum"
-    | "students";
-}
-
-export interface FormatPhoneProps {
-  ddd: string;
-  initial: string;
-  final: string;
-}
-
 export interface ToggleClassDaysFunctionProps {
   day: string;
   value: boolean;
@@ -285,16 +210,6 @@ export interface ClassDaysCompProps {
     confirmInsert?: boolean;
   };
   toggleClassDays: ({ day, value }: ToggleClassDaysFunctionProps) => void;
-}
-
-export interface GetCurriculumNameProps {
-  name: {
-    schoolName: string;
-    schoolCourseName: string;
-    scheduleName: string;
-    classDayName: string;
-    teacherName: string;
-  };
 }
 
 export interface SchoolSearchProps {
@@ -415,6 +330,6 @@ export interface SubmitLoadingProps {
 
 export interface ButtonSignProps {
   isSubmitting: boolean;
-  signType: 'signIn' | 'signUp'
+  signType: "signIn" | "signUp";
   isClosed?: boolean;
 }

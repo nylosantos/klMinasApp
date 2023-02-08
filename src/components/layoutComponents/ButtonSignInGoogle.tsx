@@ -14,7 +14,6 @@ import {
 
 import { app } from "../../db/Firebase";
 import { ButtonSignProps } from "../../@types";
-import { buttonSignInGoogle } from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -95,7 +94,7 @@ export function ButtonSignInGoogle({
     <button
       type="button"
       disabled={isClosed ? true : isSubmitting}
-      className={buttonSignInGoogle}
+      className="flex w-full px-4 py-2 gap-4 items-center justify-center border rounded-3xl border-red-900/10 bg-red-600 disabled:bg-red-600/70 disabled:dark:bg-red-600/70 disabled:border-red-900/10 font-bold text-sm text-white disabled:dark:text-white/50 uppercase"
       onClick={handleSignInWithGoogle}
     >
       {/* BUTTON ICON */}

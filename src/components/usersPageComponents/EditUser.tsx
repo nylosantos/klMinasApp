@@ -19,32 +19,6 @@ import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { editUserValidationSchema } from "../../@types/zodValidation";
 import { EditUserValidationZProps, UserFullDataProps } from "../../@types";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
-import {
-  buttonEdit,
-  buttonReset,
-  buttonSubmit,
-  divEditButton,
-  divItemsForm,
-  divMasterPage,
-  divPhoneMaster,
-  divPhoneNumber,
-  divSubmitResetItems,
-  divWithDoubleItems,
-  divWithDoubleItemsRight,
-  formMaster,
-  inputCheckbox,
-  inputError,
-  inputOk,
-  inputWithButtonError,
-  inputWithButtonOk,
-  labelTextError,
-  labelTextOk,
-  pageTitleH1,
-  selectDDDError,
-  selectDDDOk,
-  selectError,
-  selectOk,
-} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -398,7 +372,7 @@ export function EditUser() {
   };
 
   return (
-    <div className={divMasterPage}>
+    <div className="flex flex-col container text-center">
       {/* SUBMITING LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="editando" />
 
@@ -406,24 +380,35 @@ export function EditUser() {
       <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
-      <h1 className={pageTitleH1}>
+      <h1 className="font-bold text-2xl my-4">
         {isEdit ? `Editando ${userEditData.name}` : "Editar Usuário"}
       </h1>
 
       {/* FORM */}
-      <form onSubmit={handleSubmit(handleEditUser)} className={formMaster}>
+      <form
+        onSubmit={handleSubmit(handleEditUser)}
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+      >
         {/* USER SELECT */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="userSelect"
-            className={errors.name ? labelTextError : labelTextOk}
+            className={
+              errors.name
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Selecione o Usuário:{" "}
           </label>
           <select
             id="userSelect"
             defaultValue={" -- select an option -- "}
-            className={errors.name ? selectError : selectOk}
+            className={
+              errors.name
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
             name="userSelect"
             onChange={(e) => {
               setUserEditData({
@@ -444,11 +429,11 @@ export function EditUser() {
         {isSelected ? (
           <>
             {/* EDIT BUTTON */}
-            <div className={divEditButton}>
+            <div className="flex gap-2 mt-4 justify-center">
               <button
                 type="button"
                 disabled={isEdit}
-                className={buttonEdit}
+                className="w-3/4 border rounded-xl border-green-900/10 bg-green-500 disabled:bg-amber-500/70 disabled:dark:bg-amber-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50"
                 onClick={() => {
                   setIsEdit(true);
                 }}
@@ -464,10 +449,14 @@ export function EditUser() {
         {isEdit ? (
           <>
             {/* USER NAME */}
-            <div className={divItemsForm}>
+            <div className="flex gap-2 items-center">
               <label
                 htmlFor="name"
-                className={errors.name ? labelTextError : labelTextOk}
+                className={
+                  errors.name
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
               >
                 Nome:{" "}
               </label>
@@ -480,7 +469,11 @@ export function EditUser() {
                     ? "É necessário inserir o Nome do Usuário"
                     : "Insira o nome do Usuário"
                 }
-                className={errors.name ? inputError : inputOk}
+                className={
+                  errors.name
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
                 value={userEditData.name}
                 onChange={(e) => {
                   setUserEditData({
@@ -492,10 +485,14 @@ export function EditUser() {
             </div>
 
             {/* USER E-MAIL */}
-            <div className={divItemsForm}>
+            <div className="flex gap-2 items-center">
               <label
                 htmlFor="email"
-                className={errors.email ? labelTextError : labelTextOk}
+                className={
+                  errors.email
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
               >
                 E-mail:{" "}
               </label>
@@ -508,7 +505,11 @@ export function EditUser() {
                     ? "É necessário inserir o E-mail do Usuário"
                     : "Insira o E-mail do Usuário"
                 }
-                className={errors.email ? inputError : inputOk}
+                className={
+                  errors.email
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
                 value={userEditData.email}
                 onChange={(e) => {
                   setUserEditData({
@@ -520,18 +521,22 @@ export function EditUser() {
             </div>
 
             {/** CHECKBOX CHANGE PASSWORD */}
-            <div className={divItemsForm}>
+            <div className="flex gap-2 items-center">
               <label
                 htmlFor="changePassword"
-                className={errors.password ? labelTextError : labelTextOk}
+                className={
+                  errors.password
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
               >
                 Alterar Senha ?{" "}
               </label>
-              <div className={`${divWithDoubleItems} items-center`}>
+              <div className={`flex w-3/4 gap-2 items-center`}>
                 <input
                   type="checkbox"
                   name="changePassword"
-                  className={inputCheckbox}
+                  className="ml-1 text-green-500 dark:text-green-500 border-none"
                   checked={userEditData.changePassword}
                   onChange={() => {
                     setUserEditData({
@@ -545,15 +550,15 @@ export function EditUser() {
             {userEditData.changePassword ? (
               <>
                 {/* PASSWORD */}
-                <div className={divItemsForm}>
+                <div className="flex gap-2 items-center">
                   <label
                     htmlFor="password"
                     className={
                       !errorPassword
                         ? errors.password
-                          ? labelTextError
-                          : labelTextOk
-                        : labelTextError
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                        : "w-1/4 text-right text-red-500 dark:text-red-400"
                     }
                   >
                     Senha:{" "}
@@ -572,9 +577,9 @@ export function EditUser() {
                     className={
                       !errorPassword
                         ? errors.password
-                          ? inputError
-                          : inputOk
-                        : inputError
+                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     }
                     onChange={(e) => {
                       setUserEditData({
@@ -586,15 +591,15 @@ export function EditUser() {
                 </div>
 
                 {/* CONFIRM PASSWORD */}
-                <div className={divItemsForm}>
+                <div className="flex gap-2 items-center">
                   <label
                     htmlFor="confirmPassword"
                     className={
                       !errorPassword
                         ? errors.confirmPassword
-                          ? labelTextError
-                          : labelTextOk
-                        : labelTextError
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                        : "w-1/4 text-right text-red-500 dark:text-red-400"
                     }
                   >
                     Confirme a Senha:{" "}
@@ -613,9 +618,9 @@ export function EditUser() {
                     className={
                       !errorPassword
                         ? errors.confirmPassword
-                          ? inputError
-                          : inputOk
-                        : inputError
+                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     }
                     onChange={(e) => {
                       setUserEditData({
@@ -629,15 +634,19 @@ export function EditUser() {
             ) : null}
 
             {/* PHONE */}
-            <div className={divItemsForm}>
+            <div className="flex gap-2 items-center">
               <label
                 htmlFor="phone"
-                className={errors.phone ? labelTextError : labelTextOk}
+                className={
+                  errors.phone
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
               >
                 Telefone:{" "}
               </label>
-              <div className={divPhoneMaster}>
-                <div className={divPhoneNumber}>
+              <div className="flex w-2/4 gap-2">
+                <div className="flex w-10/12 items-center gap-1">
                   <select
                     id="phoneDDD"
                     disabled={isSubmitting}
@@ -646,7 +655,11 @@ export function EditUser() {
                         ? userSelectedData?.phone?.slice(3, 5)
                         : "DDD"
                     }
-                    className={errors.phone ? selectDDDError : selectDDDOk}
+                    className={
+                      errors.phone
+                        ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
                     name="DDD"
                     onChange={(e) => {
                       setPhoneFormatted({
@@ -666,7 +679,9 @@ export function EditUser() {
                     defaultValue={userSelectedData?.phone?.slice(5, 10)}
                     placeholder={errors.phone ? "É necessário um" : "99999"}
                     className={
-                      errors.phone ? inputWithButtonError : inputWithButtonOk
+                      errors.phone
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                     }
                     onChange={(e) => {
                       setPhoneFormatted({
@@ -685,7 +700,9 @@ export function EditUser() {
                     defaultValue={userSelectedData?.phone?.slice(-4)}
                     placeholder={errors.phone ? "telefone válido" : "9990"}
                     className={
-                      errors.phone ? inputWithButtonError : inputWithButtonOk
+                      errors.phone
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                     }
                     onChange={(e) => {
                       setPhoneFormatted({
@@ -695,15 +712,19 @@ export function EditUser() {
                     }}
                   />
                 </div>
-                <div className={divWithDoubleItemsRight}></div>
+                <div className="flex w-2/12 items-center gap-2"></div>
               </div>
             </div>
 
             {/* USER ROLE */}
-            <div className={divItemsForm}>
+            <div className="flex gap-2 items-center">
               <label
                 htmlFor="role"
-                className={errors.role ? labelTextError : labelTextOk}
+                className={
+                  errors.role
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                }
               >
                 Permissão:{" "}
               </label>
@@ -711,7 +732,11 @@ export function EditUser() {
                 id="role"
                 disabled={isSubmitting}
                 value={userEditData.role}
-                className={errors.name ? selectError : selectOk}
+                className={
+                  errors.name
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
                 name="role"
                 onChange={(e) => {
                   if (
@@ -736,12 +761,12 @@ export function EditUser() {
             </div>
 
             {/* SUBMIT AND RESET BUTTONS */}
-            <div className={divSubmitResetItems}>
+            <div className="flex gap-2 mt-4">
               {/* SUBMIT BUTTON */}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={buttonSubmit}
+                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
               >
                 {!isSubmitting ? "Salvar" : "Salvando"}
               </button>
@@ -749,7 +774,7 @@ export function EditUser() {
               {/* RESET BUTTON */}
               <button
                 type="reset"
-                className={buttonReset}
+                className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
                 disabled={isSubmitting}
                 onClick={() => {
                   resetForm();

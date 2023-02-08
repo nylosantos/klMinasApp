@@ -1,10 +1,8 @@
-import { Header } from "../components/layoutComponents/Header";
-
-import { Fragment, useEffect, useState } from "react";
-import { Tab } from "@headlessui/react";
+import { toast } from "react-toastify";
 import { useRouter } from "next/router";
-import { app, initFirebase } from "../db/Firebase";
+import { Tab } from "@headlessui/react";
 import { getAuth, User } from "firebase/auth";
+import { Fragment, useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
   collection,
@@ -13,11 +11,13 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { toast } from "react-toastify";
-import { UserFullDataProps } from "../@types";
-import InsertPage from "./InsertPage";
+
 import EditPage from "./EditPage";
 import DeletePage from "./DeletePage";
+import InsertPage from "./InsertPage";
+import { UserFullDataProps } from "../@types";
+import { app, initFirebase } from "../db/Firebase";
+import { Header } from "../components/layoutComponents/Header";
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
@@ -70,6 +70,7 @@ export default function ManageSchools() {
       );
   };
 
+  // IF LOGGED GET DATA, IF NOT LOGGED SEND TO LOGIN
   useEffect(() => {
     if (!user) {
       router.push("/");
@@ -89,7 +90,7 @@ export default function ManageSchools() {
                 classNames(
                   "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                   selected
-                    ? "bg-white shadow dark:text-gray-800"
+                    ? "bg-white shadow dark:text-gray-800 cursor-default"
                     : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
                 )
               }
@@ -101,7 +102,7 @@ export default function ManageSchools() {
                 classNames(
                   "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                   selected
-                    ? "bg-white shadow dark:text-gray-800"
+                    ? "bg-white shadow dark:text-gray-800 cursor-default"
                     : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
                 )
               }
@@ -113,7 +114,7 @@ export default function ManageSchools() {
                 classNames(
                   "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                   selected
-                    ? "bg-white shadow dark:text-gray-800"
+                    ? "bg-white shadow dark:text-gray-800 cursor-default"
                     : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
                 )
               }

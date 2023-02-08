@@ -25,16 +25,6 @@ import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { ButtonSignSubmit } from "../layoutComponents/ButtonSignSubmit";
 import { ButtonSignInGoogle } from "../layoutComponents/ButtonSignInGoogle";
 import { signUpEmailAndPasswordValidationSchema } from "../../@types/zodValidation";
-import {
-  divSignMaster,
-  divSignUpContainer,
-  formSignMaster,
-  inputSignError,
-  inputSignOk,
-  inputSignUpNameError,
-  inputSignUpNameOk,
-  signTitleH1,
-} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -182,26 +172,30 @@ export function FormRegister() {
       {/* TOAST CONTAINER */}
       <ToastContainer limit={4} />
 
-      <div className={divSignMaster}>
+      <div className="flex flex-col w-96 p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-gray-700/20 dark:bg-transparent">
         {/* SUBMIT LOADING */}
         <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="logando" />
 
         {/* SIGN REGISTER TITLE */}
-        <h1 className={signTitleH1}>Criar uma conta</h1>
+        <h1 className="font-bold text-xl">Criar uma conta</h1>
 
         {/* FORM */}
         <form
           onSubmit={handleSubmit(handleSignUpWithEmailAndPassword)}
-          className={formSignMaster}
+          className="flex flex-col w-full gap-8 justify-evenly"
         >
-          <div className={divSignUpContainer}>
+          <div className="flex flex-col items-start">
             {/* NAME */}
             <input
               type="text"
               name="name"
               disabled={systemSignUpClosed ? true : isSubmitting}
               placeholder={errors.name ? "É necessário inserir o Nome" : "Nome"}
-              className={errors.name ? inputSignUpNameError : inputSignUpNameOk}
+              className={
+                errors.name
+                  ? "w-full px-4 pb-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
+                  : "w-full px-4 pb-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
+              }
               value={userSignUp.name}
               onChange={(e) => {
                 setUserSignUp({ ...userSignUp, name: e.target.value });
@@ -217,7 +211,11 @@ export function FormRegister() {
             placeholder={
               errors.email ? "É necessário inserir o E-mail" : "E-mail"
             }
-            className={errors.email ? inputSignError : inputSignOk}
+            className={
+              errors.email
+                ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
+                : "w-full px-4 pb-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
+            }
             value={userSignUp.email}
             onChange={(e) => {
               setUserSignUp({ ...userSignUp, email: e.target.value });
@@ -232,7 +230,11 @@ export function FormRegister() {
             placeholder={
               errors.password ? "É necessário inserir a Senha" : "Senha"
             }
-            className={errors.password ? inputSignError : inputSignOk}
+            className={
+              errors.password
+                ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
+                : "w-full px-4 pb-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
+            }
             value={userSignUp.password}
             onChange={(e) => {
               setUserSignUp({ ...userSignUp, password: e.target.value });
@@ -249,7 +251,11 @@ export function FormRegister() {
                 ? "É necessário confirmar a Senha"
                 : "Confirme a Senha"
             }
-            className={errors.confirmPassword ? inputSignError : inputSignOk}
+            className={
+              errors.confirmPassword
+                ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
+                : "w-full px-4 pb-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
+            }
             value={userSignUp.confirmPassword}
             onChange={(e) => {
               setUserSignUp({ ...userSignUp, confirmPassword: e.target.value });

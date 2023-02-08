@@ -1,13 +1,14 @@
 import { Fragment } from "react";
 import { Tab } from "@headlessui/react";
-import { DeleteSchool } from "../components/deleteComponents/DeleteSchool";
+
 import { DeleteClass } from "../components/deleteComponents/DeleteClass";
+import { DeleteSchool } from "../components/deleteComponents/DeleteSchool";
 import { DeleteCourse } from "../components/deleteComponents/DeleteCourse";
-import { DeleteClassDays } from "../components/deleteComponents/DeleteClassDays";
-import { DeleteSchedule } from "../components/deleteComponents/DeleteSchedule";
-import { DeleteTeacher } from "../components/deleteComponents/DeleteTeacher";
-import { DeleteCurriculum } from "../components/deleteComponents/DeleteCurriculum";
 import { DeleteStudent } from "../components/deleteComponents/DeleteStudent";
+import { DeleteTeacher } from "../components/deleteComponents/DeleteTeacher";
+import { DeleteSchedule } from "../components/deleteComponents/DeleteSchedule";
+import { DeleteClassDays } from "../components/deleteComponents/DeleteClassDays";
+import { DeleteCurriculum } from "../components/deleteComponents/DeleteCurriculum";
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
@@ -23,7 +24,7 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -35,7 +36,7 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -47,7 +48,7 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -59,7 +60,7 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -71,7 +72,7 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -83,7 +84,7 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -95,7 +96,7 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -107,7 +108,7 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }

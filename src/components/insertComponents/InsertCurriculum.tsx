@@ -28,25 +28,6 @@ import {
   SchoolSearchProps,
   TeacherSearchProps,
 } from "../../@types";
-import {
-  buttonReset,
-  buttonSubmit,
-  divCheckboxItem,
-  divDescriptionInsertCurriculumCardItem,
-  divDescriptionCardMaster,
-  divItemsForm,
-  divMasterPage,
-  divSubmitResetItems,
-  formMaster,
-  inputCheckbox,
-  inputOk,
-  labelCheckbox,
-  labelTextError,
-  labelTextOk,
-  pageTitleH1,
-  selectError,
-  selectOk,
-} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -611,7 +592,7 @@ export function InsertCurriculum() {
   };
 
   return (
-    <div className={divMasterPage}>
+    <div className="flex flex-col container text-center">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
@@ -619,22 +600,33 @@ export function InsertCurriculum() {
       <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
-      <h1 className={pageTitleH1}>Adicionar Currículo</h1>
+      <h1 className="font-bold text-2xl my-4">Adicionar Currículo</h1>
 
       {/* FORM */}
-      <form onSubmit={handleSubmit(handleAddCurriculum)} className={formMaster}>
+      <form
+        onSubmit={handleSubmit(handleAddCurriculum)}
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+      >
         {/* SCHOOL SELECT */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="schoolSelect"
-            className={errors.schoolId ? labelTextError : labelTextOk}
+            className={
+              errors.schoolId
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Selecione a Escola:{" "}
           </label>
           <select
             id="schoolSelect"
             defaultValue={" -- select an option -- "}
-            className={errors.schoolId ? selectError : selectOk}
+            className={
+              errors.schoolId
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
             name="schoolSelect"
             onChange={(e) => {
               setCurriculumData({
@@ -652,17 +644,25 @@ export function InsertCurriculum() {
         </div>
 
         {/* SCHOOL CLASS SELECT */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="schoolClassSelect"
-            className={errors.schoolClassId ? labelTextError : labelTextOk}
+            className={
+              errors.schoolClassId
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Selecione a Turma:{" "}
           </label>
           <select
             id="schoolClassSelect"
             defaultValue={" -- select an option -- "}
-            className={errors.schoolClassId ? selectError : selectOk}
+            className={
+              errors.schoolClassId
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
             name="schoolClassSelect"
             onChange={(e) => {
               setCurriculumData({
@@ -681,17 +681,25 @@ export function InsertCurriculum() {
         </div>
 
         {/* SCHOOL COURSE SELECT */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="schoolCourseSelect"
-            className={errors.schoolCourseId ? labelTextError : labelTextOk}
+            className={
+              errors.schoolCourseId
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Selecione a Modalidade:{" "}
           </label>
           <select
             id="schoolCourseSelect"
             defaultValue={" -- select an option -- "}
-            className={errors.schoolCourseId ? selectError : selectOk}
+            className={
+              errors.schoolCourseId
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
             name="schoolCourseSelect"
             onChange={(e) => {
               setCurriculumData({
@@ -709,17 +717,25 @@ export function InsertCurriculum() {
         </div>
 
         {/* SCHEDULE SELECT */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="scheduleSelect"
-            className={errors.scheduleId ? labelTextError : labelTextOk}
+            className={
+              errors.scheduleId
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Selecione o Horário:{" "}
           </label>
           <select
             id="scheduleSelect"
             defaultValue={" -- select an option -- "}
-            className={errors.scheduleId ? selectError : selectOk}
+            className={
+              errors.scheduleId
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
             name="scheduleSelect"
             onChange={(e) => {
               setCurriculumData({
@@ -738,17 +754,25 @@ export function InsertCurriculum() {
         </div>
 
         {/* CLASS DAYS SELECT */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="classDaySelect"
-            className={errors.classDayId ? labelTextError : labelTextOk}
+            className={
+              errors.classDayId
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Selecione os Dias de Aula:{" "}
           </label>
           <select
             id="classDaySelect"
             defaultValue={" -- select an option -- "}
-            className={errors.classDayId ? selectError : selectOk}
+            className={
+              errors.classDayId
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
             name="classDaySelect"
             onChange={(e) => {
               setCurriculumData({
@@ -766,17 +790,25 @@ export function InsertCurriculum() {
         </div>
 
         {/* TEACHER SELECT */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="teacherSelect"
-            className={errors.teacherId ? labelTextError : labelTextOk}
+            className={
+              errors.teacherId
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Selecione o Professor:{" "}
           </label>
           <select
             id="teacherSelect"
             defaultValue={" -- select an option -- "}
-            className={errors.teacherId ? selectError : selectOk}
+            className={
+              errors.teacherId
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
             name="teacherSelect"
             onChange={(e) => {
               setCurriculumData({
@@ -794,8 +826,11 @@ export function InsertCurriculum() {
         </div>
 
         {/* CURRICULUM NAME */}
-        <div className={divItemsForm}>
-          <label htmlFor="curriculumName" className={labelTextOk}>
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="curriculumName"
+            className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+          >
             Nome:{" "}
           </label>
           <input
@@ -804,7 +839,7 @@ export function InsertCurriculum() {
             name="curriculumName"
             disabled
             placeholder="Escolha as opções acima para visualizar o nome do Currículo"
-            className={inputOk}
+            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             value={
               curriculumData.schoolName &&
               curriculumData.schoolCourseName &&
@@ -824,32 +859,60 @@ export function InsertCurriculum() {
         curriculumData.classDayName &&
         curriculumData.teacherName ? (
           <>
-            <div className={divDescriptionCardMaster}>
-              <div className={divDescriptionInsertCurriculumCardItem}>
-                <p>Colégio: {curriculumData.schoolName}</p>
+            <div className="flex gap-2 items-center justify-center mt-2">
+              <div className="flex flex-col w-2/6 items-left p-4 my-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left">
+                <p>
+                  Colégio:{" "}
+                  <span className="text-red-600 dark:text-yellow-500">
+                    {curriculumData.schoolName}
+                  </span>
+                </p>
                 {curriculumData.schoolName === "Colégio Bernoulli" ? (
-                  <p>Turma: {curriculumData.schoolClassName}</p>
-                ) : null}
-                <p>Modalidade: {curriculumData.schoolCourseName}</p>
-                <p>Dias: {curriculumData.classDayName}</p>
-                {scheduleSelectedData ? (
                   <p>
-                    Horário: De {scheduleSelectedData!.classStart} a{" "}
-                    {scheduleSelectedData!.classEnd} hrs
+                    Turma:{" "}
+                    <span className="text-red-600 dark:text-yellow-500">
+                      {curriculumData.schoolClassName}
+                    </span>
                   </p>
                 ) : null}
-                <p>Professor: {curriculumData.teacherName}</p>
+                <p>
+                  Modalidade:{" "}
+                  <span className="text-red-600 dark:text-yellow-500">
+                    {curriculumData.schoolCourseName}
+                  </span>
+                </p>
+                <p>
+                  Dias:{" "}
+                  <span className="text-red-600 dark:text-yellow-500">
+                    {curriculumData.classDayName}
+                  </span>
+                </p>
+                {scheduleSelectedData ? (
+                  <p>
+                    Horário:{" "}
+                    <span className="text-red-600 dark:text-yellow-500">
+                      De {scheduleSelectedData!.classStart} a{" "}
+                      {scheduleSelectedData!.classEnd} hrs
+                    </span>
+                  </p>
+                ) : null}
+                <p>
+                  Professor:{" "}
+                  <span className="text-red-600 dark:text-yellow-500">
+                    {curriculumData.teacherName}
+                  </span>
+                </p>
               </div>
             </div>
           </>
         ) : null}
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className={divCheckboxItem}>
+        <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
             name="confirmInsert"
-            className={inputCheckbox}
+            className="ml-1 text-green-500 dark:text-green-500 border-none"
             checked={curriculumData.confirmInsert}
             onChange={() => {
               setCurriculumData({
@@ -858,18 +921,21 @@ export function InsertCurriculum() {
               });
             }}
           />
-          <label htmlFor="confirmInsert" className={labelCheckbox}>
+          <label
+            htmlFor="confirmInsert"
+            className="text-sm text-gray-600 dark:text-gray-100"
+          >
             Confirmar criação do Currículo
           </label>
         </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
-        <div className={divSubmitResetItems}>
+        <div className="flex gap-2 mt-4">
           {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className={buttonSubmit}
+            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>
@@ -877,7 +943,7 @@ export function InsertCurriculum() {
           {/* RESET BUTTON */}
           <button
             type="reset"
-            className={buttonReset}
+            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
             disabled={isSubmitting}
             onClick={() => {
               resetForm();

@@ -1,9 +1,8 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   arrayRemove,
   collection,
@@ -17,6 +16,9 @@ import {
   where,
 } from "firebase/firestore";
 
+import { app } from "../../db/Firebase";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteStudentValidationSchema } from "../../@types/zodValidation";
 import {
   CurriculumSearchProps,
@@ -24,8 +26,6 @@ import {
   SchoolClassSearchProps,
   SchoolSearchProps,
 } from "../../@types";
-import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -42,7 +42,7 @@ export function DeleteStudent() {
     }
   );
 
-  // STUDENT SELECTED ACTIVE STATES
+  // STUDENT SELECTED ACTIVE STATE
   const [isSelected, setIsSelected] = useState(false);
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
@@ -73,7 +73,7 @@ export function DeleteStudent() {
     }
   }, [schoolSelectedData]);
 
-  // RESET SCHOOL CLASS, SCHOOL COURSE AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
+  // RESET SCHOOL CLASS, SCHOOL COURSE AND CURRICULUM SELECT TO INDEX 0 WHEN SCHOOL CHANGE
   useEffect(() => {
     (
       document.getElementById("schoolClassSelect") as HTMLSelectElement
@@ -114,7 +114,7 @@ export function DeleteStudent() {
     }
   }, [schoolClassSelectedData]);
 
-  // RESET STUDENT SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
+  // RESET CURRICULUM SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
   useEffect(() => {
     (
       document.getElementById("curriculumSelect") as HTMLSelectElement
@@ -200,6 +200,15 @@ export function DeleteStudent() {
 
   // RESET FORM FUNCTION
   const resetForm = () => {
+    (
+      document.getElementById("schoolSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("curriculumSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
     setStudentData({
       studentId: "",
       curriculumId: "",
@@ -277,7 +286,7 @@ export function DeleteStudent() {
       // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
       if (results.length !== 0) {
         try {
-          // DELETING REGISTER FROM THE REGISTRATION OF OTHER BROTHER
+          // DELETING REGISTER FROM THE BROTHER'S REGISTRATION
           const deleteStudentBrother = async () => {
             for (let i = 0; i < results.length; i++) {
               const studentBrotherRef = doc(db, "students", results[i].id);
@@ -357,8 +366,16 @@ export function DeleteStudent() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="excluindo" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Excluir Aluno</h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleDeleteStudent)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
@@ -376,6 +393,7 @@ export function DeleteStudent() {
             Selecione a Escola:{" "}
           </label>
           <select
+            id="schoolSelect"
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolId
@@ -473,6 +491,7 @@ export function DeleteStudent() {
             {studentData.schoolClassId ? (
               <SelectOptions
                 returnId
+                displaySchoolCourseAndSchedule
                 dataType="curriculum"
                 schoolId={studentData.schoolId}
                 schoolClassId={studentData.schoolClassId}
@@ -487,144 +506,152 @@ export function DeleteStudent() {
           </select>
         </div>
 
-        {/* STUDENT SELECT */}
+        {/* STUDENT SELECT CARD SECTION */}
         {isSelected ? (
-          studentsArrayData.length !== 0 ? (
-            <>
-              <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
-                Escolha o aluno a ser excluído:
-              </h1>
-              <hr className="pb-4" />
-              <div className="flex flex-wrap gap-4 justify-center">
-                {studentsArrayData.map((c: any) => (
-                  <>
-                    <div
-                      className="flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                      key={c.id}
-                    >
-                      <input
-                        type="radio"
-                        id={c.id}
-                        name="age"
-                        value={c.id}
-                        onChange={(e) =>
-                          setStudentData({
-                            ...studentData,
-                            studentId: e.target.value,
-                            confirmDelete: false,
-                          })
-                        }
-                      />
-                      <label htmlFor={c.id} className="flex flex-col gap-4">
-                        <p>
-                          Nome:{" "}
-                          <span className="text-red-600 dark:text-yellow-500">
-                            {c.name}
-                          </span>
-                        </p>
-                        <p>
-                          E-mail:{" "}
-                          <span className="text-red-600 dark:text-yellow-500">
-                            {c.email}
-                          </span>
-                        </p>
-                        <p>
-                          Responsável:{" "}
-                          <span className="text-red-600 dark:text-yellow-500">
-                            {c.responsible}
-                          </span>
-                        </p>
-                        <p>
-                          Responsável Financeiro:{" "}
-                          <span className="text-red-600 dark:text-yellow-500">
-                            {c.financialResponsible}
-                          </span>
-                        </p>
-                        <p>
-                          Telefone:{" "}
-                          <span className="text-red-600 dark:text-yellow-500">
-                            {c.phone}
-                          </span>
-                        </p>
-                        {c.phoneSecondary !== " -" ? (
-                          <p>
-                            Telefone 2:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {c.phoneSecondary}
-                            </span>
-                          </p>
-                        ) : null}
-                        {c.phoneTertiary !== " -" ? (
-                          <p>
-                            Telefone 3:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {c.phoneTertiary}
-                            </span>
-                          </p>
-                        ) : null}
-                      </label>
-                    </div>
-                  </>
-                ))}
-              </div>
+          <>
+            {studentsArrayData.length !== 0 ? (
+              <>
+                {/* STUDENT SELECT CARD SECTION TITLE */}
+                <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+                  Escolha o aluno a ser excluído:
+                </h1>
 
-              {/** CHECKBOX CONFIRM DELETE */}
-              <div className="flex justify-center items-center gap-2 mt-6">
-                <input
-                  type="checkbox"
-                  name="confirmDelete"
-                  className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
-                  checked={studentData.confirmDelete}
-                  onChange={() => {
-                    setStudentData({
-                      ...studentData,
-                      confirmDelete: !studentData.confirmDelete,
-                    });
-                  }}
-                />
-                <label
-                  htmlFor="confirmDelete"
-                  className="text-sm text-gray-600 dark:text-gray-100"
-                >
-                  Confirmar exclusão do Aluno
-                </label>
-              </div>
-            </>
-          ) : (
-            <div className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
-              Nenhum aluno encontrado.
+                {/* SEPARATOR */}
+                <hr className="pb-4" />
+
+                {/* STUDENT SELECT CARD */}
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {studentsArrayData.map((c: any) => (
+                    <>
+                      <div
+                        className="flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                        key={c.id}
+                      >
+                        <input
+                          type="radio"
+                          id={c.id}
+                          name="age"
+                          value={c.id}
+                          onChange={(e) =>
+                            setStudentData({
+                              ...studentData,
+                              studentId: e.target.value,
+                              confirmDelete: false,
+                            })
+                          }
+                        />
+                        <label htmlFor={c.id} className="flex flex-col gap-4">
+                          <p>
+                            Nome:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.name}
+                            </span>
+                          </p>
+                          <p>
+                            E-mail:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.email}
+                            </span>
+                          </p>
+                          <p>
+                            Responsável:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.responsible}
+                            </span>
+                          </p>
+                          <p>
+                            Responsável Financeiro:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.financialResponsible}
+                            </span>
+                          </p>
+                          <p>
+                            Telefone:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.phone}
+                            </span>
+                          </p>
+                          {c.phoneSecondary !== " -" ? (
+                            <p>
+                              Telefone 2:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {c.phoneSecondary}
+                              </span>
+                            </p>
+                          ) : null}
+                          {c.phoneTertiary !== " -" ? (
+                            <p>
+                              Telefone 3:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {c.phoneTertiary}
+                              </span>
+                            </p>
+                          ) : null}
+                        </label>
+                      </div>
+                    </>
+                  ))}
+                </div>
+
+                {/** CHECKBOX CONFIRM DELETE */}
+                <div className="flex justify-center items-center gap-2 mt-6">
+                  <input
+                    type="checkbox"
+                    name="confirmDelete"
+                    className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
+                    checked={studentData.confirmDelete}
+                    onChange={() => {
+                      setStudentData({
+                        ...studentData,
+                        confirmDelete: !studentData.confirmDelete,
+                      });
+                    }}
+                  />
+                  <label
+                    htmlFor="confirmDelete"
+                    className="text-sm text-gray-600 dark:text-gray-100"
+                  >
+                    Confirmar exclusão do Aluno
+                  </label>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* STUDENT SELECT CARD EMPTY SUBTITLE */}
+                <div className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+                  Nenhum aluno encontrado.
+                </div>
+              </>
+            )}
+            {/* SUBMIT AND RESET BUTTONS */}
+            <div className="flex gap-2 mt-4">
+              {/* SUBMIT BUTTON */}
+              <button
+                type="submit"
+                disabled={studentsArrayData.length === 0 ? true : isSubmitting}
+                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+              >
+                {studentsArrayData.length === 0
+                  ? "Nenhum aluno encontrado"
+                  : !isSubmitting
+                  ? "Excluir"
+                  : "Excluindo"}
+              </button>
+
+              {/* RESET BUTTON */}
+              <button
+                type="reset"
+                className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+                disabled={isSubmitting}
+                onClick={() => {
+                  resetForm();
+                }}
+              >
+                {isSubmitting ? "Aguarde" : "Limpar"}
+              </button>
             </div>
-          )
-        ) : (
-          <div className="pt-4 text-red-600 dark:text-yellow-500">
-            Selecione Colégio, Turma e Modalidade para ver os alunos
-            cadastrados.
-          </div>
-        )}
-
-        {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
-          {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
-          >
-            {!isSubmitting ? "Excluir" : "Excluindo"}
-          </button>
-
-          {/* RESET BUTTON */}
-          <button
-            type="reset"
-            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
-            disabled={isSubmitting}
-            onClick={() => {
-              resetForm();
-            }}
-          >
-            {isSubmitting ? "Aguarde" : "Limpar"}
-          </button>
-        </div>
+          </>
+        ) : null}
       </form>
     </div>
   );

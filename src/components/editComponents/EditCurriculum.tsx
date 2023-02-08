@@ -1,9 +1,8 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
   doc,
@@ -14,6 +13,9 @@ import {
   where,
 } from "firebase/firestore";
 
+import { app } from "../../db/Firebase";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { editCurriculumValidationSchema } from "../../@types/zodValidation";
 import {
   CurriculumSearchProps,
@@ -24,8 +26,6 @@ import {
   ClassDaySearchProps,
   TeacherSearchProps,
 } from "../../@types";
-import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -96,7 +96,7 @@ export function EditCurriculum() {
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
 
-  // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
+  // SET SCHOOL SELECTED STATE AND RESET SELECTS ABOVE SELECT SCHOOL WHEN SELECT SCHOOL
   useEffect(() => {
     (
       document.getElementById("schoolClassSelect") as HTMLSelectElement
@@ -117,7 +117,7 @@ export function EditCurriculum() {
     }
   }, [curriculumEditData.schoolId]);
 
-  // RESET SCHOOL CLASS, SCHOOL COURSE AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
+  // SET CURRICULUM EDIT DATA WHEN SCHOOL CHANGE
   useEffect(() => {
     setCurriculumEditData({
       ...curriculumEditData,
@@ -140,7 +140,7 @@ export function EditCurriculum() {
   const [schoolClassSelectedData, setSchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
 
-  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  // SET SCHOOL CLASS SELECTED STATE AND RESET SELECTS ABOVE SELECT SCHOOL CLASS WHEN SELECT SCHOOL CLASS
   useEffect(() => {
     (
       document.getElementById("curriculumSelect") as HTMLSelectElement
@@ -159,7 +159,7 @@ export function EditCurriculum() {
     }
   }, [curriculumEditData.schoolClassId]);
 
-  // RESET CURRICULUM SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
+  // SET CURRICULUM EDIT DATA WHEN SCHOOL CLASS CHANGE
   useEffect(() => {
     setCurriculumEditData({
       ...curriculumEditData,
@@ -169,7 +169,7 @@ export function EditCurriculum() {
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
-  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT STUDENTS
+  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT CURRICULUM
   const [curriculumDataArray, setCurriculumDataArray] =
     useState<CurriculumSearchProps[]>();
 
@@ -197,7 +197,7 @@ export function EditCurriculum() {
     }
   }, [curriculumEditData.curriculumId]);
 
-  // RESET CURRICULUM SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
+  // SET CURRICULUM EDIT DATA WHEN CURRICULUM CHANGE
   useEffect(() => {
     setCurriculumEditData({
       ...curriculumEditData,
@@ -250,7 +250,7 @@ export function EditCurriculum() {
     }
   }, [schedulesDataArray, curriculumEditData.scheduleId]);
 
-  // RESET CURRICULUM SELECT TO INDEX 0 WHEN SCHEDULE CHANGE
+  // SET CURRICULUM EDIT DATA WHEN SCHEDULE CHANGE
   useEffect(() => {
     setCurriculumEditData({
       ...curriculumEditData,
@@ -265,16 +265,16 @@ export function EditCurriculum() {
   const [classDaysDataArray, setClassDaysDataArray] =
     useState<ClassDaySearchProps[]>();
 
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  // FUNCTION THAT WORKS WITH CLASS DAY SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
   const handleClassDaySelectedData = (data: ClassDaySearchProps[]) => {
     setClassDaysDataArray(data);
   };
 
-  // SCHOOL CLASS SELECTED STATE DATA
+  // CLASS DAY SELECTED STATE DATA
   const [classDaySelectedData, setClassDaySelectedData] =
     useState<ClassDaySearchProps>();
 
-  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  // SET CLASS DAY SELECTED STATE WHEN SELECT CLASS DAY
   useEffect(() => {
     if (classDaysDataArray) {
       if (curriculumEditData.classDayId !== "") {
@@ -289,7 +289,7 @@ export function EditCurriculum() {
     }
   }, [classDaysDataArray, curriculumEditData.classDayId]);
 
-  // RESET CURRICULUM SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
+  // SET CURRICULUM EDIT DATA WHEN CLASS DAY CHANGE
   useEffect(() => {
     setCurriculumEditData({
       ...curriculumEditData,
@@ -328,7 +328,7 @@ export function EditCurriculum() {
     }
   }, [teachersDataArray, curriculumEditData.teacherId]);
 
-  // RESET CURRICULUM SELECT TO INDEX 0 WHEN TEACHER CHANGE
+  // SET CURRICULUM EDIT DATA WHEN TEACHER CHANGE
   useEffect(() => {
     setCurriculumEditData({
       ...curriculumEditData,
@@ -516,8 +516,16 @@ export function EditCurriculum() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Editar Currículo</h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditCurriculum)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"

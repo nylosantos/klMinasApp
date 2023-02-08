@@ -1,9 +1,8 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
 import {
   collection,
   doc,
@@ -14,10 +13,11 @@ import {
   where,
 } from "firebase/firestore";
 
-import { editSchoolValidationSchema } from "../../@types/zodValidation";
-import { EditSchoolValidationZProps, SchoolSearchProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import { editSchoolValidationSchema } from "../../@types/zodValidation";
+import { EditSchoolValidationZProps, SchoolSearchProps } from "../../@types";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -124,6 +124,34 @@ export function EditSchool() {
   ) => {
     setIsSubmitting(true);
 
+    // EDIT SCHOOL FUNCTION
+    const editSchool = async () => {
+      try {
+        await updateDoc(doc(db, "schools", schoolData.schoolId), {
+          name: data.name,
+        });
+        resetForm();
+        toast.success(`${schoolEditData.name} alterado com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
+
     // CHECKING IF SCHOOL EXISTS ON DATABASE
     const schoolRef = collection(db, "schools");
     const q = query(schoolRef, where("id", "==", schoolData.schoolId));
@@ -148,32 +176,6 @@ export function EditSchool() {
         );
       } else {
         // IF EXISTS, EDIT
-        const editSchool = async () => {
-          try {
-            await updateDoc(doc(db, "schools", schoolData.schoolId), {
-              name: data.name,
-            });
-            resetForm();
-            toast.success(`${schoolEditData.name} alterado com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
         editSchool();
       }
     });
@@ -181,10 +183,18 @@ export function EditSchool() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">
         {isEdit ? `Editando ${schoolEditData.name}` : "Editar Escola"}
       </h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditSchool)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"

@@ -1,11 +1,6 @@
 import { Dna } from "react-loader-spinner";
 
 import { SubmitLoadingProps } from "../../@types";
-import {
-  divSubmitLoadingCard,
-  divSubmitLoadingMaster,
-  submitTitleH1,
-} from "../../styles/tailwindConstants";
 
 export function SubmitLoading({
   isSubmitting,
@@ -14,9 +9,9 @@ export function SubmitLoading({
   return (
     <>
       {isSubmitting ? (
-        <div className={divSubmitLoadingMaster}>
+        <div className="flex flex-col w-screen h-screen top-0 left-0 absolute items-center justify-center bg-gray-900/60 dark:bg-gray-800/50 transition-all duration-300">
           {/* SUBMIT LOADING CARD */}
-          <div className={divSubmitLoadingCard}>
+          <div className="flex flex-col items-center p-40 rounded-3xl bg-gray-900/80 dark:bg-gray-900/90">
             <Dna
               visible={true}
               height="80"
@@ -25,7 +20,9 @@ export function SubmitLoading({
               wrapperStyle={{}}
               wrapperClass="dna-wrapper"
             />
-            <h1 className={submitTitleH1}>Aguarde, {whatsGoingOn}...</h1>
+            <h1 className="text-xl text-white mb-3">
+              Aguarde, {whatsGoingOn}...
+            </h1>
           </div>
         </div>
       ) : null}

@@ -1,17 +1,9 @@
-import { Fragment, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { Tab } from "@headlessui/react";
-import { InsertSchool } from "../components/insertComponents/InsertSchool";
-import { InsertClass } from "../components/insertComponents/InsertClass";
-import { InsertCourse } from "../components/insertComponents/InsertCourse";
-import { InsertClassDays } from "../components/insertComponents/InsertClassDays";
-import { InsertSchedule } from "../components/insertComponents/InsertSchedule";
-import { InsertTeacher } from "../components/insertComponents/InsertTeacher";
-import { InsertCurriculum } from "../components/insertComponents/InsertCurriculum";
-import { InsertStudent } from "../components/insertComponents/InsertStudent";
-import { InsertSeed } from "../components/insertComponents/InsertSeed";
 import { useRouter } from "next/router";
-import { app, initFirebase } from "../db/Firebase";
 import { getAuth, User } from "firebase/auth";
+import { app, initFirebase } from "../db/Firebase";
+import { Fragment, useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
   collection,
@@ -20,8 +12,17 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { toast } from "react-toastify";
+
 import { UserFullDataProps } from "../@types";
+import { InsertSeed } from "../components/insertComponents/InsertSeed";
+import { InsertClass } from "../components/insertComponents/InsertClass";
+import { InsertCourse } from "../components/insertComponents/InsertCourse";
+import { InsertSchool } from "../components/insertComponents/InsertSchool";
+import { InsertStudent } from "../components/insertComponents/InsertStudent";
+import { InsertTeacher } from "../components/insertComponents/InsertTeacher";
+import { InsertSchedule } from "../components/insertComponents/InsertSchedule";
+import { InsertClassDays } from "../components/insertComponents/InsertClassDays";
+import { InsertCurriculum } from "../components/insertComponents/InsertCurriculum";
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
@@ -74,6 +75,7 @@ export default function InsertPage() {
       );
   };
 
+  // IF LOGGED GET DATA, IF NOT LOGGED SEND TO LOGIN
   useEffect(() => {
     if (!user) {
       router.push("/");
@@ -91,7 +93,7 @@ export default function InsertPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -103,7 +105,7 @@ export default function InsertPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -115,7 +117,7 @@ export default function InsertPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -127,7 +129,7 @@ export default function InsertPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -139,7 +141,7 @@ export default function InsertPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -151,7 +153,7 @@ export default function InsertPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -163,7 +165,7 @@ export default function InsertPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -175,7 +177,7 @@ export default function InsertPage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800"
+                  ? "bg-white shadow dark:text-gray-800 cursor-default"
                   : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
@@ -190,11 +192,11 @@ export default function InsertPage() {
                   "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                   selected
                     ? // IF DISABLED
-                      // "bg-white shadow dark:text-gray-800"
-                    // : "text-gray-600/60 dark:text-gray-100/50 hover:bg-white/20 dark:hover:bg-white/[0.03]"
-                  // IF ENABLED
-                  "bg-white shadow dark:text-gray-800"
-                  : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                      // "bg-white shadow dark:text-gray-800 cursor-default"
+                      // : "text-gray-600/60 dark:text-gray-100/50 hover:bg-white/20 dark:hover:bg-white/[0.03]"
+                      // IF ENABLED
+                      "bg-white shadow dark:text-gray-800 cursor-default"
+                    : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
                 )
               }
             >

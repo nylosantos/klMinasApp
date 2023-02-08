@@ -1,9 +1,10 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+import cep from "cep-promise";
 import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import "react-toastify/dist/ReactToastify.css";
+import DatePicker, { DateObject } from "react-multi-date-picker";
 import {
   arrayRemove,
   arrayUnion,
@@ -19,7 +20,11 @@ import {
   where,
 } from "firebase/firestore";
 
+import { app } from "../../db/Firebase";
+import { SelectOptions } from "../formComponents/SelectOptions";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { editStudentValidationSchema } from "../../@types/zodValidation";
+import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 import {
   CurriculumSearchProps,
   EditStudentValidationZProps,
@@ -31,11 +36,6 @@ import {
   SearchCurriculumValidationZProps,
   StudentSearchProps,
 } from "../../@types";
-import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
-import DatePicker, { DateObject } from "react-multi-date-picker";
-import cep from "cep-promise";
-import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -123,7 +123,7 @@ export function EditStudent() {
     }
   }, [schoolSelectedData]);
 
-  // RESET SCHOOL CLASS, SCHOOL COURSE AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
+  // RESET SCHOOL CLASS, CURRICULUM AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
   useEffect(() => {
     (
       document.getElementById("schoolClassSelect") as HTMLSelectElement
@@ -170,7 +170,7 @@ export function EditStudent() {
     }
   }, [schoolClassSelectedData]);
 
-  // RESET STUDENT SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
+  // RESET CURRICULUM AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
   useEffect(() => {
     (
       document.getElementById("curriculumSelect") as HTMLSelectElement
@@ -184,7 +184,7 @@ export function EditStudent() {
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
-  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT STUDENTS
+  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT CURRICULUM
   const [curriculumDataArray, setCurriculumDataArray] =
     useState<CurriculumSearchProps[]>();
 
@@ -414,25 +414,10 @@ export function EditStudent() {
       setStudentSelectedData(undefined);
     }
   }, [studentData.studentId]);
-
-  // STUDENT NOT FOUND STATE
-  const [studentNotFound, setStudentNotFound] = useState(false);
-
-  // SET STUDENT NOT FOUND WHEN NO STUDENT IS FOUND
-  useEffect(() => {
-    if (
-      studentData.schoolId &&
-      studentData.schoolClassId &&
-      studentData.curriculumId &&
-      studentsDataArray?.length === 0
-    ) {
-      setStudentNotFound(true);
-    }
-  }, [studentsDataArray]);
   // -------------------------- END OF STUDENT SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- STUDENT EDIT STATES AND FUNCTIONS -------------------------- //
-  // DATE STRING STATE
+  // DATE TO STRING STATE
   const [dateToString, setDateToString] = useState("");
 
   // DATE SUBMIT STRING STATE
@@ -517,7 +502,7 @@ export function EditStudent() {
     }
   };
 
-  // HAVE CURRICULUM STATE
+  // HAVE FAMILY STATE
   const [haveFamily, setHaveFamily] = useState(false);
 
   // STUDENT EXISTENTS FAMILY DETAILS ARRAY
@@ -599,9 +584,12 @@ export function EditStudent() {
   // CURRICULUM DATA
   const [curriculumData, setCurriculumData] =
     useState<SearchCurriculumValidationZProps>({
-      school: "",
-      schoolClass: "",
-      schoolCourse: "",
+      schoolId: "",
+      schoolName: "",
+      schoolClassId: "",
+      schoolClassName: "",
+      schoolCourseId: "",
+      schoolCourseName: "",
     });
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
@@ -620,16 +608,16 @@ export function EditStudent() {
   // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
   useEffect(() => {
     setNewSchoolClassSelectedData(undefined);
-    if (curriculumData.school !== "") {
+    if (curriculumData.schoolId !== "") {
       setNewSchoolSelectedData(
-        newSchoolsDataArray!.find(({ id }) => id === curriculumData.school)
+        newSchoolsDataArray!.find(({ id }) => id === curriculumData.schoolId)
       );
     } else {
       setNewSchoolSelectedData(undefined);
     }
-  }, [curriculumData.school]);
+  }, [curriculumData.schoolId]);
 
-  // RESET SCHOOL CLASS, SCHOOL COURSE AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
+  // RESET SCHOOL CLASS, CURRICULUM AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
   useEffect(() => {
     if (studentEditData.addCurriculum) {
       (
@@ -639,7 +627,7 @@ export function EditStudent() {
         document.getElementById("newSchoolCourseSelect") as HTMLSelectElement
       ).selectedIndex = 0;
     }
-  }, [curriculumData.school]);
+  }, [curriculumData.schoolId]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
@@ -658,18 +646,18 @@ export function EditStudent() {
 
   // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
   useEffect(() => {
-    if (curriculumData.schoolClass !== "") {
+    if (curriculumData.schoolClassId !== "") {
       setNewSchoolClassSelectedData(
         newSchoolClassesDataArray!.find(
-          ({ id }) => id === curriculumData.schoolClass
+          ({ id }) => id === curriculumData.schoolClassId
         )
       );
     } else {
       setNewSchoolClassSelectedData(undefined);
     }
-  }, [curriculumData.schoolClass]);
+  }, [curriculumData.schoolClassId]);
 
-  // RESET STUDENT SELECT TO INDEX 0 AND GET AVAILABLE COURSES DATA WHEN SCHOOL CLASS CHANGE
+  // RESET CURRICULUM AND STUDENT SELECT TO INDEX 0 AND GET AVAILABLE COURSES DATA WHEN SCHOOL CLASS CHANGE
   useEffect(() => {
     if (studentEditData.addCurriculum) {
       (
@@ -677,40 +665,41 @@ export function EditStudent() {
       ).selectedIndex = 0;
       handleNewAvailableCoursesData();
     }
-  }, [curriculumData.schoolClass]);
+  }, [curriculumData.schoolClassId]);
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
+  // SCHOOL COURSE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL COURSES
   const [newSchoolCoursesDataArray, setNewSchoolCoursesDataArray] =
     useState<SchoolCourseSearchProps[]>();
 
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
+  // FUNCTION THAT WORKS WITH SCHOOL COURSE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
   const handleNewSchoolCourseSelectedData = (
     data: SchoolCourseSearchProps[]
   ) => {
     setNewSchoolCoursesDataArray(data);
   };
 
-  // SCHOOL CLASS SELECTED STATE DATA
+  // SCHOOL COURSE SELECTED STATE DATA
   const [newSchoolCourseSelectedData, setNewSchoolCourseSelectedData] =
     useState<SchoolCourseSearchProps>();
 
-  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  // SET SCHOOL COURSE SELECTED STATE WHEN SELECT SCHOOL COURSE
   useEffect(() => {
-    if (curriculumData.schoolCourse !== "") {
+    if (curriculumData.schoolCourseId !== "") {
       setNewSchoolCourseSelectedData(
         newSchoolCoursesDataArray!.find(
-          ({ id }) => id === curriculumData.schoolCourse
+          ({ id }) => id === curriculumData.schoolCourseId
         )
       );
     } else {
       setNewSchoolCourseSelectedData(undefined);
     }
-  }, [curriculumData.schoolCourse]);
-  // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+  }, [curriculumData.schoolCourseId]);
+  // -------------------------- END OF SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHEDULES DETAILS ARRAY STATE
   const [newSchedulesDetailsData, setNewSchedulesDetailsData] = useState([]);
 
   // GETTING SCHEDULES DATA
@@ -732,15 +721,16 @@ export function EditStudent() {
   // -------------------------- END OF SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- CURRICULUM STATES AND FUNCTIONS -------------------------- //
+  // CURRICULUM DETAILS ARRAY STATE
   const [newCurriculumCoursesData, setNewCurriculumCoursesData] = useState([]);
 
   // GETTING CURRICULUM DATA
   const handleNewAvailableCoursesData = async () => {
-    if (curriculumData.schoolCourse === "all") {
+    if (curriculumData.schoolCourseId === "all") {
       const q = query(
         collection(db, "curriculum"),
-        where("schoolId", "==", curriculumData.school),
-        where("schoolClassId", "==", curriculumData.schoolClass),
+        where("schoolId", "==", curriculumData.schoolId),
+        where("schoolClassId", "==", curriculumData.schoolClassId),
         orderBy("name")
       );
       const querySnapshot = await getDocs(q);
@@ -753,9 +743,9 @@ export function EditStudent() {
     } else {
       const q = query(
         collection(db, "curriculum"),
-        where("schoolId", "==", curriculumData.school),
-        where("schoolClassId", "==", curriculumData.schoolClass),
-        where("schoolCourseId", "==", curriculumData.schoolCourse),
+        where("schoolId", "==", curriculumData.schoolId),
+        where("schoolClassId", "==", curriculumData.schoolClassId),
+        where("schoolCourseId", "==", curriculumData.schoolCourseId),
         orderBy("name")
       );
       const querySnapshot = await getDocs(q);
@@ -768,10 +758,10 @@ export function EditStudent() {
     }
   };
 
-  // GET AVAILABLE COURSES DATA WHEN SCHOOL CLASS CHANGE
+  // GET AVAILABLE COURSES DATA WHEN SCHOOL COURSE CHANGE
   useEffect(() => {
     handleNewAvailableCoursesData();
-  }, [curriculumData.schoolCourse]);
+  }, [curriculumData.schoolCourseId]);
   // -------------------------- END OF CURRICULUM STATES AND FUNCTIONS -------------------------- //
 
   // SET SELECTS INDEX WHEN ARE CHANGES
@@ -822,6 +812,7 @@ export function EditStudent() {
       ).selectedIndex = 0;
     }
   }, [newStudentData.newFamilySchoolId]);
+
   // WHEN NEW FAMILY SCHOOL ID CHANGE
   useEffect(() => {
     if (studentEditData.addFamily) {
@@ -864,6 +855,7 @@ export function EditStudent() {
     }
   }, [newStudentData.newFamilyCurriculumId]);
   // ---------------------------------------- END OF ADD NEW CURRICULUM STATES AND FUNCTIONS ---------------------------------------- //
+
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -1070,6 +1062,7 @@ export function EditStudent() {
         )
       );
     } else {
+      // CHECK IF CURRICULUM ALREADY EXISTS ON STUDENT DATABASE
       studentEditData.curriculum.map((c) => {
         if (c === newStudentData.curriculum) {
           return (
@@ -1095,6 +1088,7 @@ export function EditStudent() {
     ) {
       excludeCurriculum.map(async (curriculum) => {
         if (curriculum.exclude) {
+          // UPDATE STUDENT (DELETE CURRICULUM)
           await updateDoc(doc(db, "students", studentData.studentId), {
             curriculum: arrayRemove(curriculum.id),
           });
@@ -1105,6 +1099,7 @@ export function EditStudent() {
     // CHECK IF SOME CURRICULUM WAS INCLUDED
     if (studentEditData.addCurriculum) {
       const addNewCurriculum = async () => {
+        // UPDATE STUDENT (INSERT CURRICULUM)
         await updateDoc(doc(db, "students", studentData.studentId), {
           curriculum: arrayUnion(newStudentData.curriculum),
         });
@@ -1128,6 +1123,7 @@ export function EditStudent() {
         )
       );
     } else {
+      // CHECK IF NEW FAMILY MEMBER ALREADY EXISTS ON STUDENT DATABASE
       studentEditData.familyAtSchool.map((c) => {
         if (c === newStudentData.familyId) {
           return (
@@ -1153,8 +1149,13 @@ export function EditStudent() {
     ) {
       excludeFamily.map(async (family) => {
         if (family.exclude) {
+          // UPDATE STUDENT (DELETE FAMILY FROM STUDENT DATABASE)
           await updateDoc(doc(db, "students", studentData.studentId), {
             familyAtSchool: arrayRemove(family.id),
+          });
+          // UPDATE FAMILY (DELETE STUDENT FROM FAMILY DATABASE)
+          await updateDoc(doc(db, "students", family.id), {
+            familyAtSchool: arrayRemove(studentData.studentId),
           });
         }
       });
@@ -1163,9 +1164,11 @@ export function EditStudent() {
     // CHECK IF SOME FAMILY WAS INCLUDED
     if (studentEditData.addFamily) {
       const addNewFamily = async () => {
+        // UPDATE STUDENT (INSERT FAMILY TO STUDENT DATABASE)
         await updateDoc(doc(db, "students", studentData.studentId), {
           familyAtSchool: arrayUnion(newStudentData.familyId),
         });
+        // UPDATE FAMILY (INSERT STUDENT TO FAMILY DATABASE)
         await updateDoc(doc(db, "students", newStudentData.familyId), {
           familyAtSchool: arrayUnion(studentData.studentId),
         });
@@ -1235,6 +1238,7 @@ export function EditStudent() {
         );
       } else {
         // IF EXISTS, EDIT
+        // STUDENT DATA OBJECT
         const updateData = {
           name: studentEditData.name,
           email: studentEditData.email,
@@ -1258,6 +1262,7 @@ export function EditStudent() {
           responsible: studentEditData.responsible,
           financialResponsible: studentEditData.financialResponsible,
         };
+        // EDIT STUDENT FUNCTION
         const editStudent = async () => {
           try {
             await updateDoc(
@@ -1292,10 +1297,18 @@ export function EditStudent() {
 
   return (
     <div className="flex flex-col container text-center">
+      {/* SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
+
+      {/* TOAST CONTAINER */}
       <ToastContainer limit={5} />
+
+      {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">
         {isEdit ? `Editando ${studentEditData.name}` : "Editar Aluno"}
       </h1>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditStudent)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
@@ -1330,8 +1343,8 @@ export function EditStudent() {
           >
             <SelectOptions
               returnId
-              handleData={handleSchoolSelectedData}
               dataType="schools"
+              handleData={handleSchoolSelectedData}
             />
           </select>
         </div>
@@ -1369,14 +1382,14 @@ export function EditStudent() {
           >
             <SelectOptions
               returnId
-              handleData={handleSchoolClassSelectedData}
               dataType="schoolClasses"
+              handleData={handleSchoolClassSelectedData}
               schoolId={studentData.schoolId}
             />
           </select>
         </div>
 
-        {/* SCHOOL COURSE SELECT */}
+        {/* CURRICULUM SELECT */}
         <div className="flex gap-2 items-center">
           <label
             htmlFor="curriculumSelect"
@@ -1409,8 +1422,8 @@ export function EditStudent() {
           >
             <SelectOptions
               returnId
-              handleData={handleCurriculumSelectedData}
               dataType="curriculum"
+              handleData={handleCurriculumSelectedData}
               schoolId={studentData.schoolId}
               schoolClassId={studentData.schoolClassId}
             />
@@ -1454,8 +1467,8 @@ export function EditStudent() {
           >
             <SelectOptions
               returnId
-              handleData={handleStudentSelectedData}
               dataType="students"
+              handleData={handleStudentSelectedData}
               schoolId={studentData.schoolId}
               schoolClassId={studentData.schoolClassId}
               curriculumId={studentData.curriculumId}
@@ -1620,6 +1633,7 @@ export function EditStudent() {
                 <div className="w-10/12">
                   <input
                     type="text"
+                    name="addressCep"
                     pattern="^[+ 0-9]{8}$"
                     maxLength={8}
                     placeholder={
@@ -1898,7 +1912,7 @@ export function EditStudent() {
             {/* PHONE */}
             <div className="flex gap-2 items-center">
               <label
-                htmlFor="address"
+                htmlFor="phone"
                 className={
                   errors.phone
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
@@ -2321,9 +2335,9 @@ export function EditStudent() {
             {/* EXISTENT CURRICULUM */}
             {haveCurriculum
               ? curriculumDetails.map((curriculum, index) => (
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2 items-center" key={curriculum.id}>
                     <label
-                      htmlFor="name"
+                      htmlFor="existentCurriculumName"
                       className="w-1/4 text-right text-gray-900 dark:text-gray-100"
                     >
                       Aula {index + 1}:{" "}
@@ -2332,7 +2346,7 @@ export function EditStudent() {
                       <div className="w-10/12">
                         <input
                           type="text"
-                          name="name"
+                          name="existentCurriculumName"
                           disabled={isSubmitting}
                           className={
                             excludeCurriculum[index].exclude
@@ -2398,12 +2412,15 @@ export function EditStudent() {
               </div>
             </div>
 
+            {/** ADD CURRICULUM */}
             {studentEditData.addCurriculum ? (
               <div className="flex flex-col py-2 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
+                {/** ADD CURRICULUM SECTION TITLE */}
                 <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
                   Atenção: você está adicionando uma nova aula para{" "}
                   {studentEditData.name}:
                 </h1>
+
                 {/* SCHOOL SELECT */}
                 <div className="flex gap-2 items-center">
                   <label
@@ -2427,9 +2444,10 @@ export function EditStudent() {
                     name="newSchoolSelect"
                     onChange={(e) => {
                       setCurriculumData({
-                        school: e.target.value,
-                        schoolClass: "",
-                        schoolCourse: "",
+                        ...curriculumData,
+                        schoolId: e.target.value,
+                        schoolClassId: "",
+                        schoolCourseId: "",
                       });
                     }}
                   >
@@ -2455,10 +2473,10 @@ export function EditStudent() {
                   </label>
                   <select
                     id="newSchoolClassSelect"
-                    disabled={curriculumData.school ? false : true}
+                    disabled={curriculumData.schoolId ? false : true}
                     defaultValue={" -- select an option -- "}
                     className={
-                      curriculumData.school
+                      curriculumData.schoolId
                         ? errors.addCurriculum
                           ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                           : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
@@ -2468,8 +2486,8 @@ export function EditStudent() {
                     onChange={(e) => {
                       setCurriculumData({
                         ...curriculumData,
-                        schoolClass: e.target.value,
-                        schoolCourse: "",
+                        schoolClassId: e.target.value,
+                        schoolCourseId: "",
                       });
                       setNewStudentData({ ...newStudentData, curriculum: "" });
                     }}
@@ -2477,7 +2495,7 @@ export function EditStudent() {
                     <SelectOptions
                       returnId
                       dataType="schoolClasses"
-                      schoolId={curriculumData.school}
+                      schoolId={curriculumData.schoolId}
                       handleData={handleNewSchoolClassSelectedData}
                     />
                   </select>
@@ -2497,10 +2515,10 @@ export function EditStudent() {
                   </label>
                   <select
                     id="newSchoolCourseSelect"
-                    disabled={curriculumData.schoolClass ? false : true}
+                    disabled={curriculumData.schoolClassId ? false : true}
                     defaultValue={" -- select an option -- "}
                     className={
-                      curriculumData.schoolClass
+                      curriculumData.schoolClassId
                         ? errors.addCurriculum
                           ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                           : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
@@ -2510,7 +2528,7 @@ export function EditStudent() {
                     onChange={(e) => {
                       setCurriculumData({
                         ...curriculumData,
-                        schoolCourse: e.target.value,
+                        schoolCourseId: e.target.value,
                       });
                       setNewStudentData({ ...newStudentData, curriculum: "" });
                     }}
@@ -2525,84 +2543,87 @@ export function EditStudent() {
                 </div>
 
                 {/* CURRICULUM SELECT */}
-                {curriculumData.school &&
-                curriculumData.schoolClass &&
-                curriculumData.schoolCourse ? (
-                  newCurriculumCoursesData.length !== 0 ? (
-                    <>
-                      <h1 className="font-bold text-2xl py-4">
-                        {newSchoolSelectedData?.name} -{" "}
-                        {newSchoolClassSelectedData?.name} -{" "}
-                        {curriculumData.schoolCourse === "all"
-                          ? "Todas as Modalidades"
-                          : newSchoolCourseSelectedData?.name}
-                        :
-                      </h1>
-                      <hr className="pb-4" />
-                      <div className="flex flex-wrap gap-4 justify-center">
-                        {newCurriculumCoursesData.map((c: any) => (
-                          <div
-                            className={
-                              errors.curriculum
-                                ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                                : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                            }
-                            key={c.id}
-                          >
-                            <input
-                              type="radio"
-                              id={c.id}
-                              name="age"
-                              value={c.id}
-                              onChange={(e) => {
-                                setNewStudentData({
-                                  ...newStudentData,
-                                  curriculum: e.target.value,
-                                });
-                              }}
-                            />
-                            <label
-                              htmlFor={c.id}
-                              className="flex flex-col gap-4"
+                {curriculumData.schoolId &&
+                curriculumData.schoolClassId &&
+                curriculumData.schoolCourseId ? (
+                  <>
+                    {/* CURRICULUM CARD DETAILS SECTION TITLE */}
+                    <h1 className="font-bold text-2xl py-4">
+                      {newSchoolSelectedData?.name} -{" "}
+                      {newSchoolClassSelectedData?.name} -{" "}
+                      {curriculumData.schoolCourseId === "all"
+                        ? "Todas as Modalidades"
+                        : newSchoolCourseSelectedData?.name}
+                      :
+                    </h1>
+
+                    {/* SEPARATOR */}
+                    <hr className="pb-4" />
+
+                    {newCurriculumCoursesData.length !== 0 ? (
+                      <>
+                        {/* CURRICULUM CARD DETAILS */}
+                        <div className="flex flex-wrap gap-4 justify-center">
+                          {newCurriculumCoursesData.map((c: any) => (
+                            <div
+                              className={
+                                errors.curriculum
+                                  ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                                  : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                              }
+                              key={c.id}
                             >
-                              {curriculumData.school === "Colégio Bernoulli" ? (
-                                <p>Turma: {c.schoolClass}</p>
-                              ) : null}
-                              <p>Modalidade: {c.schoolCourse}</p>
-                              {newSchedulesDetailsData.map((details: any) =>
-                                details.name === c.schedule
-                                  ? `Horário: De ${details.classStart} a ${details.classEnd} hrs`
-                                  : null
-                              )}
-                              <p>Dias: {c.classDay}</p>
-                              <p>Professor: {c.teacher}</p>
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <h1 className="font-bold text-2xl py-4">
-                        {newSchoolSelectedData?.name} -{" "}
-                        {newSchoolClassSelectedData?.name} -{" "}
-                        {curriculumData.schoolCourse === "all"
-                          ? "Todas as Modalidades"
-                          : newSchoolCourseSelectedData?.name}
-                        :
-                      </h1>
-                      <hr className="pb-4" />
-                      <h1 className="font-bold text-2xl pb-10 text-red-600 dark:text-yellow-500">
-                        Nenhuma vaga disponível com as opções selecionadas,
-                        tente novamente.
-                      </h1>
-                    </>
-                  )
+                              <input
+                                type="radio"
+                                id={c.id}
+                                name="curriculumCardDetails"
+                                value={c.id}
+                                onChange={(e) => {
+                                  setNewStudentData({
+                                    ...newStudentData,
+                                    curriculum: e.target.value,
+                                  });
+                                }}
+                              />
+                              <label
+                                htmlFor="curriculumCardDetails"
+                                className="flex flex-col gap-4"
+                              >
+                                {curriculumData.schoolName ===
+                                "Colégio Bernoulli" ? (
+                                  <p>Turma: {c.schoolClass}</p>
+                                ) : null}
+                                <p>Modalidade: {c.schoolCourse}</p>
+                                {newSchedulesDetailsData.map((details: any) =>
+                                  details.name === c.schedule
+                                    ? `Horário: De ${details.classStart} a ${details.classEnd} hrs`
+                                    : null
+                                )}
+                                <p>Dias: {c.classDay}</p>
+                                <p>Professor: {c.teacher}</p>
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* CURRICULUM EMPTY DESCRIPTION */}
+                        <h1 className="font-bold text-2xl pb-10 text-red-600 dark:text-yellow-500">
+                          Nenhuma vaga disponível com as opções selecionadas,
+                          tente novamente.
+                        </h1>
+                      </>
+                    )}
+                  </>
                 ) : (
-                  <p className="text-red-600 dark:text-yellow-500">
-                    Selecione um colégio e uma turma para ver as modalidades
-                    disponíveis.
-                  </p>
+                  <>
+                    {/* CURRICULUM PRE-SELECT DESCRIPTION */}
+                    <p className="text-red-600 dark:text-yellow-500">
+                      Selecione um colégio e uma turma para ver as modalidades
+                      disponíveis.
+                    </p>
+                  </>
                 )}
 
                 {/** CHECKBOX CONFIRM INSERT NEW CURRICULUM */}
@@ -2633,9 +2654,9 @@ export function EditStudent() {
             {/* EXISTENT FAMILY */}
             {haveFamily
               ? familyDetails.map((family, index) => (
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2 items-center" key={family.id}>
                     <label
-                      htmlFor="name"
+                      htmlFor="existentFamilyName"
                       className="w-1/4 text-right text-gray-900 dark:text-gray-100"
                     >
                       {index === 0 ? "Familiares: " : ""}
@@ -2644,7 +2665,7 @@ export function EditStudent() {
                       <div className="w-10/12">
                         <input
                           type="text"
-                          name="name"
+                          name="existentFamilyName"
                           disabled={isSubmitting}
                           className={
                             excludeFamily[index].exclude
@@ -2710,8 +2731,10 @@ export function EditStudent() {
               </div>
             </div>
 
+            {/** ADD FAMILY */}
             {studentEditData.addFamily ? (
               <div className="flex flex-col py-2 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
+                {/** ADD FAMILY SECTION TITLE */}
                 <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
                   Atenção: a seguir insira os dados do aluno que estuda na KL
                   Minas, e é parente de {studentEditData.name}:
@@ -2846,7 +2869,7 @@ export function EditStudent() {
                   </select>
                 </div>
 
-                {/* STUDENT SELECT */}
+                {/* FAMILY STUDENT SELECT */}
                 <div className="flex gap-2 items-center pb-2">
                   <label
                     htmlFor="newFamilyStudentSelect"
@@ -2886,6 +2909,7 @@ export function EditStudent() {
                         schoolId={newStudentData.newFamilySchoolId}
                         schoolClassId={newStudentData.newFamilySchoolClassId}
                         curriculumId={newStudentData.newFamilyCurriculumId}
+                        studentId={studentData.studentId}
                       />
                     ) : (
                       <option disabled value={" -- select an option -- "}>

@@ -25,27 +25,6 @@ import {
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
-import {
-  buttonReset,
-  buttonSubmit,
-  divCheckboxItem,
-  divDatePicker,
-  divItemsForm,
-  divMasterPage,
-  divSubmitResetItems,
-  formMaster,
-  inputCheckbox,
-  inputError,
-  inputOk,
-  inputWithButtonError,
-  inputWithButtonOk,
-  labelCheckbox,
-  labelTextError,
-  labelTextOk,
-  pageTitleH1,
-  selectError,
-  selectOk,
-} from "../../styles/tailwindConstants";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -180,7 +159,7 @@ export function InsertSchedule() {
       });
     });
   }, [errors]);
-  console.log(scheduleData);
+  
   // SUBMIT DATA FUNCTION
   const handleAddSchedule: SubmitHandler<
     CreateScheduleValidationZProps
@@ -274,7 +253,7 @@ export function InsertSchedule() {
   };
 
   return (
-    <div className={divMasterPage}>
+    <div className="flex flex-col container text-center">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
@@ -282,22 +261,33 @@ export function InsertSchedule() {
       <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
-      <h1 className={pageTitleH1}>Adicionar Horário</h1>
+      <h1 className="font-bold text-2xl my-4">Adicionar Horário</h1>
 
       {/* FORM */}
-      <form onSubmit={handleSubmit(handleAddSchedule)} className={formMaster}>
+      <form
+        onSubmit={handleSubmit(handleAddSchedule)}
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+      >
         {/* SCHOOL SELECT */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="schoolSelect"
-            className={errors.name ? labelTextError : labelTextOk}
+            className={
+              errors.name
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Selecione a Escola:{" "}
           </label>
           <select
             id="schoolSelect"
             defaultValue={" -- select an option -- "}
-            className={errors.name ? selectError : selectOk}
+            className={
+              errors.name
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
             name="schoolSelect"
             onChange={(e) => {
               setSchoolData({
@@ -315,10 +305,14 @@ export function InsertSchedule() {
         </div>
 
         {/* SCHEDULE IDENTIFIER */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="scheduleName"
-            className={errors.name ? labelTextError : labelTextOk}
+            className={
+              errors.name
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Identificador:{" "}
           </label>
@@ -327,11 +321,15 @@ export function InsertSchedule() {
             name="scheduleName"
             disabled={isSubmitting}
             placeholder={
-              selectOk
+              "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 ? "É necessário inserir um Identificador para o Horário"
                 : "Insira um Identificador para o Horário"
             }
-            className={errors.name ? inputError : inputOk}
+            className={
+              errors.name
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
             value={scheduleData.name}
             onChange={(e) => {
               setScheduleData({
@@ -344,14 +342,18 @@ export function InsertSchedule() {
         </div>
 
         {/* TRANSITION START */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="transitionStart"
-            className={errors.transitionStart ? labelTextError : labelTextOk}
+            className={
+              errors.transitionStart
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Início da Transição:{" "}
           </label>
-          <div className={divDatePicker}>
+          <div className="flex w-3/4">
             <DatePicker
               disableDayPicker
               editable={false}
@@ -359,8 +361,8 @@ export function InsertSchedule() {
               plugins={[<TimePicker hideSeconds key={uuidv4()} />]}
               inputClass={
                 errors.transitionStart
-                  ? inputWithButtonError
-                  : inputWithButtonOk
+                  ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
               }
               onChange={(e) =>
                 setScheduleData({
@@ -374,21 +376,27 @@ export function InsertSchedule() {
         </div>
 
         {/* TRANSITION END */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="transitionEnd"
-            className={errors.transitionEnd ? labelTextError : labelTextOk}
+            className={
+              errors.transitionEnd
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Fim da Transição:{" "}
           </label>
-          <div className={divDatePicker}>
+          <div className="flex w-3/4">
             <DatePicker
               disableDayPicker
               editable={false}
               format="HH:mm"
               plugins={[<TimePicker hideSeconds key={uuidv4()} />]}
               inputClass={
-                errors.transitionEnd ? inputWithButtonError : inputWithButtonOk
+                errors.transitionEnd
+                  ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
               }
               onChange={(e) =>
                 setScheduleData({
@@ -402,21 +410,27 @@ export function InsertSchedule() {
         </div>
 
         {/* CLASS START */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="classStart"
-            className={errors.classStart ? labelTextError : labelTextOk}
+            className={
+              errors.classStart
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Início da Aula:{" "}
           </label>
-          <div className={divDatePicker}>
+          <div className="flex w-3/4">
             <DatePicker
               disableDayPicker
               editable={false}
               format="HH:mm"
               plugins={[<TimePicker hideSeconds key={uuidv4()} />]}
               inputClass={
-                errors.classStart ? inputWithButtonError : inputWithButtonOk
+                errors.classStart
+                  ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
               }
               onChange={(e) =>
                 setScheduleData({
@@ -430,21 +444,27 @@ export function InsertSchedule() {
         </div>
 
         {/* CLASS END */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="classEnd"
-            className={errors.classEnd ? labelTextError : labelTextOk}
+            className={
+              errors.classEnd
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Fim da Aula:{" "}
           </label>
-          <div className={divDatePicker}>
+          <div className="flex w-3/4">
             <DatePicker
               disableDayPicker
               editable={false}
               format="HH:mm"
               plugins={[<TimePicker hideSeconds key={uuidv4()} />]}
               inputClass={
-                errors.classEnd ? inputWithButtonError : inputWithButtonOk
+                errors.classEnd
+                  ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
               }
               onChange={(e) =>
                 setScheduleData({
@@ -458,21 +478,27 @@ export function InsertSchedule() {
         </div>
 
         {/* EXIT */}
-        <div className={divItemsForm}>
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="exit"
-            className={errors.exit ? labelTextError : labelTextOk}
+            className={
+              errors.exit
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+            }
           >
             Saída:{" "}
           </label>
-          <div className={divDatePicker}>
+          <div className="flex w-3/4">
             <DatePicker
               disableDayPicker
               editable={false}
               format="HH:mm"
               plugins={[<TimePicker hideSeconds key={uuidv4()} />]}
               inputClass={
-                errors.exit ? inputWithButtonError : inputWithButtonOk
+                errors.exit
+                  ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
               }
               onChange={(e) =>
                 setScheduleData({
@@ -486,11 +512,11 @@ export function InsertSchedule() {
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className={divCheckboxItem}>
+        <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
             name="confirmInsert"
-            className={inputCheckbox}
+            className="ml-1 text-green-500 dark:text-green-500 border-none"
             checked={scheduleData.confirmInsert}
             onChange={() => {
               setScheduleData({
@@ -499,7 +525,10 @@ export function InsertSchedule() {
               });
             }}
           />
-          <label htmlFor="confirmInsert" className={labelCheckbox}>
+          <label
+            htmlFor="confirmInsert"
+            className="text-sm text-gray-600 dark:text-gray-100"
+          >
             {scheduleData.name
               ? `Confirmar criação do ${scheduleData.name}`
               : `Confirmar criação`}
@@ -507,12 +536,12 @@ export function InsertSchedule() {
         </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
-        <div className={divSubmitResetItems}>
+        <div className="flex gap-2 mt-4">
           {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className={buttonSubmit}
+            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>
@@ -520,7 +549,7 @@ export function InsertSchedule() {
           {/* RESET BUTTON */}
           <button
             type="reset"
-            className={buttonReset}
+            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
             disabled={isSubmitting}
             onClick={() => {
               resetForm();

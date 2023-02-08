@@ -321,7 +321,7 @@ export function DeleteUser() {
                     </label>
                     <input
                       type="text"
-                      name="name"
+                      name="e-mail"
                       disabled
                       className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                       value={userSelectedData?.email}
@@ -376,7 +376,7 @@ export function DeleteUser() {
                           className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                         />
                       </div>
-                      <div className="w-2/12"></div>
+                      <div className="flex w-2/12 items-center gap-2"></div>
                     </div>
                   </div>
 
@@ -392,7 +392,7 @@ export function DeleteUser() {
                       disabled
                       id="role"
                       value={userSelectedData?.role}
-                      className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                       name="role"
                     >
                       <option value="admin">Administrador</option>

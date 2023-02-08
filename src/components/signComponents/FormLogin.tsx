@@ -10,13 +10,6 @@ import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { ButtonSignSubmit } from "../layoutComponents/ButtonSignSubmit";
 import { ButtonSignInGoogle } from "../layoutComponents/ButtonSignInGoogle";
 import { loginEmailAndPasswordValidationSchema } from "../../@types/zodValidation";
-import {
-  divSignMaster,
-  formSignMaster,
-  inputSignError,
-  inputSignOk,
-  signTitleH1,
-} from "../../styles/tailwindConstants";
 
 export function FormLogin() {
   // USER LOGIN STATE
@@ -113,17 +106,17 @@ export function FormLogin() {
       {/* TOAST CONTAINER */}
       <ToastContainer limit={2} />
 
-      <div className={divSignMaster}>
+      <div className="flex flex-col w-96 p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-gray-700/20 dark:bg-transparent">
         {/* SUBMIT LOADING */}
         <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="logando" />
 
         {/* SIGN LOGIN TITLE */}
-        <h1 className={signTitleH1}>Login</h1>
+        <h1 className="font-bold text-xl">Login</h1>
 
         {/* FORM */}
         <form
           onSubmit={handleSubmit(handleSignInWithEmailAndPassword)}
-          className={formSignMaster}
+          className="flex flex-col w-full gap-8 justify-evenly"
         >
           {/* E-MAIL */}
           <input
@@ -133,7 +126,11 @@ export function FormLogin() {
             placeholder={
               errors.email ? "É necessário inserir o E-mail" : "E-mail"
             }
-            className={errors.email ? inputSignError : inputSignOk}
+            className={
+              errors.email
+                ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
+                : "w-full px-4 py-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm"
+            }
             value={userLogin.email}
             onChange={(e) => {
               setUserLogin({ ...userLogin, email: e.target.value });
@@ -148,7 +145,11 @@ export function FormLogin() {
             placeholder={
               errors.password ? "É necessário inserir a Senha" : "Senha"
             }
-            className={errors.password ? inputSignError : inputSignOk}
+            className={
+              errors.password
+                ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
+                : "w-full px-4 py-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm"
+            }
             value={userLogin.password}
             onChange={(e) => {
               setUserLogin({ ...userLogin, password: e.target.value });
