@@ -324,7 +324,7 @@ export function InsertUser() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddUser)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* USER NAME */}
         <div className="flex gap-2 items-center">
@@ -333,7 +333,7 @@ export function InsertUser() {
             className={
               errors.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Nome:{" "}
@@ -370,7 +370,7 @@ export function InsertUser() {
             className={
               errors.email
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             E-mail:{" "}
@@ -407,7 +407,7 @@ export function InsertUser() {
             className={
               errors.password
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Senha:{" "}
@@ -442,7 +442,7 @@ export function InsertUser() {
             className={
               errors.confirmPassword
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Confirme a Senha:{" "}
@@ -479,7 +479,7 @@ export function InsertUser() {
             className={
               errors.phone
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Telefone:{" "}
@@ -563,7 +563,7 @@ export function InsertUser() {
             className={
               errors.role
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Permissão:{" "}
@@ -604,7 +604,7 @@ export function InsertUser() {
           <input
             type="checkbox"
             name="confirmInsert"
-            className="ml-1 text-green-500 dark:text-green-500 border-none"
+            className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
             checked={userData.confirmInsert}
             onChange={() => {
               setUserData({
@@ -615,7 +615,7 @@ export function InsertUser() {
           />
           <label
             htmlFor="confirmInsert"
-            className="text-sm text-gray-600 dark:text-gray-100"
+            className="text-sm"
           >
             {userData.name
               ? `Confirmar criação do Usuário: ${userData.name}`
@@ -629,7 +629,7 @@ export function InsertUser() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+            className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>

@@ -18,14 +18,14 @@ export default function DeletePage() {
   return (
     <div className="w-10/12 px-2 py-8 sm:px-0">
       <Tab.Group>
-        <Tab.List className="flex space-x-1 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 p-1">
+        <Tab.List className="flex space-x-1 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 p-1">
           <Tab
             className={({ selected }) =>
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800 cursor-default"
-                  : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                  ? "bg-white text-klGreen-500 shadow dark:text-gray-800 cursor-default"
+                    : "text-klGreen-500 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
           >
@@ -36,8 +36,8 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800 cursor-default"
-                  : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                  ? "bg-white text-klGreen-500 shadow dark:text-gray-800 cursor-default"
+                    : "text-klGreen-500 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
           >
@@ -48,8 +48,8 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800 cursor-default"
-                  : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                  ? "bg-white text-klGreen-500 shadow dark:text-gray-800 cursor-default"
+                    : "text-klGreen-500 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
           >
@@ -60,8 +60,8 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800 cursor-default"
-                  : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                  ? "bg-white text-klGreen-500 shadow dark:text-gray-800 cursor-default"
+                    : "text-klGreen-500 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
           >
@@ -72,8 +72,8 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800 cursor-default"
-                  : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                  ? "bg-white text-klGreen-500 shadow dark:text-gray-800 cursor-default"
+                    : "text-klGreen-500 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
           >
@@ -84,8 +84,8 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800 cursor-default"
-                  : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                  ? "bg-white text-klGreen-500 shadow dark:text-gray-800 cursor-default"
+                    : "text-klGreen-500 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
           >
@@ -96,8 +96,8 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800 cursor-default"
-                  : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                  ? "bg-white text-klGreen-500 shadow dark:text-gray-800 cursor-default"
+                    : "text-klGreen-500 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
           >
@@ -108,8 +108,8 @@ export default function DeletePage() {
               classNames(
                 "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
                 selected
-                  ? "bg-white shadow dark:text-gray-800 cursor-default"
-                  : "text-gray-600 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                  ? "bg-white text-klGreen-500 shadow dark:text-gray-800 cursor-default"
+                    : "text-klGreen-500 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
               )
             }
           >

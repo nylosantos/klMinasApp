@@ -9,9 +9,9 @@ export function SubmitLoading({
   return (
     <>
       {isSubmitting ? (
-        <div className="flex flex-col w-screen h-screen top-0 left-0 absolute items-center justify-center bg-gray-900/60 dark:bg-gray-800/50 transition-all duration-300">
+        <div className="flex flex-col w-screen h-screen top-0 left-0 absolute items-center justify-center bg-transparent transition-all duration-300">
           {/* SUBMIT LOADING CARD */}
-          <div className="flex flex-col items-center p-40 rounded-3xl bg-gray-900/80 dark:bg-gray-900/90">
+          <div className="flex flex-col items-center p-40 rounded-3xl bg-klGreen-500 dark:bg-klGreen-500">
             <Dna
               visible={true}
               height="80"

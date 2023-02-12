@@ -605,7 +605,7 @@ export function InsertCurriculum() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddCurriculum)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL SELECT */}
         <div className="flex gap-2 items-center">
@@ -614,7 +614,7 @@ export function InsertCurriculum() {
             className={
               errors.schoolId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Escola:{" "}
@@ -650,7 +650,7 @@ export function InsertCurriculum() {
             className={
               errors.schoolClassId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Turma:{" "}
@@ -687,7 +687,7 @@ export function InsertCurriculum() {
             className={
               errors.schoolCourseId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Modalidade:{" "}
@@ -723,7 +723,7 @@ export function InsertCurriculum() {
             className={
               errors.scheduleId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione o Horário:{" "}
@@ -760,7 +760,7 @@ export function InsertCurriculum() {
             className={
               errors.classDayId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione os Dias de Aula:{" "}
@@ -796,7 +796,7 @@ export function InsertCurriculum() {
             className={
               errors.teacherId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione o Professor:{" "}
@@ -829,7 +829,7 @@ export function InsertCurriculum() {
         <div className="flex gap-2 items-center">
           <label
             htmlFor="curriculumName"
-            className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+            className="w-1/4 text-right"
           >
             Nome:{" "}
           </label>
@@ -912,7 +912,7 @@ export function InsertCurriculum() {
           <input
             type="checkbox"
             name="confirmInsert"
-            className="ml-1 text-green-500 dark:text-green-500 border-none"
+            className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
             checked={curriculumData.confirmInsert}
             onChange={() => {
               setCurriculumData({
@@ -923,7 +923,7 @@ export function InsertCurriculum() {
           />
           <label
             htmlFor="confirmInsert"
-            className="text-sm text-gray-600 dark:text-gray-100"
+            className="text-sm"
           >
             Confirmar criação do Currículo
           </label>
@@ -935,7 +935,7 @@ export function InsertCurriculum() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+            className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>

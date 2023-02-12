@@ -106,7 +106,7 @@ export function FormLogin() {
       {/* TOAST CONTAINER */}
       <ToastContainer limit={2} />
 
-      <div className="flex flex-col w-96 p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-gray-700/20 dark:bg-transparent">
+      <div className="flex flex-col w-96 p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-klOrange-500/80 dark:bg-transparent">
         {/* SUBMIT LOADING */}
         <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="logando" />
 

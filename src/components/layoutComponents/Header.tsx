@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { getAuth, User } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -15,6 +16,9 @@ import {
 
 import { UserFullDataProps } from "../../@types";
 import { app, initFirebase } from "../../db/Firebase";
+import Logo from "../../assets/logoAlt1.png";
+import LogoDark from "../../assets/logoAlt2.png";
+import { customerFullName } from "../../custom";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -96,14 +100,16 @@ export function Header() {
     },
   ];
 
+  // THEME CONSTANT
+  const currentTheme = theme === "system" ? systemTheme : theme;
+
   // THEME CHANGER FUNCTION
   const renderThemeChanger = () => {
     if (!mounted) return null;
-    const currentTheme = theme === "system" ? systemTheme : theme;
     return (
       /* BUTTON THEME CHANGER */
       <button
-        className="bg-gray-100 text-slate-800 dark:bg-gray-700 dark:text-yellow-500 p-2 rounded-md hover:ring-2 hover:ring-gray-300"
+        className="bg-green-500/10 text-klGreen-500 dark:bg-klGreen-500/30 dark:text-klOrange-500 p-2 rounded-md hover:bg-green-500/20 dark:hover:bg-green-500/50"
         onClick={() => setTheme(currentTheme === "light" ? "dark" : "light")}
       >
         <svg
@@ -135,11 +141,16 @@ export function Header() {
   };
 
   return (
-    <div className="w-screen flex justify-center top-0 left-0 mb-4 bg-gray-100 dark:bg-gray-600">
+    <div className="w-screen flex justify-center top-0 left-0 mb-4 bg-klGreen-500/20 dark:bg-klGreen-500/30">
       <div className="flex container justify-between items-center py-6">
         {/* 'HI USER' LEFT */}
         <div className="w-1/6">
-          {user ? <p>Olá, {user.displayName}</p> : null}
+          <Image
+            src={currentTheme === "light" ? Logo : LogoDark}
+            alt={`Logo ${customerFullName}`}
+            width={200}
+            className="dark:bg-transparent dark:rounded-xl p-4"
+          />
         </div>
 
         {/* NAVIGATION DISPLAY CENTER */}
@@ -149,17 +160,29 @@ export function Header() {
               {navigations.map((nav) => (
                 <div
                   key={nav.path}
-                  className="flex border-b-2 border-gray-100 hover:border-black dark:border-gray-600 dark:hover:border-gray-100"
+                  className="flex border-b-2 border-klGreen-500/0 hover:border-klGreen-500 dark:border-klGreen-500/10 dark:hover:border-klOrange-500"
                 >
-                  <Link href={nav.path}>{nav.label}</Link>
+                  <Link href={nav.path} className="text-klGreen-500 dark:text-klOrange-500">{nav.label}</Link>
                 </div>
               ))}
+              {userFullData?.role === "root" ||
+              userFullData?.role === "admin" ? (
+                <>
+                  {/* NAVIGATION SETTINGS ITEM */}
+                  <div
+                    key={"settings"}
+                    className="flex border-b-2 border-klGreen-500/0 hover:border-klGreen-500 dark:border-klGreen-500/10 dark:hover:border-klOrange-500"
+                  >
+                    <Link href={"/Settings"} className="text-klGreen-500 dark:text-klOrange-500">Configurações do Sistema</Link>
+                  </div>
+                </>
+              ) : null}
               {/* NAVIGATION LOGOUT ITEM */}
               <div
                 key={"logout"}
-                className="flex border-b-2 border-gray-100 hover:border-black dark:border-gray-600 dark:hover:border-gray-100"
+                className="flex border-b-2 border-klGreen-500/0 hover:border-red-500 dark:border-klGreen-500/10 dark:hover:border-red-500"
               >
-                <p className="cursor-pointer" onClick={() => auth.signOut()}>
+                <p className="text-klGreen-500 dark:text-klOrange-500 hover:text-red-500 dark:hover:text-red-500 cursor-pointer" onClick={() => auth.signOut()}>
                   Sair
                 </p>
               </div>
@@ -168,7 +191,14 @@ export function Header() {
         </div>
 
         {/* BUTTON THEME CHANGE RIGHT */}
-        <div className="flex w-1/6 justify-end">{renderThemeChanger()}</div>
+        <div className="flex w-1/6 justify-end items-center gap-4">
+          {user ? (
+            <p className="text-klGreen-500 dark:text-klOrange-500 font-bold">
+              Olá, {user.displayName}
+            </p>
+          ) : null}
+          {renderThemeChanger()}
+        </div>
       </div>
     </div>
   );

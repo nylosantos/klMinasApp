@@ -291,7 +291,7 @@ export function EditSchedule() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditSchedule)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL SELECT */}
         <div className="flex gap-2 items-center">
@@ -300,7 +300,7 @@ export function EditSchedule() {
             className={
               errors.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Escola:{" "}
@@ -336,7 +336,7 @@ export function EditSchedule() {
             className={
               errors.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione o Horário:{" "}
@@ -377,7 +377,7 @@ export function EditSchedule() {
               <button
                 type="button"
                 disabled={isEdit}
-                className="w-3/4 border rounded-xl border-green-900/10 bg-green-500 disabled:bg-amber-500/70 disabled:dark:bg-amber-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50"
+                className="w-3/4 border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-amber-500/70 disabled:dark:bg-amber-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50"
                 onClick={() => {
                   setIsEdit(true);
                 }}
@@ -403,7 +403,7 @@ export function EditSchedule() {
               <div className="flex gap-2 items-center">
                 <label
                   htmlFor="oldName"
-                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                  className="w-1/4 text-right"
                 >
                   Nome:{" "}
                 </label>
@@ -420,7 +420,7 @@ export function EditSchedule() {
               <div className="flex gap-2 items-center">
                 <label
                   htmlFor="oldTransitionStart"
-                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                  className="w-1/4 text-right"
                 >
                   Início da Transição:{" "}
                 </label>
@@ -437,7 +437,7 @@ export function EditSchedule() {
               <div className="flex gap-2 items-center">
                 <label
                   htmlFor="oldTransitionEnd"
-                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                  className="w-1/4 text-right"
                 >
                   Fim da Transição:{" "}
                 </label>
@@ -454,7 +454,7 @@ export function EditSchedule() {
               <div className="flex gap-2 items-center">
                 <label
                   htmlFor="oldClassStart"
-                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                  className="w-1/4 text-right"
                 >
                   Início da Aula:{" "}
                 </label>
@@ -471,7 +471,7 @@ export function EditSchedule() {
               <div className="flex gap-2 items-center">
                 <label
                   htmlFor="oldClassEnd"
-                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                  className="w-1/4 text-right"
                 >
                   Fim da Aula:{" "}
                 </label>
@@ -488,7 +488,7 @@ export function EditSchedule() {
               <div className="flex gap-2 items-center">
                 <label
                   htmlFor="oldExit"
-                  className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                  className="w-1/4 text-right"
                 >
                   Saída:{" "}
                 </label>
@@ -514,7 +514,7 @@ export function EditSchedule() {
                 className={
                   errors.name
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Identificador:{" "}
@@ -550,7 +550,7 @@ export function EditSchedule() {
                 className={
                   errors.transitionStart
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Início da Transição:{" "}
@@ -583,7 +583,7 @@ export function EditSchedule() {
                 className={
                   errors.transitionEnd
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Fim da Transição:{" "}
@@ -616,7 +616,7 @@ export function EditSchedule() {
                 className={
                   errors.classStart
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Início da Aula:{" "}
@@ -649,7 +649,7 @@ export function EditSchedule() {
                 className={
                   errors.classEnd
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Fim da Aula:{" "}
@@ -682,7 +682,7 @@ export function EditSchedule() {
                 className={
                   errors.exit
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Saída:{" "}
@@ -714,7 +714,7 @@ export function EditSchedule() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+                className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
               >
                 {!isSubmitting ? "Salvar" : "Salvando"}
               </button>

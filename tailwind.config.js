@@ -18,7 +18,7 @@ module.exports = {
           100: "#E1E1E6",
         },
         green: {
-          500: "#00B2A9",
+          500: "#2a5369",
         },
         ignite: {
           500: "#129E57",
@@ -31,6 +31,12 @@ module.exports = {
         red: {
           500: "#DB4437",
         },
+        klOrange: {
+          500: "#ed8504",
+        },
+        klGreen: {
+          500: "#2a5369",
+        }
       },
     },
   },

@@ -35,12 +35,12 @@ export function ClassDays({ classDay, toggleClassDays }: ClassDaysCompProps) {
           return (
             <div
               key={uuidv4()}
-              className="flex flex-col w-24 items-center gap-2 bg-white/50 dark:bg-gray-800 py-2 pt-4 rounded-xl"
+              className="flex flex-col w-24 items-center gap-2 bg-white/50 dark:bg-klGreen-500/20 py-2 pt-4 rounded-xl"
             >
               <input
                 key={uuidv4()}
                 type="checkbox"
-                className="ml-1 text-green-500 dark:text-green-500 border-none"
+                className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
                 id={item}
                 name={item}
                 checked={classDay[item]}

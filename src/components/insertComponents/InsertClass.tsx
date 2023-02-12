@@ -26,13 +26,14 @@ const db = getFirestore(app);
 
 export function InsertClass() {
   // SCHOOL CLASS DATA
-  const [classData, setClassData] = useState<CreateClassValidationZProps>({
-    name: "",
-    schoolName: "",
-    schoolId: "",
-    available: false,
-    confirmInsert: false,
-  });
+  const [schoolClassData, setSchoolClassData] =
+    useState<CreateClassValidationZProps>({
+      name: "",
+      schoolName: "",
+      schoolId: "",
+      available: "closed",
+      confirmInsert: false,
+    });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL
@@ -49,19 +50,22 @@ export function InsertClass() {
 
   // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
   useEffect(() => {
-    if (classData.schoolId !== "") {
+    if (schoolClassData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolDataArray!.find(({ id }) => id === classData.schoolId)
+        schoolDataArray!.find(({ id }) => id === schoolClassData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
     }
-  }, [classData.schoolId]);
+  }, [schoolClassData.schoolId]);
 
   // SET SCHOOL NAME WITH SCHOOL SELECTED DATA WHEN SELECT SCHOOL
   useEffect(() => {
     if (schoolSelectedData !== undefined) {
-      setClassData({ ...classData, schoolName: schoolSelectedData!.name });
+      setSchoolClassData({
+        ...schoolClassData,
+        schoolName: schoolSelectedData!.name,
+      });
     }
   }, [schoolSelectedData]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
@@ -81,18 +85,18 @@ export function InsertClass() {
       name: "",
       schoolName: "",
       schoolId: "",
-      available: false,
+      available: "closed",
       confirmInsert: false,
     },
   });
 
   // RESET FORM FUNCTION
   const resetForm = () => {
-    setClassData({
+    setSchoolClassData({
       name: "",
       schoolName: "",
       schoolId: "",
-      available: false,
+      available: "closed",
       confirmInsert: false,
     });
     ((
@@ -103,12 +107,12 @@ export function InsertClass() {
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
-    setValue("name", classData.name);
-    setValue("schoolId", classData.schoolId);
-    setValue("schoolName", classData.schoolName);
-    setValue("available", classData.available);
-    setValue("confirmInsert", classData.confirmInsert);
-  }, [classData]);
+    setValue("name", schoolClassData.name);
+    setValue("schoolId", schoolClassData.schoolId);
+    setValue("schoolName", schoolClassData.schoolName);
+    setValue("available", schoolClassData.available);
+    setValue("confirmInsert", schoolClassData.confirmInsert);
+  }, [schoolClassData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
@@ -226,24 +230,24 @@ export function InsertClass() {
 
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">
-        {classData.name
-          ? `Adicionando Turma ${classData.name}`
+        {schoolClassData.name
+          ? `Adicionando Turma ${schoolClassData.name}`
           : "Adicionar Turma"}
       </h1>
 
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddClass)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
-        {/* CLASS NAME */}
+        {/* SCHOOL CLASS NAME */}
         <div className="flex gap-2 items-center">
           <label
             htmlFor="name"
             className={
               errors.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Nome:{" "}
@@ -262,9 +266,9 @@ export function InsertClass() {
                 ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                 : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
-            value={classData.name}
+            value={schoolClassData.name}
             onChange={(e) => {
-              setClassData({ ...classData, name: e.target.value });
+              setSchoolClassData({ ...schoolClassData, name: e.target.value });
             }}
           />
         </div>
@@ -276,7 +280,7 @@ export function InsertClass() {
             className={
               errors.schoolId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Escola:{" "}
@@ -291,8 +295,8 @@ export function InsertClass() {
             }
             name="schoolSelect"
             onChange={(e) => {
-              setClassData({
-                ...classData,
+              setSchoolClassData({
+                ...schoolClassData,
                 schoolId: e.target.value,
                 confirmInsert: false,
               });
@@ -313,7 +317,7 @@ export function InsertClass() {
             className={
               errors.available
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Disponibilidade:{" "}
@@ -322,12 +326,18 @@ export function InsertClass() {
             name="available"
             defaultValue={"closed"}
             onChange={(e) => {
-              e.target.value === "opened"
-                ? setClassData({ ...classData, available: true })
-                : e.target.value === "closed"
-                ? setClassData({ ...classData, available: false })
-                : null;
-              setClassData({ ...classData, confirmInsert: false });
+              e.target.value === "open" ||
+              e.target.value === "closed" ||
+              e.target.value === "waitingList"
+                ? setSchoolClassData({
+                    ...schoolClassData,
+                    available: e.target.value,
+                  })
+                : setSchoolClassData({
+                    ...schoolClassData,
+                    available: "closed",
+                  });
+              setSchoolClassData({ ...schoolClassData, confirmInsert: false });
             }}
             className={
               errors.available
@@ -339,8 +349,9 @@ export function InsertClass() {
               {" "}
               -- Selecione --{" "}
             </option>
-            <option value={"opened"}>Turma Aberta</option>
+            <option value={"open"}>Turma Aberta</option>
             <option value={"closed"}>Turma Fechada</option>
+            <option value={"waitingList"}>Lista de Espera</option>
           </select>
         </div>
 
@@ -349,21 +360,21 @@ export function InsertClass() {
           <input
             type="checkbox"
             name="confirmInsert"
-            className="ml-1 text-green-500 dark:text-green-500 border-none"
-            checked={classData.confirmInsert}
+            className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
+            checked={schoolClassData.confirmInsert}
             onChange={() => {
-              setClassData({
-                ...classData,
-                confirmInsert: !classData.confirmInsert,
+              setSchoolClassData({
+                ...schoolClassData,
+                confirmInsert: !schoolClassData.confirmInsert,
               });
             }}
           />
           <label
             htmlFor="confirmInsert"
-            className="text-sm text-gray-600 dark:text-gray-100"
+            className="text-sm"
           >
-            {classData.name
-              ? `Confirmar criação de Turma ${classData.name}`
+            {schoolClassData.name
+              ? `Confirmar criação de Turma ${schoolClassData.name}`
               : `Confirmar criação`}
           </label>
         </div>
@@ -374,7 +385,7 @@ export function InsertClass() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+            className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>

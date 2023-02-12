@@ -91,7 +91,7 @@ export const createClassValidationSchema = z.object ({
   name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
   schoolName: z.string().min(1, {message: `Por favor, preencha o campo "Colégio"`}),
   schoolId: z.string().min(1, {message: `Por favor, preencha o campo "Colégio"`}),
-  available: z.boolean(),
+  available: z.literal('open').or(z.literal('closed')).or(z.literal('waitingList')),
   confirmInsert: z.boolean()
 })
 
@@ -220,6 +220,7 @@ export const editSchoolValidationSchema = z.object ({
 })
 export const editSchoolClassValidationSchema = z.object ({
   name: z.string().min(1, {message: `Por favor, digite o nome da Turma`}),
+  available: z.literal('open').or(z.literal('closed')).or(z.literal('waitingList')),
 })
 export const editSchoolCourseValidationSchema = z.object ({
   name: z.string().min(1, {message: `Por favor, digite o nome da Modalidade`}),
@@ -296,9 +297,11 @@ export const editStudentValidationSchema = z.object ({
   }),
   responsible: z.string().min(1, {message: `Por favor, preencha o campo "Responsável"`}),
   financialResponsible: z.string().min(1, {message: `Por favor, preencha o campo "Responsável Financeiro"`}),
-  familyAtSchool: z.array(z.string().optional().or(z.literal(''))),
-  curriculum: z.array(z.string().optional().or(z.literal(''))),
+  familyAtSchoolIds: z.array(z.string().optional().or(z.literal(''))),
+  curriculumIds: z.array(z.string().optional().or(z.literal(''))),
+  experimentalCurriculumIds: z.array(z.string().optional().or(z.literal(''))),
   addCurriculum: z.boolean(),
+  addExperimentalCurriculum: z.boolean(),
   addFamily: z.boolean(),
 })
 

@@ -528,7 +528,7 @@ export function EditCurriculum() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditCurriculum)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL SELECT */}
         <div className="flex gap-2 items-center">
@@ -537,7 +537,7 @@ export function EditCurriculum() {
             className={
               errors.schoolId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Escola:{" "}
@@ -573,7 +573,7 @@ export function EditCurriculum() {
             className={
               errors.schoolClassId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Turma:{" "}
@@ -620,7 +620,7 @@ export function EditCurriculum() {
             className={
               errors.curriculumId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione o Currículo:{" "}
@@ -668,7 +668,7 @@ export function EditCurriculum() {
               <button
                 type="button"
                 disabled={isEdit}
-                className="w-3/4 border rounded-xl border-green-900/10 bg-green-500 disabled:bg-amber-500/70 disabled:dark:bg-amber-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50"
+                className="w-3/4 border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-amber-500/70 disabled:dark:bg-amber-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50"
                 onClick={() => {
                   setIsEdit(true);
                 }}
@@ -687,7 +687,7 @@ export function EditCurriculum() {
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="name"
-                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                className="w-1/4 text-right"
               >
                 Nome:{" "}
               </label>
@@ -704,7 +704,7 @@ export function EditCurriculum() {
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="schoolName"
-                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                className="w-1/4 text-right"
               >
                 Colégio:{" "}
               </label>
@@ -721,7 +721,7 @@ export function EditCurriculum() {
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="schoolClass"
-                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                className="w-1/4 text-right"
               >
                 Turma:{" "}
               </label>
@@ -738,7 +738,7 @@ export function EditCurriculum() {
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="schoolCourse"
-                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                className="w-1/4 text-right"
               >
                 Modalidade:{" "}
               </label>
@@ -768,7 +768,7 @@ export function EditCurriculum() {
                 className={
                   errors.scheduleId
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Horário:{" "}
@@ -808,7 +808,7 @@ export function EditCurriculum() {
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="transitionStart"
-                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                className="w-1/4 text-right"
               >
                 Início da Transição:{" "}
               </label>
@@ -825,7 +825,7 @@ export function EditCurriculum() {
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="transitionEnd"
-                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                className="w-1/4 text-right"
               >
                 Fim da Transição:{" "}
               </label>
@@ -842,7 +842,7 @@ export function EditCurriculum() {
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="classStart"
-                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                className="w-1/4 text-right"
               >
                 Início da Aula:{" "}
               </label>
@@ -859,7 +859,7 @@ export function EditCurriculum() {
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="classEnd"
-                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                className="w-1/4 text-right"
               >
                 Fim da Aula:{" "}
               </label>
@@ -876,7 +876,7 @@ export function EditCurriculum() {
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="exit"
-                className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+                className="w-1/4 text-right"
               >
                 Saída:{" "}
               </label>
@@ -906,7 +906,7 @@ export function EditCurriculum() {
                 className={
                   errors.classDayId
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Dias de Aula:{" "}
@@ -953,7 +953,7 @@ export function EditCurriculum() {
                 className={
                   errors.teacherId
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Professor:{" "}
@@ -989,7 +989,7 @@ export function EditCurriculum() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+                className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
               >
                 {!isSubmitting ? "Salvar" : "Salvando"}
               </button>

@@ -226,7 +226,7 @@ export function DeleteClassDays() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleDeleteClassDays)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* CLASS DAYS SELECT */}
         <div className="flex gap-2 items-center">
@@ -235,7 +235,7 @@ export function DeleteClassDays() {
             className={
               errors.classDayId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione o Dia de Aula:{" "}
@@ -271,7 +271,7 @@ export function DeleteClassDays() {
               <input
                 type="checkbox"
                 name="confirmDelete"
-                className="ml-1 dark: text-green-500 dark:text-green-500 border-none "
+                className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none "
                 checked={classDaysData.confirmDelete}
                 onChange={() => {
                   setClassDaysData({
@@ -282,7 +282,7 @@ export function DeleteClassDays() {
               />
               <label
                 htmlFor="confirmDelete"
-                className="text-sm text-gray-600 dark:text-gray-100"
+                className="text-sm"
               >
                 {classDaysData.classDayName
                   ? `Confirmar exclusão de ${classDaysData.classDayName}`
@@ -296,7 +296,7 @@ export function DeleteClassDays() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+                className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
               >
                 {!isSubmitting ? "Excluir" : "Excluindo"}
               </button>

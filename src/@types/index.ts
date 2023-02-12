@@ -189,6 +189,9 @@ export interface SelectProps {
   returnId?: boolean;
   displaySchoolCourseAndSchedule?: boolean;
   displayAdmins?: boolean;
+  onlyAvailableClasses?: boolean;
+  availableAndWaitingClasses?: boolean;
+  onlyEnrolledStudents?: boolean;
   handleData?: (data: any) => void;
 }
 
@@ -223,7 +226,7 @@ export interface SchoolClassSearchProps {
   name: string;
   schoolName: string;
   schoolId: string;
-  available: boolean;
+  available: "open" | "closed" | "waitingList";
   timestamp: Date;
 }
 
@@ -289,8 +292,12 @@ export interface StudentSearchProps {
   phoneTertiary: string;
   responsible: string;
   financialResponsible: string;
-  familyAtSchool: [];
-  curriculum: [];
+  familyAtSchoolDetails: {};
+  familyAtSchoolIds: [];
+  experimentalCurriculumDetails: {};
+  experimentalCurriculumIds: [];
+  curriculumDetails: {};
+  curriculumIds: [];
   timestamp: Date;
 }
 

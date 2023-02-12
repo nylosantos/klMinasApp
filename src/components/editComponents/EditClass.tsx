@@ -38,6 +38,7 @@ export function EditClass() {
   const [schoolClassEditData, setSchoolClassEditData] =
     useState<EditSchoolClassValidationZProps>({
       name: "",
+      available: "closed",
     });
 
   // SCHOOL CLASS SELECTED AND EDIT ACTIVE STATES
@@ -95,6 +96,7 @@ export function EditClass() {
       setSchoolClassEditData({
         ...schoolClassEditData,
         name: schoolClassSelectedData.name,
+        available: schoolClassSelectedData.available,
       });
     }
   }, [schoolClassSelectedData]);
@@ -135,6 +137,7 @@ export function EditClass() {
     resolver: zodResolver(editSchoolClassValidationSchema),
     defaultValues: {
       name: "",
+      available: "closed",
     },
   });
 
@@ -148,6 +151,7 @@ export function EditClass() {
     ).selectedIndex = 0;
     setSchoolClassEditData({
       name: "",
+      available: "closed",
     });
     setSchoolClassData({
       schoolClassId: "",
@@ -159,11 +163,12 @@ export function EditClass() {
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("name", schoolClassEditData.name);
+    setValue("available", schoolClassEditData.available);
   }, [schoolClassEditData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [errors.name];
+    const fullErrors = [errors.name, errors.available];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -188,6 +193,7 @@ export function EditClass() {
           doc(db, "schoolClasses", schoolClassData.schoolClassId),
           {
             name: data.name,
+            available: data.available,
           }
         );
         resetForm();
@@ -260,7 +266,7 @@ export function EditClass() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditClass)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL SELECT */}
         <div className="flex gap-2 items-center">
@@ -269,7 +275,7 @@ export function EditClass() {
             className={
               errors.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Escola:{" "}
@@ -305,7 +311,7 @@ export function EditClass() {
             className={
               errors.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Turma:{" "}
@@ -346,7 +352,7 @@ export function EditClass() {
               <button
                 type="button"
                 disabled={isEdit}
-                className="w-3/4 border rounded-xl border-green-900/10 bg-green-500 disabled:bg-amber-500/70 disabled:dark:bg-amber-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50"
+                className="w-3/4 border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-amber-500/70 disabled:dark:bg-amber-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50"
                 onClick={() => {
                   setIsEdit(true);
                 }}
@@ -368,7 +374,7 @@ export function EditClass() {
                 className={
                   errors.name
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Nome:{" "}
@@ -397,13 +403,57 @@ export function EditClass() {
               />
             </div>
 
+            {/* SCHOOL CLASS AVAILABILITY */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="available"
+                className={
+                  errors.available
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Disponibilidade:{" "}
+              </label>
+              <select
+                name="available"
+                defaultValue={schoolClassSelectedData?.available}
+                onChange={(e) => {
+                  e.target.value === "open" ||
+                  e.target.value === "closed" ||
+                  e.target.value === "waitingList"
+                    ? setSchoolClassEditData({
+                        ...schoolClassEditData,
+                        available: e.target.value,
+                      })
+                    : setSchoolClassEditData({
+                        ...schoolClassEditData,
+                        available: "closed",
+                      });
+                }}
+                className={
+                  errors.available
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+              >
+                <option disabled value={" -- select an option -- "}>
+                  {" "}
+                  -- Selecione --{" "}
+                </option>
+                <option value={"open"}>Turma Aberta</option>
+                <option value={"closed"}>Turma Fechada</option>
+                <option value={"waitingList"}>Lista de Espera</option>
+              </select>
+            </div>
+
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">
               {/* SUBMIT BUTTON */}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+                className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
               >
                 {!isSubmitting ? "Salvar" : "Salvando"}
               </button>

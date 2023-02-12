@@ -141,7 +141,7 @@ export function InsertSeed() {
       name: "Turma Bernoulli - 1º e 2º Período",
       schoolName: "Colégio Bernoulli",
       schoolId: commonIdBernoulli,
-      available: true,
+      available: "open",
     });
 
     const commonIdBernoulliFirstAndSecondYear = uuidv4();
@@ -156,7 +156,7 @@ export function InsertSeed() {
       name: "Turma Bernoulli - 1º e 2º Ano",
       schoolName: "Colégio Bernoulli",
       schoolId: commonIdBernoulli,
-      available: true,
+      available: "open",
     });
 
     const commomIdBernoulliThirdToFifthYear = uuidv4();
@@ -171,7 +171,7 @@ export function InsertSeed() {
       name: "Turma Bernoulli - 3º ao 5º Ano",
       schoolName: "Colégio Bernoulli",
       schoolId: commonIdBernoulli,
-      available: true,
+      available: "open",
     });
 
     const commomIdSchoolClassVillaBuritis = uuidv4();
@@ -186,7 +186,7 @@ export function InsertSeed() {
       name: "Turma Villa Buritis",
       schoolName: "Colégio Villa Buritis",
       schoolId: commonIdVillaBuritis,
-      available: true,
+      available: "open",
     });
 
     const commomIdSchoolClassBilboqueGutierrez = uuidv4();
@@ -201,7 +201,7 @@ export function InsertSeed() {
       name: "Turma Bilboquê Gutierrez",
       schoolName: "Colégio Bilboquê Gutierrez",
       schoolId: commonIdBilboqueGutierrez,
-      available: true,
+      available: "open",
     });
 
     const commomIdSchoolClassBilboqueBuritis = uuidv4();
@@ -216,7 +216,7 @@ export function InsertSeed() {
       name: "Turma Bilboquê Buritis",
       schoolName: "Colégio Bilboquê Buritis",
       schoolId: commonIdBilboqueBuritis,
-      available: true,
+      available: "open",
     });
 
     const commomIdSchoolClassEdnaRoriz = uuidv4();
@@ -231,7 +231,7 @@ export function InsertSeed() {
       name: "Turma Edna Roriz",
       schoolName: "Colégio Edna Roriz",
       schoolId: commonIdEdnaRoriz,
-      available: true,
+      available: "open",
     });
 
     // CREATING SCHOOL COURSES
@@ -682,7 +682,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -707,7 +706,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -733,7 +731,6 @@ export function InsertSeed() {
       classDay: "Sexta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -758,7 +755,6 @@ export function InsertSeed() {
       classDay: "Sexta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -784,7 +780,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -809,7 +804,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -835,7 +829,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -860,7 +853,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -886,7 +878,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -911,7 +902,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -937,7 +927,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -962,7 +951,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -988,7 +976,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1013,7 +1000,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1039,7 +1025,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1064,7 +1049,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1091,7 +1075,6 @@ export function InsertSeed() {
       classDay: "Terça, Quinta e Sexta-Feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1117,7 +1100,6 @@ export function InsertSeed() {
       classDay: "Terça, Quinta e Sexta-Feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1144,7 +1126,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1170,7 +1151,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1196,7 +1176,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1221,7 +1200,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1247,7 +1225,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1272,7 +1249,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1298,7 +1274,6 @@ export function InsertSeed() {
       classDay: "Sexta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1323,7 +1298,6 @@ export function InsertSeed() {
       classDay: "Sexta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1349,7 +1323,6 @@ export function InsertSeed() {
       classDay: "Sexta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1374,7 +1347,6 @@ export function InsertSeed() {
       classDay: "Sexta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1400,7 +1372,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1426,7 +1397,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1452,7 +1422,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1478,7 +1447,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1504,7 +1472,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1529,7 +1496,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1555,7 +1521,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1580,7 +1545,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1606,7 +1570,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1633,7 +1596,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1659,7 +1621,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1685,7 +1646,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1711,7 +1671,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1737,7 +1696,6 @@ export function InsertSeed() {
       classDay: "Terça e Quinta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1763,7 +1721,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1789,7 +1746,6 @@ export function InsertSeed() {
       classDay: "Segunda e Quarta-feira",
       teacherId: commonIdteacherExample,
       teacher: "Natália Peruzzo Costa",
-      students: [],
       timestamp: serverTimestamp(),
     });
 
@@ -1831,14 +1787,14 @@ export function InsertSeed() {
       {/** FORM */}
       <form
         onSubmit={handleSubmit(handleAddSeed)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/** CHECKBOX CONFIRM INSERT */}
         <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
             name="confirmInsert"
-            className="ml-1 text-green-500 dark:text-green-500 border-none"
+            className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
             checked={seedData.confirmInsert}
             onChange={() => {
               setSeedData({
@@ -1849,7 +1805,7 @@ export function InsertSeed() {
           />
           <label
             htmlFor="confirmInsert"
-            className="text-sm text-gray-600 dark:text-gray-100"
+            className="text-sm"
           >
             Confirmar criação de todo o SEED
           </label>
@@ -1861,7 +1817,7 @@ export function InsertSeed() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-full"
+            className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-full"
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>

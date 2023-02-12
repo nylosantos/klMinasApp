@@ -336,7 +336,7 @@ export function EditMyUser() {
           {/* FORM */}
           <form
             onSubmit={handleSubmit(handleEditUser)}
-            className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+            className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
           >
             {/* USER NAME */}
             <div className="flex gap-2 items-center">
@@ -345,7 +345,7 @@ export function EditMyUser() {
                 className={
                   errors.name
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Nome:{" "}
@@ -381,7 +381,7 @@ export function EditMyUser() {
                 className={
                   errors.email
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 E-mail:{" "}
@@ -417,7 +417,7 @@ export function EditMyUser() {
                 className={
                   errors.password
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Alterar Senha ?{" "}
@@ -426,7 +426,7 @@ export function EditMyUser() {
                 <input
                   type="checkbox"
                   name="changePassword"
-                  className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
+                  className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
                   checked={userEditData.changePassword}
                   onChange={() => {
                     setUserEditData({
@@ -447,7 +447,7 @@ export function EditMyUser() {
                       !errorPassword
                         ? errors.password
                           ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                          : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                          : "w-1/4 text-right"
                         : "w-1/4 text-right text-red-500 dark:text-red-400"
                     }
                   >
@@ -488,7 +488,7 @@ export function EditMyUser() {
                       !errorPassword
                         ? errors.confirmPassword
                           ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                          : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                          : "w-1/4 text-right"
                         : "w-1/4 text-right text-red-500 dark:text-red-400"
                     }
                   >
@@ -530,7 +530,7 @@ export function EditMyUser() {
                 className={
                   errors.phone
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Telefone:{" "}
@@ -612,7 +612,7 @@ export function EditMyUser() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+                className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
               >
                 {!isSubmitting ? "Salvar" : "Salvando"}
               </button>

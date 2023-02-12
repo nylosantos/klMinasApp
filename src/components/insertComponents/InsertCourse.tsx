@@ -178,7 +178,7 @@ export function InsertCourse() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddCourse)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL COURSE NAME */}
         <div className="flex gap-2 items-center">
@@ -187,7 +187,7 @@ export function InsertCourse() {
             className={
               errors.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Modalidade:{" "}
@@ -220,7 +220,7 @@ export function InsertCourse() {
             className={
               errors.price
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Valor da Mensalidade:{" "}
@@ -258,7 +258,7 @@ export function InsertCourse() {
           <input
             type="checkbox"
             name="confirmInsert"
-            className="ml-1 text-green-500 dark:text-green-500 border-none"
+            className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
             checked={courseData.confirmInsert}
             onChange={() => {
               setCourseData({
@@ -269,7 +269,7 @@ export function InsertCourse() {
           />
           <label
             htmlFor="confirmInsert"
-            className="text-sm text-gray-600 dark:text-gray-100"
+            className="text-sm"
           >
             {courseData.name
               ? `Confirmar criação da modalidade ${courseData.name}`
@@ -283,7 +283,7 @@ export function InsertCourse() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+            className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>

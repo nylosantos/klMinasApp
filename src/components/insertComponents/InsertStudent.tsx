@@ -12,6 +12,7 @@ import {
   doc,
   getDocs,
   getFirestore,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -22,14 +23,16 @@ import {
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
-import { customerFullName } from "../../custom";
+import { customerFullName, months, weekDays } from "../../custom";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { createStudentValidationSchema } from "../../@types/zodValidation";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 import {
+  ClassDaySearchProps,
   CreateStudentValidationZProps,
   CurriculumSearchProps,
+  ScheduleSearchProps,
   SchoolClassSearchProps,
   SchoolCourseSearchProps,
   SchoolSearchProps,
@@ -433,6 +436,144 @@ export function InsertStudent() {
   }, []);
   // -------------------------- END OF SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
 
+  // -------------------------- EXPERIMENTAL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+  // EXPERMIENTAL CLASS STATE
+  const [newClass, setNewClass] = useState({
+    type: "" || "experimental" || "enrolled",
+    date: "",
+  });
+
+  const [experimentalClassError, setExperimentalClassError] = useState(false);
+
+  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT CURRICULUM
+  const [curriculumDataArray, setCurriculumDataArray] =
+    useState<CurriculumSearchProps[]>();
+
+  // CURRICULUM SELECTED STATE DATA
+  const [curriculumSelectedData, setCurriculumSelectedData] =
+    useState<CurriculumSearchProps>();
+
+  // GET CURRICULUM FULL DATA WHEN STUDENT CURRICULUM IS SELECTED
+  useEffect(() => {
+    setIndexDaysArray([]);
+    const handleCurriculumFullData = async () => {
+      if (studentData.curriculum !== "") {
+        const q = query(
+          collection(db, "curriculum"),
+          where("id", "==", studentData.curriculum)
+        );
+        const unsubscribe = onSnapshot(q, (querySnapShot) => {
+          const promises: any = [];
+          querySnapShot.forEach((doc) => {
+            const promise = doc.data();
+            promises.push(promise);
+          });
+          setCurriculumDataArray(promises);
+        });
+      } else {
+        setCurriculumDataArray(undefined);
+      }
+    };
+    handleCurriculumFullData();
+  }, [studentData.curriculum]);
+
+  // SET CURRICULUM SELECTED STATE WHEN SELECT CURRICULUM
+  useEffect(() => {
+    if (curriculumDataArray !== undefined) {
+      setCurriculumSelectedData(
+        curriculumDataArray!.find(({ id }) => id === studentData.curriculum)
+      );
+    } else {
+      setCurriculumSelectedData(undefined);
+    }
+  }, [curriculumDataArray]);
+
+  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT CURRICULUM
+  const [classDayDataArray, setClassDayDataArray] =
+    useState<ClassDaySearchProps[]>();
+
+  // CURRICULUM SELECTED STATE DATA
+  const [classDaySelectedData, setClassDaySelectedData] =
+    useState<ClassDaySearchProps>();
+
+  // GET CLASS DAY FULL DATA WHEN HAVE CURRICULUM SELECTED DATA
+  useEffect(() => {
+    const handleClassDayFullData = async () => {
+      if (curriculumSelectedData !== undefined) {
+        const q = query(
+          collection(db, "classDays"),
+          where("id", "==", curriculumSelectedData.classDayId)
+        );
+        const unsubscribe = onSnapshot(q, (querySnapShot) => {
+          const promises: any = [];
+          querySnapShot.forEach((doc) => {
+            const promise = doc.data();
+            promises.push(promise);
+          });
+          setClassDayDataArray(promises);
+        });
+      } else {
+        setClassDayDataArray(undefined);
+      }
+    };
+    handleClassDayFullData();
+  }, [curriculumSelectedData]);
+
+  // SET CLASS DAY SELECTED STATE WHEN SELECT CLASS DAY
+  useEffect(() => {
+    if (classDayDataArray !== undefined) {
+      setClassDaySelectedData(
+        classDayDataArray!.find(
+          ({ id }) => id === curriculumSelectedData?.classDayId
+        )
+      );
+    } else {
+      setClassDaySelectedData(undefined);
+    }
+  }, [classDayDataArray]);
+
+  // CREATING INDEX TO DAYS FO USE ON DATE PICKER
+  const indexDays = {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+  };
+
+  const [indexDaysArray, setIndexDaysArray] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (classDaySelectedData !== undefined) {
+      if (!classDaySelectedData.sunday) {
+        indexDaysArray.push(indexDays.sunday);
+      }
+      if (!classDaySelectedData.monday) {
+        indexDaysArray.push(indexDays.monday);
+      }
+      if (!classDaySelectedData.tuesday) {
+        indexDaysArray.push(indexDays.tuesday);
+      }
+      if (!classDaySelectedData.wednesday) {
+        indexDaysArray.push(indexDays.wednesday);
+      }
+      if (!classDaySelectedData.thursday) {
+        indexDaysArray.push(indexDays.thursday);
+      }
+      if (!classDaySelectedData.friday) {
+        indexDaysArray.push(indexDays.friday);
+      }
+      if (!classDaySelectedData.saturday) {
+        indexDaysArray.push(indexDays.saturday);
+      }
+    } else {
+      setIndexDaysArray([]);
+    }
+  }, [classDaySelectedData]);
+  // -------------------------- END OF EXPERIMENTAL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+
   // -------------------------- CURRICULUM STATES AND FUNCTIONS -------------------------- //
   // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF CURRICULUM
   const [curriculumCoursesData, setCurriculumCoursesData] = useState([]);
@@ -515,13 +656,41 @@ export function InsertStudent() {
     });
   }, [curriculumData.schoolClassId]);
 
-  // RESET CONFIRM INSERT WHEN CHANGE SCHOOL COURSE OR CURRICULUM AVAILABLE
+  // RESET ALL UNDER SCHOOL COURSE SELECT WHEN CHANGE SCHOOL COURSE
+  useEffect(() => {
+    setStudentData({
+      ...studentData,
+      curriculum: "",
+      confirmInsert: false,
+    });
+  }, [curriculumData.schoolCourseId]);
+
+  // RESET CONFIRM INSERT WHEN CURRICULUM AVAILABLE
+  useEffect(() => {
+    if (studentData.curriculum !== "") {
+      setNewClass({
+        type: "",
+        date: "",
+      });
+      (
+        document.getElementById(
+          "experimentalClassSelectQuestion"
+        ) as HTMLSelectElement
+      ).selectedIndex = 0;
+      setStudentData({
+        ...studentData,
+        confirmInsert: false,
+      });
+    }
+  }, [studentData.curriculum]);
+
+  // RESET CONFIRM INSERT WHEN EXPERIMENTAL CLASS CHANGE
   useEffect(() => {
     setStudentData({
       ...studentData,
       confirmInsert: false,
     });
-  }, [curriculumData.schoolCourseId, studentData.curriculum]);
+  }, [newClass]);
   // -------------------------- END OF RESET SELECTS -------------------------- //
   // ---------------------------- END OF STUDENT VARIABLES, STATES AND FUNCTIONS ---------------------------- //
 
@@ -681,6 +850,20 @@ export function InsertStudent() {
       schoolCourseId: "",
       schoolCourseName: "",
     });
+    setNewClass({
+      type: "",
+      date: "",
+    });
+    setExperimentalClassError(false);
+    (
+      document.getElementById("phoneDDD") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("phoneSecondaryDDD") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("phoneTertiaryDDD") as HTMLSelectElement
+    ).selectedIndex = 0;
     (
       document.getElementById("schoolSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -774,147 +957,133 @@ export function InsertStudent() {
 
     // ADD STUDENT FUNCTION
     const addStudent = async () => {
-      const commonId = uuidv4();
-      const newStudentId = commonId;
-      const newStudentRef = doc(db, "students", commonId);
-      const curriculumRef = collection(db, "curriculum");
-      const q = query(curriculumRef, where("id", "==", data.curriculum));
-      const querySnapshot = await getDocs(q);
-      const promises: any = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.id;
-        promises.push(promise);
-      });
+      const newStudentId = uuidv4();
+      const newStudentRef = doc(db, "students", newStudentId);
+      const curriculumRef = doc(db, "curriculum", data.curriculum);
       try {
-        // ADD STUDENT TO CURRICULUM TABLE
-        const curriculumId = doc(db, "curriculum", promises[0]);
-        await updateDoc(curriculumId, {
-          students: arrayUnion(newStudentId),
+        // CREATE STUDENT
+        await setDoc(newStudentRef, {
+          id: newStudentId,
+          name: data.name,
+          email: data.email,
+          birthDate: Timestamp.fromDate(new Date(data.birthDate)),
+          address: {
+            street: data.address.street,
+            number: data.address.number,
+            complement: data.address.complement,
+            neighborhood: data.address.neighborhood,
+            city: data.address.city,
+            state: data.address.state,
+            cep: data.address.cep,
+          },
+          phone: `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`,
+          phoneSecondary: activePhoneSecondary
+            ? `+55${data.phoneSecondary.ddd}${data.phoneSecondary.prefix}${data.phoneSecondary.suffix}`
+            : "",
+          phoneTertiary: activePhoneTertiary
+            ? `+55${data.phoneTertiary.ddd}${data.phoneTertiary.prefix}${data.phoneTertiary.suffix}`
+            : "",
+          responsible: data.responsible,
+          financialResponsible: data.financialResponsible,
+          timestamp: serverTimestamp(),
         });
-        try {
-          if (data.familyAtSchool) {
-            // ADD STUDENT TO DATABASE WITH BROTHER
-            await setDoc(newStudentRef, {
-              id: newStudentId,
-              name: data.name,
-              email: data.email,
-              birthDate: Timestamp.fromDate(new Date(data.birthDate)),
-              address: {
-                street: data.address.street,
-                number: data.address.number,
-                complement: data.address.complement,
-                neighborhood: data.address.neighborhood,
-                city: data.address.city,
-                state: data.address.state,
-                cep: data.address.cep,
+        if (newClass.type === "experimental") {
+          // ADD STUDENT TO CURRICULUM TABLE ON EXPERIMENTAL STUDENTS FIELD
+          await setDoc(
+            curriculumRef,
+            {
+              experimentalStudentsIds: arrayUnion(newStudentId),
+              experimentalStudentsDetails: {
+                [newStudentId]: {
+                  name: data.name,
+                  date: Timestamp.fromDate(new Date(newClass.date)),
+                },
               },
-              phone: `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`,
-              phoneSecondary: activePhoneSecondary
-                ? `+55${data.phoneSecondary.ddd}${data.phoneSecondary.prefix}${data.phoneSecondary.suffix}`
-                : "",
-              phoneTertiary: activePhoneTertiary
-                ? `+55${data.phoneTertiary.ddd}${data.phoneTertiary.prefix}${data.phoneTertiary.suffix}`
-                : "",
-              responsible: data.responsible,
-              financialResponsible: data.financialResponsible,
-              curriculum: [data.curriculum],
-              familyAtSchool: [data.familyAtSchoolId],
-              timestamp: serverTimestamp(),
-            });
-            try {
-              const brotherId = doc(db, "students", data.familyAtSchoolId!);
-              await updateDoc(brotherId, {
-                familyAtSchool: arrayUnion(newStudentId),
-              });
-              toast.success(`Aluno ${data.name} criado com sucesso! 👌`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
-              (
-                document.getElementsByTagName(
-                  "select"
-                ) as unknown as HTMLSelectElement
-              ).selectedIndex = 0;
-              resetForm();
-              setIsSubmitting(false);
-            } catch (error) {
-              console.log("ESSE É O ERROR", error);
-              toast.error(
-                `O aluno foi criado, mas ocorreu um erro ao adicioná-lo ao registro do seu irmão. Contate o suporte... 🤯`,
-                {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                }
-              );
-              (
-                document.getElementsByTagName(
-                  "select"
-                ) as unknown as HTMLSelectElement
-              ).selectedIndex = 0;
-              resetForm();
-              setIsSubmitting(false);
-            }
-          } else {
-            // ADD STUDENT TO DATABASE WITHOUT BROTHER
-            await setDoc(newStudentRef, {
-              id: newStudentId,
-              name: data.name,
-              email: data.email,
-              birthDate: Timestamp.fromDate(new Date(data.birthDate)),
-              address: {
-                street: data.address.street,
-                number: data.address.number,
-                complement: data.address.complement,
-                neighborhood: data.address.neighborhood,
-                city: data.address.city,
-                state: data.address.state,
-                cep: data.address.cep,
+            },
+            { merge: true }
+          );
+          // ADD CURRICULUM INSIDE STUDENT TABLE ON EXPERIMENTAL CURRICULUM FIELD
+          await setDoc(
+            newStudentRef,
+            {
+              experimentalCurriculumIds: arrayUnion(data.curriculum),
+              experimentalCurriculumDetails: {
+                [data.curriculum]: {
+                  name: curriculumSelectedData?.name,
+                  date: Timestamp.fromDate(new Date(newClass.date)),
+                },
               },
-              phone: `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`,
-              phoneSecondary: activePhoneSecondary
-                ? `+55${data.phoneSecondary.ddd}${data.phoneSecondary.prefix}${data.phoneSecondary.suffix}`
-                : "",
-              phoneTertiary: activePhoneTertiary
-                ? `+55${data.phoneTertiary.ddd}${data.phoneTertiary.prefix}${data.phoneTertiary.suffix}`
-                : "",
-              responsible: data.responsible,
-              financialResponsible: data.financialResponsible,
-              curriculum: [data.curriculum],
-              familyAtSchool: [],
-              timestamp: serverTimestamp(),
-            });
-            toast.success(`Aluno ${data.name} criado com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            (
-              document.getElementsByTagName(
-                "select"
-              ) as unknown as HTMLSelectElement
-            ).selectedIndex = 0;
-            resetForm();
-            setIsSubmitting(false);
-          }
-        } catch (error) {
-          console.log("ESSE É O ERROR", error);
-          toast.error(`Ocorreu um erro... 🤯`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
-          setIsSubmitting(false);
+            },
+            { merge: true }
+          );
+        } else {
+          // ADD STUDENT TO CURRICULUM TABLE ON STUDENTS FIELD
+          await setDoc(
+            curriculumRef,
+            {
+              studentsIds: arrayUnion(newStudentId),
+              studentsDetails: {
+                [newStudentId]: {
+                  name: data.name,
+                  date: Timestamp.fromDate(new Date(newClass.date)),
+                },
+              },
+            },
+            { merge: true }
+          );
+          // ADD CURRICULUM TO STUDENT TABLE ON CURRICULUM FIELD
+          await setDoc(
+            newStudentRef,
+            {
+              curriculumIds: arrayUnion(data.curriculum),
+              curriculumDetails: {
+                [data.curriculum]: {
+                  name: curriculumSelectedData?.name,
+                  date: Timestamp.fromDate(new Date(newClass.date)),
+                },
+              },
+            },
+            { merge: true }
+          );
         }
+        if (data.familyAtSchool) {
+          const familyRef = doc(db, "students", data.familyAtSchoolId!);
+          // CREATE STUDENT FAMILY'S INSIDE STUDENT TABLE
+          await setDoc(
+            newStudentRef,
+            {
+              familyAtSchoolIds: arrayUnion(data.familyAtSchoolId!),
+              familyAtSchoolDetails: {
+                [data.familyAtSchoolId!]: {
+                  name: familyStudentSelectedData?.name,
+                },
+              },
+            },
+            { merge: true }
+          );
+          // CREATE STUDENT INSIDE FAMILY TABLE COLLECTION
+          await setDoc(
+            familyRef,
+            {
+              familyAtSchoolIds: arrayUnion(newStudentId),
+              familyAtSchoolDetails: {
+                [newStudentId]: {
+                  name: data.name,
+                },
+              },
+            },
+            { merge: true }
+          );
+        }
+        toast.success(`Aluno ${data.name} criado com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        resetForm();
+        setIsSubmitting(false);
       } catch (error) {
         console.log("ESSE É O ERROR", error);
         toast.error(`Ocorreu um erro... 🤯`, {
@@ -927,6 +1096,42 @@ export function InsertStudent() {
         setIsSubmitting(false);
       }
     };
+
+    // CHEKING IF EXPERIMENTAL CLASS DATE WAS PICKED
+    if (newClass.type !== "") {
+      if (newClass.date === "") {
+        return (
+          setIsSubmitting(false),
+          setExperimentalClassError(true),
+          toast.error(
+            newClass.type === "experimental"
+              ? "Escolha a data da Aula Experimental... ❕"
+              : "Escolha a data da aula inicial... ❕",
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      } else {
+        setExperimentalClassError(false);
+      }
+    } else {
+      return (
+        setIsSubmitting(false),
+        setExperimentalClassError(true),
+        toast.error(`É necessário informar se é uma Aula Experimental... ❕`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        })
+      );
+    }
 
     // CHEKING VALID SECONDARY PHONE
     if (studentData.activePhoneSecondary) {
@@ -1070,7 +1275,7 @@ export function InsertStudent() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddStudent)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* NAME */}
         <div className="flex gap-2 items-center">
@@ -1079,7 +1284,7 @@ export function InsertStudent() {
             className={
               errors.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Nome:{" "}
@@ -1112,7 +1317,7 @@ export function InsertStudent() {
             className={
               errors.email
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             E-mail:{" "}
@@ -1143,13 +1348,16 @@ export function InsertStudent() {
             className={
               errors.birthDate
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Data de Nascimento:{" "}
           </label>
           <div className="flex w-3/4">
             <DatePicker
+              name="birthDate"
+              months={months}
+              weekDays={weekDays}
               placeholder={
                 errors.birthDate
                   ? "É necessário selecionar uma Data"
@@ -1184,7 +1392,7 @@ export function InsertStudent() {
             className={
               errors.address?.cep
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             CEP:{" "}
@@ -1241,7 +1449,7 @@ export function InsertStudent() {
             className={
               errors.address?.street
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Rua:{" "}
@@ -1305,7 +1513,7 @@ export function InsertStudent() {
             className={
               errors.address?.neighborhood
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Bairro:{" "}
@@ -1375,7 +1583,7 @@ export function InsertStudent() {
             className={
               errors.address?.city
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Cidade:{" "}
@@ -1443,7 +1651,7 @@ export function InsertStudent() {
         <div className="flex gap-2 items-center">
           <label
             htmlFor="editAddressButton"
-            className="w-1/4 text-right text-gray-900 dark:text-gray-100"
+            className="w-1/4 text-right"
           ></label>
           <button
             type="button"
@@ -1465,7 +1673,7 @@ export function InsertStudent() {
             className={
               errors.phone
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Telefone:{" "}
@@ -1551,7 +1759,7 @@ export function InsertStudent() {
             className={
               errors.phoneSecondary
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Telefone 2:{" "}
@@ -1647,7 +1855,7 @@ export function InsertStudent() {
               <input
                 type="checkbox"
                 name="activePhoneSecondary"
-                className="ml-1 text-green-500 dark:text-green-500 border-none"
+                className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
                 checked={activePhoneSecondary}
                 onChange={() => {
                   setActivePhoneSecondary(!activePhoneSecondary);
@@ -1657,10 +1865,7 @@ export function InsertStudent() {
                   });
                 }}
               />
-              <label
-                htmlFor="activePhoneSecondary"
-                className="text-sm text-gray-600 dark:text-gray-100"
-              >
+              <label htmlFor="activePhoneSecondary" className="text-sm">
                 Incluir
               </label>
             </div>
@@ -1674,7 +1879,7 @@ export function InsertStudent() {
             className={
               errors.phoneTertiary
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Telefone 3:{" "}
@@ -1770,7 +1975,7 @@ export function InsertStudent() {
               <input
                 type="checkbox"
                 name="activePhoneTertiary"
-                className="ml-1 text-green-500 dark:text-green-500 border-none"
+                className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
                 checked={activePhoneTertiary}
                 onChange={() => {
                   setActivePhoneTertiary(!activePhoneTertiary);
@@ -1780,10 +1985,7 @@ export function InsertStudent() {
                   });
                 }}
               />
-              <label
-                htmlFor="activePhoneTertiary"
-                className="text-sm text-gray-600 dark:text-gray-100"
-              >
+              <label htmlFor="activePhoneTertiary" className="text-sm">
                 Incluir
               </label>
             </div>
@@ -1797,7 +1999,7 @@ export function InsertStudent() {
             className={
               errors.responsible
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Responsável{" "}
@@ -1836,7 +2038,7 @@ export function InsertStudent() {
             className={
               errors.financialResponsible
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Responsável Financeiro{" "}
@@ -1872,7 +2074,7 @@ export function InsertStudent() {
             className={
               errors.curriculum
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Escola:{" "}
@@ -1909,7 +2111,7 @@ export function InsertStudent() {
             className={
               errors.curriculum
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Turma:{" "}
@@ -1936,6 +2138,7 @@ export function InsertStudent() {
           >
             <SelectOptions
               returnId
+              availableAndWaitingClasses
               dataType="schoolClasses"
               schoolId={curriculumData.schoolId}
               handleData={handleSchoolClassSelectedData}
@@ -1950,7 +2153,7 @@ export function InsertStudent() {
             className={
               errors.curriculum
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Modalidade:{" "}
@@ -1999,46 +2202,165 @@ export function InsertStudent() {
               </h1>
               <hr className="pb-4" />
               <div className="flex flex-wrap gap-4 justify-center">
-                {curriculumCoursesData.map((c: any) => (
-                  <div
-                    className={
-                      errors.curriculum
-                        ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                        : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                    }
-                    key={c.id}
-                  >
-                    <input
-                      type="radio"
-                      id={c.id}
-                      name="curriculumRadio"
-                      value={c.id}
-                      onChange={(e) => {
-                        setStudentData({
-                          ...studentData,
-                          curriculum: e.target.value,
-                        });
-                      }}
-                    />
-                    <label
-                      htmlFor="curriculumRadio"
-                      className="flex flex-col gap-4"
+                {curriculumCoursesData.map((c: CurriculumSearchProps) => (
+                  <>
+                    <div
+                      className={
+                        errors.curriculum
+                          ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                          : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                      }
+                      key={c.id}
                     >
-                      {schoolSelectedData?.name === "Colégio Bernoulli" ? (
-                        <p>Turma: {c.schoolClass}</p>
-                      ) : null}
-                      <p>Modalidade: {c.schoolCourse}</p>
-                      {schedulesDetailsData.map((details: any) =>
-                        details.name === c.schedule
-                          ? `Horário: De ${details.classStart} a ${details.classEnd} hrs`
-                          : null
-                      )}
-                      <p>Dias: {c.classDay}</p>
-                      <p>Professor: {c.teacher}</p>
-                    </label>
-                  </div>
+                      <input
+                        type="radio"
+                        id={c.id}
+                        name="curriculumRadio"
+                        className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                        value={c.id}
+                        onChange={(e) => {
+                          setStudentData({
+                            ...studentData,
+                            curriculum: e.target.value,
+                          });
+                        }}
+                      />
+                      <label
+                        htmlFor="curriculumRadio"
+                        className="flex flex-col gap-4"
+                      >
+                        {schoolSelectedData?.name === "Colégio Bernoulli" ? (
+                          <p>Turma: {c.schoolClass}</p>
+                        ) : null}
+                        <p>Modalidade: {c.schoolCourse}</p>
+                        {schedulesDetailsData.map(
+                          (details: ScheduleSearchProps) =>
+                            details.name === c.schedule
+                              ? `Horário: De ${details.classStart.slice(
+                                  0,
+                                  2
+                                )}h${
+                                  details.classStart.slice(3, 5) === "00"
+                                    ? ""
+                                    : details.classStart.slice(3, 5) + "min"
+                                } a ${details.classEnd.slice(0, 2)}h${
+                                  details.classEnd.slice(3, 5) === "00"
+                                    ? ""
+                                    : details.classEnd.slice(3, 5) + "min"
+                                }`
+                              : null
+                        )}
+                        <p>Dias: {c.classDay}</p>
+                        <p>Professor: {c.teacher}</p>
+                      </label>
+                    </div>
+                  </>
                 ))}
               </div>
+
+              {/* IS EXPERIMENTAL CLASS ? */}
+              {studentData.curriculum ? (
+                <>
+                  {/* EXPERIMENTAL CLASS QUESTION */}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="experimentalClassSelectQuestion"
+                      className={
+                        experimentalClassError
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                      }
+                    >
+                      Aula Experimental?:{" "}
+                    </label>
+                    <select
+                      id="experimentalClassSelectQuestion"
+                      defaultValue={""}
+                      disabled={curriculumData.schoolCourseId ? false : true}
+                      className={
+                        curriculumData.schoolCourseId
+                          ? experimentalClassError
+                            ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                            : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                      }
+                      name="experimentalClassSelectQuestion"
+                      onChange={(e) => {
+                        setNewClass({
+                          type: e.target.value,
+                          date: "",
+                        });
+                      }}
+                    >
+                      <option disabled value={""}>
+                        -- Selecione --
+                      </option>
+                      <option value={"enrolled"}>Não</option>
+                      <option value={"experimental"}>Sim</option>
+                    </select>
+                  </div>
+
+                  {newClass && indexDaysArray.length > 0 ? (
+                    <>
+                      {/* EXPERIMENTAL/INITIAL DAY */}
+                      <div className="flex gap-2 items-center">
+                        <label
+                          htmlFor="experimentalClassPick"
+                          className={
+                            experimentalClassError
+                              ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                              : "w-1/4 text-right"
+                          }
+                        >
+                          {newClass.type === "enrolled"
+                            ? "Escolha a data de início: "
+                            : "Escolha o dia da aula experimental: "}
+                        </label>
+                        <div className="flex w-3/4">
+                          <DatePicker
+                            months={months}
+                            weekDays={weekDays}
+                            placeholder={
+                              experimentalClassError
+                                ? "É necessário selecionar uma Data"
+                                : "Selecione uma Data"
+                            }
+                            currentDate={new DateObject()}
+                            inputClass={
+                              experimentalClassError
+                                ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                            }
+                            minDate={new DateObject().add(1, "day")}
+                            mapDays={({ date }) => {
+                              let isWeekend = indexDaysArray.includes(
+                                date.weekDay.index
+                              );
+
+                              if (isWeekend)
+                                return {
+                                  disabled: true,
+                                  style: { color: "#ccc" },
+                                  title: "Aula não disponível neste dia",
+                                };
+                            }}
+                            editable={false}
+                            format="DD/MM/YYYY"
+                            onChange={(e: DateObject) => {
+                              e !== null
+                                ? setNewClass({
+                                    ...newClass,
+                                    date: `${e.month}/${e.day}/${e.year}`,
+                                  })
+                                : null;
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+                </>
+              ) : null}
             </>
           ) : (
             <>
@@ -2070,7 +2392,7 @@ export function InsertStudent() {
             className={
               errors.familyAtSchool
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Algum parente estuda na escola?:{" "}
@@ -2119,7 +2441,7 @@ export function InsertStudent() {
                 className={
                   errors.familyAtSchoolId
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Selecione a Escola do Parente:{" "}
@@ -2160,7 +2482,7 @@ export function InsertStudent() {
                 className={
                   errors.familyAtSchoolId
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Selecione a Turma do Parente:{" "}
@@ -2211,7 +2533,7 @@ export function InsertStudent() {
                 className={
                   errors.familyAtSchoolId
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Selecione a Modalidade do Parente:{" "}
@@ -2267,7 +2589,7 @@ export function InsertStudent() {
                 className={
                   errors.familyAtSchoolId
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                    : "w-1/4 text-right"
                 }
               >
                 Selecione o Parente:{" "}
@@ -2318,7 +2640,7 @@ export function InsertStudent() {
           <input
             type="checkbox"
             name="confirmInsert"
-            className="ml-1 text-green-500 dark:text-green-500 border-none"
+            className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
             checked={studentData.confirmInsert}
             onChange={() => {
               setStudentData({
@@ -2327,10 +2649,7 @@ export function InsertStudent() {
               });
             }}
           />
-          <label
-            htmlFor="confirmInsert"
-            className="text-sm text-gray-600 dark:text-gray-100"
-          >
+          <label htmlFor="confirmInsert" className="text-sm">
             {studentData.name
               ? `Confirmar criação de ${studentData.name}`
               : `Confirmar criação`}
@@ -2343,7 +2662,7 @@ export function InsertStudent() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+            className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
           >
             {!isSubmitting ? "Criar" : "Criando"}
           </button>

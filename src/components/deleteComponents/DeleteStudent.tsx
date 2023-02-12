@@ -163,6 +163,7 @@ export function DeleteStudent() {
 
   // GETTING STUDENTS AVAILABLE DATA
   const handleAvailableStudentsData = async () => {
+    // GETTING ENROLLED STUDENTS
     const q = query(
       collection(db, "students"),
       where("curriculum", "array-contains", studentData.curriculumId),
@@ -174,10 +175,21 @@ export function DeleteStudent() {
       const promise = doc.data();
       promises.push(promise);
     });
+    // GETTING EXPERIMENTAL STUDENTS
+    const q2 = query(
+      collection(db, "students"),
+      where("experimentalClass", "array-contains", {id: studentData.curriculumId}),
+      orderBy("name")
+    );
+    const querySnapshotExperimental = await getDocs(q2);
+    querySnapshotExperimental.forEach((doc) => {
+      const promise = doc.data();
+      promises.push(promise);
+    });
     setStudentsArrayData(promises);
   };
   // -------------------------- END OF STUDENTS SELECT STATES AND FUNCTIONS -------------------------- //
-
+console.log(studentsArrayData)
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -378,7 +390,7 @@ export function DeleteStudent() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleDeleteStudent)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-gray-700/20 dark:bg-gray-100/10 mt-2"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL SELECT */}
         <div className="flex gap-2 items-center">
@@ -387,7 +399,7 @@ export function DeleteStudent() {
             className={
               errors.schoolId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Escola:{" "}
@@ -420,7 +432,7 @@ export function DeleteStudent() {
             className={
               errors.schoolClassId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Turma:{" "}
@@ -464,7 +476,7 @@ export function DeleteStudent() {
             className={
               errors.curriculumId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right text-gray-900 dark:text-gray-100"
+                : "w-1/4 text-right"
             }
           >
             Selecione a Modalidade:{" "}
@@ -598,7 +610,7 @@ export function DeleteStudent() {
                   <input
                     type="checkbox"
                     name="confirmDelete"
-                    className="ml-1 dark: text-green-500 dark:text-green-500 border-none"
+                    className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
                     checked={studentData.confirmDelete}
                     onChange={() => {
                       setStudentData({
@@ -609,7 +621,7 @@ export function DeleteStudent() {
                   />
                   <label
                     htmlFor="confirmDelete"
-                    className="text-sm text-gray-600 dark:text-gray-100"
+                    className="text-sm"
                   >
                     Confirmar exclusão do Aluno
                   </label>
@@ -629,7 +641,7 @@ export function DeleteStudent() {
               <button
                 type="submit"
                 disabled={studentsArrayData.length === 0 ? true : isSubmitting}
-                className="border rounded-xl border-green-900/10 bg-green-500 disabled:bg-green-500/70 disabled:dark:bg-green-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+                className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
               >
                 {studentsArrayData.length === 0
                   ? "Nenhum aluno encontrado"
