@@ -6,6 +6,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import {
   arrayRemove,
   collection,
+  collectionGroup,
   deleteDoc,
   doc,
   getDocs,
@@ -25,6 +26,9 @@ import {
   DeleteStudentValidationZProps,
   SchoolClassSearchProps,
   SchoolSearchProps,
+  StudentSearchProps,
+  SubCollectionDetailsProps,
+  SubCollectionProps,
 } from "../../@types";
 
 // INITIALIZING FIRESTORE DB
@@ -35,9 +39,11 @@ export function DeleteStudent() {
   const [studentData, setStudentData] = useState<DeleteStudentValidationZProps>(
     {
       studentId: "",
+      studentName: "",
       curriculumId: "",
       schoolId: "",
       schoolClassId: "",
+      studentType: "",
       confirmDelete: false,
     }
   );
@@ -73,7 +79,7 @@ export function DeleteStudent() {
     }
   }, [schoolSelectedData]);
 
-  // RESET SCHOOL CLASS, SCHOOL COURSE AND CURRICULUM SELECT TO INDEX 0 WHEN SCHOOL CHANGE
+  // RESET SCHOOL CLASS AND CURRICULUM SELECT TO INDEX 0 WHEN SCHOOL CHANGE
   useEffect(() => {
     (
       document.getElementById("schoolClassSelect") as HTMLSelectElement
@@ -81,7 +87,11 @@ export function DeleteStudent() {
     (
       document.getElementById("curriculumSelect") as HTMLSelectElement
     ).selectedIndex = 0;
+    (
+      document.getElementById("studentType") as HTMLSelectElement
+    ).selectedIndex = 0;
     setIsSelected(false);
+    setStudentsArrayData([]);
   }, [studentData.schoolId]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
@@ -119,7 +129,11 @@ export function DeleteStudent() {
     (
       document.getElementById("curriculumSelect") as HTMLSelectElement
     ).selectedIndex = 0;
+    (
+      document.getElementById("studentType") as HTMLSelectElement
+    ).selectedIndex = 0;
     setIsSelected(false);
+    setStudentsArrayData([]);
   }, [studentData.schoolClassId]);
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
@@ -140,7 +154,6 @@ export function DeleteStudent() {
   // SET CURRICULUM SELECTED STATE WHEN SELECT CURRICULUM
   useEffect(() => {
     if (studentData.curriculumId !== "") {
-      setIsSelected(true);
       setCurriculumSelectedData(
         curriculumDataArray!.find(({ id }) => id === studentData.curriculumId)
       );
@@ -151,45 +164,160 @@ export function DeleteStudent() {
 
   // GET AVAILABLE STUDENTS WHEN CURRICULUM CHANGE
   useEffect(() => {
-    if (studentData.curriculumId) {
-      setIsSelected(true);
+    if (studentData.studentType !== "") {
+      setStudentsArrayData([]);
       handleAvailableStudentsData();
+      setIsSelected(true);
     }
-  }, [studentData.curriculumId]);
+  }, [studentData.studentType]);
   // -------------------------- END OF CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- STUDENTS SELECT STATES AND FUNCTIONS -------------------------- //
-  const [studentsArrayData, setStudentsArrayData] = useState([]);
+  const [studentsArrayData, setStudentsArrayData] = useState<
+    StudentSearchProps[]
+  >([]);
 
   // GETTING STUDENTS AVAILABLE DATA
   const handleAvailableStudentsData = async () => {
-    // GETTING ENROLLED STUDENTS
-    const q = query(
-      collection(db, "students"),
-      where("curriculum", "array-contains", studentData.curriculumId),
-      orderBy("name")
+    setLoadingData(true);
+    // QUERY FOR EXPERIMENTAL STUDENTS
+    const queryExperimental = query(
+      collectionGroup(db, "studentExperimentalCurriculum"),
+      where("idsArray", "array-contains", studentData.curriculumId)
     );
-    const querySnapshot = await getDocs(q);
-    const promises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    // GETTING EXPERIMENTAL STUDENTS
-    const q2 = query(
-      collection(db, "students"),
-      where("experimentalClass", "array-contains", {id: studentData.curriculumId}),
-      orderBy("name")
+    // QUERY FOR ENROLLED STUDENTS
+    const queryCurriculum = query(
+      collectionGroup(db, "studentCurriculum"),
+      where("idsArray", "array-contains", studentData.curriculumId)
     );
-    const querySnapshotExperimental = await getDocs(q2);
-    querySnapshotExperimental.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    setStudentsArrayData(promises);
+    const handleAllStudentsData = async () => {
+      if (studentData.studentType === "experimental") {
+        // GETTING EXPERIMENTAL STUDENTS
+        const getExperimental = await getDocs(queryExperimental);
+        getExperimental.forEach(async (doc) => {
+          const studentId = doc.ref.parent.parent?.id;
+          if (studentId) {
+            const queryStudent = query(
+              collection(db, "students"),
+              where("id", "==", studentId)
+            );
+            const getStudentFullData = await getDocs(queryStudent);
+            getStudentFullData.forEach((doc: any) => {
+              const dataStudent: StudentSearchProps = doc.data();
+              setStudentsArrayData((studentsArrayData) => [
+                ...studentsArrayData,
+                dataStudent,
+              ]);
+            });
+          }
+        });
+      }
+      if (studentData.studentType === "enrolled") {
+        // GETTING ENROLLED STUDENTS
+        const getCurriculum = await getDocs(queryCurriculum);
+        getCurriculum.forEach(async (doc) => {
+          const studentId = doc.ref.parent.parent?.id;
+          if (studentId) {
+            const queryStudent = query(
+              collection(db, "students"),
+              where("id", "==", studentId)
+            );
+            const getStudentFullData = await getDocs(queryStudent);
+            getStudentFullData.forEach((doc: any) => {
+              const dataStudent: StudentSearchProps = doc.data();
+              setStudentsArrayData((studentsArrayData) => [
+                ...studentsArrayData,
+                dataStudent,
+              ]);
+            });
+          }
+        });
+      }
+    };
+    await handleAllStudentsData();
+    setLoadingData(false);
   };
+
+  // LOADING STATE FOR USING WHEN IS LOADING DATA
+  const [loadingData, setLoadingData] = useState(false);
+
+  // STUDENT SELECTED DATA EXPERIMENTAL CURRICULUM ARRAY DETAILS
+  const [
+    experimentalCurriculumArrayDetails,
+    setExperimentalCurriculumArrayDetails,
+  ] = useState<SubCollectionDetailsProps[]>([]);
+
+  // STUDENT SELECTED DATA CURRICULUM ARRAY DETAILS
+  const [curriculumArrayDetails, setCurriculumArrayDetails] = useState<
+    SubCollectionDetailsProps[]
+  >([]);
+
+  // GET STUDENT CURRICULUM DATA WHEN SELECT STUDENT
+  useEffect(() => {
+    if (studentData.studentId) {
+      const handleAllCurriculumDetails = async () => {
+        // GET EXPERIMENTAL CURRICULUM
+        const queryExperimentalStudent = query(
+          collection(
+            db,
+            `students/${studentData.studentId}/studentExperimentalCurriculum`
+          )
+        );
+        const queryExperimentalStudentSnapshot = await getDocs(
+          queryExperimentalStudent
+        );
+        const experimentalStudentPromises: any = [];
+        queryExperimentalStudentSnapshot.forEach((doc) => {
+          const promise = doc.data();
+          experimentalStudentPromises.push(promise);
+        });
+        Promise.all(experimentalStudentPromises).then(
+          (results: SubCollectionProps[]) => {
+            if (results.length > 0) {
+              const detailsExperimentalStudentData: SubCollectionDetailsProps[] =
+                results[0].detailsArray;
+              detailsExperimentalStudentData.map(
+                (detail: SubCollectionDetailsProps) => {
+                  setExperimentalCurriculumArrayDetails(
+                    (experimentalCurriculumArrayDetails) => [
+                      ...experimentalCurriculumArrayDetails,
+                      detail,
+                    ]
+                  );
+                }
+              );
+            }
+          }
+        );
+        // GET ENROLLED CURRICULUM
+        const queryStudent = query(
+          collection(db, `students/${studentData.studentId}/studentCurriculum`)
+        );
+        const queryStudentSnapshot = await getDocs(queryStudent);
+        const studentPromises: any = [];
+        queryStudentSnapshot.forEach((doc) => {
+          const promise = doc.data();
+          studentPromises.push(promise);
+        });
+        Promise.all(studentPromises).then((results: SubCollectionProps[]) => {
+          if (results.length > 0) {
+            const detailsStudentData: SubCollectionDetailsProps[] =
+              results[0].detailsArray;
+            detailsStudentData.map((detail: SubCollectionDetailsProps) => {
+              setCurriculumArrayDetails((curriculumArrayDetails) => [
+                ...curriculumArrayDetails,
+                detail,
+              ]);
+            });
+          }
+        });
+      };
+      handleAllCurriculumDetails();
+    }
+  }, [studentData.studentId]);
+
   // -------------------------- END OF STUDENTS SELECT STATES AND FUNCTIONS -------------------------- //
-console.log(studentsArrayData)
+
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -203,9 +331,11 @@ console.log(studentsArrayData)
     resolver: zodResolver(deleteStudentValidationSchema),
     defaultValues: {
       studentId: "",
+      studentName: "",
       curriculumId: "",
       schoolId: "",
       schoolClassId: "",
+      studentType: "",
       confirmDelete: false,
     },
   });
@@ -223,11 +353,14 @@ console.log(studentsArrayData)
     ).selectedIndex = 0;
     setStudentData({
       studentId: "",
+      studentName: "",
       curriculumId: "",
       schoolId: "",
       schoolClassId: "",
+      studentType: "",
       confirmDelete: false,
     });
+    setStudentsArrayData([]);
     setIsSelected(false);
     reset();
   };
@@ -235,6 +368,7 @@ console.log(studentsArrayData)
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("studentId", studentData.studentId);
+    setValue("studentName", studentData.studentName);
     setValue("curriculumId", studentData.curriculumId);
     setValue("schoolId", studentData.schoolId);
     setValue("schoolClassId", studentData.schoolClassId);
@@ -283,97 +417,157 @@ console.log(studentsArrayData)
     }
 
     // TEST FOR BROTHERS REGISTERED
-    const studentRef = collection(db, "students");
-    const q = query(
-      studentRef,
-      where("familyAtSchool", "array-contains", data.studentId)
+    const familyQuery = query(
+      collectionGroup(db, "studentFamilyAtSchool"),
+      where("id", "==", data.studentId)
     );
-    const querySnapshot = await getDocs(q);
-    const promises: any = [];
-    querySnapshot.forEach((doc) => {
+    const familySnapshot = await getDocs(familyQuery);
+    const familyPromises: any = [];
+    familySnapshot.forEach((doc) => {
       const promise = doc.data();
-      promises.push(promise);
+      familyPromises.push(promise);
     });
-    Promise.all(promises).then((results) => {
+    Promise.all(familyPromises).then((results: SubCollectionProps[]) => {
       // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
       if (results.length !== 0) {
-        try {
-          // DELETING REGISTER FROM THE BROTHER'S REGISTRATION
-          const deleteStudentBrother = async () => {
-            for (let i = 0; i < results.length; i++) {
-              const studentBrotherRef = doc(db, "students", results[i].id);
-              await updateDoc(studentBrotherRef, {
-                familyAtSchool: arrayRemove(data.studentId),
-              });
-            }
-          };
-          deleteStudentBrother();
-        } catch (error) {
-          console.log("ESSE É O ERROR", error);
-          toast.error(`Ocorreu um erro... 🤯`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
-          setIsSubmitting(false);
-        }
-        // DELETE STUDENT
-        const deleteStudent = async () => {
-          try {
-            await deleteDoc(doc(db, "students", data.studentId));
-            resetForm();
-            toast.success(`Aluno excluído com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
+        const myFamilyData = results[0];
+        myFamilyData.detailsArray.map(
+          async (student: SubCollectionDetailsProps) => {
+            const q = query(
+              collectionGroup(db, "studentFamilyAtSchool"),
+              where("id", "==", student.id)
+            );
+            const querySnapshot = await getDocs(q);
+            const promises: any = [];
+            querySnapshot.forEach((doc) => {
+              const promise = doc.data();
+              promises.push(promise);
             });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
+            Promise.all(promises).then((results: SubCollectionProps[]) => {
+              if (results.length !== 0) {
+                const familyBrotherData = results[0];
+                updateDoc(
+                  doc(
+                    db,
+                    `students/${familyBrotherData.id}/studentFamilyAtSchool/${familyBrotherData.id}`
+                  ),
+                  {
+                    familyAtSchoolIds: arrayRemove(myFamilyData.id),
+                    familyDetails: arrayRemove({
+                      id: myFamilyData.id,
+                      name: myFamilyData.name,
+                    }),
+                  }
+                );
+              }
             });
-            setIsSubmitting(false);
           }
-        };
-        deleteStudent();
-      } else {
-        // DELETE STUDENT
-        const deleteStudent = async () => {
-          try {
-            await deleteDoc(doc(db, "students", data.studentId));
-            resetForm();
-            toast.success(`Aluno excluído com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
-        deleteStudent();
+        );
       }
     });
+
+    // DELETE STUDENT FROM EXPERIMENTAL CLASSES
+    if (experimentalCurriculumArrayDetails) {
+      experimentalCurriculumArrayDetails.map(
+        async (curriculum: SubCollectionDetailsProps) => {
+          const q = query(
+            collectionGroup(db, "curriculumExperimentalStudents"),
+            where("id", "==", curriculum.id)
+          );
+          const querySnapshot = await getDocs(q);
+          const promises: any = [];
+          querySnapshot.forEach((doc) => {
+            const promise = doc.data();
+            promises.push(promise);
+          });
+          Promise.all(promises).then((results: SubCollectionProps[]) => {
+            if (results.length > 0) {
+              const curriculumData = results[0];
+              updateDoc(
+                doc(
+                  db,
+                  `curriculum/${curriculumData.id}/curriculumExperimentalStudents/${curriculumData.id}`
+                ),
+                {
+                  idsArray: arrayRemove(data.studentId),
+                  detailsArray: arrayRemove({
+                    id: data.studentId,
+                    name: data.studentName,
+                    date: curriculum.date,
+                    isExperimental: curriculum.isExperimental,
+                  }),
+                }
+              );
+            }
+          });
+        }
+      );
+    }
+
+    // DELETE STUDENT FROM CURRICULUM
+    if (curriculumArrayDetails) {
+      curriculumArrayDetails.map(
+        async (curriculum: SubCollectionDetailsProps) => {
+          const q = query(
+            collectionGroup(db, "curriculumStudents"),
+            where("id", "==", curriculum.id)
+          );
+          const querySnapshot = await getDocs(q);
+          const promises: any = [];
+          querySnapshot.forEach((doc) => {
+            const promise = doc.data();
+            promises.push(promise);
+          });
+          Promise.all(promises).then((results: SubCollectionProps[]) => {
+            if (results.length > 0) {
+              const curriculumData = results[0];
+              updateDoc(
+                doc(
+                  db,
+                  `curriculum/${curriculumData.id}/curriculumStudents/${curriculumData.id}`
+                ),
+                {
+                  idsArray: arrayRemove(data.studentId),
+                  detailsArray: arrayRemove({
+                    id: data.studentId,
+                    name: data.studentName,
+                    date: curriculum.date,
+                    isExperimental: curriculum.isExperimental,
+                  }),
+                }
+              );
+            }
+          });
+        }
+      );
+    }
+
+    // DELETE STUDENT
+    const deleteStudent = async () => {
+      try {
+        await deleteDoc(doc(db, "students", data.studentId));
+        resetForm();
+        toast.success(`Aluno excluído com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
+    deleteStudent();
   };
 
   return (
@@ -484,6 +678,7 @@ console.log(studentsArrayData)
           <select
             id="curriculumSelect"
             defaultValue={" -- select an option -- "}
+            disabled={studentData.schoolClassId ? false : true}
             className={
               studentData.schoolClassId
                 ? errors.curriculumId
@@ -518,151 +713,223 @@ console.log(studentsArrayData)
           </select>
         </div>
 
-        {/* STUDENT SELECT CARD SECTION */}
-        {isSelected ? (
-          <>
-            {studentsArrayData.length !== 0 ? (
+        {/* STUDENT TYPE SELECT */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="studentType"
+            className={
+              errors.curriculumId
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right"
+            }
+          >
+            Tipo de matrícula:{" "}
+          </label>
+          <select
+            id="studentType"
+            defaultValue={" -- select an option -- "}
+            disabled={studentData.curriculumId ? false : true}
+            className={
+              studentData.curriculumId
+                ? errors.studentType
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+            }
+            name="studentType"
+            onChange={(e) => {
+              if (
+                e.target.value === "enrolled" ||
+                e.target.value === "experimental"
+              ) {
+                setStudentData({
+                  ...studentData,
+                  studentType: e.target.value,
+                  confirmDelete: false,
+                });
+              }
+            }}
+          >
+            {studentData.schoolClassId ? (
               <>
-                {/* STUDENT SELECT CARD SECTION TITLE */}
-                <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
-                  Escolha o aluno a ser excluído:
-                </h1>
-
-                {/* SEPARATOR */}
-                <hr className="pb-4" />
-
-                {/* STUDENT SELECT CARD */}
-                <div className="flex flex-wrap gap-4 justify-center">
-                  {studentsArrayData.map((c: any) => (
-                    <>
-                      <div
-                        className="flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                        key={c.id}
-                      >
-                        <input
-                          type="radio"
-                          id={c.id}
-                          name="age"
-                          value={c.id}
-                          onChange={(e) =>
-                            setStudentData({
-                              ...studentData,
-                              studentId: e.target.value,
-                              confirmDelete: false,
-                            })
-                          }
-                        />
-                        <label htmlFor={c.id} className="flex flex-col gap-4">
-                          <p>
-                            Nome:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {c.name}
-                            </span>
-                          </p>
-                          <p>
-                            E-mail:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {c.email}
-                            </span>
-                          </p>
-                          <p>
-                            Responsável:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {c.responsible}
-                            </span>
-                          </p>
-                          <p>
-                            Responsável Financeiro:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {c.financialResponsible}
-                            </span>
-                          </p>
-                          <p>
-                            Telefone:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {c.phone}
-                            </span>
-                          </p>
-                          {c.phoneSecondary !== " -" ? (
-                            <p>
-                              Telefone 2:{" "}
-                              <span className="text-red-600 dark:text-yellow-500">
-                                {c.phoneSecondary}
-                              </span>
-                            </p>
-                          ) : null}
-                          {c.phoneTertiary !== " -" ? (
-                            <p>
-                              Telefone 3:{" "}
-                              <span className="text-red-600 dark:text-yellow-500">
-                                {c.phoneTertiary}
-                              </span>
-                            </p>
-                          ) : null}
-                        </label>
-                      </div>
-                    </>
-                  ))}
-                </div>
-
-                {/** CHECKBOX CONFIRM DELETE */}
-                <div className="flex justify-center items-center gap-2 mt-6">
-                  <input
-                    type="checkbox"
-                    name="confirmDelete"
-                    className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                    checked={studentData.confirmDelete}
-                    onChange={() => {
-                      setStudentData({
-                        ...studentData,
-                        confirmDelete: !studentData.confirmDelete,
-                      });
-                    }}
-                  />
-                  <label
-                    htmlFor="confirmDelete"
-                    className="text-sm"
-                  >
-                    Confirmar exclusão do Aluno
-                  </label>
-                </div>
+                <option disabled value={" -- select an option -- "}>
+                  {" "}
+                  -- Selecione --{" "}
+                </option>
+                <option value={"enrolled"}>
+                  Incluir apenas alunos matriculados
+                </option>
+                <option value={"experimental"}>
+                  Incluir apenas alunos com aulas experimentais agendadas
+                </option>
               </>
             ) : (
-              <>
-                {/* STUDENT SELECT CARD EMPTY SUBTITLE */}
-                <div className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
-                  Nenhum aluno encontrado.
-                </div>
-              </>
+              <option disabled value={" -- select an option -- "}>
+                {" "}
+                -- Selecione uma Modalidade para ver os tipos de matrícula
+                disponíveis --{" "}
+              </option>
             )}
-            {/* SUBMIT AND RESET BUTTONS */}
-            <div className="flex gap-2 mt-4">
-              {/* SUBMIT BUTTON */}
-              <button
-                type="submit"
-                disabled={studentsArrayData.length === 0 ? true : isSubmitting}
-                className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
-              >
-                {studentsArrayData.length === 0
-                  ? "Nenhum aluno encontrado"
-                  : !isSubmitting
-                  ? "Excluir"
-                  : "Excluindo"}
-              </button>
+          </select>
+        </div>
 
-              {/* RESET BUTTON */}
-              <button
-                type="reset"
-                className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
-                disabled={isSubmitting}
-                onClick={() => {
-                  resetForm();
-                }}
-              >
-                {isSubmitting ? "Aguarde" : "Limpar"}
-              </button>
-            </div>
-          </>
+        {/* STUDENT SELECT CARD SECTION */}
+        {isSelected ? (
+          loadingData ? (
+            <>
+              {/* DATA LOADING */}
+              <SubmitLoading
+                isSubmitting={loadingData}
+                whatsGoingOn="carregando"
+                isNotFullScreen
+              />
+            </>
+          ) : (
+            <>
+              {studentsArrayData.length !== 0 ? (
+                <>
+                  {/* STUDENT SELECT CARD SECTION TITLE */}
+                  <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+                    Escolha o aluno a ser excluído:
+                  </h1>
+
+                  {/* SEPARATOR */}
+                  <hr className="pb-4" />
+
+                  {/* STUDENT SELECT CARD */}
+                  <div className="flex flex-wrap gap-4 justify-center">
+                    {studentsArrayData.map((c: any) => (
+                      <>
+                        <div
+                          className="flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                          key={c.id}
+                        >
+                          <input
+                            type="radio"
+                            id={c.id}
+                            name="age"
+                            value={c.id}
+                            className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                            onChange={(e) =>
+                              setStudentData({
+                                ...studentData,
+                                studentId: e.target.value,
+                                studentName: c.name,
+                                confirmDelete: false,
+                              })
+                            }
+                          />
+                          <label htmlFor={c.id} className="flex flex-col gap-4">
+                            <p>
+                              Nome:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {c.name}
+                              </span>
+                            </p>
+                            <p>
+                              E-mail:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {c.email}
+                              </span>
+                            </p>
+                            <p>
+                              Responsável:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {c.responsible}
+                              </span>
+                            </p>
+                            <p>
+                              Responsável Financeiro:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {c.financialResponsible}
+                              </span>
+                            </p>
+                            <p>
+                              Telefone:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {c.phone}
+                              </span>
+                            </p>
+                            {c.phoneSecondary !== " -" ? (
+                              <p>
+                                Telefone 2:{" "}
+                                <span className="text-red-600 dark:text-yellow-500">
+                                  {c.phoneSecondary}
+                                </span>
+                              </p>
+                            ) : null}
+                            {c.phoneTertiary !== " -" ? (
+                              <p>
+                                Telefone 3:{" "}
+                                <span className="text-red-600 dark:text-yellow-500">
+                                  {c.phoneTertiary}
+                                </span>
+                              </p>
+                            ) : null}
+                          </label>
+                        </div>
+                      </>
+                    ))}
+                  </div>
+
+                  {/** CHECKBOX CONFIRM DELETE */}
+                  <div className="flex justify-center items-center gap-2 mt-6">
+                    <input
+                      type="checkbox"
+                      name="confirmDelete"
+                      className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                      checked={studentData.confirmDelete}
+                      onChange={() => {
+                        setStudentData({
+                          ...studentData,
+                          confirmDelete: !studentData.confirmDelete,
+                        });
+                      }}
+                    />
+                    <label htmlFor="confirmDelete" className="text-sm">
+                      Confirmar exclusão do Aluno
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* STUDENT SELECT CARD EMPTY SUBTITLE */}
+                  <div className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+                    Nenhum aluno encontrado.
+                  </div>
+                </>
+              )}
+              {/* SUBMIT AND RESET BUTTONS */}
+              <div className="flex gap-2 mt-4">
+                {/* SUBMIT BUTTON */}
+                <button
+                  type="submit"
+                  disabled={
+                    studentsArrayData.length === 0 ? true : isSubmitting
+                  }
+                  className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+                >
+                  {studentsArrayData.length === 0
+                    ? "Nenhum aluno encontrado"
+                    : !isSubmitting
+                    ? "Excluir"
+                    : "Excluindo"}
+                </button>
+
+                {/* RESET BUTTON */}
+                <button
+                  type="reset"
+                  className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    resetForm();
+                  }}
+                >
+                  {isSubmitting ? "Aguarde" : "Limpar"}
+                </button>
+              </div>
+            </>
+          )
         ) : null}
       </form>
     </div>

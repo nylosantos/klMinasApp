@@ -437,10 +437,11 @@ export function InsertStudent() {
   // -------------------------- END OF SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- EXPERIMENTAL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // EXPERMIENTAL CLASS STATE
+  // CURRICULUM / EXPERMIENTAL CLASS STATE
   const [newClass, setNewClass] = useState({
     type: "" || "experimental" || "enrolled",
     date: "",
+    name: "",
   });
 
   const [experimentalClassError, setExperimentalClassError] = useState(false);
@@ -667,8 +668,16 @@ export function InsertStudent() {
 
   // RESET CONFIRM INSERT WHEN CURRICULUM AVAILABLE
   useEffect(() => {
+    if (studentData.curriculum === "") {
+      setNewClass({
+        type: "",
+        date: "",
+        name: "",
+      });
+    }
     if (studentData.curriculum !== "") {
       setNewClass({
+        ...newClass,
         type: "",
         date: "",
       });
@@ -853,8 +862,12 @@ export function InsertStudent() {
     setNewClass({
       type: "",
       date: "",
+      name: "",
     });
+    setActivePhoneSecondary(false);
+    setActivePhoneTertiary(false);
     setExperimentalClassError(false);
+    setEditAddress(false);
     (
       document.getElementById("phoneDDD") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -873,6 +886,13 @@ export function InsertStudent() {
     (
       document.getElementById("schoolCourseSelect") as HTMLSelectElement
     ).selectedIndex = 0;
+    (
+      document.getElementById("familySchoolSelectQuestion") as HTMLSelectElement
+    ).selectedIndex = 0;
+    const birthDateInput = document.getElementById(
+      "birthDate"
+    ) as HTMLInputElement;
+    birthDateInput.value = "";
     reset();
   };
 
@@ -990,87 +1010,112 @@ export function InsertStudent() {
         if (newClass.type === "experimental") {
           // ADD STUDENT TO CURRICULUM TABLE ON EXPERIMENTAL STUDENTS FIELD
           await setDoc(
-            curriculumRef,
+            doc(
+              db,
+              `curriculum/${data.curriculum}/curriculumExperimentalStudents/${data.curriculum}`
+            ),
             {
-              experimentalStudentsIds: arrayUnion(newStudentId),
-              experimentalStudentsDetails: {
-                [newStudentId]: {
-                  name: data.name,
-                  date: Timestamp.fromDate(new Date(newClass.date)),
-                },
-              },
+              idsArray: arrayUnion(newStudentId),
+              detailsArray: arrayUnion({
+                id: newStudentId,
+                name: data.name,
+                date: Timestamp.fromDate(new Date(newClass.date)),
+                isExperimental: true,
+              }),
+              id: data.curriculum,
+              name: newClass.name,
             },
             { merge: true }
           );
-          // ADD CURRICULUM INSIDE STUDENT TABLE ON EXPERIMENTAL CURRICULUM FIELD
           await setDoc(
-            newStudentRef,
+            doc(
+              db,
+              `students/${newStudentId}/studentExperimentalCurriculum/${newStudentId}`
+            ),
             {
-              experimentalCurriculumIds: arrayUnion(data.curriculum),
-              experimentalCurriculumDetails: {
-                [data.curriculum]: {
-                  name: curriculumSelectedData?.name,
-                  date: Timestamp.fromDate(new Date(newClass.date)),
-                },
-              },
+              idsArray: arrayUnion(data.curriculum),
+              detailsArray: arrayUnion({
+                id: data.curriculum,
+                name: newClass.name,
+                date: Timestamp.fromDate(new Date(newClass.date)),
+                isExperimental: true,
+              }),
+              id: newStudentId,
+              name: data.name,
             },
             { merge: true }
           );
         } else {
-          // ADD STUDENT TO CURRICULUM TABLE ON STUDENTS FIELD
           await setDoc(
-            curriculumRef,
+            doc(
+              db,
+              `curriculum/${data.curriculum}/curriculumStudents/${data.curriculum}`
+            ),
             {
-              studentsIds: arrayUnion(newStudentId),
-              studentsDetails: {
-                [newStudentId]: {
-                  name: data.name,
-                  date: Timestamp.fromDate(new Date(newClass.date)),
-                },
-              },
+              idsArray: arrayUnion(newStudentId),
+              detailsArray: arrayUnion({
+                id: newStudentId,
+                name: data.name,
+                date: Timestamp.fromDate(new Date(newClass.date)),
+                isExperimental: false,
+              }),
+              id: data.curriculum,
+              name: newClass.name,
             },
             { merge: true }
           );
           // ADD CURRICULUM TO STUDENT TABLE ON CURRICULUM FIELD
           await setDoc(
-            newStudentRef,
+            doc(
+              db,
+              `students/${newStudentId}/studentCurriculum/${newStudentId}`
+            ),
             {
-              curriculumIds: arrayUnion(data.curriculum),
-              curriculumDetails: {
-                [data.curriculum]: {
-                  name: curriculumSelectedData?.name,
-                  date: Timestamp.fromDate(new Date(newClass.date)),
-                },
-              },
+              idsArray: arrayUnion(data.curriculum),
+              detailsArray: arrayUnion({
+                id: data.curriculum,
+                name: newClass.name,
+                date: Timestamp.fromDate(new Date(newClass.date)),
+                isExperimental: false,
+              }),
+              id: newStudentId,
+              name: data.name,
             },
             { merge: true }
           );
         }
         if (data.familyAtSchool) {
-          const familyRef = doc(db, "students", data.familyAtSchoolId!);
           // CREATE STUDENT FAMILY'S INSIDE STUDENT TABLE
           await setDoc(
-            newStudentRef,
+            doc(
+              db,
+              `students/${newStudentId}/studentFamilyAtSchool/${newStudentId}`
+            ),
             {
-              familyAtSchoolIds: arrayUnion(data.familyAtSchoolId!),
-              familyAtSchoolDetails: {
-                [data.familyAtSchoolId!]: {
-                  name: familyStudentSelectedData?.name,
-                },
-              },
+              idsArray: arrayUnion(data.familyAtSchoolId!),
+              detailsArray: arrayUnion({
+                id: data.familyAtSchoolId!,
+                name: familyStudentSelectedData?.name,
+              }),
+              id: newStudentId,
+              name: data.name,
             },
             { merge: true }
           );
           // CREATE STUDENT INSIDE FAMILY TABLE COLLECTION
           await setDoc(
-            familyRef,
+            doc(
+              db,
+              `students/${data.familyAtSchoolId!}/studentFamilyAtSchool/${data.familyAtSchoolId!}`
+            ),
             {
-              familyAtSchoolIds: arrayUnion(newStudentId),
-              familyAtSchoolDetails: {
-                [newStudentId]: {
-                  name: data.name,
-                },
-              },
+              idsArray: arrayUnion(newStudentId),
+              detailsArray: arrayUnion({
+                id: newStudentId,
+                name: data.name,
+              }),
+              id: data.familyAtSchoolId!,
+              name: familyStudentSelectedData?.name,
             },
             { merge: true }
           );
@@ -1356,6 +1401,7 @@ export function InsertStudent() {
           <div className="flex w-3/4">
             <DatePicker
               name="birthDate"
+              id="birthDate"
               months={months}
               weekDays={weekDays}
               placeholder={
@@ -1364,6 +1410,8 @@ export function InsertStudent() {
                   : "Selecione uma Data"
               }
               currentDate={new DateObject().subtract(3, "years")}
+              containerClassName="w-full"
+              style={{ width: "100%" }}
               inputClass={
                 errors.birthDate
                   ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -2223,6 +2271,10 @@ export function InsertStudent() {
                             ...studentData,
                             curriculum: e.target.value,
                           });
+                          setNewClass({
+                            ...newClass,
+                            name: c.name,
+                          });
                         }}
                       />
                       <label
@@ -2287,6 +2339,7 @@ export function InsertStudent() {
                       name="experimentalClassSelectQuestion"
                       onChange={(e) => {
                         setNewClass({
+                          ...newClass,
                           type: e.target.value,
                           date: "",
                         });
@@ -2617,7 +2670,7 @@ export function InsertStudent() {
                 {familyStudentData.curriculumId ? (
                   <SelectOptions
                     returnId
-                    dataType="students"
+                    dataType="allStudents"
                     schoolId={familyStudentData.schoolId}
                     schoolClassId={familyStudentData.schoolClassId}
                     curriculumId={familyStudentData.curriculumId}

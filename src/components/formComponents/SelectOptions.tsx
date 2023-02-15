@@ -10,7 +10,11 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 
-import { SchoolClassSearchProps, SelectProps, StudentSearchProps } from "../../@types";
+import {
+  SchoolClassSearchProps,
+  SelectProps,
+  StudentSearchProps,
+} from "../../@types";
 import { app } from "../../db/Firebase";
 
 // INITIALIZING FIRESTORE DB
@@ -26,12 +30,16 @@ export function SelectOptions({
   teacherId,
   curriculumId,
   studentId,
+  familyIds = [],
+  curriculumIds = [],
+  experimentalCurriculumIds = [],
   returnId = false,
   displaySchoolCourseAndSchedule = false,
   displayAdmins = false,
   onlyAvailableClasses = false,
   availableAndWaitingClasses = false,
   onlyEnrolledStudents = false,
+  dontShowMyself = false,
   handleData,
 }: SelectProps) {
   // DATA STATE
@@ -39,98 +47,142 @@ export function SelectOptions({
 
   // GET DATA
   const handleOptionData = async () => {
-    if (dataType === "students") {
+    if (dataType === "allStudents") {
+      const queryExperimental = query(
+        collectionGroup(db, "studentExperimentalCurriculum"),
+        where("idsArray", "array-contains", curriculumId)
+      );
+      const promises: any = [];
+      const getExperimental = await getDocs(queryExperimental);
+      getExperimental.forEach((doc) => {
+        const promise = doc.data();
+        promises.push(promise);
+      });
+      const queryCurriculum = query(
+        collectionGroup(db, "studentCurriculum"),
+        where("idsArray", "array-contains", curriculumId)
+      );
+      const getCurriculum = await getDocs(queryCurriculum);
+      getCurriculum.forEach((doc) => {
+        const promise = doc.data();
+        promises.push(promise);
+      });
+      Promise.all(promises).then((result) => {
+        return setData(result);
+      });
+      // QUERY TO SEARCH ALL STUDENTS EXCLUDING THE SELECTED STUDENT ITSELF
+    } else if (schoolId && schoolClassId && curriculumId && studentId) {
+      const queryCurriculum = query(
+        collection(db, dataType),
+        where("id", "!=", studentId),
+        where("curriculumIds", "array-contains", curriculumId),
+        orderBy("id")
+      );
+      const queryExperimentalCurriculum = query(
+        collection(db, dataType),
+        where("id", "!=", studentId),
+        where("experimentalCurriculumIds", "array-contains", curriculumId),
+        orderBy("id")
+      );
+      const promises: any = [];
+      const getCurriculum = await getDocs(queryCurriculum);
+      getCurriculum.forEach((doc) => {
+        const promise = doc.data();
+        promises.push(promise);
+      });
+      const getExperimentalCurriculum = await getDocs(
+        queryExperimentalCurriculum
+      );
+      getExperimentalCurriculum.forEach((doc) => {
+        const promise = doc.data();
+        promises.push(promise);
+      });
+      Promise.all(promises).then((result) => {
+        return setData(result);
+      });
+      // QUERY TO SEARCH ALL STUDENTS OF SELECTED CURRICULUM (INCLUDING EXPERIMENTAL STUDENTS)
+    } else if (dataType === "students") {
       if (
+        // QUERY TO SEARCH ENROLLED STUDENTS EXCLUDING THE SELECTED STUDENT ITSELF
         schoolId &&
         schoolClassId &&
         curriculumId &&
         studentId &&
         onlyEnrolledStudents
       ) {
-        const q = query(
-          collection(db, dataType, "curriculum", curriculumId),
+        const queryCurriculum = query(
+          collection(db, dataType),
           where("id", "!=", studentId),
-          orderBy("id")
-        );
-        const promises: StudentSearchProps[] = [];
-        const unsubscribe = onSnapshot(q, (querySnapShot) => {
-          querySnapShot.forEach((doc) => {
-            const promise: any = doc.data();
-            promises.push(promise);
-          });
-        });
-        setData(promises);
-      }
-      if (schoolId && schoolClassId && curriculumId && studentId) {
-        const q1 = query(
-          collection(db, dataType, "curriculum", curriculumId),
-          orderBy("id")
-        );
-        const q2 = query(
-          collection(db, dataType, "experimentalCurriculum", curriculumId),
+          where("curriculumIds", "array-contains", curriculumId),
           orderBy("id")
         );
         const promises: any = [];
-        const unsubscribeQuery1 = onSnapshot(q1, (querySnapShot) => {
-          querySnapShot.forEach((doc) => {
-            const promise = doc.data();
-            promises.push(promise);
-          });
-        });
-        const unsubscribeQuery2 = onSnapshot(q2, (querySnapShot) => {
-          querySnapShot.forEach((doc) => {
-            const promise = doc.data();
-            promises.push(promise);
-          });
-        });
-        setData(promises);
-      }
-      if (schoolId && schoolClassId && curriculumId) {
-          const q1 = query(
-          collection(db, "students"),
-          where("experimentalCurriculumIds", "array-contains", curriculumId)
-        );
-        const q2 = query(
-          collection(db, "students"),
-          where("curriculumIds", "array-contains", curriculumId)
-        );
-        const promises: any = [];
-        const queryExperimentalCurriculum = await getDocs(q1);
-        queryExperimentalCurriculum.forEach((doc) => {
+        const getCurriculum = await getDocs(queryCurriculum);
+        getCurriculum.forEach((doc) => {
           const promise = doc.data();
           promises.push(promise);
-          // console.log("Promise: ", promise)
-        });
-        const queryCurriculum = await getDocs(q2);
-        queryCurriculum.forEach((doc) => {
-          const promise = doc.data();
-          promises.push(promise);
-          // console.log("Promise: ", promise)
         });
         Promise.all(promises).then((result) => {
           return setData(result);
         });
-        // const q2 = query(
-        //   collectionGroup(db, "experimentalCurriculum"),
-        //   where("id", "==", curriculumId),
-        // );
-        // const unsubscribeQuery1 = onSnapshot(q1, (querySnapShot) => {
-        //   const promises: any = [];
-        //   querySnapShot.forEach((doc) => {
-        //     const promise = doc.data();
-        //     console.log("Olha aí: ", promise)
-        //     promises.push(promise);
-        //   });
-        //   setData(promises);
-        // });
-        // const unsubscribeQuery2 = onSnapshot(q2, (querySnapShot) => {
-        //   querySnapShot.forEach((doc) => {
-        //     const promise = doc.data();
-        //     promises.push(promise);
-        //   });
-        // });
-      }
-      if (schoolId && schoolClassId) {
+        // QUERY TO SEARCH ALL STUDENTS EXCLUDING THE SELECTED STUDENT ITSELF
+      } else if (schoolId && schoolClassId && curriculumId && studentId) {
+        const queryCurriculum = query(
+          collection(db, dataType),
+          where("id", "!=", studentId),
+          where("curriculumIds", "array-contains", curriculumId),
+          orderBy("id")
+        );
+        const queryExperimentalCurriculum = query(
+          collection(db, dataType),
+          where("id", "!=", studentId),
+          where("experimentalCurriculumIds", "array-contains", curriculumId),
+          orderBy("id")
+        );
+        const promises: any = [];
+        const getCurriculum = await getDocs(queryCurriculum);
+        getCurriculum.forEach((doc) => {
+          const promise = doc.data();
+          promises.push(promise);
+        });
+        const getExperimentalCurriculum = await getDocs(
+          queryExperimentalCurriculum
+        );
+        getExperimentalCurriculum.forEach((doc) => {
+          const promise = doc.data();
+          promises.push(promise);
+        });
+        Promise.all(promises).then((result) => {
+          return setData(result);
+        });
+        // QUERY TO SEARCH ALL STUDENTS OF SELECTED CURRICULUM (INCLUDING EXPERIMENTAL STUDENTS)
+      } else if (schoolId && schoolClassId && curriculumId) {
+        const queryCurriculum = query(
+          collection(db, dataType),
+          where("experimentalCurriculumIds", "array-contains", curriculumId)
+        );
+        const queryExperimentalCurriculum = query(
+          collection(db, dataType),
+          where("curriculumIds", "array-contains", curriculumId)
+        );
+        const promises: any = [];
+        const getCurriculum = await getDocs(queryCurriculum);
+        getCurriculum.forEach((doc) => {
+          const promise = doc.data();
+          promises.push(promise);
+        });
+        const getExperimentalCurriculum = await getDocs(
+          queryExperimentalCurriculum
+        );
+        getExperimentalCurriculum.forEach((doc) => {
+          const promise = doc.data();
+          promises.push(promise);
+        });
+        Promise.all(promises).then((result) => {
+          return setData(result);
+        });
+        // QUERY TO SEARCH STUDENTS OF SELECTED SCHOOL AND SCHOOL CLASS
+      } else if (schoolId && schoolClassId) {
         const q = query(
           collection(db, dataType),
           where("schoolId", "==", schoolId),
@@ -146,14 +198,6 @@ export function SelectOptions({
         });
         setData(promises);
       }
-      // const unsubscribe = onSnapshot(q, (querySnapShot) => {
-      //   const promises: any = [];
-      //   querySnapShot.forEach((doc) => {
-      //     const promise = doc.data();
-      //     promises.push(promise);
-      //   });
-      //   setData(promises);
-      // });
     } else {
       const q =
         dataType === "appUsers" && displayAdmins
@@ -234,33 +278,63 @@ export function SelectOptions({
         {" "}
         -- Selecione --{" "}
       </option>
-      {data.map((option: any) => (
-        <>
-          <option
-            key={option.id}
-            value={returnId ? option.id : option.name}
-            className={
-              dataType === "schoolClasses"
-                ? option.available === "open"
-                  ? "bg-green-600"
-                  : option.available === "closed"
-                  ? "bg-red-600"
-                  : "bg-teal-600"
-                : ""
-            }
-          >
-            {displaySchoolCourseAndSchedule
-              ? `${option.schoolCourse} | ${option.schedule}`
-              : dataType === "schoolClasses"
-              ? option.available === "open"
-                ? option.name + " (Turma Aberta)"
-                : option.available === "closed"
-                ? option.name + " (Turma Fechada)"
-                : option.name + " (Lista de Espera)"
-              : option.name}
-          </option>
-        </>
-      ))}
+      {dontShowMyself && studentId
+        ? data.map((option: any) => (
+            <>
+              {option.id !== studentId ? (
+                <option
+                  key={option.id}
+                  value={returnId ? option.id : option.name}
+                  className={
+                    dataType === "schoolClasses"
+                      ? option.available === "open"
+                        ? "bg-green-600"
+                        : option.available === "closed"
+                        ? "bg-red-600"
+                        : "bg-teal-600"
+                      : ""
+                  }
+                >
+                  {displaySchoolCourseAndSchedule
+                    ? `${option.schoolCourse} | ${option.schedule}`
+                    : dataType === "schoolClasses"
+                    ? option.available === "open"
+                      ? option.name + " (Turma Aberta)"
+                      : option.available === "closed"
+                      ? option.name + " (Turma Fechada)"
+                      : option.name + " (Lista de Espera)"
+                    : option.name}
+                </option>
+              ) : null}
+            </>
+          ))
+        : data.map((option: any) => (
+            <>
+              <option
+                key={option.id}
+                value={returnId ? option.id : option.name}
+                className={
+                  dataType === "schoolClasses"
+                    ? option.available === "open"
+                      ? "bg-green-600"
+                      : option.available === "closed"
+                      ? "bg-red-600"
+                      : "bg-teal-600"
+                    : ""
+                }
+              >
+                {displaySchoolCourseAndSchedule
+                  ? `${option.schoolCourse} | ${option.schedule}`
+                  : dataType === "schoolClasses"
+                  ? option.available === "open"
+                    ? option.name + " (Turma Aberta)"
+                    : option.available === "closed"
+                    ? option.name + " (Turma Fechada)"
+                    : option.name + " (Lista de Espera)"
+                  : option.name}
+              </option>
+            </>
+          ))}
     </>
   );
 }

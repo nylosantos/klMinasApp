@@ -1,0 +1,402 @@
+import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ToastContainer, toast } from "react-toastify";
+import { SubmitHandler, useForm } from "react-hook-form";
+import {
+  getFirestore,
+  collection,
+  doc,
+  FirestoreDataConverter,
+  WithFieldValue,
+  DocumentData,
+  QueryDocumentSnapshot,
+  SnapshotOptions,
+  query,
+  onSnapshot,
+  where,
+  getDocs,
+  collectionGroup,
+  arrayRemove,
+  updateDoc,
+} from "firebase/firestore";
+import {
+  useCollection,
+  useDocument,
+  useDocumentOnce,
+} from "react-firebase-hooks/firestore";
+
+import { app } from "../../db/Firebase";
+import {
+  CurriculumSearchProps,
+  SubCollectionDetailsProps,
+  SubCollectionProps,
+  TesteBancoValidationZProps,
+} from "../../@types";
+import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import { testeBancoValidationSchema } from "../../@types/zodValidation";
+
+// INITIALIZING FIRESTORE DB
+const db = getFirestore(app);
+
+export function TestesBanco() {
+  // SEED DATA
+  const [seedData, setSeedData] = useState<TesteBancoValidationZProps>({
+    confirmInsert: false,
+  });
+
+  // SUBMITTING STATE
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // REACT HOOK FORM SETTINGS
+  const {
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<TesteBancoValidationZProps>({
+    resolver: zodResolver(testeBancoValidationSchema),
+    defaultValues: {
+      confirmInsert: false,
+    },
+  });
+
+  // SET REACT HOOK FORM VALUES
+  useEffect(() => {
+    setValue("confirmInsert", seedData.confirmInsert);
+  }, [seedData]);
+
+  // SET REACT HOOK FORM ERRORS
+  useEffect(() => {
+    const fullErrors = [errors.confirmInsert];
+    fullErrors.map((fieldError) => {
+      toast.error(fieldError?.message, {
+        theme: "colored",
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        autoClose: 3000,
+      });
+    });
+  }, [errors]);
+
+  // SUBMIT SEED DATA FUNCTION
+  const handleAddSeed: SubmitHandler<TesteBancoValidationZProps> = async (
+    data
+  ) => {
+    setIsSubmitting(true);
+    const oldCurriculumArray: DetailsProps[] = [
+      {
+        date: "Timestamp(seconds=1674415946, nanoseconds=419000000)",
+        id: "3683d2cb-3cf3-4f5f-b15b-0242861d5fa7",
+        name: "Colégio Bernoulli | Xadrez | Horário Bernoulli - 3º ao 5º Ano Vespertino | Sexta-feira | Professor: Natália Peruzzo Costa",
+      },
+      {
+        date: "Timestamp(seconds=1674415946, nanoseconds=419000000)",
+        id: "aa79ba81-9a48-4b7c-83dc-7857f613db92",
+        name: "Colégio Bernoulli | Futsal | Horário Bernoulli - 1º e 2º Ano Vespertino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      },
+      {
+        date: "Timestamp(seconds=1674415946, nanoseconds=419000000)",
+        id: "c2876b59-2368-4b20-8742-969921c2894e",
+        name: "Colégio Bernoulli | Futsal | Horário Bernoulli - 1º e 2º Período Vespertino | Segunda e Quarta-feira | Professor: Natália Peruzzo Costa",
+      },
+    ];
+    const idExampleArray = [
+      // "aa79ba81-9a48-4b7c-83dc-7857f613db92",
+      // "3683d2cb-3cf3-4f5f-b15b-0242861d5fa7",
+      "c2876b59-2368-4b20-8742-969921c2894e",
+    ];
+
+    // PEGANDO ID E RETIRANDO DETAILS QUE RECEBI DO STUDENT
+    // const deleteCurriculumDetails = () => {
+    //   idExampleArray.map((id) => {
+    //     oldCurriculumArray.splice(
+    //       oldCurriculumArray.findIndex((curriculum) => curriculum.id === id),
+    //       1
+    //     );
+    //   });
+    // };
+    // deleteCurriculumDetails();
+    // console.log("Array Modificado:", oldCurriculumArray);
+
+    // PEGANDO DADOS DO CURRICULUM E JOGANDO NUM ARRAY QUE SERIA O CURRICULUM DETAILS DO STUDENT
+    // const handleOptionData = async () => {
+    //   const q = query(collection(db, "curriculum"));
+    //   const promises: any = [];
+    //   const getCurriculum = await getDocs(q);
+    //   getCurriculum.forEach((doc) => {
+    //     const promise = doc.data();
+    //     promises.push(promise);
+    //   });
+    //   Promise.all(promises).then((result: CurriculumSearchProps[]) => {
+    //     if (result.length > 0) {
+    //       result.map((curriculum: CurriculumSearchProps) => {
+    //         idExampleArray.forEach((id: string) => {
+    //           if (id === curriculum.id) {
+    //             newCurriculumDetailsArray.push({
+    //               id: curriculum.id,
+    //               name: curriculum.name,
+    //               date: curriculum.timestamp.toString(),
+    //             });
+    //           }
+    //         });
+    //       });
+    //     }
+    //   });
+    // };
+    // handleOptionData();
+    // console.log("Novo Array:", newCurriculumDetailsArray);
+
+    // PEGANDO CURRICULUM IDS E CURRICULUM DETAILS DO STUDENT
+    // const handleOptionData = async () => {
+    //   const q = query(
+    //     collection(
+    //       db,
+    //       "/students/87a99809-294e-442a-a59c-bd38b07e8020/curriculum"
+    //     )
+    //   );
+    //   const promises: any = [];
+    //   const getCurriculum = await getDocs(q);
+    //   getCurriculum.forEach((doc) => {
+    //     const promise = doc.data();
+    //     promises.push(promise);
+    //   });
+    //   Promise.all(promises).then((result: CurriculumCollectionProps[]) => {
+    //     if (result.length > 0) {
+    //       const detailsData = result[0];
+    //       console.log("Array do Banco:", detailsData.curriculumDetails);
+    //       setArrayBanco(detailsData);
+    //     }
+    //   });
+    //   const q1 = query(collection(db, "curriculum"));
+    //   const promisesCurriculum: any = [];
+    //   const getCurriculumAll = await getDocs(q1);
+    //   getCurriculumAll.forEach((doc) => {
+    //     const promiseCurriculum = doc.data();
+    //     promisesCurriculum.push(promiseCurriculum);
+    //   });
+    //   Promise.all(promisesCurriculum).then(
+    //     (result: CurriculumSearchProps[]) => {
+    //       if (result.length > 0) {
+    //         result.map((curriculum: CurriculumSearchProps) => {
+    //           if (arrayBanco !== undefined) {
+    //             arrayBanco.curriculumIds.forEach((id: string) => {
+    //               if (id === curriculum.id) {
+    //                 newCurriculumDetailsArray.push({
+    //                   id: curriculum.id,
+    //                   name: curriculum.name,
+    //                   date: curriculum.timestamp.toString(),
+    //                 });
+    //               }
+    //             });
+    //           }
+    //         });
+    //       }
+    //       console.log("Novo Array:", newCurriculumDetailsArray);
+    //     }
+    //   );
+    // };
+    // handleOptionData();
+    // setIsSubmitting(false);
+
+    // const handleOptionData = async () => {
+    //   const queryCurriculum = query(
+    //     collectionGroup(db, "studentExperimentalCurriculum"),
+    //     where("experimentalCurriculumIds", "array-contains", "e5bad4ab-b1e8-4e5b-94da-25f516e61ccc"),
+    //   );
+    //   const promises: any = [];
+    //   const getCurriculum = await getDocs(queryCurriculum);
+    //   getCurriculum.forEach((doc) => {
+    //     const promise = doc.data();
+    //     promises.push(promise);
+    //   });
+    //   Promise.all(promises).then((result: CurriculumCollectionProps[]) => {
+    //     if (result.length > 0) {
+    //       const detailsData = result;
+    //       console.log("Array do Banco:", detailsData);
+    //     }
+    //   });
+    // };
+    // handleOptionData();
+    // setIsSubmitting(false);
+
+    // const handleOptionData = async () => {
+    //   const queryExperimental = query(
+    //     collectionGroup(db, "studentExperimentalCurriculum"),
+    //     where(
+    //       "experimentalCurriculumIds",
+    //       "array-contains",
+    //       "c2876b59-2368-4b20-8742-969921c2894e"
+    //     )
+    //   );
+    //   const promises: any = [];
+    //   const getData = await getDocs(queryExperimental);
+    //   getData.forEach(async (doc) => {
+    //     // console.log(doc.ref.parent.parent?.id);
+    //     const studentId = doc.ref.parent.parent?.id;
+    //     // console.log("StudentId:", studentId)
+    //     if (studentId) {
+    //       const queryStudent = query(
+    //         collection(db, "students"),
+    //         where("id", "==", studentId)
+    //       );
+    //       const getStudentFullData = await getDocs(queryStudent);
+    //       getStudentFullData.forEach((doc : any) => {
+    //         const dataStudent = doc.data()
+    //         setUserData(userData => [...userData, dataStudent]);
+    //         // console.log("Dentro:", doc.data())
+    //       });
+    //     }
+    //     // const promise = doc.data();
+    //     // promises.push(promise);
+    //   });
+    //   // Promise.all(promises).then((result: CurriculumCollectionProps[]) => {
+    //   //   if (result.length > 0) {
+    //   //     const detailsData = result;
+    //   //     console.log("Array do Banco:", detailsData);
+    //   //   }
+    //   // });
+    // };
+    // handleOptionData();
+    // setIsSubmitting(false);
+
+    // const handleOptionData = async () => {
+    //   const q = query(
+    //     collectionGroup(db, "studentFamilyAtSchool"),
+    //     where("id", "==", "f197c92b-a40a-4b99-9070-984c5368ee20")
+    //   );
+    //   const querySnapshot = await getDocs(q);
+    //   const promises: any = [];
+    //   querySnapshot.forEach((doc) => {
+    //     const promise = doc.data();
+    //     promises.push(promise);
+    //   });
+    //   Promise.all(promises).then((results: FamilyCollectionProps[]) => {
+    //     // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
+    //     if (results.length !== 0) {
+    //       const myFamilyData = results[0];
+    //       myFamilyData.familyDetails.map(async (student: StudentDetailsProps) => {
+    //         const q = query(
+    //           collectionGroup(db, "studentFamilyAtSchool"),
+    //           where("id", "==", student.id)
+    //         );
+    //         const querySnapshot = await getDocs(q);
+    //         const promises: any = [];
+    //         querySnapshot.forEach((doc) => {
+    //           const promise = doc.data();
+    //           promises.push(promise);
+    //         });
+    //         Promise.all(promises).then((results: FamilyCollectionProps[]) => {
+    //           if (results.length !== 0) {
+    //             const familyBrotherData = results[0];
+    //             updateDoc(
+    //               doc(
+    //                 db,
+    //                 `students/${familyBrotherData.id}/studentFamilyAtSchool/${familyBrotherData.id}`
+    //               ),
+    //               {
+    //                 familyAtSchoolIds: arrayRemove(
+    //                   myFamilyData.id
+    //                 ),
+    //                 familyDetails: arrayRemove({
+    //                   id: myFamilyData.id,
+    //                   name: myFamilyData.name,
+    //                 }), //Aluno Experimental Classe Ben
+    //               }
+    //             );
+    //           }
+    //         });
+    //       });
+    //     }
+    //   });
+    // };
+    // handleOptionData();
+    // setIsSubmitting(false);
+
+    const queryStudent = query(
+      collection(
+        db,
+        "students/053e245c-25b5-495c-b7bc-202df0be68d2/studentExperimentalCurriculum"
+      )
+    );
+    const querySnapshot = await getDocs(queryStudent);
+    const studentPromises: any = [];
+    querySnapshot.forEach((doc) => {
+      const promise = doc.data();
+      studentPromises.push(promise);
+    });
+    Promise.all(studentPromises).then((results: SubCollectionProps[]) => {
+      const subCollectionStudentData = results[0];
+      subCollectionStudentData.idsArray.map(async (id) => {
+        const queryCurriculum = query(
+          collection(db, `curriculum/${id}/curriculumExperimentalStudents`)
+        );
+        const querySnapshot = await getDocs(queryCurriculum);
+        const curriculumPromises: any = [];
+        querySnapshot.forEach((doc) => {
+          const promise = doc.data();
+          curriculumPromises.push(promise);
+        });
+        Promise.all(curriculumPromises).then((results: SubCollectionProps[]) => {
+          const subCollectionCurriculumData = results[0];
+          subCollectionCurriculumData.detailsArray.map((detail: SubCollectionDetailsProps) => {
+            if(detail.id === "053e245c-25b5-495c-b7bc-202df0be68d2"){
+              console.log(detail.isExperimental)
+            }
+          })
+        })
+      });
+    });
+    setIsSubmitting(false);
+  };
+  const [userData, setUserData] = useState([]);
+
+  useEffect(() => {
+    console.log("User Data:", userData);
+  }, [userData]);
+
+  interface DetailsProps {
+    date: string;
+    id: string;
+    name: string;
+  }
+
+  interface CurriculumCollectionProps {
+    curriculumIds: Array<string>;
+    curriculumDetails: Array<DetailsProps>;
+  }
+  const [arrayBanco, setArrayBanco] = useState<CurriculumCollectionProps>();
+
+  const newCurriculumDetailsArray: DetailsProps[] = [];
+
+  return (
+    <div className="flex flex-col container text-center">
+      {/** SUBMIT LOADING */}
+      <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando seed" />
+
+      {/** TOAST CONTAINER */}
+      <ToastContainer limit={5} />
+
+      {/** PAGE TITLE */}
+      <h1 className="font-bold text-2xl my-4">Testar</h1>
+
+      {/** FORM */}
+      <form
+        onSubmit={handleSubmit(handleAddSeed)}
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
+      >
+        {/* SUBMIT AND RESET BUTTONS */}
+        <div className="flex gap-2 mt-4">
+          {/* SUBMIT BUTTON */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-full"
+          >
+            {!isSubmitting ? "Testar" : "Testando"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

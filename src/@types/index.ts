@@ -32,6 +32,7 @@ import {
   loginEmailAndPasswordValidationSchema,
   searchCurriculumValidationSchema,
   signUpEmailAndPasswordValidationSchema,
+  testeBancoValidationSchema,
 } from "./zodValidation";
 
 // LOGIN VALIDATIONS
@@ -92,6 +93,9 @@ export type CreateCurriculumValidationZProps = z.infer<
 >;
 export type CreateSeedValidationZProps = z.infer<
   typeof createSeedValidationSchema
+>;
+export type TesteBancoValidationZProps = z.infer<
+  typeof testeBancoValidationSchema
 >;
 
 // DELETE VALIDATIONS SCHOOLS
@@ -177,6 +181,10 @@ export interface SelectProps {
     | "teachers"
     | "curriculum"
     | "students"
+    | "allStudents"
+    | "enrolledStudents"
+    | "allCurriculum"
+    | "enrolledCurriculum"
     | "appUsers";
   schoolId?: string;
   schoolClassId?: string;
@@ -186,12 +194,16 @@ export interface SelectProps {
   teacherId?: string;
   curriculumId?: string;
   studentId?: string;
+  familyIds?: Array<string>;
+  curriculumIds?: Array<string>;
+  experimentalCurriculumIds?: Array<string>;
   returnId?: boolean;
   displaySchoolCourseAndSchedule?: boolean;
   displayAdmins?: boolean;
   onlyAvailableClasses?: boolean;
   availableAndWaitingClasses?: boolean;
   onlyEnrolledStudents?: boolean;
+  dontShowMyself?: boolean;
   handleData?: (data: any) => void;
 }
 
@@ -296,6 +308,7 @@ export interface StudentSearchProps {
   familyAtSchoolIds: [];
   experimentalCurriculumDetails: {};
   experimentalCurriculumIds: [];
+  arrayCurriculumDetails?: [];
   curriculumDetails: {};
   curriculumIds: [];
   timestamp: Date;
@@ -333,10 +346,25 @@ export interface ExcludeFamilyProps {
 export interface SubmitLoadingProps {
   isSubmitting: boolean;
   whatsGoingOn: string;
+  isNotFullScreen?: boolean;
 }
 
 export interface ButtonSignProps {
   isSubmitting: boolean;
   signType: "signIn" | "signUp";
   isClosed?: boolean;
+}
+
+export interface SubCollectionDetailsProps {
+  date: string;
+  id: string;
+  name: string;
+  isExperimental: boolean;
+}
+
+export interface SubCollectionProps {
+  idsArray: Array<string>;
+  detailsArray: Array<SubCollectionDetailsProps>;
+  id: string;
+  name: string;
 }

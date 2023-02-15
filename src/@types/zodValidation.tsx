@@ -156,6 +156,10 @@ export const createSeedValidationSchema = z.object ({
   confirmInsert: z.boolean()
 })
 
+export const testeBancoValidationSchema = z.object ({
+  confirmInsert: z.boolean().optional()
+})
+
 // DELETE VALIDATION SCHEMA SCHOOLS
 export const deleteSchoolValidationSchema = z.object ({
   confirmDelete: z.boolean(),
@@ -176,6 +180,8 @@ export const deleteStudentValidationSchema = z.object ({
   schoolClassId: z.string().min(1, {message: `Por favor, selecione a Turma`}),
   curriculumId: z.string().min(1, {message: `Por favor, selecione a Modalidade`}),
   studentId: z.string().min(1, {message: `Por favor, selecione o Aluno`}),
+  studentName: z.string().min(1, {message: `Por favor, selecione o Aluno`}),
+  studentType: z.literal('').or(z.literal('enrolled').or(z.literal('experimental'))),
 })
 
 export const deleteSchoolCourseValidationSchema = z.object ({
@@ -299,6 +305,8 @@ export const editStudentValidationSchema = z.object ({
   financialResponsible: z.string().min(1, {message: `Por favor, preencha o campo "Responsável Financeiro"`}),
   familyAtSchoolIds: z.array(z.string().optional().or(z.literal(''))),
   curriculumIds: z.array(z.string().optional().or(z.literal(''))),
+  arrayCurriculumDetails: z.array(z.object({name: z.string(),date: z.string(),id: z.string(),})),
+  curriculumDetails: z.object({}).optional(),
   experimentalCurriculumIds: z.array(z.string().optional().or(z.literal(''))),
   addCurriculum: z.boolean(),
   addExperimentalCurriculum: z.boolean(),

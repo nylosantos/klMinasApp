@@ -23,6 +23,7 @@ import { InsertTeacher } from "../components/insertComponents/InsertTeacher";
 import { InsertSchedule } from "../components/insertComponents/InsertSchedule";
 import { InsertClassDays } from "../components/insertComponents/InsertClassDays";
 import { InsertCurriculum } from "../components/insertComponents/InsertCurriculum";
+import { TestesBanco } from "../components/insertComponents/TestesBanco";
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
@@ -203,6 +204,25 @@ export default function InsertPage() {
               Seed
             </Tab>
           ) : null}
+          {userFullData?.role === "root" ? (
+            <Tab
+              // disabled
+              className={({ selected }) =>
+                classNames(
+                  "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
+                  selected
+                    ? // IF DISABLED
+                      // "bg-white shadow dark:text-gray-800 cursor-default"
+                      // : "text-gray-600/60 dark:text-gray-100/50 hover:bg-white/20 dark:hover:bg-white/[0.03]"
+                      // IF ENABLED
+                      "bg-white text-klGreen-500 shadow dark:text-gray-800 cursor-default"
+                      : "text-klGreen-500 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
+                )
+              }
+            >
+              Testes Banco
+            </Tab>
+          ) : null}
         </Tab.List>
         <Tab.Panels className="mt-2 flex justify-center">
           <Tab.Panel as={Fragment}>
@@ -232,6 +252,11 @@ export default function InsertPage() {
           {userFullData?.role === "root" ? (
             <Tab.Panel as={Fragment}>
               <InsertSeed />
+            </Tab.Panel>
+          ) : null}
+          {userFullData?.role === "root" ? (
+            <Tab.Panel as={Fragment}>
+              <TestesBanco />
             </Tab.Panel>
           ) : null}
         </Tab.Panels>

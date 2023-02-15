@@ -40,6 +40,8 @@ import {
   StudentSearchProps,
 } from "../../@types";
 import { months, weekDays } from "../../custom";
+import { useHttpsCallable } from "react-firebase-hooks/functions";
+import { getFunctions } from "firebase/functions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -89,6 +91,7 @@ export function EditStudent() {
       financialResponsible: "",
       familyAtSchoolIds: [],
       curriculumIds: [],
+      arrayCurriculumDetails: [],
       experimentalCurriculumIds: [],
       addCurriculum: false,
       addExperimentalCurriculum: false,
@@ -230,10 +233,10 @@ export function EditStudent() {
   // -------------------------- STUDENT SELECT STATES AND FUNCTIONS -------------------------- //
   // STUDENT DATA ARRAY WITH ALL OPTIONS OF SELECT STUDENTS
   const [studentsDataArray, setStudentsDataArray] =
-    useState<StudentSearchProps[]>();
+    useState<CurriculumCollectionProps[]>();
 
   // FUNCTION THAT WORKS WITH STUDENT SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleStudentSelectedData = (data: StudentSearchProps[]) => {
+  const handleStudentSelectedData = (data: CurriculumCollectionProps[]) => {
     setStudentsDataArray(data);
   };
 
@@ -294,10 +297,6 @@ export function EditStudent() {
           },
           responsible: studentSelectedData.responsible,
           financialResponsible: studentSelectedData.financialResponsible,
-          familyAtSchoolIds: studentSelectedData.familyAtSchoolIds,
-          curriculumIds: studentSelectedData.curriculumIds,
-          experimentalCurriculumIds:
-            studentSelectedData.experimentalCurriculumIds,
         });
       }
     }
@@ -434,6 +433,10 @@ export function EditStudent() {
     });
     setExcludeCurriculum(newExcludeCurriculum);
   }
+  useEffect(() => {
+    console.log("Curriculum: ", excludeCurriculum);
+    console.log("Experimental: ", excludeExperimentalCurriculum);
+  }, [excludeCurriculum, excludeExperimentalCurriculum]);
 
   // CHANGE STUDENT CURRICULUM (INCLUDE / EXCLUDE) FUNCTION
   function handleIncludeExcludeExperimentalCurriculum(
@@ -509,9 +512,23 @@ export function EditStudent() {
     if (studentData.studentId !== "") {
       setIsEdit(false);
       setIsSelected(true);
-      setStudentSelectedData(
-        studentsDataArray!.find(({ id }) => id === studentData.studentId)
-      );
+      // const dataData = studentsDataArray!.find(({ id }) => id === studentData.studentId)
+      studentsDataArray?.map(async (data: CurriculumCollectionProps) => {
+        if (data.id === studentData.studentId) {
+          const queryStudent = query(
+            collection(db, "students"),
+            where("id", "==", data.id)
+          );
+          const getStudentFullData = await getDocs(queryStudent);
+          getStudentFullData.forEach((doc: any) => {
+            const dataStudent = doc.data();
+            // setUserData((userData) => [...userData, dataStudent]);
+            // console.log("Dentro:", doc.data())
+          });
+        }
+      });
+      console.log("const DATADATA", studentsDataArray);
+      // setStudentSelectedData();
     } else {
       setStudentSelectedData(undefined);
     }
@@ -915,7 +932,7 @@ export function EditStudent() {
     };
     handleNewCurriculumClassDayFullData();
   }, [newStudentData.curriculumClassDayId]);
-console.log(newStudentData)
+
   // CREATING INDEX TO DAYS FO USE ON DATE PICKER
   const indexDays = {
     sunday: 0,
@@ -952,7 +969,8 @@ console.log(newStudentData)
       if (!classDayCurriculumSelectedData[0].saturday) {
         indexDaysArray.push(indexDays.saturday);
       }
-    } else {//@ts-ignore
+    } else {
+      //@ts-ignore
       setIndexDaysArray(undefined);
     }
   }, [classDayCurriculumSelectedData]);
@@ -1017,7 +1035,8 @@ console.log(newStudentData)
       if (!classDayExperimentalCurriculumSelectedData[0].saturday) {
         experimentalIndexDaysArray.push(indexDays.saturday);
       }
-    } else { //@ts-ignore
+    } else {
+      //@ts-ignore
       setExperimentalIndexDaysArray(undefined);
     }
   }, [classDayExperimentalCurriculumSelectedData]);
@@ -1209,91 +1228,157 @@ console.log(newStudentData)
   // SET SELECTS INDEX WHEN ARE CHANGES
   // WHEN ADD FAMILY CHANGE
   useEffect(() => {
-    setNewStudentData({
-      ...newStudentData,
-      familyId: "",
-      newFamilySchoolId: "",
-      newFamilySchoolClassId: "",
-      newFamilyCurriculumId: "",
-    });
-    if (studentEditData.addFamily) {
-      (
-        document.getElementById("newFamilySchoolSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
-      (
-        document.getElementById(
-          "newFamilySchoolClassSelect"
-        ) as HTMLSelectElement
-      ).selectedIndex = 0;
-      (
-        document.getElementById(
-          "newFamilyCurriculumSelect"
-        ) as HTMLSelectElement
-      ).selectedIndex = 0;
-      (
-        document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
+    if (studentSelectedData) {
+      setNewStudentData({
+        ...newStudentData,
+        familyId: "",
+        newFamilySchoolId: "",
+        newFamilySchoolClassId: "",
+        newFamilyCurriculumId: "",
+      });
+      if (studentEditData.addFamily) {
+        (
+          document.getElementById("newFamilySchoolSelect") as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById(
+            "newFamilySchoolClassSelect"
+          ) as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById(
+            "newFamilyCurriculumSelect"
+          ) as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
+        ).selectedIndex = 0;
+      }
     }
   }, [studentEditData.addFamily]);
 
+  // WHEN ADD CURRICULUM CHANGE
+  useEffect(() => {
+    if (studentSelectedData) {
+      setNewStudentData({
+        ...newStudentData,
+        curriculum: "",
+        curriculumClassDayId: "",
+        curriculumInitialDate: "",
+        curriculumName: "",
+        confirmAddCurriculum: false,
+      });
+      if (studentEditData.addCurriculum) {
+        (
+          document.getElementById("newSchoolSelect") as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById("newSchoolClassSelect") as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById("newSchoolCourseSelect") as HTMLSelectElement
+        ).selectedIndex = 0;
+      }
+    }
+  }, [studentEditData.addCurriculum]);
+
+  // WHEN ADD EXPERIMENTAL CURRICULUM CHANGE
+  useEffect(() => {
+    if (studentSelectedData) {
+      setNewStudentData({
+        ...newStudentData,
+        experimentalCurriculum: "",
+        experimentalCurriculumClassDayId: "",
+        experimentalCurriculumInitialDate: "",
+        experimentalCurriculumName: "",
+        confirmAddExperimentalCurriculum: false,
+      });
+      if (studentEditData.addExperimentalCurriculum) {
+        (
+          document.getElementById(
+            "newExperimentalSchoolSelect"
+          ) as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById(
+            "newExperimentalSchoolClassSelect"
+          ) as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById(
+            "newExperimentalSchoolCourseSelect"
+          ) as HTMLSelectElement
+        ).selectedIndex = 0;
+      }
+    }
+  }, [studentEditData.addExperimentalCurriculum]);
+
   // WHEN NEW FAMILY CURRICULUM SCHOOL ID CHANGE
   useEffect(() => {
-    if (studentEditData.addFamily) {
-      (
-        document.getElementById(
-          "newFamilySchoolClassSelect"
-        ) as HTMLSelectElement
-      ).selectedIndex = 0;
-      (
-        document.getElementById(
-          "newFamilyCurriculumSelect"
-        ) as HTMLSelectElement
-      ).selectedIndex = 0;
-      (
-        document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
+    if (studentSelectedData) {
+      if (studentEditData.addFamily) {
+        (
+          document.getElementById(
+            "newFamilySchoolClassSelect"
+          ) as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById(
+            "newFamilyCurriculumSelect"
+          ) as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
+        ).selectedIndex = 0;
+      }
     }
   }, [newStudentData.newFamilySchoolId]);
 
   // WHEN NEW FAMILY SCHOOL ID CHANGE
   useEffect(() => {
-    if (studentEditData.addFamily) {
-      (
-        document.getElementById(
-          "newFamilySchoolClassSelect"
-        ) as HTMLSelectElement
-      ).selectedIndex = 0;
-      (
-        document.getElementById(
-          "newFamilyCurriculumSelect"
-        ) as HTMLSelectElement
-      ).selectedIndex = 0;
-      (
-        document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
+    if (studentSelectedData) {
+      if (studentEditData.addFamily) {
+        (
+          document.getElementById(
+            "newFamilySchoolClassSelect"
+          ) as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById(
+            "newFamilyCurriculumSelect"
+          ) as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
+        ).selectedIndex = 0;
+      }
     }
   }, [newStudentData.newFamilySchoolId]);
 
   // WHEN NEW FAMILY SCHOOL CLASS ID CHANGE
   useEffect(() => {
-    if (studentEditData.addFamily) {
-      (
-        document.getElementById(
-          "newFamilyCurriculumSelect"
-        ) as HTMLSelectElement
-      ).selectedIndex = 0;
-      (
-        document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
+    if (studentSelectedData) {
+      if (studentEditData.addFamily) {
+        (
+          document.getElementById(
+            "newFamilyCurriculumSelect"
+          ) as HTMLSelectElement
+        ).selectedIndex = 0;
+        (
+          document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
+        ).selectedIndex = 0;
+      }
     }
   }, [newStudentData.newFamilySchoolClassId]);
 
   // WHEN NEW FAMILY CURRICULUM ID CHANGE
   useEffect(() => {
-    if (studentEditData.addFamily) {
-      (
-        document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
+    if (studentSelectedData) {
+      if (studentEditData.addFamily) {
+        (
+          document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
+        ).selectedIndex = 0;
+      }
     }
   }, [newStudentData.newFamilyCurriculumId]);
   // ---------------------------------------- END OF ADD NEW CURRICULUM STATES AND FUNCTIONS ---------------------------------------- //
@@ -1343,7 +1428,11 @@ console.log(newStudentData)
       financialResponsible: "",
       familyAtSchoolIds: [],
       curriculumIds: [],
+      curriculumDetails: {},
+      arrayCurriculumDetails: [],
+      experimentalCurriculumIds: [],
       addCurriculum: false,
+      addExperimentalCurriculum: false,
       addFamily: false,
     },
   });
@@ -1396,6 +1485,7 @@ console.log(newStudentData)
       financialResponsible: "",
       familyAtSchoolIds: [],
       curriculumIds: [],
+      arrayCurriculumDetails: [],
       experimentalCurriculumIds: [],
       addCurriculum: false,
       addExperimentalCurriculum: false,
@@ -1407,7 +1497,41 @@ console.log(newStudentData)
       curriculumId: "",
       studentId: "",
     });
+    setNewStudentData({
+      confirmAddFamily: false,
+      confirmAddCurriculum: false,
+      confirmAddExperimentalCurriculum: false,
+      curriculum: "",
+      curriculumName: "",
+      curriculumClassDayId: "",
+      curriculumInitialDate: "",
+      experimentalCurriculum: "",
+      experimentalCurriculumName: "",
+      experimentalCurriculumClassDayId: "",
+      experimentalCurriculumInitialDate: "",
+      familyId: "",
+      newFamilySchoolId: "",
+      newFamilySchoolClassId: "",
+      newFamilyCurriculumId: "",
+    });
+    setCurriculumData({
+      schoolId: "",
+      schoolName: "",
+      schoolClassId: "",
+      schoolClassName: "",
+      schoolCourseId: "",
+      schoolCourseName: "",
+    });
+    setExperimentalCurriculumData({
+      schoolId: "",
+      schoolName: "",
+      schoolClassId: "",
+      schoolClassName: "",
+      schoolCourseId: "",
+      schoolCourseName: "",
+    });
     setExcludeCurriculum([]);
+    setExcludeExperimentalCurriculum([]);
     setCurriculumDetails([]);
     setFamilyDetails([]);
     reset();
@@ -1440,6 +1564,18 @@ console.log(newStudentData)
     setValue("financialResponsible", studentEditData.financialResponsible);
     setValue("familyAtSchoolIds", studentEditData.familyAtSchoolIds);
     setValue("curriculumIds", studentEditData.curriculumIds);
+    setValue("curriculumDetails", studentEditData.curriculumDetails);
+    setValue("arrayCurriculumDetails", studentEditData.arrayCurriculumDetails);
+    setValue("addCurriculum", studentEditData.addCurriculum);
+    setValue(
+      "addExperimentalCurriculum",
+      studentEditData.addExperimentalCurriculum
+    );
+    setValue(
+      "experimentalCurriculumIds",
+      studentEditData.experimentalCurriculumIds
+    );
+    setValue("addFamily", studentEditData.addFamily);
   }, [studentEditData, dateToString]);
 
   // SET REACT HOOK FORM ERRORS
@@ -1471,6 +1607,8 @@ console.log(newStudentData)
       errors.familyAtSchoolIds,
       errors.curriculumIds,
       errors.addCurriculum,
+      errors.experimentalCurriculumIds,
+      errors.addExperimentalCurriculum,
       errors.addFamily,
     ];
     fullErrors.map((fieldError) => {
@@ -1510,7 +1648,7 @@ console.log(newStudentData)
       setExperimentalClassError(false);
     }
 
-    // CHEKING IF EXPERIMENTAL CLASS DATE WAS PICKED
+    // CHEKING IF CURRICULUM INITIAL CLASS DATE WAS PICKED
     if (
       newStudentData.confirmAddCurriculum &&
       newStudentData.curriculumInitialDate === ""
@@ -1518,7 +1656,7 @@ console.log(newStudentData)
       return (
         setIsSubmitting(false),
         setNewClassError(true),
-        toast.error("Escolha a data da Aula Experimental... ❕", {
+        toast.error("Escolha a data de início na nova modalidade... ❕", {
           theme: "colored",
           closeOnClick: true,
           pauseOnHover: true,
@@ -1550,23 +1688,49 @@ console.log(newStudentData)
       );
     } else {
       // CHECK IF EXPERIMENTAL CURRICULUM ALREADY EXISTS ON STUDENT DATABASE
+      const checkExistentExperimentalCurriculum = [""];
       studentEditData.experimentalCurriculumIds.map((c) => {
         if (c === newStudentData.experimentalCurriculum) {
-          return (
-            setIsSubmitting(false),
-            toast.error(
-              `Aluno já fez uma Aula Experimental na modalidade selecionada. Selecione uma nova modalidade para fazer uma Aula Experimental ou desmarque a opção "Adicionar Aula Experimental"...... ❕`,
-              {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              }
-            )
-          );
+          checkExistentExperimentalCurriculum.push(c);
         }
       });
+      if (checkExistentExperimentalCurriculum.length > 1) {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Aluno já fez uma Aula Experimental na modalidade selecionada. Selecione uma nova modalidade para fazer uma Aula Experimental ou desmarque a opção "Adicionar Aula Experimental"... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      }
+      // CHECK IF STUDENT IS TRYING TO ADD EXPERIMENTAL CLASS INTO A COURSE THAT IS ALREADY ENROLLED
+      const checkExistentCurriculum = [""];
+      studentEditData.curriculumIds.map((c) => {
+        if (c === newStudentData.curriculum) {
+          checkExistentCurriculum.push(c);
+        }
+      });
+      if (checkExistentCurriculum.length > 1) {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Não é possível agendar uma aula experimental para uma modalidade a qual o Aluno já está matriculado. Selecione uma nova modalidade para fazer uma Aula Experimental ou desmarque a opção "Adicionar Aula Experimental"... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      }
     }
 
     // CHECK IF SOME EXPERIMENTAL CURRICULUM WAS EXCLUDED
@@ -1580,11 +1744,16 @@ console.log(newStudentData)
           await updateDoc(doc(db, "students", studentData.studentId), {
             experimentalCurriculumIds: arrayRemove(curriculum.id),
           });
-          await updateDoc(doc(db, "students", studentData.studentId), {
-            experimentalCurriculumDetails: {
+          await updateDoc(
+            doc(
+              db,
+              "students",
+              `${studentData.studentId}/experimentalCurriculumDetails`
+            ),
+            {
               [curriculum.id]: deleteField(),
-            },
-          });
+            }
+          );
         }
       });
     }
@@ -1633,23 +1802,27 @@ console.log(newStudentData)
       );
     } else {
       // CHECK IF CURRICULUM ALREADY EXISTS ON STUDENT DATABASE
+      const checkExistentCurriculum = [""];
       studentEditData.curriculumIds.map((c) => {
         if (c === newStudentData.curriculum) {
-          return (
-            setIsSubmitting(false),
-            toast.error(
-              `Aluno já matriculado na modalidade selecionada. Selecione uma nova modalidade para incluir ou desmarque a opção "Adicionar Modalidade"...... ❕`,
-              {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              }
-            )
-          );
+          checkExistentCurriculum.push(c);
         }
       });
+      if (checkExistentCurriculum.length > 1) {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Aluno já matriculado na modalidade selecionada. Selecione uma nova modalidade para incluir ou desmarque a opção "Adicionar Modalidade"...... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      }
     }
 
     // CHECK IF SOME CURRICULUM WAS EXCLUDED
@@ -1659,14 +1832,15 @@ console.log(newStudentData)
       excludeCurriculum.map(async (curriculum) => {
         if (curriculum.exclude) {
           // UPDATE STUDENT (DELETE CURRICULUM)
-          await updateDoc(doc(db, "students", studentData.studentId), {
-            curriculumIds: arrayRemove(curriculum.id),
-          });
-          await updateDoc(doc(db, "students", studentData.studentId), {
-            curriculumDetails: {
-              [curriculum.id]: deleteField(),
-            },
-          });
+          // await updateDoc(doc(db, "students", studentData.studentId), {
+          //   curriculumIds: arrayRemove(curriculum.id),
+          // });
+          // await updateDoc(doc(db, "students", studentData.studentId), {
+          //     curriculumDetails: {
+          //       [curriculum.id]: FieldValue.delete()
+          //     }
+          // });
+          // await deleteCurriculum(curriculum.id);
         }
       });
     }
@@ -1697,7 +1871,7 @@ console.log(newStudentData)
     }
 
     // CHECK IF ADD FAMILY
-    if (studentEditData.addFamily && !newStudentData.confirmAddFamily) {
+    if (studentEditData.addFamily && !newStudentData.familyId) {
       return (
         setIsSubmitting(false),
         toast.error(
@@ -1711,25 +1885,45 @@ console.log(newStudentData)
           }
         )
       );
-    } else {
-      // CHECK IF NEW FAMILY MEMBER ALREADY EXISTS ON STUDENT DATABASE
-      studentEditData.familyAtSchoolIds.map((c) => {
-        if (c === newStudentData.familyId) {
-          return (
-            setIsSubmitting(false),
-            toast.error(
-              `Familiar já consta na ficha do aluno. Selecione um novo familiar para incluir ou desmarque a opção "Adicionar Familiar"...... ❕`,
-              {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              }
-            )
-          );
-        }
-      });
+    }
+
+    // CHECK CONFIRM ADD NEW FAMILY MEMBER
+    if (!newStudentData.confirmAddFamily) {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Confirme a adição do familiar ou desmarque a opção "Adicionar Familiar"...... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    }
+
+    // CHECK IF NEW FAMILY MEMBER ALREADY EXISTS ON STUDENT DATABASE
+    const checkExistentFamily = studentEditData.familyAtSchoolIds.map((c) => {
+      if (c === newStudentData.familyId) {
+        return true;
+      } else false;
+    });
+    if (checkExistentFamily) {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Familiar já consta na ficha do aluno. Selecione um novo familiar para incluir ou desmarque a opção "Adicionar Familiar"...... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
     }
 
     // CHECK IF SOME FAMILY WAS EXCLUDED
@@ -1740,11 +1934,11 @@ console.log(newStudentData)
         if (family.exclude) {
           // UPDATE STUDENT (DELETE FAMILY FROM STUDENT DATABASE)
           await updateDoc(doc(db, "students", studentData.studentId), {
-            familyAtSchool: arrayRemove(family.id),
+            familyAtSchoolIds: arrayRemove(family.id),
           });
           // UPDATE FAMILY (DELETE STUDENT FROM FAMILY DATABASE)
           await updateDoc(doc(db, "students", family.id), {
-            familyAtSchool: arrayRemove(studentData.studentId),
+            familyAtSchoolIds: arrayRemove(studentData.studentId),
           });
         }
       });
@@ -1755,11 +1949,11 @@ console.log(newStudentData)
       const addNewFamily = async () => {
         // UPDATE STUDENT (INSERT FAMILY TO STUDENT DATABASE)
         await updateDoc(doc(db, "students", studentData.studentId), {
-          familyAtSchool: arrayUnion(newStudentData.familyId),
+          familyAtSchoolIds: arrayUnion(newStudentData.familyId),
         });
         // UPDATE FAMILY (INSERT STUDENT TO FAMILY DATABASE)
         await updateDoc(doc(db, "students", newStudentData.familyId), {
-          familyAtSchool: arrayUnion(studentData.studentId),
+          familyAtSchoolIds: arrayUnion(studentData.studentId),
         });
       };
       addNewFamily();
@@ -2012,6 +2206,7 @@ console.log(newStudentData)
             <SelectOptions
               returnId
               dataType="curriculum"
+              displaySchoolCourseAndSchedule
               handleData={handleCurriculumSelectedData}
               schoolId={studentData.schoolId}
               schoolClassId={studentData.schoolClassId}
@@ -2056,7 +2251,7 @@ console.log(newStudentData)
           >
             <SelectOptions
               returnId
-              dataType="students"
+              dataType="allStudents"
               handleData={handleStudentSelectedData}
               schoolId={studentData.schoolId}
               schoolClassId={studentData.schoolClassId}
@@ -3251,7 +3446,8 @@ console.log(newStudentData)
                   </>
                 )}
 
-                {classDayExperimentalCurriculumSelectedData && experimentalIndexDaysArray !== undefined ? (
+                {classDayExperimentalCurriculumSelectedData &&
+                experimentalIndexDaysArray !== undefined ? (
                   <>
                     {/* EXPERIMENTAL/INITIAL DAY */}
                     <div className="flex gap-2 items-center">
@@ -3357,7 +3553,8 @@ console.log(newStudentData)
                           }
                           value={
                             //@ts-ignore
-                            studentSelectedData?.curriculumDetails[family].name
+                            studentSelectedData?.curriculumDetails[curriculum]
+                              .name
                           }
                           readOnly
                         />
@@ -3646,7 +3843,8 @@ console.log(newStudentData)
                   </>
                 )}
 
-                {classDayCurriculumSelectedData && indexDaysArray.length !== undefined ? (
+                {classDayCurriculumSelectedData &&
+                indexDaysArray.length !== undefined ? (
                   <>
                     {/* NEW CURRICULUM/INITIAL DAY */}
                     <div className="flex gap-2 items-center">
@@ -3936,6 +4134,7 @@ console.log(newStudentData)
                       <SelectOptions
                         returnId
                         dataType="curriculum"
+                        displaySchoolCourseAndSchedule
                         schoolId={newStudentData.newFamilySchoolId}
                         schoolClassId={newStudentData.newFamilySchoolClassId}
                       />
@@ -3985,7 +4184,8 @@ console.log(newStudentData)
                     {newStudentData.newFamilyCurriculumId ? (
                       <SelectOptions
                         returnId
-                        dataType="students"
+                        dataType="allStudents"
+                        // onlyEnrolledStudents
                         schoolId={newStudentData.newFamilySchoolId}
                         schoolClassId={newStudentData.newFamilySchoolClassId}
                         curriculumId={newStudentData.newFamilyCurriculumId}
