@@ -336,11 +336,15 @@ export interface CurriculumSearchProps {
 export interface ExcludeCurriculumProps {
   exclude: boolean;
   id: string;
+  name: string;
+  isExperimental: boolean;
+  date: string;
 }
 
 export interface ExcludeFamilyProps {
   exclude: boolean;
   id: string;
+  name: string;
 }
 
 export interface SubmitLoadingProps {
@@ -360,6 +364,18 @@ export interface SubCollectionDetailsProps {
   id: string;
   name: string;
   isExperimental: boolean;
+}
+
+export interface SubCollectionFamilyDetailsProps {
+  id: string;
+  name: string;
+}
+
+export interface SubCollectionFamilyProps {
+  idsArray: Array<string>;
+  detailsArray: Array<SubCollectionFamilyDetailsProps>;
+  id: string;
+  name: string;
 }
 
 export interface SubCollectionProps {

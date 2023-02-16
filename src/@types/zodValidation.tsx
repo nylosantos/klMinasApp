@@ -38,7 +38,7 @@ export const editUserValidationSchema = z.object ({
   role: z.literal("root").or(z.literal("admin")).or(z.literal("editor")).or(z.literal("teacher")).or(z.literal("user")),
 }).refine((data) => data.password === data.confirmPassword, {message: "As senhas não coincidem", path: ["confirmPassword"]})
 
-// EDIT VALIDATION SCHEMA USERS
+// DELETE VALIDATION SCHEMA USERS
 export const deleteUserValidationSchema = z.object ({
   id: z.string().min(1, {message: `Por favor, selecione o Usuário`}),
 })
@@ -272,6 +272,7 @@ export const editCurriculumValidationSchema = z.object ({
   teacherId: z.string().min(1, {message: `Por favor, escolha o professor`}),
 })
 export const editStudentValidationSchema = z.object ({
+  id: z.string().min(1, {message: `Por favor, selecione o Aluno`}),
   name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
   email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}),
   birthDate: z.string().min(1, {message: `Por favor, selecione a Data de Nascimento`}),
@@ -303,11 +304,16 @@ export const editStudentValidationSchema = z.object ({
   }),
   responsible: z.string().min(1, {message: `Por favor, preencha o campo "Responsável"`}),
   financialResponsible: z.string().min(1, {message: `Por favor, preencha o campo "Responsável Financeiro"`}),
-  familyAtSchoolIds: z.array(z.string().optional().or(z.literal(''))),
-  curriculumIds: z.array(z.string().optional().or(z.literal(''))),
-  arrayCurriculumDetails: z.array(z.object({name: z.string(),date: z.string(),id: z.string(),})),
-  curriculumDetails: z.object({}).optional(),
-  experimentalCurriculumIds: z.array(z.string().optional().or(z.literal(''))),
+  curriculumDetails: z.object({
+    name: z.string(),
+    date: z.string(),
+    id: z.string(), 
+    isExperimental: z.boolean(),
+  }).optional().array(),
+  familyDetails: z.object({
+    name: z.string(),
+    id: z.string(),
+  }).optional().array(),
   addCurriculum: z.boolean(),
   addExperimentalCurriculum: z.boolean(),
   addFamily: z.boolean(),

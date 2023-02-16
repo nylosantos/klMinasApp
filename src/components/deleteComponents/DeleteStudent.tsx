@@ -427,9 +427,17 @@ export function DeleteStudent() {
       const promise = doc.data();
       familyPromises.push(promise);
     });
-    Promise.all(familyPromises).then((results: SubCollectionProps[]) => {
-      // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
+    Promise.all(familyPromises).then(async (results: SubCollectionProps[]) => {
       if (results.length !== 0) {
+        // IF EXISTS, REMOVE STUDENT FAMILY AT SCHOOL REGISTERS
+        await deleteDoc(
+          doc(
+            db,
+            `students/${data.studentId}/studentFamilyAtSchool`,
+            data.studentId
+          )
+        );
+        // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
         const myFamilyData = results[0];
         myFamilyData.detailsArray.map(
           async (student: SubCollectionDetailsProps) => {
@@ -468,6 +476,14 @@ export function DeleteStudent() {
 
     // DELETE STUDENT FROM EXPERIMENTAL CLASSES
     if (experimentalCurriculumArrayDetails) {
+      // REMOVE STUDENT EXPERIMENTAL CURRICULUM REGISTERS
+      await deleteDoc(
+        doc(
+          db,
+          `students/${data.studentId}/studentExperimentalCurriculum`,
+          data.studentId
+        )
+      );
       experimentalCurriculumArrayDetails.map(
         async (curriculum: SubCollectionDetailsProps) => {
           const q = query(
@@ -506,6 +522,10 @@ export function DeleteStudent() {
 
     // DELETE STUDENT FROM CURRICULUM
     if (curriculumArrayDetails) {
+      // REMOVE STUDENT EXPERIMENTAL CURRICULUM REGISTERS
+      await deleteDoc(
+        doc(db, `students/${data.studentId}/studentCurriculum`, data.studentId)
+      );
       curriculumArrayDetails.map(
         async (curriculum: SubCollectionDetailsProps) => {
           const q = query(

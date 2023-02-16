@@ -19,6 +19,7 @@ import {
   collectionGroup,
   arrayRemove,
   updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import {
   useCollection,
@@ -148,55 +149,70 @@ export function TestesBanco() {
     // console.log("Novo Array:", newCurriculumDetailsArray);
 
     // PEGANDO CURRICULUM IDS E CURRICULUM DETAILS DO STUDENT
-    // const handleOptionData = async () => {
-    //   const q = query(
-    //     collection(
-    //       db,
-    //       "/students/87a99809-294e-442a-a59c-bd38b07e8020/curriculum"
-    //     )
-    //   );
-    //   const promises: any = [];
-    //   const getCurriculum = await getDocs(q);
-    //   getCurriculum.forEach((doc) => {
-    //     const promise = doc.data();
-    //     promises.push(promise);
-    //   });
-    //   Promise.all(promises).then((result: CurriculumCollectionProps[]) => {
-    //     if (result.length > 0) {
-    //       const detailsData = result[0];
-    //       console.log("Array do Banco:", detailsData.curriculumDetails);
-    //       setArrayBanco(detailsData);
-    //     }
-    //   });
-    //   const q1 = query(collection(db, "curriculum"));
-    //   const promisesCurriculum: any = [];
-    //   const getCurriculumAll = await getDocs(q1);
-    //   getCurriculumAll.forEach((doc) => {
-    //     const promiseCurriculum = doc.data();
-    //     promisesCurriculum.push(promiseCurriculum);
-    //   });
-    //   Promise.all(promisesCurriculum).then(
-    //     (result: CurriculumSearchProps[]) => {
-    //       if (result.length > 0) {
-    //         result.map((curriculum: CurriculumSearchProps) => {
-    //           if (arrayBanco !== undefined) {
-    //             arrayBanco.curriculumIds.forEach((id: string) => {
-    //               if (id === curriculum.id) {
-    //                 newCurriculumDetailsArray.push({
-    //                   id: curriculum.id,
-    //                   name: curriculum.name,
-    //                   date: curriculum.timestamp.toString(),
-    //                 });
-    //               }
-    //             });
-    //           }
-    //         });
-    //       }
-    //       console.log("Novo Array:", newCurriculumDetailsArray);
-    //     }
-    //   );
-    // };
-    // handleOptionData();
+    const handleOptionData = async () => {
+      const curriculumQuery = query(
+        collection(
+          db,
+          `/students/053e245c-25b5-495c-b7bc-202df0be68d2/studentCurriculum`
+        )
+      );
+      const getCurriculum = await getDocs(curriculumQuery);
+      getCurriculum.forEach((doc: any) => {
+        const detailsData: SubCollectionProps = doc.data();
+        detailsData.detailsArray.map(
+          (curriculumDetail: SubCollectionDetailsProps) => {
+            setStudentCurriculumDetails(studentCurriculumDetails => [...studentCurriculumDetails, curriculumDetail])
+          }
+        );
+      });
+      const experimentalCurriculumQuery = query(
+        collection(
+          db,
+          `/students/053e245c-25b5-495c-b7bc-202df0be68d2/studentExperimentalCurriculum`
+        )
+      );
+      const getExperimentalCurriculum = await getDocs(
+        experimentalCurriculumQuery
+      );
+      getExperimentalCurriculum.forEach((doc: any) => {
+        const detailsData: SubCollectionProps = doc.data();
+        detailsData.detailsArray.map(
+          (curriculumDetail: SubCollectionDetailsProps) => {
+            setStudentCurriculumDetails(studentCurriculumDetails => [...studentCurriculumDetails, curriculumDetail])
+          }
+        );
+      });
+
+
+      //   const q1 = query(collection(db, "curriculum"));
+      //   const promisesCurriculum: any = [];
+      //   const getCurriculumAll = await getDocs(q1);
+      //   getCurriculumAll.forEach((doc) => {
+      //     const promiseCurriculum = doc.data();
+      //     promisesCurriculum.push(promiseCurriculum);
+      //   });
+      //   Promise.all(promisesCurriculum).then(
+      //     (result: CurriculumSearchProps[]) => {
+      //       if (result.length > 0) {
+      //         result.map((curriculum: CurriculumSearchProps) => {
+      //           if (arrayBanco !== undefined) {
+      //             arrayBanco.curriculumIds.forEach((id: string) => {
+      //               if (id === curriculum.id) {
+      //                 newCurriculumDetailsArray.push({
+      //                   id: curriculum.id,
+      //                   name: curriculum.name,
+      //                   date: curriculum.timestamp.toString(),
+      //                 });
+      //               }
+      //             });
+      //           }
+      //         });
+      //       }
+      //       console.log("Novo Array:", newCurriculumDetailsArray);
+      //     }
+      //   );
+    };
+    handleOptionData();
     // setIsSubmitting(false);
 
     // const handleOptionData = async () => {
@@ -260,100 +276,18 @@ export function TestesBanco() {
     // handleOptionData();
     // setIsSubmitting(false);
 
-    // const handleOptionData = async () => {
-    //   const q = query(
-    //     collectionGroup(db, "studentFamilyAtSchool"),
-    //     where("id", "==", "f197c92b-a40a-4b99-9070-984c5368ee20")
-    //   );
-    //   const querySnapshot = await getDocs(q);
-    //   const promises: any = [];
-    //   querySnapshot.forEach((doc) => {
-    //     const promise = doc.data();
-    //     promises.push(promise);
-    //   });
-    //   Promise.all(promises).then((results: FamilyCollectionProps[]) => {
-    //     // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
-    //     if (results.length !== 0) {
-    //       const myFamilyData = results[0];
-    //       myFamilyData.familyDetails.map(async (student: StudentDetailsProps) => {
-    //         const q = query(
-    //           collectionGroup(db, "studentFamilyAtSchool"),
-    //           where("id", "==", student.id)
-    //         );
-    //         const querySnapshot = await getDocs(q);
-    //         const promises: any = [];
-    //         querySnapshot.forEach((doc) => {
-    //           const promise = doc.data();
-    //           promises.push(promise);
-    //         });
-    //         Promise.all(promises).then((results: FamilyCollectionProps[]) => {
-    //           if (results.length !== 0) {
-    //             const familyBrotherData = results[0];
-    //             updateDoc(
-    //               doc(
-    //                 db,
-    //                 `students/${familyBrotherData.id}/studentFamilyAtSchool/${familyBrotherData.id}`
-    //               ),
-    //               {
-    //                 familyAtSchoolIds: arrayRemove(
-    //                   myFamilyData.id
-    //                 ),
-    //                 familyDetails: arrayRemove({
-    //                   id: myFamilyData.id,
-    //                   name: myFamilyData.name,
-    //                 }), //Aluno Experimental Classe Ben
-    //               }
-    //             );
-    //           }
-    //         });
-    //       });
-    //     }
-    //   });
-    // };
-    // handleOptionData();
-    // setIsSubmitting(false);
-
-    const queryStudent = query(
-      collection(
-        db,
-        "students/053e245c-25b5-495c-b7bc-202df0be68d2/studentExperimentalCurriculum"
-      )
-    );
-    const querySnapshot = await getDocs(queryStudent);
-    const studentPromises: any = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      studentPromises.push(promise);
-    });
-    Promise.all(studentPromises).then((results: SubCollectionProps[]) => {
-      const subCollectionStudentData = results[0];
-      subCollectionStudentData.idsArray.map(async (id) => {
-        const queryCurriculum = query(
-          collection(db, `curriculum/${id}/curriculumExperimentalStudents`)
-        );
-        const querySnapshot = await getDocs(queryCurriculum);
-        const curriculumPromises: any = [];
-        querySnapshot.forEach((doc) => {
-          const promise = doc.data();
-          curriculumPromises.push(promise);
-        });
-        Promise.all(curriculumPromises).then((results: SubCollectionProps[]) => {
-          const subCollectionCurriculumData = results[0];
-          subCollectionCurriculumData.detailsArray.map((detail: SubCollectionDetailsProps) => {
-            if(detail.id === "053e245c-25b5-495c-b7bc-202df0be68d2"){
-              console.log(detail.isExperimental)
-            }
-          })
-        })
-      });
-    });
     setIsSubmitting(false);
   };
   const [userData, setUserData] = useState([]);
 
+  // STUDENT CURRICULUM DETAILS STATE
+  const [studentCurriculumDetails, setStudentCurriculumDetails] = useState<
+    SubCollectionDetailsProps[]
+  >([]);
+
   useEffect(() => {
-    console.log("User Data:", userData);
-  }, [userData]);
+    console.log("StudentCurriculumDetails:", studentCurriculumDetails);
+  }, [studentCurriculumDetails]);
 
   interface DetailsProps {
     date: string;
