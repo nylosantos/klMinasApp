@@ -1009,7 +1009,7 @@ export function InsertStudent() {
         });
         if (newClass.type === "experimental") {
           // ADD STUDENT TO CURRICULUM TABLE ON EXPERIMENTAL STUDENTS COLLECTION
-          await updateDoc(
+          await setDoc(
             doc(
               db,
               `curriculum/${data.curriculum}/curriculumExperimentalStudents/${data.curriculum}`
@@ -1025,9 +1025,10 @@ export function InsertStudent() {
               id: data.curriculum,
               name: newClass.name,
             },
+            { merge: true }
           );
           // ADD EXPERIMENTAL CURRICULUM TO STUDENT TABLE ON EXPERIMENTAL CURRICULUM COLLECTION
-          await updateDoc(
+          await setDoc(
             doc(
               db,
               `students/${newStudentId}/studentExperimentalCurriculum/${newStudentId}`
@@ -1042,11 +1043,24 @@ export function InsertStudent() {
               }),
               id: newStudentId,
               name: data.name,
-            },
+            }
+          );
+          // CREATE EMPTY STUDENT CURRICULUM DOC
+          await setDoc(
+            doc(
+              db,
+              `students/${newStudentId}/studentCurriculum/${newStudentId}`
+            ),
+            {
+              idsArray: [],
+              detailsArray: [],
+              id: newStudentId,
+              name: data.name,
+            }
           );
         } else {
           // ADD STUDENT TO CURRICULUM TABLE ON STUDENT COLLECTION
-          await updateDoc(
+          await setDoc(
             doc(
               db,
               `curriculum/${data.curriculum}/curriculumStudents/${data.curriculum}`
@@ -1062,9 +1076,10 @@ export function InsertStudent() {
               id: data.curriculum,
               name: newClass.name,
             },
+            { merge: true }
           );
           // ADD CURRICULUM TO STUDENT TABLE ON CURRICULUM COLLECTION
-          await updateDoc(
+          await setDoc(
             doc(
               db,
               `students/${newStudentId}/studentCurriculum/${newStudentId}`
@@ -1079,12 +1094,25 @@ export function InsertStudent() {
               }),
               id: newStudentId,
               name: data.name,
-            },
+            }
+          );
+          // CREATE EMPTY STUDENT EXPERIMENTAL CURRICULUM DOC
+          await setDoc(
+            doc(
+              db,
+              `students/${newStudentId}/studentExperimentalCurriculum/${newStudentId}`
+            ),
+            {
+              idsArray: [],
+              detailsArray: [],
+              id: newStudentId,
+              name: data.name,
+            }
           );
         }
         if (data.familyAtSchool) {
           // CREATE STUDENT FAMILY'S INSIDE STUDENT TABLE
-          await updateDoc(
+          await setDoc(
             doc(
               db,
               `students/${newStudentId}/studentFamilyAtSchool/${newStudentId}`
@@ -1098,6 +1126,7 @@ export function InsertStudent() {
               id: newStudentId,
               name: data.name,
             },
+            { merge: true }
           );
           // CREATE STUDENT INSIDE FAMILY TABLE COLLECTION
           await setDoc(
@@ -1113,6 +1142,21 @@ export function InsertStudent() {
               }),
               id: data.familyAtSchoolId!,
               name: familyStudentSelectedData?.name,
+            },
+            { merge: true }
+          );
+        } else {
+          // CREATE EMPTY FAMILYATSCHOOL DOC
+          await setDoc(
+            doc(
+              db,
+              `students/${newStudentId}/studentFamilyAtSchool/${newStudentId}`
+            ),
+            {
+              idsArray: [],
+              detailsArray: [],
+              id: newStudentId,
+              name: data.name,
             },
             { merge: true }
           );

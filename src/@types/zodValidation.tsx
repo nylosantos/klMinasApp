@@ -304,16 +304,6 @@ export const editStudentValidationSchema = z.object ({
   }),
   responsible: z.string().min(1, {message: `Por favor, preencha o campo "Responsável"`}),
   financialResponsible: z.string().min(1, {message: `Por favor, preencha o campo "Responsável Financeiro"`}),
-  curriculumDetails: z.object({
-    name: z.string(),
-    date: z.string(),
-    id: z.string(), 
-    isExperimental: z.boolean(),
-  }).optional().array(),
-  familyDetails: z.object({
-    name: z.string(),
-    id: z.string(),
-  }).optional().array(),
   addCurriculum: z.boolean(),
   addExperimentalCurriculum: z.boolean(),
   addFamily: z.boolean(),

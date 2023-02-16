@@ -90,8 +90,6 @@ export function EditStudent() {
       },
       responsible: "",
       financialResponsible: "",
-      curriculumDetails: [],
-      familyDetails: [],
       addCurriculum: false,
       addExperimentalCurriculum: false,
       addFamily: false,
@@ -266,52 +264,6 @@ export function EditStudent() {
     setNewStudentExperimentalCurriculumArray,
   ] = useState<(string | undefined)[]>([]);
 
-  // IF STUDENT HAVE CURRICULUM SET STATE AND SHOW INPUTS
-  useEffect(() => {
-    if (studentEditData.curriculumDetails !== undefined) {
-      if (studentEditData.curriculumDetails.length > 0) {
-        setHaveCurriculum(true);
-        for (
-          let index = 0;
-          index < studentEditData.curriculumDetails.length;
-          index++
-        ) {
-          if (studentEditData.curriculumDetails[index]! !== undefined) {
-            if (studentEditData.curriculumDetails[index]!.isExperimental) {
-              setExcludeExperimentalCurriculum(
-                (excludeExperimentalCurriculum) => [
-                  ...excludeExperimentalCurriculum,
-                  {
-                    exclude: false,
-                    id: studentEditData.curriculumDetails![index]!.id,
-                    name: studentEditData.curriculumDetails![index]!.name,
-                    isExperimental:
-                      studentEditData.curriculumDetails![index]!.isExperimental,
-                    date: studentEditData.curriculumDetails![index]!.date,
-                  },
-                ]
-              );
-            } else {
-              setExcludeCurriculum((excludeCurriculum) => [
-                ...excludeCurriculum,
-                {
-                  exclude: false,
-                  id: studentEditData.curriculumDetails![index]!.id,
-                  name: studentEditData.curriculumDetails![index]!.name,
-                  isExperimental:
-                    studentEditData.curriculumDetails![index]!.isExperimental,
-                  date: studentEditData.curriculumDetails![index]!.date,
-                },
-              ]);
-            }
-          }
-        }
-      } else {
-        setHaveCurriculum(false);
-      }
-    }
-  }, [studentEditData.curriculumDetails]);
-
   // CHANGE STUDENT CURRICULUM (INCLUDE / EXCLUDE) FUNCTION
   function handleIncludeExcludeCurriculum(
     index: number,
@@ -455,8 +407,8 @@ export function EditStudent() {
   >([]);
 
   // SET STUDENT EDIT ARRAYS
+  // SET STUDENT FAMILY DETAILS
   const handleStudentFamilyDetails = async () => {
-    // SET STUDENT FAMILY DETAILS
     const familyQuery = query(
       collection(db, `/students/${studentData.studentId}/studentFamilyAtSchool`)
     );
@@ -467,8 +419,8 @@ export function EditStudent() {
     });
   };
 
+  // SET STUDENT CURRICULUM DETAILS
   const handleStudentCurriculumDetails = async () => {
-    // SET STUDENT CURRICULUM DETAILS
     const curriculumQuery = query(
       collection(db, `/students/${studentData.studentId}/studentCurriculum`)
     );
@@ -486,8 +438,8 @@ export function EditStudent() {
     });
   };
 
+  // SET STUDENT EXPERIMENTAL CURRICULUM DETAILS
   const handleStudentExperimentalCurriculumDetails = async () => {
-    // SET STUDENT EXPERIMENTAL CURRICULUM DETAILS
     const experimentalCurriculumQuery = query(
       collection(
         db,
@@ -512,6 +464,11 @@ export function EditStudent() {
 
   // SET STUDENT FAMILY ARRAY DETAILS WHEN STUDENT IS SELECTED
   useEffect(() => {
+    setExcludeCurriculum([]);
+    setExcludeExperimentalCurriculum([]);
+    setExcludeFamily([]);
+    setStudentCurriculumDetails([]);
+    setStudentFamilyDetails([]);
     if (studentData.studentId !== "") {
       handleStudentFamilyDetails();
       handleStudentCurriculumDetails();
@@ -575,11 +532,53 @@ export function EditStudent() {
         },
         responsible: studentSelectedData.responsible,
         financialResponsible: studentSelectedData.financialResponsible,
-        familyDetails: studentFamilyDetails,
-        curriculumDetails: studentCurriculumDetails,
       });
     }
   }, [studentSelectedData]);
+
+  // IF STUDENT HAVE CURRICULUM SET STATE AND SHOW INPUTS
+  useEffect(() => {
+    setExcludeCurriculum([]);
+    setExcludeExperimentalCurriculum([]);
+    if (studentCurriculumDetails !== undefined) {
+      if (studentCurriculumDetails.length > 0) {
+        setHaveCurriculum(true);
+        for (let index = 0; index < studentCurriculumDetails.length; index++) {
+          if (studentCurriculumDetails[index]! !== undefined) {
+            if (studentCurriculumDetails[index]!.isExperimental) {
+              setExcludeExperimentalCurriculum(
+                (excludeExperimentalCurriculum) => [
+                  ...excludeExperimentalCurriculum,
+                  {
+                    exclude: false,
+                    id: studentCurriculumDetails![index]!.id,
+                    name: studentCurriculumDetails![index]!.name,
+                    isExperimental:
+                      studentCurriculumDetails![index]!.isExperimental,
+                    date: studentCurriculumDetails![index]!.date,
+                  },
+                ]
+              );
+            } else {
+              setExcludeCurriculum((excludeCurriculum) => [
+                ...excludeCurriculum,
+                {
+                  exclude: false,
+                  id: studentCurriculumDetails![index]!.id,
+                  name: studentCurriculumDetails![index]!.name,
+                  isExperimental:
+                    studentCurriculumDetails![index]!.isExperimental,
+                  date: studentCurriculumDetails![index]!.date,
+                },
+              ]);
+            }
+          }
+        }
+      } else {
+        setHaveCurriculum(false);
+      }
+    }
+  }, [studentCurriculumDetails]);
   // -------------------------- END OF STUDENT SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- STUDENT EDIT STATES AND FUNCTIONS -------------------------- //
@@ -665,20 +664,17 @@ export function EditStudent() {
 
   // GET BROTHER NAME TO PUT ON FORM
   useEffect(() => {
-    if (studentEditData.familyDetails !== undefined) {
-      if (studentEditData.familyDetails.length > 0) {
+    if (studentFamilyDetails !== undefined) {
+      if (studentFamilyDetails.length > 0) {
+        setExcludeFamily([]);
         setHaveFamily(true);
-        for (
-          let index = 0;
-          index < studentEditData.familyDetails.length;
-          index++
-        ) {
+        for (let index = 0; index < studentFamilyDetails.length; index++) {
           setExcludeFamily((excludeFamily) => [
             ...excludeFamily,
             {
               exclude: false,
-              id: studentEditData.familyDetails![index]!.id,
-              name: studentEditData.familyDetails![index]!.name,
+              id: studentFamilyDetails![index]!.id,
+              name: studentFamilyDetails![index]!.name,
             },
           ]);
         }
@@ -686,7 +682,7 @@ export function EditStudent() {
         setHaveFamily(false);
       }
     }
-  }, [studentEditData.familyDetails]);
+  }, [studentFamilyDetails]);
 
   // INCLUDE / EXLUDE FAMILY STATES
   const [excludeFamily, setExcludeFamily] = useState<ExcludeFamilyProps[]>([]);
@@ -757,7 +753,7 @@ export function EditStudent() {
 
   // SET NEW FAMILY SELECTED STATE WHEN SELECT NEW FAMILY
   useEffect(() => {
-    if (curriculumData.schoolId !== "") {
+    if (newStudentData.familyId !== "") {
       setNewFamilySelectedData(
         newFamilyDataArray!.find(({ id }) => id === newStudentData.familyId)
       );
@@ -1019,30 +1015,53 @@ export function EditStudent() {
     saturday: 6,
   };
 
+  // DAYS WITH CLASS ARRAY
   const [indexDaysArray, setIndexDaysArray] = useState<number[]>([]);
 
+  // SET DAYS WITH EXPERIMENTAL CLASS ARRAY
   useEffect(() => {
     if (classDayCurriculumSelectedData !== undefined) {
       if (!classDayCurriculumSelectedData[0].sunday) {
-        indexDaysArray.push(indexDays.sunday);
+        setIndexDaysArray((indexDaysArray) => [
+          ...indexDaysArray,
+          indexDays.sunday,
+        ]);
       }
       if (!classDayCurriculumSelectedData[0].monday) {
-        indexDaysArray.push(indexDays.monday);
+        setIndexDaysArray((indexDaysArray) => [
+          ...indexDaysArray,
+          indexDays.monday,
+        ]);
       }
       if (!classDayCurriculumSelectedData[0].tuesday) {
-        indexDaysArray.push(indexDays.tuesday);
+        setIndexDaysArray((indexDaysArray) => [
+          ...indexDaysArray,
+          indexDays.tuesday,
+        ]);
       }
       if (!classDayCurriculumSelectedData[0].wednesday) {
-        indexDaysArray.push(indexDays.wednesday);
+        setIndexDaysArray((indexDaysArray) => [
+          ...indexDaysArray,
+          indexDays.wednesday,
+        ]);
       }
       if (!classDayCurriculumSelectedData[0].thursday) {
-        indexDaysArray.push(indexDays.thursday);
+        setIndexDaysArray((indexDaysArray) => [
+          ...indexDaysArray,
+          indexDays.thursday,
+        ]);
       }
       if (!classDayCurriculumSelectedData[0].friday) {
-        indexDaysArray.push(indexDays.friday);
+        setIndexDaysArray((indexDaysArray) => [
+          ...indexDaysArray,
+          indexDays.friday,
+        ]);
       }
       if (!classDayCurriculumSelectedData[0].saturday) {
-        indexDaysArray.push(indexDays.saturday);
+        setIndexDaysArray((indexDaysArray) => [
+          ...indexDaysArray,
+          indexDays.saturday,
+        ]);
       }
     } else {
       //@ts-ignore
@@ -1083,32 +1102,55 @@ export function EditStudent() {
     handleNewExperimentalCurriculumClassDayFullData();
   }, [newStudentData.experimentalCurriculumClassDayId]);
 
+  // DAYS WITH EXPERIMENTAL CLASS ARRAY
   const [experimentalIndexDaysArray, setExperimentalIndexDaysArray] = useState<
     number[]
   >([]);
 
+  // SET DAYS WITH EXPERIMENTAL CLASS ARRAY
   useEffect(() => {
     if (classDayExperimentalCurriculumSelectedData !== undefined) {
       if (!classDayExperimentalCurriculumSelectedData[0].sunday) {
-        experimentalIndexDaysArray.push(indexDays.sunday);
+        setExperimentalIndexDaysArray((experimentalIndexDaysArray) => [
+          ...experimentalIndexDaysArray,
+          indexDays.sunday,
+        ]);
       }
       if (!classDayExperimentalCurriculumSelectedData[0].monday) {
-        experimentalIndexDaysArray.push(indexDays.monday);
+        setExperimentalIndexDaysArray((experimentalIndexDaysArray) => [
+          ...experimentalIndexDaysArray,
+          indexDays.monday,
+        ]);
       }
       if (!classDayExperimentalCurriculumSelectedData[0].tuesday) {
-        experimentalIndexDaysArray.push(indexDays.tuesday);
+        setExperimentalIndexDaysArray((experimentalIndexDaysArray) => [
+          ...experimentalIndexDaysArray,
+          indexDays.tuesday,
+        ]);
       }
       if (!classDayExperimentalCurriculumSelectedData[0].wednesday) {
-        experimentalIndexDaysArray.push(indexDays.wednesday);
+        setExperimentalIndexDaysArray((experimentalIndexDaysArray) => [
+          ...experimentalIndexDaysArray,
+          indexDays.wednesday,
+        ]);
       }
       if (!classDayExperimentalCurriculumSelectedData[0].thursday) {
-        experimentalIndexDaysArray.push(indexDays.thursday);
+        setExperimentalIndexDaysArray((experimentalIndexDaysArray) => [
+          ...experimentalIndexDaysArray,
+          indexDays.thursday,
+        ]);
       }
       if (!classDayExperimentalCurriculumSelectedData[0].friday) {
-        experimentalIndexDaysArray.push(indexDays.friday);
+        setExperimentalIndexDaysArray((experimentalIndexDaysArray) => [
+          ...experimentalIndexDaysArray,
+          indexDays.friday,
+        ]);
       }
       if (!classDayExperimentalCurriculumSelectedData[0].saturday) {
-        experimentalIndexDaysArray.push(indexDays.saturday);
+        setExperimentalIndexDaysArray((experimentalIndexDaysArray) => [
+          ...experimentalIndexDaysArray,
+          indexDays.saturday,
+        ]);
       }
     } else {
       //@ts-ignore
@@ -1119,6 +1161,7 @@ export function EditStudent() {
   // -------------------------- END OF NEW EXPERIMENTAL CURRICULUM CLASS DAY STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
+  // EXPERIMENTAL CLASS ERROR STATE
   const [experimentalClassError, setExperimentalClassError] = useState(false);
 
   // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
@@ -1502,8 +1545,6 @@ export function EditStudent() {
       },
       responsible: "",
       financialResponsible: "",
-      curriculumDetails: [],
-      familyDetails: [],
       addCurriculum: false,
       addExperimentalCurriculum: false,
       addFamily: false,
@@ -1557,8 +1598,6 @@ export function EditStudent() {
       },
       responsible: "",
       financialResponsible: "",
-      curriculumDetails: [],
-      familyDetails: [],
       addCurriculum: false,
       addExperimentalCurriculum: false,
       addFamily: false,
@@ -1605,6 +1644,9 @@ export function EditStudent() {
     });
     setExcludeCurriculum([]);
     setExcludeExperimentalCurriculum([]);
+    setExcludeFamily([]);
+    setStudentFamilyDetails([]);
+    setStudentCurriculumDetails([]);
     reset();
   };
 
@@ -1634,8 +1676,6 @@ export function EditStudent() {
     setValue("phoneTertiary.suffix", studentEditData.phoneTertiary.suffix);
     setValue("responsible", studentEditData.responsible);
     setValue("financialResponsible", studentEditData.financialResponsible);
-    setValue("curriculumDetails", studentEditData.curriculumDetails);
-    setValue("familyDetails", studentEditData.familyDetails);
     setValue("addCurriculum", studentEditData.addCurriculum);
     setValue(
       "addExperimentalCurriculum",
@@ -1671,8 +1711,6 @@ export function EditStudent() {
       errors.phoneTertiary?.suffix,
       errors.responsible,
       errors.financialResponsible,
-      errors.familyDetails,
-      errors.curriculumDetails,
       errors.addCurriculum,
       errors.addExperimentalCurriculum,
       errors.addFamily,
@@ -1687,7 +1725,7 @@ export function EditStudent() {
       });
     });
   }, [errors]);
-console.log(studentEditData)
+
   // SUBMIT DATA FUNCTION
   const handleEditStudent: SubmitHandler<EditStudentValidationZProps> = async (
     data
@@ -1754,7 +1792,7 @@ console.log(studentEditData)
     } else {
       // CHECK IF EXPERIMENTAL CURRICULUM ALREADY EXISTS ON STUDENT DATABASE
       const checkExistentExperimentalCurriculum = [];
-      studentEditData.curriculumDetails!.map((curriculumDetail) => {
+      studentCurriculumDetails!.map((curriculumDetail) => {
         if (
           curriculumDetail!.id === newStudentData.experimentalCurriculum &&
           curriculumDetail!.isExperimental
@@ -1779,9 +1817,9 @@ console.log(studentEditData)
       }
       // CHECK IF STUDENT IS TRYING TO ADD EXPERIMENTAL CLASS INTO A COURSE THAT IS ALREADY ENROLLED
       const checkExistentCurriculum = [];
-      studentEditData.curriculumDetails!.map((curriculumDetail) => {
+      studentCurriculumDetails!.map((curriculumDetail) => {
         if (
-          curriculumDetail!.id === newStudentData.curriculum &&
+          curriculumDetail!.id === newStudentData.experimentalCurriculum &&
           !curriculumDetail!.isExperimental
         ) {
           checkExistentCurriculum.push(curriculumDetail!.id);
@@ -1806,7 +1844,8 @@ console.log(studentEditData)
 
     // CHECK IF SOME EXPERIMENTAL CURRICULUM WAS EXCLUDED
     const experimentalCurriculumLength = [];
-    studentEditData.curriculumDetails!.map((curriculumDetail) => {
+    studentCurriculumDetails!.map((curriculumDetail) => {
+      console.log("Curriculum Detail: ", curriculumDetail);
       if (curriculumDetail!.isExperimental) {
         experimentalCurriculumLength.push(curriculumDetail!.id);
       }
@@ -1878,7 +1917,7 @@ console.log(studentEditData)
     } else {
       // CHECK IF CURRICULUM ALREADY EXISTS ON STUDENT DATABASE
       const checkExistentCurriculum = [];
-      studentEditData.curriculumDetails!.map((curriculumDetail) => {
+      studentCurriculumDetails!.map((curriculumDetail) => {
         if (
           curriculumDetail!.id === newStudentData.curriculum &&
           !curriculumDetail!.isExperimental
@@ -1905,7 +1944,7 @@ console.log(studentEditData)
 
     // CHECK IF SOME CURRICULUM WAS EXCLUDED
     const curriculumLength = [];
-    studentEditData.curriculumDetails!.map((curriculumDetail) => {
+    studentCurriculumDetails!.map((curriculumDetail) => {
       if (!curriculumDetail!.isExperimental) {
         curriculumLength.push(curriculumDetail!.id);
       }
@@ -1972,7 +2011,7 @@ console.log(studentEditData)
       );
     }
     // CHECK CONFIRM ADD NEW FAMILY MEMBER
-    else if (!newStudentData.confirmAddFamily) {
+    if (newStudentData.familyId && !newStudentData.confirmAddFamily) {
       return (
         setIsSubmitting(false),
         toast.error(
@@ -1989,14 +2028,13 @@ console.log(studentEditData)
     }
 
     // CHECK IF NEW FAMILY MEMBER ALREADY EXISTS ON STUDENT DATABASE
-    const checkExistentFamily = studentEditData.familyDetails!.map(
-      (familyDetail) => {
-        if (familyDetail!.id === newStudentData.familyId) {
-          return true;
-        } else false;
+    const checkExistentFamily = [];
+    studentFamilyDetails!.map((familyDetail) => {
+      if (familyDetail!.id === newStudentData.familyId) {
+        checkExistentFamily.push(familyDetail.id);
       }
-    );
-    if (checkExistentFamily) {
+    });
+    if (checkExistentFamily.length > 0) {
       return (
         setIsSubmitting(false),
         toast.error(
@@ -2013,9 +2051,7 @@ console.log(studentEditData)
     }
 
     // CHECK IF SOME FAMILY WAS EXCLUDED
-    if (
-      newStudentFamilyArray.length !== studentEditData.familyDetails!.length
-    ) {
+    if (newStudentFamilyArray.length !== studentFamilyDetails!.length) {
       excludeFamily.map(async (familyToExclude) => {
         if (familyToExclude.exclude) {
           // UPDATE STUDENT (DELETE FAMILY FROM STUDENT DATABASE)
@@ -2399,6 +2435,11 @@ console.log(studentEditData)
 
         {isEdit ? (
           <>
+            {/** PERSONAL DATA SECTION TITLE */}
+            <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+              Dados Pessoais:
+            </h1>
+
             {/* STUDENT NAME */}
             <div className="flex gap-2 items-center">
               <label
@@ -3231,6 +3272,14 @@ console.log(studentEditData)
               />
             </div>
 
+            {/* SEPARATOR */}
+            {/* <hr className="pb-4" /> */}
+
+            {/** EXPERIMENTAL CURRICULUM SECTION TITLE */}
+            <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+              Aulas Experimentais:
+            </h1>
+
             {/* EXISTENT EXPERIMENTAL CURRICULUM */}
             {haveCurriculum
               ? excludeExperimentalCurriculum.map((curriculum, index) => (
@@ -3484,7 +3533,7 @@ console.log(studentEditData)
                             (curriculum: any) => (
                               <div
                                 className={
-                                  errors.curriculumDetails
+                                  errors.addExperimentalCurriculum
                                     ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
                                     : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
                                 }
@@ -3504,6 +3553,7 @@ console.log(studentEditData)
                                         curriculum.name,
                                       experimentalCurriculumClassDayId:
                                         curriculum.classDayId,
+                                      confirmAddExperimentalCurriculum: false,
                                     });
                                   }}
                                 />
@@ -3563,7 +3613,8 @@ console.log(studentEditData)
                   </>
                 )}
 
-                {classDayExperimentalCurriculumSelectedData &&
+                {newStudentData.experimentalCurriculum &&
+                classDayExperimentalCurriculumSelectedData &&
                 experimentalIndexDaysArray !== undefined ? (
                   <>
                     {/* EXPERIMENTAL/INITIAL DAY */}
@@ -3646,6 +3697,14 @@ console.log(studentEditData)
                 </div>
               </div>
             ) : null}
+
+            {/* SEPARATOR */}
+            {/* <hr className="pb-4" /> */}
+
+            {/** CURRICULUM SECTION TITLE */}
+            <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+              Matriculado em:
+            </h1>
 
             {/* EXISTENT CURRICULUM */}
             {haveCurriculum
@@ -3885,7 +3944,7 @@ console.log(studentEditData)
                           {newCurriculumCoursesData.map((curriculum: any) => (
                             <div
                               className={
-                                errors.curriculumDetails
+                                errors.addCurriculum
                                   ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
                                   : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
                               }
@@ -3903,6 +3962,7 @@ console.log(studentEditData)
                                     curriculum: e.target.value,
                                     curriculumName: curriculum.name,
                                     curriculumClassDayId: curriculum.classDayId,
+                                    confirmAddCurriculum: false,
                                   });
                                 }}
                               />
@@ -3959,7 +4019,8 @@ console.log(studentEditData)
                   </>
                 )}
 
-                {classDayCurriculumSelectedData &&
+                {newStudentData.curriculum &&
+                classDayCurriculumSelectedData &&
                 indexDaysArray.length !== undefined ? (
                   <>
                     {/* NEW CURRICULUM/INITIAL DAY */}
@@ -4039,6 +4100,14 @@ console.log(studentEditData)
                 </div>
               </div>
             ) : null}
+
+            {/* SEPARATOR */}
+            {/* <hr className="pb-4" /> */}
+
+            {/** CURRICULUM SECTION TITLE */}
+            <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+              Familiares:
+            </h1>
 
             {/* EXISTENT FAMILY */}
             {haveFamily
