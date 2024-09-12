@@ -14,8 +14,6 @@ export default function LoginPage() {
   const { login, userLoading, setLogin } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
-  
-console.log(import.meta.env.VITE_FIREBASE_API_KEY)
 
   return (
     <div className="text-center flex flex-col gap-5 items-center">
