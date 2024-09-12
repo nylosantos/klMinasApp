@@ -7,12 +7,13 @@ import "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAv6bOqFMQ5_pf3P7TPSqjQNnOHJqocaFA",
-  authDomain: "klminasapp.firebaseapp.com",
-  projectId: "klminasapp",
-  storageBucket: "klminasapp.appspot.com",
-  messagingSenderId: "966343529337",
-  appId: "1:966343529337:web:c77ac6b588beb2df8555a8"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string,
+  messagingSenderId: import.meta.env
+    .VITE_FIREBASE_MESSAGING_SENDER_ID as string,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID as string,
 };
 
 // Initialize Firebase

@@ -16,8 +16,16 @@ type NavigationsProps = {
 
 export function Header() {
   // GET GLOBAL DATA
-  const { auth, page, theme, logged, userFullData, setPage, setTheme } =
-    useContext(GlobalDataContext) as GlobalDataContextType;
+  const {
+    auth,
+    page,
+    theme,
+    logged,
+    userFullData,
+    setLogin,
+    setPage,
+    setTheme,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // MOUNTED PAGE
   const [mounted, setMounted] = useState(false);
@@ -140,7 +148,10 @@ export function Header() {
               >
                 <p
                   className="text-klGreen-500 dark:text-klOrange-500 hover:text-red-500 dark:hover:text-red-500 cursor-pointer"
-                  onClick={() => auth.signOut()}
+                  onClick={() => {
+                    setLogin(true);
+                    auth.signOut();
+                  }}
                 >
                   Sair
                 </p>
