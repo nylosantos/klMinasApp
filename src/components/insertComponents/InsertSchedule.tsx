@@ -326,7 +326,7 @@ export function InsertSchedule() {
             disabled={isSubmitting}
             placeholder={
               // eslint-disable-next-line no-constant-condition
-              "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              errors.name
                 ? "É necessário inserir um Identificador para o Horário"
                 : "Insira um Identificador para o Horário"
             }

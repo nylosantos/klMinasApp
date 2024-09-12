@@ -137,8 +137,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   }, [user]);
 
   const [page, setPage] = useState<SetPageProps>({
-    prev: "Dashboard" || "Settings" || "ManageSchools" || "ManageUsers",
-    show: "Dashboard" || "Settings" || "ManageSchools" || "ManageUsers",
+    prev: "Dashboard",
+    show: "Dashboard",
   });
   return (
     <GlobalDataContext.Provider
