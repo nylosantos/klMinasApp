@@ -45,6 +45,53 @@ export function SelectOptions({
   // DATA STATE
   const [data, setData] = useState<any[]>([]);
 
+  function handleQueryData() {
+    if (dataType === "appUsers" && displayAdmins) {
+      // QUERY FOR SEARCH APP USERS, "ROOT" USERS
+      return query(collection(db, dataType), where("role", "!=", "root"));
+    } else if (dataType === "appUsers") {
+      // QUERY FOR SEARCH APP USERS, EXCEPT "ADMIN" AND "ROOT" USERS
+      return query(
+        collection(db, dataType),
+        where("role", "not-in", ["admin", "root"])
+      );
+    } else if (onlyAvailableClasses && schoolId) {
+      // QUERY FOR SEARCH ONLY AVAILABLE SCHOOL CLASSES OF SCHOOL ID
+      return query(
+        collection(db, dataType),
+        where("schoolId", "==", schoolId),
+        where("available", "==", "open"),
+        orderBy("name")
+      );
+    } else if (availableAndWaitingClasses && schoolId) {
+      // QUERY FOR SEARCH AVAILABLE AND WAITING LIST SCHOOL CLASSES OF SCHOOL ID
+      return query(
+        collection(db, dataType),
+        where("schoolId", "==", schoolId),
+        where("available", "!=", "closed"),
+        orderBy("available")
+      );
+    } else if (schoolId && schoolClassId) {
+      // QUERY SEARCH SOMETHING WITH SELECTED SCHOOL AND SCHOOL CLASS FILTERS (CURRICULUM - SCHEDULE)
+      return query(
+        collection(db, dataType),
+        where("schoolId", "==", schoolId),
+        where("schoolClassId", "==", schoolClassId),
+        orderBy("name")
+      );
+    } else if (schoolId) {
+      // QUERY SEARCH SOMETHING WITH SELECTED SCHOOL FILTER
+      return query(
+        collection(db, dataType),
+        where("schoolId", "==", schoolId),
+        orderBy("name")
+      );
+    } else {
+      // QUERY ONLY FOR DATATYPE
+      return query(collection(db, dataType), orderBy("name"));
+    }
+  }
+
   // GET DATA
   const handleOptionData = async () => {
     if (dataType === "allStudents") {
@@ -215,49 +262,49 @@ export function SelectOptions({
         setData(promises.sort((a, b) => a.name.localeCompare(b.name)));
       }
     } else {
-      const q =
-        dataType === "appUsers" && displayAdmins
-          ? // QUERY FOR SEARCH APP USERS, "ROOT" USERS
-            query(collection(db, dataType), where("role", "!=", "root"))
-          : dataType === "appUsers"
-          ? // QUERY FOR SEARCH APP USERS, EXCEPT "ADMIN" AND "ROOT" USERS
-            query(
-              collection(db, dataType),
-              where("role", "not-in", ["admin", "root"])
-            )
-          : onlyAvailableClasses && schoolId
-          ? // QUERY FOR SEARCH ONLY AVAILABLE SCHOOL CLASSES OF SCHOOL ID
-            query(
-              collection(db, dataType),
-              where("schoolId", "==", schoolId),
-              where("available", "==", "open"),
-              orderBy("name")
-            )
-          : availableAndWaitingClasses && schoolId
-          ? // QUERY FOR SEARCH AVAILABLE AND WAITING LIST SCHOOL CLASSES OF SCHOOL ID
-            query(
-              collection(db, dataType),
-              where("schoolId", "==", schoolId),
-              where("available", "!=", "closed"),
-              orderBy("available")
-            )
-          : schoolId && schoolClassId
-          ? // QUERY SEARCH SOMETHING WITH SELECTED SCHOOL AND SCHOOL CLASS FILTERS (CURRICULUM - SCHEDULE)
-            query(
-              collection(db, dataType),
-              where("schoolId", "==", schoolId),
-              where("schoolClassId", "==", schoolClassId),
-              orderBy("name")
-            )
-          : schoolId
-          ? // QUERY SEARCH SOMETHING WITH SELECTED SCHOOL FILTER
-            query(
-              collection(db, dataType),
-              where("schoolId", "==", schoolId),
-              orderBy("name")
-            )
-          : // QUERY ONLY FOR DATATYPE
-            query(collection(db, dataType), orderBy("name"));
+      const q = handleQueryData();
+      // dataType === "appUsers" && displayAdmins
+      //   ? // QUERY FOR SEARCH APP USERS, "ROOT" USERS
+      //     query(collection(db, dataType), where("role", "!=", "root"))
+      //   : dataType === "appUsers"
+      //   ? // QUERY FOR SEARCH APP USERS, EXCEPT "ADMIN" AND "ROOT" USERS
+      //     query(
+      //       collection(db, dataType),
+      //       where("role", "not-in", ["admin", "root"])
+      //     )
+      //   : onlyAvailableClasses && schoolId
+      //   ? // QUERY FOR SEARCH ONLY AVAILABLE SCHOOL CLASSES OF SCHOOL ID
+      //     query(
+      //       collection(db, dataType),
+      //       where("schoolId", "==", schoolId),
+      //       where("available", "==", "open"),
+      //       orderBy("name")
+      //     )
+      //   : availableAndWaitingClasses && schoolId
+      //   ? // QUERY FOR SEARCH AVAILABLE AND WAITING LIST SCHOOL CLASSES OF SCHOOL ID
+      //     query(
+      //       collection(db, dataType),
+      //       where("schoolId", "==", schoolId),
+      //       where("available", "!=", "closed"),
+      //       orderBy("available")
+      //     )
+      //   : schoolId && schoolClassId
+      //   ? // QUERY SEARCH SOMETHING WITH SELECTED SCHOOL AND SCHOOL CLASS FILTERS (CURRICULUM - SCHEDULE)
+      //     query(
+      //       collection(db, dataType),
+      //       where("schoolId", "==", schoolId),
+      //       where("schoolClassId", "==", schoolClassId),
+      //       orderBy("name")
+      //     )
+      //   : schoolId
+      //   ? // QUERY SEARCH SOMETHING WITH SELECTED SCHOOL FILTER
+      //     query(
+      //       collection(db, dataType),
+      //       where("schoolId", "==", schoolId),
+      //       orderBy("name")
+      //     )
+      //   : // QUERY ONLY FOR DATATYPE
+      //     query(collection(db, dataType), orderBy("name"));
       const unsubscribe = onSnapshot(q, (querySnapShot) => {
         const promises: any = [];
         querySnapShot.forEach((doc) => {
@@ -287,6 +334,7 @@ export function SelectOptions({
 
   // IF HAS A FUNCTION, SEND DATA FOR IT
   useEffect(() => {
+    
     if (handleData) {
       handleData(data);
     }

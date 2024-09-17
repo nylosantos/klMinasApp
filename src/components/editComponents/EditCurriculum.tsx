@@ -65,9 +65,9 @@ export function EditCurriculum() {
         scheduleSelectedData
           ? scheduleSelectedData.name
           : curriculumEditData.schedule
-      } | ${curriculumEditData.classDay} | Professor: ${
-        curriculumEditData.teacher
-      }`,
+      } | ${curriculumEditData.classDay} | ${
+        curriculumEditData.schoolClass
+      } | Professor: ${curriculumEditData.teacher}`,
     });
   }, [curriculumEditData]);
 
@@ -200,6 +200,7 @@ export function EditCurriculum() {
 
   // SET CURRICULUM EDIT DATA WHEN CURRICULUM CHANGE
   useEffect(() => {
+    console.log("oi", curriculumSelectedData);
     setCurriculumEditData({
       ...curriculumEditData,
       schoolCourseId: curriculumSelectedData
@@ -216,10 +217,14 @@ export function EditCurriculum() {
         ? curriculumSelectedData.classDayId
         : "",
       classDay: curriculumSelectedData ? curriculumSelectedData.classDay : "",
-      teacherId: curriculumSelectedData ? curriculumSelectedData.teacherId : "",
-      teacher: curriculumSelectedData ? curriculumSelectedData.teacher : "",
+      teacherId: curriculumSelectedData
+        ? curriculumSelectedData.teacherId
+        : "Jesus amado",
+      teacher: curriculumSelectedData
+        ? curriculumSelectedData.teacher
+        : "Jesus amado Nome",
     });
-  }, [curriculumSelectedData]);
+  }, [curriculumSelectedData, curriculumEditData.curriculumId]);
   // -------------------------- END OF CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
@@ -309,6 +314,10 @@ export function EditCurriculum() {
   const handleTeacherSelectedData = (data: TeacherSearchProps[]) => {
     setTeachersDataArray(data);
   };
+
+  useEffect(() => {
+    console.log("curriculumEditData", curriculumEditData);
+  }, [curriculumEditData]);
 
   // TEACHER SELECTED STATE DATA
   const [teacherSelectedData, setTeacherSelectedData] =
@@ -451,6 +460,9 @@ export function EditCurriculum() {
         await updateDoc(
           doc(db, "curriculum", curriculumEditData.curriculumId),
           {
+            name: data.name,
+            schoolClass: data.schoolClass,
+            schoolClassId: data.schoolClassId,
             schedule: data.schedule,
             scheduleId: data.scheduleId,
             classDay: data.classDay,

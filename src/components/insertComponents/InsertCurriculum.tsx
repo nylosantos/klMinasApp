@@ -844,8 +844,9 @@ export function InsertCurriculum() {
               curriculumData.schoolCourseName &&
               curriculumData.scheduleName &&
               curriculumData.classDayName &&
+              curriculumData.schoolClassName &&
               curriculumData.teacherName
-                ? `${curriculumData.schoolName} | ${curriculumData.schoolCourseName} | ${curriculumData.scheduleName} | ${curriculumData.classDayName} | Professor: ${curriculumData.teacherName}`
+                ? `${curriculumData.schoolName} | ${curriculumData.schoolCourseName} | ${curriculumData.scheduleName} | ${curriculumData.classDayName} | ${curriculumData.schoolClassName} | Professor: ${curriculumData.teacherName}`
                 : ""
             }
           />
@@ -866,14 +867,14 @@ export function InsertCurriculum() {
                     {curriculumData.schoolName}
                   </span>
                 </p>
-                {curriculumData.schoolName === "Colégio Bernoulli" ? (
-                  <p>
-                    Turma:{" "}
-                    <span className="text-red-600 dark:text-yellow-500">
-                      {curriculumData.schoolClassName}
-                    </span>
-                  </p>
-                ) : null}
+
+                <p>
+                  Turma:{" "}
+                  <span className="text-red-600 dark:text-yellow-500">
+                    {curriculumData.schoolClassName}
+                  </span>
+                </p>
+
                 <p>
                   Modalidade:{" "}
                   <span className="text-red-600 dark:text-yellow-500">

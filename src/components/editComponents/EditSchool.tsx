@@ -52,6 +52,11 @@ export function EditSchool() {
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
 
+  useEffect(() => {
+    console.log("schoolSelectedData: ", schoolSelectedData);
+    console.log("schoolEditData: ", schoolEditData);
+  }, [schoolSelectedData, schoolEditData]);
+
   // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
   useEffect(() => {
     setIsEdit(false);

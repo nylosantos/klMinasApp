@@ -50,6 +50,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   // THEME STATE
   const [theme, setTheme] = useState<"dark" | "light" | null>(null);
 
+  // LISTENING TO THEME CHANGES
   useEffect(() => {
     if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
       setTheme("dark");
@@ -58,6 +59,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     }
   }, []);
 
+  // CHANGING THEME CLASS TO BODY
   useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
@@ -136,10 +138,12 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     }
   }, [user]);
 
+  // PAGE STATE
   const [page, setPage] = useState<SetPageProps>({
     prev: "Dashboard",
     show: "Dashboard",
   });
+
   return (
     <GlobalDataContext.Provider
       value={{

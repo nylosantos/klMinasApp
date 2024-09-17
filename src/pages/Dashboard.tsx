@@ -1,4 +1,8 @@
-import { collection, getDocs, getFirestore } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  getFirestore
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   CurriculumSearchProps,
@@ -46,12 +50,12 @@ export default function Dashboard() {
   const handleData = async () => {
     // GET SCHOOL DATA
     const querySnapshotSchool = await getDocs(collection(db, "schools"));
-    const schoolPromises: SchoolSearchProps[] = [];
+    const schoolDatabaseData: SchoolSearchProps[] = [];
     querySnapshotSchool.forEach((doc) => {
-      const promise = doc.data() as SchoolSearchProps;
-      schoolPromises.push(promise);
+      const school = doc.data() as SchoolSearchProps;
+      schoolDatabaseData.push(school);
     });
-    setSchoolData(schoolPromises);
+    setSchoolData(schoolDatabaseData);
 
     // GET SCHOOL CLASS DATA
     const querySnapshotSchoolClass = await getDocs(
@@ -110,6 +114,15 @@ export default function Dashboard() {
     });
     setStudentsData(studentsPromises);
   };
+
+  function handleScheduleDetails(id: string) {
+    const scheduleDetail = scheduleData.find((schedule) => schedule.id === id);
+    if (scheduleDetail) {
+      return scheduleDetail;
+    } else {
+      return;
+    }
+  }
 
   useEffect(() => {
     handleData();
@@ -207,7 +220,13 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
-        <div className="flex flex-col container mt-8 [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl">
+        <div
+          className={
+            showPage === "curriculum"
+              ? `flex flex-wrap justify-center container mt-8 [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl gap-2`
+              : `flex flex-col container mt-8 [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl`
+          }
+        >
           {showPage === "school" ? (
             schoolData.length !== 0 ? (
               schoolData
@@ -326,13 +345,96 @@ export default function Dashboard() {
                 .map((curriculum) => {
                   return (
                     <div
-                      className="flex justify-center p-4 "
                       key={curriculum.id}
+                      className="flex flex-col w-3/12 items-left p-4 my-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
                     >
-                      <p className="text-klGreen-500 dark:text-white">
-                        {curriculum.name}
+                      <p>
+                        Colégio:{" "}
+                        <span className="text-red-600 dark:text-yellow-500">
+                          {curriculum.school}
+                        </span>
+                      </p>
+
+                      <p>
+                        Turma:{" "}
+                        <span className="text-red-600 dark:text-yellow-500">
+                          {curriculum.schoolClass}
+                        </span>
+                      </p>
+
+                      <p>
+                        Modalidade:{" "}
+                        <span className="text-red-600 dark:text-yellow-500">
+                          {curriculum.schoolCourse}
+                        </span>
+                      </p>
+                      <p>
+                        Dias:{" "}
+                        <span className="text-red-600 dark:text-yellow-500">
+                          {curriculum.classDay}
+                        </span>
+                      </p>
+                      {handleScheduleDetails(curriculum.scheduleId) !==
+                      undefined ? (
+                        <p>
+                          Horário:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            De{" "}
+                            {`${handleScheduleDetails(
+                              curriculum.scheduleId
+                            )!.classStart.slice(0, 2)}h${
+                              handleScheduleDetails(
+                                curriculum.scheduleId
+                              )!.classStart.slice(3, 5) === "00"
+                                ? ""
+                                : handleScheduleDetails(
+                                    curriculum.scheduleId
+                                  )!.classStart.slice(3, 5) + "min"
+                            } a ${handleScheduleDetails(
+                              curriculum.scheduleId
+                            )!.classEnd.slice(0, 2)}h${
+                              handleScheduleDetails(
+                                curriculum.scheduleId
+                              )!.classEnd.slice(3, 5) === "00"
+                                ? ""
+                                : handleScheduleDetails(
+                                    curriculum.scheduleId
+                                  )!.classEnd.slice(3, 5) + "min"
+                            } (${curriculum.schedule})`}
+                          </span>
+                        </p>
+                      ) : null}
+                      <p>
+                        Professor:{" "}
+                        <span className="text-red-600 dark:text-yellow-500">
+                          {curriculum.teacher}
+                        </span>
                       </p>
                     </div>
+
+                    // <div
+                    //   className="flex flex-col w-3/12 justify-center p-4 gap-2 rounded-xl"
+                    //   key={curriculum.id}
+                    // >
+                    //   <p className="text-klGreen-500 dark:text-white">
+                    //     Escola: {curriculum.school}
+                    //   </p>
+                    //   <p className="text-klGreen-500 dark:text-white">
+                    //     Modalidade: {curriculum.schoolCourse}
+                    //   </p>
+                    //   <p className="text-klGreen-500 dark:text-white">
+                    //     Horário: {curriculum.schedule}
+                    //   </p>
+                    //   <p className="text-klGreen-500 dark:text-white">
+                    //     Dias de Aula: {curriculum.classDay}
+                    //   </p>
+                    //   <p className="text-klGreen-500 dark:text-white">
+                    //     Turma: {curriculum.schoolClass}
+                    //   </p>
+                    //   <p className="text-klGreen-500 dark:text-white">
+                    //     Professor: {curriculum.teacher}
+                    //   </p>
+                    // </div>
                   );
                 })
             ) : (
