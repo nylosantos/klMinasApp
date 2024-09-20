@@ -1,20 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import CurrencyInput from "react-currency-input-field";
 import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  DocumentData,
-  getDocs,
-  getFirestore,
-  query,
-  where,
-} from "firebase/firestore";
+import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -23,12 +14,24 @@ import { deleteSchoolCourseValidationSchema } from "../../@types/zodValidation";
 import {
   DeleteSchoolCourseValidationZProps,
   SchoolCourseSearchProps,
+  StudentSearchProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function DeleteCourse() {
+  // GET GLOBAL DATA
+  const {
+    curriculumDatabaseData,
+    schoolCourseDatabaseData,
+    studentsDatabaseData,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
+
   // SCHOOL COURSE DATA
   const [schoolCourseData, setSchoolCourseData] =
     useState<DeleteSchoolCourseValidationZProps>({
@@ -41,15 +44,6 @@ export function DeleteCourse() {
     });
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL COURSE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL COURSE
-  const [schoolCourseDataArray, setSchoolCourseDataArray] =
-    useState<SchoolCourseSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL COURSE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolCourseSelectedData = (data: SchoolCourseSearchProps[]) => {
-    setSchoolCourseDataArray(data);
-  };
-
   // SCHOOL COURSE SELECTED STATE DATA
   const [schoolCourseSelectedData, setSchoolCourseSelectedData] =
     useState<SchoolCourseSearchProps>();
@@ -59,7 +53,7 @@ export function DeleteCourse() {
     if (schoolCourseData.schoolCourseId !== "") {
       setIsSelected(true);
       setSchoolCourseSelectedData(
-        schoolCourseDataArray!.find(
+        schoolCourseDatabaseData.find(
           ({ id }) => id === schoolCourseData.schoolCourseId
         )
       );
@@ -198,43 +192,138 @@ export function DeleteCourse() {
       );
     }
 
-    // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
-    const schoolCourseRef = collection(db, "curriculum");
-    const q = query(
-      schoolCourseRef,
-      where("schoolCourse", "==", data.schoolCourseName)
+    // CHECKING IF SCHOOLCOURSE EXISTS ON SOME STUDENT OR CURRICULUM ON DATABASE
+    // STUDENTS IN THIS SCHOOLCOURSE ARRAY
+    const schoolCourseExistsOnStudent: StudentSearchProps[] = [];
+
+    // SEARCH CURRICULUM WITH THIS SCHOOLCOURSE
+    const schoolCourseExistsOnCurriculum = curriculumDatabaseData.filter(
+      (curriculum) =>
+        curriculum.schoolCourseId === schoolCourseData.schoolCourseId
     );
-    const querySnapshot = await getDocs(q);
-    const promises: DocumentData[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(
-            `Modalidade incluída em ${results.length} ${
-              results.length === 1 ? "Currículo" : "Currículos"
-            }, exclua ou altere primeiramente ${
-              results.length === 1 ? "o Currículo" : "os Currículos"
-            } e depois exclua a Modalidade ${data.schoolCourseName}... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
+
+    // SEARCH STUDENTS WITH THIS SCHOOLCOURSE AND PUTTING ON ARRAY
+    studentsDatabaseData.map((student) => {
+      if (student.curriculumIds) {
+        // ENROLLED STUDENTS
+        student.curriculumIds.map((studentCurriculum) => {
+          const foundedSchoolCourseStudentWithCurriculum =
+            schoolCourseExistsOnCurriculum.find(
+              (schoolCurriculum) => schoolCurriculum.id === studentCurriculum.id
+            );
+          if (foundedSchoolCourseStudentWithCurriculum) {
+            schoolCourseExistsOnStudent.push(student);
+          }
+        });
+        // EXPERIMENTAL STUDENTS
+        student.experimentalCurriculumIds.map(
+          (studentExperimentalCurriculum) => {
+            const foundedSchoolCourseStudentWithExperimentalCurriculum =
+              schoolCourseExistsOnCurriculum.find(
+                (schoolCurriculum) =>
+                  schoolCurriculum.id === studentExperimentalCurriculum.id
+              );
+            if (foundedSchoolCourseStudentWithExperimentalCurriculum) {
+              schoolCourseExistsOnStudent.push(student);
             }
-          )
+          }
         );
-      } else {
-        // IF NO EXISTS, DELETE
-        deleteSchoolCourse();
       }
     });
+
+    // IF EXISTS, RETURN ERROR
+    if (schoolCourseExistsOnStudent.length !== 0) {
+      return (
+        setSchoolCourseData({
+          ...schoolCourseData,
+          confirmDelete: false,
+        }),
+        setIsSubmitting(false),
+        toast.error(
+          `Modalidade tem ${schoolCourseExistsOnStudent.length} ${
+            schoolCourseExistsOnStudent.length === 1
+              ? "aluno matriculado"
+              : "alunos matriculados"
+          }, exclua ou altere primeiramente ${
+            schoolCourseExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
+          } e depois exclua a modalidade ${data.schoolCourseName}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else if (schoolCourseExistsOnCurriculum.length !== 0) {
+      return (
+        setSchoolCourseData({
+          ...schoolCourseData,
+          confirmDelete: false,
+        }),
+        setIsSubmitting(false),
+        toast.error(
+          `Modalidade incluída em ${schoolCourseExistsOnCurriculum.length} ${
+            schoolCourseExistsOnCurriculum.length === 1
+              ? "Currículo"
+              : "Currículos"
+          }, exclua ou altere primeiramente ${
+            schoolCourseExistsOnCurriculum.length === 1
+              ? "o Currículo"
+              : "os Currículos"
+          } e depois exclua a modalidade ${data.schoolCourseName}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else {
+      // IF NO EXISTS, DELETE
+      deleteSchoolCourse();
+    }
+
+    // // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
+    // const schoolCourseRef = collection(db, "curriculum");
+    // const q = query(
+    //   schoolCourseRef,
+    //   where("schoolCourse", "==", data.schoolCourseName)
+    // );
+    // const querySnapshot = await getDocs(q);
+    // const promises: DocumentData[] = [];
+    // querySnapshot.forEach((doc) => {
+    //   const promise = doc.data();
+    //   promises.push(promise);
+    // });
+    // Promise.all(promises).then((results) => {
+    //   // IF EXISTS, RETURN ERROR
+    //   if (results.length !== 0) {
+    //     return (
+    //       setIsSubmitting(false),
+    //       toast.error(
+    //         `Modalidade incluída em ${results.length} ${
+    //           results.length === 1 ? "Currículo" : "Currículos"
+    //         }, exclua ou altere primeiramente ${
+    //           results.length === 1 ? "o Currículo" : "os Currículos"
+    //         } e depois exclua a Modalidade ${data.schoolCourseName}... ❕`,
+    //         {
+    //           theme: "colored",
+    //           closeOnClick: true,
+    //           pauseOnHover: true,
+    //           draggable: true,
+    //           autoClose: 3000,
+    //         }
+    //       )
+    //     );
+    //   } else {
+    //     // IF NO EXISTS, DELETE
+    //     deleteSchoolCourse();
+    //   }
+    // });
   };
 
   return (
@@ -281,11 +370,7 @@ export function DeleteCourse() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schoolCourses"
-              handleData={handleSchoolCourseSelectedData}
-            />
+            <SelectOptions returnId dataType="schoolCourses" />
           </select>
         </div>
 

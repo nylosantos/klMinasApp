@@ -18,8 +18,8 @@ import {
 import { app } from "../../db/Firebase";
 import { systemSignUpClosed } from "../../custom";
 import {
-  AppUsersSearchProps,
   SignUpWithEmailAndPasswordZProps,
+  UserFullDataProps,
 } from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { ButtonSignSubmit } from "../layoutComponents/ButtonSignSubmit";
@@ -108,9 +108,9 @@ export function FormRegister() {
         const userRef = collection(db, "appUsers");
         const q = query(userRef, where("id", "==", user.uid));
         const querySnapshot = await getDocs(q);
-        const promises: AppUsersSearchProps[] = [];
+        const promises: UserFullDataProps[] = [];
         querySnapshot.forEach((doc) => {
-          const promise = doc.data() as AppUsersSearchProps;
+          const promise = doc.data() as UserFullDataProps;
           promises.push(promise);
         });
         Promise.all(promises).then((results) => {

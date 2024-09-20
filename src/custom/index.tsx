@@ -8,6 +8,10 @@ export const customerShortName = "KL";
 export const systemSignInClosed = false;
 // OPEN/CLOSE APP SIGN UP
 export const systemSignUpClosed = true;
+// ENROLMENT FEE FULL VALUES
+export const enrolmentFee = 157
+export const enrolmentFeeDiscount = 67.5
+
 // CUSTOM MONTHS OF DATEPICKER
 export const months = [
   ["Jan", "J"],

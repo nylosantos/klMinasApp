@@ -35,7 +35,6 @@ import {
   signUpEmailAndPasswordValidationSchema,
   testeBancoValidationSchema,
 } from "./zodValidation";
-import { Timestamp } from "firebase/firestore";
 
 // LOGIN VALIDATIONS
 export type LoginWithEmailAndPasswordZProps = z.infer<
@@ -52,7 +51,7 @@ export interface UserFullDataProps {
   phone?: string;
   photo?: string;
   role: "root" | "admin" | "editor" | "teacher" | "user";
-  timestamp: Date;
+  updatedAt: Date;
 }
 
 // CREATE VALIDATIONS USERS
@@ -187,7 +186,9 @@ export interface SelectProps {
     | "enrolledStudents"
     | "allCurriculum"
     | "enrolledCurriculum"
-    | "appUsers";
+    | "appUsers"
+    | "searchEnrolledStudent"
+    | "searchStudent";
   schoolId?: string;
   schoolClassId?: string;
   schoolCourseId?: string;
@@ -200,6 +201,9 @@ export interface SelectProps {
   curriculumIds?: Array<string>;
   experimentalCurriculumIds?: Array<string>;
   returnId?: boolean;
+  setSchedule?: boolean;
+  setClassDay?: boolean;
+  setTeacher?: boolean;
   displaySchoolCourseAndSchedule?: boolean;
   displayAdmins?: boolean;
   onlyAvailableClasses?: boolean;
@@ -228,20 +232,10 @@ export interface ClassDaysCompProps {
   };
   toggleClassDays: ({ day, value }: ToggleClassDaysFunctionProps) => void;
 }
-
-export interface AppUsersSearchProps {
-  email: string;
-  id: string;
-  name: string;
-  phone: string;
-  role: "root" | "admin" | "editor" | "teacher" | "user";
-  updatedAt: Timestamp;
-}
-
 export interface SchoolSearchProps {
   id: string;
   name: string;
-  timestamp: Date;
+  updatedAt: Date;
 }
 
 export interface SchoolClassSearchProps {
@@ -250,7 +244,7 @@ export interface SchoolClassSearchProps {
   schoolName: string;
   schoolId: string;
   available: "open" | "closed" | "waitingList";
-  timestamp: Date;
+  updatedAt: Date;
 }
 
 export interface SchoolCourseSearchProps {
@@ -259,7 +253,7 @@ export interface SchoolCourseSearchProps {
   priceUnit: number;
   priceBundle: number;
   bundleDays: number;
-  timestamp: Date;
+  updatedAt: Date;
 }
 
 export interface ClassDaySearchProps {
@@ -274,7 +268,7 @@ export interface ClassDaySearchProps {
   // thursday: boolean;
   // friday: boolean;
   // saturday: boolean;
-  timestamp: Date;
+  updatedAt: Date;
 }
 
 export interface TeacherSearchProps {
@@ -282,7 +276,8 @@ export interface TeacherSearchProps {
   name: string;
   email: string;
   phone: string;
-  timestamp: Date;
+  haveAccount: boolean;
+  updatedAt: Date;
 }
 
 export interface ScheduleSearchProps {
@@ -295,10 +290,47 @@ export interface ScheduleSearchProps {
   exit: string;
   schoolId: string;
   schoolName: string;
-  timestamp: Date;
+  updatedAt: Date;
 }
 
+// export interface StudentSearchProps {
+//   [x: string]: any;
+//   id: string;
+//   name: string;
+//   email: string;
+//   birthDate: string;
+//   address: {
+//     street: string;
+//     number: string;
+//     complement: string;
+//     neighborhood: string;
+//     city: string;
+//     state: string;
+//     cep: string;
+//   };
+//   phone: string;
+//   activePhoneSecondary: boolean;
+//   phoneSecondary: string;
+//   activePhoneTertiary: boolean;
+//   phoneTertiary: string;
+//   responsible: string;
+//   responsibleDocument: string;
+//   financialResponsible: string;
+//   financialResponsibleDocument: string;
+//   enrolmentFee: number;
+//   fullPrice: number;
+//   appliedPrice: number;
+//   customDiscount: boolean;
+//   customDiscountValue: string;
+//   employeeDiscount: boolean;
+//   enrolmentExemption: boolean;
+//   familyDiscount: boolean;
+//   secondCourseDiscount: boolean;
+//   updatedAt: Date;
+// }
+
 export interface StudentSearchProps {
+  [x: string]: any;
   id: string;
   name: string;
   email: string;
@@ -330,8 +362,46 @@ export interface StudentSearchProps {
   enrolmentExemption: boolean;
   familyDiscount: boolean;
   secondCourseDiscount: boolean;
-  timestamp: Date;
+  updatedAt: Date;
+  curriculumIds: Array<CurriculumArrayProps>;
+  experimentalCurriculumIds: Array<CurriculumArrayProps>;
+  paymentRegister: PaymentRegisterProps;
+  paymentDay?: string;
+  studentFamilyAtSchool: Array<StudentFamilyAtSchoolProps>;
 }
+
+export interface StudentFamilyAtSchoolProps {
+  id: string;
+  name: string;
+  applyDiscount: boolean;
+}
+export interface CurriculumArrayProps {
+  date: string;
+  id: string;
+  name: string;
+  isExperimental: boolean;
+  indexDays: Array<number>;
+  price: number;
+}
+
+// export interface CurriculumSearchProps {
+//   id: string;
+//   name: string;
+//   school: string;
+//   schoolId: string;
+//   schoolClass: string;
+//   schoolClassId: string;
+//   schoolCourse: string;
+//   schoolCourseId: string;
+//   classDay: string;
+//   classDayId: string;
+//   schedule: string;
+//   scheduleId: string;
+//   teacher: string;
+//   teacherId: string;
+//   students: [];
+//   updatedAt: Date;
+// }
 
 export interface CurriculumSearchProps {
   id: string;
@@ -348,8 +418,18 @@ export interface CurriculumSearchProps {
   scheduleId: string;
   teacher: string;
   teacherId: string;
-  students: [];
-  timestamp: Date;
+  students: Array<CurriculumStudentsProps>;
+  experimentalStudents: Array<CurriculumStudentsProps>;
+  updatedAt: Date;
+}
+
+export interface CurriculumStudentsProps {
+  date: string;
+  id: string;
+  name: string;
+  isExperimental: boolean;
+  indexDays: Array<number>;
+  price: number;
 }
 
 export interface ExcludeCurriculumProps {

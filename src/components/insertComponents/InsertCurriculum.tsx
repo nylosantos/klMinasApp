@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
@@ -30,11 +30,25 @@ import {
   SchoolSearchProps,
   TeacherSearchProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertCurriculum() {
+  // GET GLOBAL DATA
+  const {
+    classDaysDatabaseData,
+    schoolDatabaseData,
+    schoolClassDatabaseData,
+    schoolCourseDatabaseData,
+    scheduleDatabaseData,
+    teacherDatabaseData,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
+
   // CURRICULUM DATA
   const [curriculumData, setCurriculumData] =
     useState<CreateCurriculumValidationZProps>({
@@ -54,14 +68,6 @@ export function InsertCurriculum() {
     });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL
-  const [schoolDataArray, setSchoolDataArray] = useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
@@ -70,7 +76,7 @@ export function InsertCurriculum() {
   useEffect(() => {
     if (curriculumData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolDataArray!.find(({ id }) => id === curriculumData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === curriculumData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -89,15 +95,6 @@ export function InsertCurriculum() {
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASS
-  const [schoolClassDataArray, setSchoolClassDataArray] =
-    useState<SchoolClassSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
-    setSchoolClassDataArray(data);
-  };
-
   // SCHOOL CLASS SELECTED STATE DATA
   const [schoolClassSelectedData, setSchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
@@ -106,7 +103,7 @@ export function InsertCurriculum() {
   useEffect(() => {
     if (curriculumData.schoolClassId !== "") {
       setSchoolClassSelectedData(
-        schoolClassDataArray!.find(
+        schoolClassDatabaseData.find(
           ({ id }) => id === curriculumData.schoolClassId
         )
       );
@@ -127,15 +124,6 @@ export function InsertCurriculum() {
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL COURSE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL COURSE
-  const [schoolCourseDataArray, setSchoolCourseDataArray] =
-    useState<SchoolCourseSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL COURSE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolCourseSelectedData = (data: SchoolCourseSearchProps[]) => {
-    setSchoolCourseDataArray(data);
-  };
-
   // SCHOOL COURSE SELECTED STATE DATA
   const [schoolCourseSelectedData, setSchoolCourseSelectedData] =
     useState<SchoolCourseSearchProps>();
@@ -144,7 +132,7 @@ export function InsertCurriculum() {
   useEffect(() => {
     if (curriculumData.schoolCourseId !== "") {
       setSchoolCourseSelectedData(
-        schoolCourseDataArray!.find(
+        schoolCourseDatabaseData.find(
           ({ id }) => id === curriculumData.schoolCourseId
         )
       );
@@ -165,15 +153,6 @@ export function InsertCurriculum() {
   // -------------------------- END OF SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHEDULE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHEDULE
-  const [scheduleDataArray, setScheduleDataArray] =
-    useState<ScheduleSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHEDULE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleScheduleSelectedData = (data: ScheduleSearchProps[]) => {
-    setScheduleDataArray(data);
-  };
-
   // SCHEDULE SELECTED STATE DATA
   const [scheduleSelectedData, setScheduleSelectedData] =
     useState<ScheduleSearchProps>();
@@ -182,7 +161,7 @@ export function InsertCurriculum() {
   useEffect(() => {
     if (curriculumData.scheduleId !== "") {
       setScheduleSelectedData(
-        scheduleDataArray!.find(({ id }) => id === curriculumData.scheduleId)
+        scheduleDatabaseData.find(({ id }) => id === curriculumData.scheduleId)
       );
     } else {
       setScheduleSelectedData(undefined);
@@ -201,15 +180,6 @@ export function InsertCurriculum() {
   // -------------------------- END OF SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
-  // CLASS DAY DATA ARRAY WITH ALL OPTIONS OF SELECT CLASS DAY
-  const [classDayDataArray, setClassDayDataArray] =
-    useState<ClassDaySearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH CLASS DAY SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleClassDaySelectedData = (data: ClassDaySearchProps[]) => {
-    setClassDayDataArray(data);
-  };
-
   // CLASS DAY SELECTED STATE DATA
   const [classDaySelectedData, setClassDaySelectedData] =
     useState<ClassDaySearchProps>();
@@ -218,7 +188,7 @@ export function InsertCurriculum() {
   useEffect(() => {
     if (curriculumData.classDayId !== "") {
       setClassDaySelectedData(
-        classDayDataArray!.find(({ id }) => id === curriculumData.classDayId)
+        classDaysDatabaseData.find(({ id }) => id === curriculumData.classDayId)
       );
     } else {
       setClassDaySelectedData(undefined);
@@ -237,15 +207,6 @@ export function InsertCurriculum() {
   // -------------------------- END OF CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- TEACHER SELECT STATES AND FUNCTIONS -------------------------- //
-  // TEACHER DATA ARRAY WITH ALL OPTIONS OF SELECT TEACHER
-  const [teacherDataArray, setTeacherDataArray] =
-    useState<TeacherSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH TEACHER SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleTeacherSelectedData = (data: TeacherSearchProps[]) => {
-    setTeacherDataArray(data);
-  };
-
   // TEACHER SELECTED STATE DATA
   const [teacherSelectedData, setTeacherSelectedData] =
     useState<TeacherSearchProps>();
@@ -254,7 +215,7 @@ export function InsertCurriculum() {
   useEffect(() => {
     if (curriculumData.teacherId !== "") {
       setTeacherSelectedData(
-        teacherDataArray!.find(({ id }) => id === curriculumData.teacherId)
+        teacherDatabaseData.find(({ id }) => id === curriculumData.teacherId)
       );
     } else {
       setTeacherSelectedData(undefined);
@@ -532,6 +493,7 @@ export function InsertCurriculum() {
           teacherId: data.teacherId,
           teacher: data.teacherName,
           students: [],
+          experimentalStudents: [],
           timestamp: serverTimestamp(),
         });
         resetForm();
@@ -637,11 +599,7 @@ export function InsertCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schools"
-              handleData={handleSchoolSelectedData}
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 
@@ -677,7 +635,6 @@ export function InsertCurriculum() {
               returnId
               dataType="schoolClasses"
               schoolId={curriculumData.schoolId}
-              handleData={handleSchoolClassSelectedData}
             />
           </select>
         </div>
@@ -710,11 +667,7 @@ export function InsertCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schoolCourses"
-              handleData={handleSchoolCourseSelectedData}
-            />
+            <SelectOptions returnId dataType="schoolCourses" />
           </select>
         </div>
 
@@ -750,7 +703,6 @@ export function InsertCurriculum() {
               returnId
               dataType="schedules"
               schoolId={curriculumData.schoolId}
-              handleData={handleScheduleSelectedData}
             />
           </select>
         </div>
@@ -783,11 +735,7 @@ export function InsertCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="classDays"
-              handleData={handleClassDaySelectedData}
-            />
+            <SelectOptions returnId dataType="classDays" />
           </select>
         </div>
 
@@ -819,11 +767,7 @@ export function InsertCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="teachers"
-              handleData={handleTeacherSelectedData}
-            />
+            <SelectOptions returnId dataType="teachers" />
           </select>
         </div>
 

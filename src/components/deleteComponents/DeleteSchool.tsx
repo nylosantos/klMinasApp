@@ -1,29 +1,38 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  where,
-} from "firebase/firestore";
+import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteSchoolValidationSchema } from "../../@types/zodValidation";
-import { DeleteSchoolValidationZProps, SchoolSearchProps } from "../../@types";
+import {
+  DeleteSchoolValidationZProps,
+  SchoolSearchProps,
+  StudentSearchProps,
+} from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function DeleteSchool() {
+  // GET GLOBAL DATA
+  const {
+    curriculumDatabaseData,
+    scheduleDatabaseData,
+    schoolClassDatabaseData,
+    schoolDatabaseData,
+    studentsDatabaseData,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
+
   // SCHOOL DATA
   const [schoolData, setSchoolData] = useState<DeleteSchoolValidationZProps>({
     schoolId: "",
@@ -32,14 +41,6 @@ export function DeleteSchool() {
   });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL
-  const [schoolDataArray, setSchoolDataArray] = useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
@@ -49,7 +50,7 @@ export function DeleteSchool() {
     if (schoolData.schoolId !== "") {
       setIsSelected(true);
       setSchoolSelectedData(
-        schoolDataArray!.find(({ id }) => id === schoolData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === schoolData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -136,7 +137,7 @@ export function DeleteSchool() {
       try {
         await deleteDoc(doc(db, "schools", data.schoolId));
         resetForm();
-        toast.success(`Colégio excluído com sucesso! 👌`, {
+        toast.success(`Colégio excluído com sucesso ! 👌`, {
           theme: "colored",
           closeOnClick: true,
           pauseOnHover: true,
@@ -172,40 +173,170 @@ export function DeleteSchool() {
       );
     }
 
-    // CHECKING IF SCHOOL EXISTS ON DATABASE
-    const schoolRef = collection(db, "curriculum");
-    const q = query(schoolRef, where("school", "==", data.schoolName));
-    const querySnapshot = await getDocs(q);
-    const promises: SchoolSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as SchoolSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(
-            `Colégio incluído em ${results.length} ${
-              results.length === 1 ? "Currículo" : "Currículos"
-            }, exclua ou altere primeiramente ${
-              results.length === 1 ? "o Currículo" : "os Currículos"
-            } e depois exclua o ${data.schoolName}... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
+    // CHECKING IF SCHOOL EXISTS ON SOME STUDENT, CLASS, SCHEDULE OR CURRICULUM ON DATABASE
+    // STUDENTS IN THIS SCHOOL ARRAY
+    const schoolExistsOnStudent: StudentSearchProps[] = [];
+
+    // SEARCH CURRICULUM WITH THIS SCHOOL
+    const schoolExistsOnCurriculum = curriculumDatabaseData.filter(
+      (curriculum) => curriculum.schoolId === schoolData.schoolId
+    );
+
+    // SEARCH STUDENTS WITH THIS SCHOOL AND PUTTING ON ARRAY
+    studentsDatabaseData.map((student) => {
+      if (student.curriculumIds) {
+        // ENROLLED STUDENTS
+        student.curriculumIds.map((studentCurriculum) => {
+          const foundedSchoolStudentWithCurriculum =
+            schoolExistsOnCurriculum.find(
+              (schoolCurriculum) => schoolCurriculum.id === studentCurriculum.id
+            );
+          if (foundedSchoolStudentWithCurriculum) {
+            schoolExistsOnStudent.push(student);
+          }
+        });
+        // EXPERIMENTAL STUDENTS
+        student.experimentalCurriculumIds.map(
+          (studentExperimentalCurriculum) => {
+            const foundedSchoolStudentWithExperimentalCurriculum =
+              schoolExistsOnCurriculum.find(
+                (schoolCurriculum) =>
+                  schoolCurriculum.id === studentExperimentalCurriculum.id
+              );
+            if (foundedSchoolStudentWithExperimentalCurriculum) {
+              schoolExistsOnStudent.push(student);
             }
-          )
+          }
         );
-      } else {
-        // IF NO EXISTS, DELETE
-        deleteSchool();
       }
     });
+
+    // SEARCH CLASS WITH THIS SCHOOL
+    const schoolExistsOnClass = schoolClassDatabaseData.filter(
+      (schoolClass) => schoolClass.schoolId === schoolData.schoolId
+    );
+
+    // SEARCH SCHEDULE WITH THIS SCHOOL
+    const schoolExistsOnSchedule = scheduleDatabaseData.filter(
+      (schedule) => schedule.schoolId === schoolData.schoolId
+    );
+
+    // IF EXISTS, RETURN ERROR
+    if (schoolExistsOnStudent.length !== 0) {
+      return (
+        setSchoolData({ ...schoolData, confirmDelete: false }),
+        setIsSubmitting(false),
+        toast.error(
+          `Colégio tem ${schoolExistsOnStudent.length} ${
+            schoolExistsOnStudent.length === 1
+              ? "aluno matriculado"
+              : "alunos matriculados"
+          }, exclua ou altere primeiramente ${
+            schoolExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
+          } e depois exclua o ${data.schoolName}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else if (schoolExistsOnCurriculum.length !== 0) {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Colégio incluído em ${schoolExistsOnCurriculum.length} ${
+            schoolExistsOnCurriculum.length === 1 ? "Currículo" : "Currículos"
+          }, exclua ou altere primeiramente ${
+            schoolExistsOnCurriculum.length === 1
+              ? "o Currículo"
+              : "os Currículos"
+          } e depois exclua o ${data.schoolName}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else if (schoolExistsOnSchedule.length !== 0) {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Colégio incluído em ${schoolExistsOnSchedule.length} ${
+            schoolExistsOnSchedule.length === 1 ? "Horário" : "Horários"
+          }, exclua ou altere primeiramente ${
+            schoolExistsOnSchedule.length === 1 ? "o Horário" : "os Horários"
+          } e depois exclua o ${data.schoolName}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else if (schoolExistsOnClass.length !== 0) {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Colégio incluído em ${schoolExistsOnClass.length} ${
+            schoolExistsOnClass.length === 1 ? "Turma" : "Turmas"
+          }, exclua ou altere primeiramente ${
+            schoolExistsOnClass.length === 1 ? "o Turma" : "os Turmas"
+          } e depois exclua o ${data.schoolName}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else {
+      // IF NO EXISTS, DELETE
+      deleteSchool();
+    }
+
+    // const schoolRef = collection(db, "curriculum");
+    // const q = query(schoolRef, where("school", "==", data.schoolName));
+    // const querySnapshot = await getDocs(q);
+    // const promises: SchoolSearchProps[] = [];
+    // querySnapshot.forEach((doc) => {
+    //   const promise = doc.data() as SchoolSearchProps;
+    //   promises.push(promise);
+    // });
+    // Promise.all(promises).then((results) => {
+    //   // IF EXISTS, RETURN ERROR
+    //   if (results.length !== 0) {
+    //     return (
+    //       setIsSubmitting(false),
+    //       toast.error(
+    //         `Colégio incluído em ${results.length} ${
+    //           results.length === 1 ? "Currículo" : "Currículos"
+    //         }, exclua ou altere primeiramente ${
+    //           results.length === 1 ? "o Currículo" : "os Currículos"
+    //         } e depois exclua o ${data.schoolName}... ❕`,
+    //         {
+    //           theme: "colored",
+    //           closeOnClick: true,
+    //           pauseOnHover: true,
+    //           draggable: true,
+    //           autoClose: 3000,
+    //         }
+    //       )
+    //     );
+    //   } else {
+    //     // IF NO EXISTS, DELETE
+    //     deleteSchool();
+    //   }
+    // });
   };
 
   return (
@@ -249,11 +380,7 @@ export function DeleteSchool() {
               setSchoolData({ ...schoolData, schoolId: e.target.value });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schools"
-              handleData={handleSchoolSelectedData}
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 

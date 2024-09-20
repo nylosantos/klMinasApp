@@ -1,34 +1,33 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
-} from "firebase/firestore";
+import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
-import {
-  AppUsersSearchProps,
-  CreateTeacherValidationZProps,
-} from "../../@types";
+import { CreateTeacherValidationZProps } from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { createTeacherValidationSchema } from "../../@types/zodValidation";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
+import { useHttpsCallable } from "react-firebase-hooks/functions";
+import { getFunctions } from "firebase/functions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertTeacher() {
+  // GET GLOBAL DATA
+  const { appUsersDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // TEACHER DATA
   const [teacherData, setTeacherData] = useState<CreateTeacherValidationZProps>(
     {
@@ -40,8 +39,12 @@ export function InsertTeacher() {
         suffix: "",
       },
       confirmInsert: false,
+      createAccount: false,
     }
   );
+
+  // CREATE USER CLOUD FUNCTION HOOK
+  const [createAppUser] = useHttpsCallable(getFunctions(app), "createAppUser");
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,6 +80,7 @@ export function InsertTeacher() {
         suffix: "",
       },
       confirmInsert: false,
+      createAccount: false,
     });
     (
       document.getElementById("phoneDDD") as HTMLSelectElement
@@ -92,6 +96,7 @@ export function InsertTeacher() {
     setValue("phone.prefix", teacherData.phone.prefix);
     setValue("phone.suffix", teacherData.phone.suffix);
     setValue("confirmInsert", teacherData.confirmInsert);
+    setValue("createAccount", teacherData.createAccount);
   }, [teacherData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -119,38 +124,112 @@ export function InsertTeacher() {
   ) => {
     // ADD TEACHER FUNCTION
     const addTeacher = async () => {
-      try {
-        const commonId = uuidv4();
-        await setDoc(doc(db, "teachers", commonId), {
-          id: commonId,
+      if (data.createAccount) {
+        const teacherData = {
           name: data.name,
           email: data.email,
           phone:
             data.phone.ddd && data.phone.prefix && data.phone.suffix
               ? `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`
               : "",
-          timestamp: serverTimestamp(),
-        });
-        resetForm();
-        toast.success(`Professor ${data.name} criado com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
+          confirmInsert: data.confirmInsert,
+          role: "teacher",
+          password: "123456",
+          confirmPassword: "123456",
+        };
+        try {
+          await createAppUser(teacherData).then(async (result) => {
+            if (result?.data) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const userUid: any = result.data;
+              try {
+                // CREATE TEACHER ON DATABASE
+                await setDoc(doc(db, "teachers", userUid), {
+                  id: userUid,
+                  name: data.name,
+                  email: data.email,
+                  phone:
+                    data.phone.ddd && data.phone.prefix && data.phone.suffix
+                      ? `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`
+                      : "",
+                  haveAccount: data.createAccount,
+                  updatedAt: serverTimestamp(),
+                });
+                toast.success(`Professor ${data.name} criado com sucesso! 👌`, {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                });
+                resetForm();
+                setIsSubmitting(false);
+              } catch (error) {
+                console.log(error);
+                toast.error(
+                  `Usuário no sistema criado, porém correu um erro ao criar o professor no banco de dados da escola, contate o suporte... 🤯`,
+                  {
+                    theme: "colored",
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    autoClose: 3000,
+                  }
+                );
+                resetForm();
+                setIsSubmitting(false);
+              }
+            }
+          });
+        } catch (error) {
+          console.error("CONSOLE.ERROR: ", error);
+          console.log("ESSE É O ERROR", error);
+          toast.error(
+            `Ocorreu um erro na criação do Usuário no sistema deste professor, contate o suporte... 🤯`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
+          setIsSubmitting(false);
+        }
+      } else
+        try {
+          const commonId = uuidv4();
+          await setDoc(doc(db, "teachers", commonId), {
+            id: commonId,
+            name: data.name,
+            email: data.email,
+            phone:
+              data.phone.ddd && data.phone.prefix && data.phone.suffix
+                ? `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`
+                : "",
+            haveAccount: data.createAccount,
+            updatedAt: serverTimestamp(),
+          });
+          resetForm();
+          toast.success(`Professor ${data.name} criado com sucesso! 👌`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
     };
 
     setIsSubmitting(true);
@@ -170,30 +249,33 @@ export function InsertTeacher() {
       );
     }
 
-    // FIREBASE DATABASE REFERENCE
-    const dataRef = collection(db, "appUsers");
-
     // ---------- CHECKING IF PHONE EXISTS ON DATABASE ---------- //
-    const phoneQuery = query(
-      dataRef,
-      where(
-        "phone",
-        "==",
+    const teacherPhoneExist = appUsersDatabaseData.find(
+      (teacher) =>
+        teacher.phone ===
         `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`
-      )
     );
-    const phoneSnapshot = await getDocs(phoneQuery);
-    const promisesPhone: AppUsersSearchProps[] = [];
-    phoneSnapshot.forEach((doc) => {
-      const promise = doc.data() as AppUsersSearchProps;
-      promisesPhone.push(promise);
-    });
-    Promise.all(promisesPhone).then(async (results) => {
+    // IF EXISTS, RETURN ERROR
+    if (teacherPhoneExist) {
+      return (
+        setIsSubmitting(false),
+        toast.error(`Telefone já registrado em nosso banco de dados... ❕`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        })
+      );
+    } else {
+      const teacherEmailExist = appUsersDatabaseData.find(
+        (teacher) => teacher.email === data.email
+      );
       // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
+      if (teacherEmailExist) {
         return (
           setIsSubmitting(false),
-          toast.error(`Telefone já registrado em nosso banco de dados... ❕`, {
+          toast.error(`E-mail já registrado em nosso banco de dados... ❕`, {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
@@ -202,66 +284,29 @@ export function InsertTeacher() {
           })
         );
       } else {
-        // ---------- CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
-        const emailQuery = query(dataRef, where("email", "==", data.email));
-        const emailSnapshot = await getDocs(emailQuery);
-        const promisesEmail: AppUsersSearchProps[] = [];
-        emailSnapshot.forEach((doc) => {
-          const promise = doc.data() as AppUsersSearchProps;
-          promisesEmail.push(promise);
-        });
-        Promise.all(promisesEmail).then(async (results) => {
-          // IF EXISTS, RETURN ERROR
-          if (results.length !== 0) {
-            return (
-              setIsSubmitting(false),
-              toast.error(
-                `E-mail já registrado em nosso banco de dados... ❕`,
-                {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                }
-              )
-            );
-          } else {
-            // ---------- CHECKING IF NAME EXISTS ON DATABASE ---------- //
-            const q = query(dataRef, where("name", "==", data.name));
-            const querySnapshot = await getDocs(q);
-            const promises: AppUsersSearchProps[] = [];
-            querySnapshot.forEach((doc) => {
-              const promise = doc.data() as AppUsersSearchProps;
-              promises.push(promise);
-            });
-            Promise.all(promises).then((results) => {
-              // IF EXISTS, RETURN ERROR
-              if (results.length !== 0) {
-                return (
-                  setIsSubmitting(false),
-                  toast.error(
-                    `Professor ${data.name} já existe no nosso banco de dados... ❕`,
-                    {
-                      theme: "colored",
-                      closeOnClick: true,
-                      pauseOnHover: true,
-                      draggable: true,
-                      autoClose: 3000,
-                    }
-                  )
-                );
-              } else {
-                addTeacher();
+        const teacherNameExist = appUsersDatabaseData.find(
+          (teacher) => teacher.name === data.name
+        );
+        // IF EXISTS, RETURN ERROR
+        if (teacherNameExist) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Professor ${data.name} já existe no nosso banco de dados.. ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
               }
-            });
-            // ---------- END OF CHECKING IF NAME EXISTS ON DATABASE ---------- //
-          }
-        });
-        // ---------- END OF CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
+            )
+          );
+        } else {
+          addTeacher();
+        }
       }
-    });
-    // ---------- END OF CHECKING IF PHONE EXISTS ON DATABASE ---------- //
+    }
   };
 
   return (
@@ -428,6 +473,32 @@ export function InsertTeacher() {
             </div>
             <div className="flex w-2/12 items-center gap-2"></div>
           </div>
+        </div>
+
+        {/* CREATE TEACHER ACCOUNT CHECKBOX */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="teacherAccount"
+            className={
+              errors.name
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right"
+            }
+          >
+            Criar conta no sistema?{" "}
+          </label>
+          <input
+            type="checkbox"
+            name="teacherAccount"
+            className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
+            checked={teacherData.createAccount}
+            onChange={() => {
+              setTeacherData({
+                ...teacherData,
+                createAccount: !teacherData.createAccount,
+              });
+            }}
+          />
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}

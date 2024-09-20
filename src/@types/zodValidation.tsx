@@ -144,6 +144,7 @@ export const createTeacherValidationSchema = z.object ({
     prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone de contato`}).or(z.literal("")),
     suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato`}).or(z.literal("")),
   }),
+  createAccount: z.boolean(),
   confirmInsert: z.boolean()
 })
 
@@ -192,7 +193,7 @@ export const deleteStudentValidationSchema = z.object ({
   curriculumId: z.string().min(1, {message: `Por favor, selecione a Modalidade`}),
   studentId: z.string().min(1, {message: `Por favor, selecione o Aluno`}),
   studentName: z.string().min(1, {message: `Por favor, selecione o Aluno`}),
-  studentType: z.literal('').or(z.literal('enrolled').or(z.literal('experimental'))),
+  studentType: z.literal('').or(z.literal('enrolled').or(z.literal('experimental')).or(z.literal('all'))),
 })
 
 export const deleteSchoolCourseValidationSchema = z.object ({

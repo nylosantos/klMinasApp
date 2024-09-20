@@ -1,122 +1,123 @@
+import { useContext, useState } from "react";
 import {
-  collection,
-  getDocs,
-  getFirestore
-} from "firebase/firestore";
-import { useEffect, useState } from "react";
-import {
-  CurriculumSearchProps,
-  ScheduleSearchProps,
-  SchoolClassSearchProps,
-  SchoolCourseSearchProps,
-  SchoolSearchProps,
-  StudentSearchProps,
-  TeacherSearchProps,
-} from "../@types";
-import { app } from "../db/Firebase";
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
-const db = getFirestore(app);
+// const db = getFirestore(app);
 
 export default function Dashboard() {
-  // SCHOOL DATA STATE
-  const [schoolData, setSchoolData] = useState<SchoolSearchProps[]>([]);
+  // GET GLOBAL DATA
+  const {
+    schoolDatabaseData,
+    schoolClassDatabaseData,
+    schoolCourseDatabaseData,
+    scheduleDatabaseData,
+    teacherDatabaseData,
+    curriculumDatabaseData,
+    studentsDatabaseData,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
+  // // SCHOOL DATA STATE
+  // const [schoolData, setSchoolData] = useState<SchoolSearchProps[]>([]);
 
-  // SCHOOL CLASS DATA STATE
-  const [schoolClassData, setSchoolClassData] = useState<
-    SchoolClassSearchProps[]
-  >([]);
+  // // SCHOOL CLASS DATA STATE
+  // const [schoolClassData, setSchoolClassData] = useState<
+  //   SchoolClassSearchProps[]
+  // >([]);
 
-  // SCHOOL COURSE DATA STATE
-  const [schoolCourseData, setSchoolCourseData] = useState<
-    SchoolCourseSearchProps[]
-  >([]);
+  // // SCHOOL COURSE DATA STATE
+  // const [schoolCourseData, setSchoolCourseData] = useState<
+  //   SchoolCourseSearchProps[]
+  // >([]);
 
-  // SCHEDULE DATA STATE
-  const [scheduleData, setScheduleData] = useState<ScheduleSearchProps[]>([]);
+  // // SCHEDULE DATA STATE
+  // const [scheduleData, setScheduleData] = useState<ScheduleSearchProps[]>([]);
 
-  // TEACHER DATA STATE
-  const [teacherData, setTeacherData] = useState<TeacherSearchProps[]>([]);
+  // // TEACHER DATA STATE
+  // const [teacherData, setTeacherData] = useState<TeacherSearchProps[]>([]);
 
-  // CURRICULUM DATA STATE
-  const [curriculumData, setCurriculumData] = useState<CurriculumSearchProps[]>(
-    []
-  );
+  // // CURRICULUM DATA STATE
+  // const [curriculumData, setCurriculumData] = useState<CurriculumSearchProps[]>(
+  //   []
+  // );
 
-  // STUDENTS DATA STATE
-  const [studentsData, setStudentsData] = useState<StudentSearchProps[]>([]);
+  // // STUDENTS DATA STATE
+  // const [studentsData, setStudentsData] = useState<StudentSearchProps[]>([]);
 
-  // GET DATA
-  const handleData = async () => {
-    // GET SCHOOL DATA
-    const querySnapshotSchool = await getDocs(collection(db, "schools"));
-    const schoolDatabaseData: SchoolSearchProps[] = [];
-    querySnapshotSchool.forEach((doc) => {
-      const school = doc.data() as SchoolSearchProps;
-      schoolDatabaseData.push(school);
-    });
-    setSchoolData(schoolDatabaseData);
+  // // GET DATA
+  // const handleData = async () => {
+  //   // GET SCHOOL DATA
+  //   const querySnapshotSchool = await getDocs(collection(db, "schools"));
+  //   const schoolDatabaseData: SchoolSearchProps[] = [];
+  //   querySnapshotSchool.forEach((doc) => {
+  //     const school = doc.data() as SchoolSearchProps;
+  //     schoolDatabaseData.push(school);
+  //   });
+  //   setSchoolData(schoolDatabaseData);
 
-    // GET SCHOOL CLASS DATA
-    const querySnapshotSchoolClass = await getDocs(
-      collection(db, "schoolClasses")
-    );
-    const schoolClassPromises: SchoolClassSearchProps[] = [];
-    querySnapshotSchoolClass.forEach((doc) => {
-      const promise = doc.data() as SchoolClassSearchProps;
-      schoolClassPromises.push(promise);
-    });
-    setSchoolClassData(schoolClassPromises);
+  //   // GET SCHOOL CLASS DATA
+  //   const querySnapshotSchoolClass = await getDocs(
+  //     collection(db, "schoolClasses")
+  //   );
+  //   const schoolClassPromises: SchoolClassSearchProps[] = [];
+  //   querySnapshotSchoolClass.forEach((doc) => {
+  //     const promise = doc.data() as SchoolClassSearchProps;
+  //     schoolClassPromises.push(promise);
+  //   });
+  //   setSchoolClassData(schoolClassPromises);
 
-    // GET SCHOOL COURSE DATA
-    const querySnapshotSchoolCourse = await getDocs(
-      collection(db, "schoolCourses")
-    );
-    const schoolCoursePromises: SchoolCourseSearchProps[] = [];
-    querySnapshotSchoolCourse.forEach((doc) => {
-      const promise = doc.data() as SchoolCourseSearchProps;
-      schoolCoursePromises.push(promise);
-    });
-    setSchoolCourseData(schoolCoursePromises);
+  //   // GET SCHOOL COURSE DATA
+  //   const querySnapshotSchoolCourse = await getDocs(
+  //     collection(db, "schoolCourses")
+  //   );
+  //   const schoolCoursePromises: SchoolCourseSearchProps[] = [];
+  //   querySnapshotSchoolCourse.forEach((doc) => {
+  //     const promise = doc.data() as SchoolCourseSearchProps;
+  //     schoolCoursePromises.push(promise);
+  //   });
+  //   setSchoolCourseData(schoolCoursePromises);
 
-    // GET SCHEDULE DATA
-    const querySnapshotSchedule = await getDocs(collection(db, "schedules"));
-    const schedulePromises: ScheduleSearchProps[] = [];
-    querySnapshotSchedule.forEach((doc) => {
-      const promise = doc.data() as ScheduleSearchProps;
-      schedulePromises.push(promise);
-    });
-    setScheduleData(schedulePromises);
+  //   // GET SCHEDULE DATA
+  //   const querySnapshotSchedule = await getDocs(collection(db, "schedules"));
+  //   const schedulePromises: ScheduleSearchProps[] = [];
+  //   querySnapshotSchedule.forEach((doc) => {
+  //     const promise = doc.data() as ScheduleSearchProps;
+  //     schedulePromises.push(promise);
+  //   });
+  //   setScheduleData(schedulePromises);
 
-    // GET TEACHER DATA
-    const querySnapshotTeacher = await getDocs(collection(db, "teachers"));
-    const teacherPromises: TeacherSearchProps[] = [];
-    querySnapshotTeacher.forEach((doc) => {
-      const promise = doc.data() as TeacherSearchProps;
-      teacherPromises.push(promise);
-    });
-    setTeacherData(teacherPromises);
+  //   // GET TEACHER DATA
+  //   const querySnapshotTeacher = await getDocs(collection(db, "teachers"));
+  //   const teacherPromises: TeacherSearchProps[] = [];
+  //   querySnapshotTeacher.forEach((doc) => {
+  //     const promise = doc.data() as TeacherSearchProps;
+  //     teacherPromises.push(promise);
+  //   });
+  //   setTeacherData(teacherPromises);
 
-    // GET CURRICULUM DATA
-    const querySnapshotCurriculum = await getDocs(collection(db, "curriculum"));
-    const curriculumPromises: CurriculumSearchProps[] = [];
-    querySnapshotCurriculum.forEach((doc) => {
-      const promise = doc.data() as CurriculumSearchProps;
-      curriculumPromises.push(promise);
-    });
-    setCurriculumData(curriculumPromises);
-    // GET STUDENTS DATA
-    const querySnapshotStudents = await getDocs(collection(db, "students"));
-    const studentsPromises: StudentSearchProps[] = [];
-    querySnapshotStudents.forEach(async (doc) => {
-      const promise = doc.data() as StudentSearchProps;
-      studentsPromises.push(promise);
-    });
-    setStudentsData(studentsPromises);
-  };
+  //   // GET CURRICULUM DATA
+  //   const querySnapshotCurriculum = await getDocs(collection(db, "curriculum"));
+  //   const curriculumPromises: CurriculumSearchProps[] = [];
+  //   querySnapshotCurriculum.forEach((doc) => {
+  //     const promise = doc.data() as CurriculumSearchProps;
+  //     curriculumPromises.push(promise);
+  //   });
+  //   setCurriculumData(curriculumPromises);
+  //   // GET STUDENTS DATA
+  //   const querySnapshotStudents = await getDocs(collection(db, "students"));
+  //   const studentsPromises: StudentSearchProps[] = [];
+  //   querySnapshotStudents.forEach(async (doc) => {
+  //     const promise = doc.data() as StudentSearchProps;
+  //     studentsPromises.push(promise);
+  //   });
+  //   setStudentsData(studentsPromises);
+  // };
 
   function handleScheduleDetails(id: string) {
-    const scheduleDetail = scheduleData.find((schedule) => schedule.id === id);
+    const scheduleDetail = scheduleDatabaseData.find(
+      (schedule) => schedule.id === id
+    );
     if (scheduleDetail) {
       return scheduleDetail;
     } else {
@@ -124,9 +125,9 @@ export default function Dashboard() {
     }
   }
 
-  useEffect(() => {
-    handleData();
-  }, []);
+  // useEffect(() => {
+  //   handleData();
+  // }, []);
 
   const [showPage, setShowPage] = useState<
     | "school"
@@ -150,7 +151,7 @@ export default function Dashboard() {
               Escolas Cadastradas:
             </p>
             <p className="font-bold text-klOrange-500 text-2xl">
-              {schoolData.length}
+              {schoolDatabaseData.length}
             </p>
           </div>
           <div
@@ -161,7 +162,7 @@ export default function Dashboard() {
               Turmas Cadastradas:
             </p>
             <p className="font-bold text-klOrange-500 text-2xl">
-              {schoolClassData.length}
+              {schoolClassDatabaseData.length}
             </p>
           </div>
           <div
@@ -172,7 +173,7 @@ export default function Dashboard() {
               Modalidades Cadastradas:
             </p>
             <p className="font-bold text-klOrange-500 text-2xl">
-              {schoolCourseData.length}
+              {schoolCourseDatabaseData.length}
             </p>
           </div>
           <div
@@ -183,7 +184,7 @@ export default function Dashboard() {
               Horários Cadastrados:
             </p>
             <p className="font-bold text-klOrange-500 text-2xl">
-              {scheduleData.length}
+              {scheduleDatabaseData.length}
             </p>
           </div>
           <div
@@ -194,7 +195,7 @@ export default function Dashboard() {
               Professores Cadastrados:
             </p>
             <p className="font-bold text-klOrange-500 text-2xl">
-              {teacherData.length}
+              {teacherDatabaseData.length}
             </p>
           </div>
           <div
@@ -205,7 +206,7 @@ export default function Dashboard() {
               Currículos cadastrados:
             </p>
             <p className="font-bold text-klOrange-500 text-2xl">
-              {curriculumData.length}
+              {curriculumDatabaseData.length}
             </p>
           </div>
           <div
@@ -216,7 +217,7 @@ export default function Dashboard() {
               Alunos Cadastrados:
             </p>
             <p className="font-bold text-klOrange-500 text-2xl">
-              {studentsData.length}
+              {studentsDatabaseData.length}
             </p>
           </div>
         </div>
@@ -228,8 +229,8 @@ export default function Dashboard() {
           }
         >
           {showPage === "school" ? (
-            schoolData.length !== 0 ? (
-              schoolData
+            schoolDatabaseData.length !== 0 ? (
+              schoolDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((school) => {
                   return (
@@ -249,8 +250,8 @@ export default function Dashboard() {
             )
           ) : null}
           {showPage === "schoolClass" ? (
-            schoolClassData.length !== 0 ? (
-              schoolClassData
+            schoolClassDatabaseData.length !== 0 ? (
+              schoolClassDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((schoolClass) => {
                   return (
@@ -273,8 +274,8 @@ export default function Dashboard() {
             )
           ) : null}
           {showPage === "schoolCourse" ? (
-            schoolCourseData.length !== 0 ? (
-              schoolCourseData
+            schoolCourseDatabaseData.length !== 0 ? (
+              schoolCourseDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((schoolCourse) => {
                   return (
@@ -297,8 +298,8 @@ export default function Dashboard() {
             )
           ) : null}
           {showPage === "schedule" ? (
-            scheduleData.length !== 0 ? (
-              scheduleData
+            scheduleDatabaseData.length !== 0 ? (
+              scheduleDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((schedule) => {
                   return (
@@ -318,8 +319,8 @@ export default function Dashboard() {
             )
           ) : null}
           {showPage === "teacher" ? (
-            teacherData.length !== 0 ? (
-              teacherData
+            teacherDatabaseData.length !== 0 ? (
+              teacherDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((teacher) => {
                   return (
@@ -339,8 +340,8 @@ export default function Dashboard() {
             )
           ) : null}
           {showPage === "curriculum" ? (
-            curriculumData.length !== 0 ? (
-              curriculumData
+            curriculumDatabaseData.length !== 0 ? (
+              curriculumDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((curriculum) => {
                   return (
@@ -446,8 +447,8 @@ export default function Dashboard() {
             )
           ) : null}
           {showPage === "student" ? (
-            studentsData.length !== 0 ? (
-              studentsData
+            studentsDatabaseData.length !== 0 ? (
+              studentsDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((student) => {
                   return (

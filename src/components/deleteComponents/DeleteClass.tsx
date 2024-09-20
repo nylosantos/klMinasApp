@@ -1,19 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  DocumentData,
-  getDocs,
-  getFirestore,
-  query,
-  where,
-} from "firebase/firestore";
+import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -23,12 +14,25 @@ import {
   DeleteClassValidationZProps,
   SchoolClassSearchProps,
   SchoolSearchProps,
+  StudentSearchProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function DeleteClass() {
+  // GET GLOBAL DATA
+  const {
+    curriculumDatabaseData,
+    schoolClassDatabaseData,
+    schoolDatabaseData,
+    studentsDatabaseData,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
+
   // SCHOOL CLASS DATA
   const [schoolClassData, setSchoolClassData] =
     useState<DeleteClassValidationZProps>({
@@ -39,14 +43,6 @@ export function DeleteClass() {
     });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL
-  const [schoolDataArray, setSchoolDataArray] = useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [, setSchoolSelectedData] = useState<SchoolSearchProps>();
 
@@ -56,9 +52,13 @@ export function DeleteClass() {
       document.getElementById("schoolClassSelect") as HTMLSelectElement
     ).selectedIndex = 0;
     setIsSelected(false);
+    setSchoolClassData({
+      ...schoolClassData,
+      confirmDelete: false,
+    });
     if (schoolClassData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolDataArray!.find(({ id }) => id === schoolClassData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === schoolClassData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -67,25 +67,20 @@ export function DeleteClass() {
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASS
-  const [schoolClassDataArray, setSchoolClassDataArray] =
-    useState<SchoolClassSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
-    setSchoolClassDataArray(data);
-  };
-
   // SCHOOL CLASS SELECTED STATE DATA
   const [schoolClassSelectedData, setSchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
 
   // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
   useEffect(() => {
+    setSchoolClassData({
+      ...schoolClassData,
+      confirmDelete: false,
+    });
     if (schoolClassData.schoolClassId !== "") {
       setIsSelected(true);
       setSchoolClassSelectedData(
-        schoolClassDataArray!.find(
+        schoolClassDatabaseData.find(
           ({ id }) => id === schoolClassData.schoolClassId
         )
       );
@@ -217,43 +212,137 @@ export function DeleteClass() {
       );
     }
 
-    // CHECKING IF SCHOOL EXISTS ON CURRRICULUM DATABASE
-    const schoolClassRef = collection(db, "curriculum");
-    const q = query(
-      schoolClassRef,
-      where("schoolClass", "==", data.schoolClassName)
+    // CHECKING IF SCHOOLCLASS EXISTS ON SOME STUDENT OR CURRICULUM ON DATABASE
+    // STUDENTS IN THIS SCHOOLCLASS ARRAY
+    const schoolClassExistsOnStudent: StudentSearchProps[] = [];
+
+    // SEARCH CURRICULUM WITH THIS SCHOOLCLASS
+    const schoolClassExistsOnCurriculum = curriculumDatabaseData.filter(
+      (curriculum) => curriculum.schoolClassId === schoolClassData.schoolClassId
     );
-    const querySnapshot = await getDocs(q);
-    const promises: DocumentData[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(
-            `Turma incluída em ${results.length} ${
-              results.length === 1 ? "Currículo" : "Currículos"
-            }, exclua ou altere primeiramente ${
-              results.length === 1 ? "o Currículo" : "os Currículos"
-            } e depois exclua a ${data.schoolClassName}... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
+
+    // SEARCH STUDENTS WITH THIS SCHOOLCLASS AND PUTTING ON ARRAY
+    studentsDatabaseData.map((student) => {
+      if (student.curriculumIds) {
+        // ENROLLED STUDENTS
+        student.curriculumIds.map((studentCurriculum) => {
+          const foundedSchoolClassStudentWithCurriculum =
+            schoolClassExistsOnCurriculum.find(
+              (schoolCurriculum) => schoolCurriculum.id === studentCurriculum.id
+            );
+          if (foundedSchoolClassStudentWithCurriculum) {
+            schoolClassExistsOnStudent.push(student);
+          }
+        });
+        // EXPERIMENTAL STUDENTS
+        student.experimentalCurriculumIds.map(
+          (studentExperimentalCurriculum) => {
+            const foundedSchoolClassStudentWithExperimentalCurriculum =
+              schoolClassExistsOnCurriculum.find(
+                (schoolCurriculum) =>
+                  schoolCurriculum.id === studentExperimentalCurriculum.id
+              );
+            if (foundedSchoolClassStudentWithExperimentalCurriculum) {
+              schoolClassExistsOnStudent.push(student);
             }
-          )
+          }
         );
-      } else {
-        // IF NO EXISTS, DELETE
-        deleteSchoolClass();
       }
     });
+
+    // IF EXISTS, RETURN ERROR
+    if (schoolClassExistsOnStudent.length !== 0) {
+      return (
+        setSchoolClassData({
+          ...schoolClassData,
+          confirmDelete: false,
+        }),
+        setIsSubmitting(false),
+        toast.error(
+          `Turma tem ${schoolClassExistsOnStudent.length} ${
+            schoolClassExistsOnStudent.length === 1
+              ? "aluno matriculado"
+              : "alunos matriculados"
+          }, exclua ou altere primeiramente ${
+            schoolClassExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
+          } e depois exclua o ${data.schoolClassName}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else if (schoolClassExistsOnCurriculum.length !== 0) {
+      return (
+        setSchoolClassData({
+          ...schoolClassData,
+          confirmDelete: false,
+        }),
+        setIsSubmitting(false),
+        toast.error(
+          `Turma incluída em ${schoolClassExistsOnCurriculum.length} ${
+            schoolClassExistsOnCurriculum.length === 1
+              ? "Currículo"
+              : "Currículos"
+          }, exclua ou altere primeiramente ${
+            schoolClassExistsOnCurriculum.length === 1
+              ? "o Currículo"
+              : "os Currículos"
+          } e depois exclua o ${data.schoolClassName}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else {
+      // IF NO EXISTS, DELETE
+      deleteSchoolClass();
+    }
+
+    // // CHECKING IF SCHOOL EXISTS ON CURRRICULUM DATABASE
+    // const schoolClassRef = collection(db, "curriculum");
+    // const q = query(
+    //   schoolClassRef,
+    //   where("schoolClass", "==", data.schoolClassName)
+    // );
+    // const querySnapshot = await getDocs(q);
+    // const promises: DocumentData[] = [];
+    // querySnapshot.forEach((doc) => {
+    //   const promise = doc.data();
+    //   promises.push(promise);
+    // });
+    // Promise.all(promises).then((results) => {
+    //   // IF EXISTS, RETURN ERROR
+    //   if (results.length !== 0) {
+    //     return (
+    //       setIsSubmitting(false),
+    //       toast.error(
+    //         `Turma incluída em ${results.length} ${
+    //           results.length === 1 ? "Currículo" : "Currículos"
+    //         }, exclua ou altere primeiramente ${
+    //           results.length === 1 ? "o Currículo" : "os Currículos"
+    //         } e depois exclua a ${data.schoolClassName}... ❕`,
+    //         {
+    //           theme: "colored",
+    //           closeOnClick: true,
+    //           pauseOnHover: true,
+    //           draggable: true,
+    //           autoClose: 3000,
+    //         }
+    //       )
+    //     );
+    //   } else {
+    //     // IF NO EXISTS, DELETE
+    //     deleteSchoolClass();
+    //   }
+    // });
   };
 
   return (
@@ -300,11 +389,7 @@ export function DeleteClass() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schools"
-              handleData={handleSchoolSelectedData}
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 
@@ -344,7 +429,6 @@ export function DeleteClass() {
                 returnId
                 dataType="schoolClasses"
                 schoolId={schoolClassData.schoolId}
-                handleData={handleSchoolClassSelectedData}
               />
             ) : (
               <option disabled value={" -- select an option -- "}>

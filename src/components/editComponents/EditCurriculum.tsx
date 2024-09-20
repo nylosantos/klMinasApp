@@ -1,17 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  updateDoc,
-  where,
+  doc, getFirestore, updateDoc
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -27,11 +21,24 @@ import {
   ClassDaySearchProps,
   TeacherSearchProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditCurriculum() {
+  // GET GLOBAL DATA
+  const {
+    schoolDatabaseData,
+    schoolClassDatabaseData,
+    curriculumDatabaseData,
+    scheduleDatabaseData,
+    classDaysDatabaseData,
+    teacherDatabaseData,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
   // STUDENT DATA
   const [curriculumEditData, setCurriculumEditData] =
     useState<EditCurriculumValidationZProps>({
@@ -84,15 +91,6 @@ export function EditCurriculum() {
   const [isEdit, setIsEdit] = useState(false);
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
-  const [schoolsDataArray, setSchoolsDataArray] =
-    useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolsDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
@@ -111,7 +109,7 @@ export function EditCurriculum() {
     setCurriculumSelectedData(undefined);
     if (curriculumEditData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolsDataArray!.find(({ id }) => id === curriculumEditData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === curriculumEditData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -128,15 +126,6 @@ export function EditCurriculum() {
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
-  const [schoolClassesDataArray, setSchoolClassesDataArray] =
-    useState<SchoolClassSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
-    setSchoolClassesDataArray(data);
-  };
-
   // SCHOOL CLASS SELECTED STATE DATA
   const [schoolClassSelectedData, setSchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
@@ -151,7 +140,7 @@ export function EditCurriculum() {
     setCurriculumSelectedData(undefined);
     if (curriculumEditData.schoolClassId !== "") {
       setSchoolClassSelectedData(
-        schoolClassesDataArray!.find(
+        schoolClassDatabaseData.find(
           ({ id }) => id === curriculumEditData.schoolClassId
         )
       );
@@ -170,15 +159,6 @@ export function EditCurriculum() {
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
-  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT CURRICULUM
-  const [curriculumDataArray, setCurriculumDataArray] =
-    useState<CurriculumSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH CURRICULUM SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleCurriculumSelectedData = (data: CurriculumSearchProps[]) => {
-    setCurriculumDataArray(data);
-  };
-
   // CURRICULUM SELECTED STATE DATA
   const [curriculumSelectedData, setCurriculumSelectedData] =
     useState<CurriculumSearchProps>();
@@ -189,7 +169,7 @@ export function EditCurriculum() {
       setIsSelected(true);
       setIsEdit(false);
       setCurriculumSelectedData(
-        curriculumDataArray!.find(
+        curriculumDatabaseData.find(
           ({ id }) => id === curriculumEditData.curriculumId
         )
       );
@@ -200,7 +180,6 @@ export function EditCurriculum() {
 
   // SET CURRICULUM EDIT DATA WHEN CURRICULUM CHANGE
   useEffect(() => {
-    console.log("oi", curriculumSelectedData);
     setCurriculumEditData({
       ...curriculumEditData,
       schoolCourseId: curriculumSelectedData
@@ -228,33 +207,22 @@ export function EditCurriculum() {
   // -------------------------- END OF CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHEDULE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHEDULES
-  const [schedulesDataArray, setSchedulesDataArray] =
-    useState<ScheduleSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHEDULE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleScheduleSelectedData = (data: ScheduleSearchProps[]) => {
-    setSchedulesDataArray(data);
-  };
-
   // SCHEDULE SELECTED STATE DATA
   const [scheduleSelectedData, setScheduleSelectedData] =
     useState<ScheduleSearchProps>();
 
   // SET SCHEDULE SELECTED STATE WHEN SELECT SCHEDULE
   useEffect(() => {
-    if (schedulesDataArray) {
-      if (curriculumEditData.scheduleId !== "") {
-        setScheduleSelectedData(
-          schedulesDataArray!.find(
-            ({ id }) => id === curriculumEditData.scheduleId
-          )
-        );
-      } else {
-        setScheduleSelectedData(undefined);
-      }
+    if (curriculumEditData.scheduleId !== "") {
+      setScheduleSelectedData(
+        scheduleDatabaseData.find(
+          ({ id }) => id === curriculumEditData.scheduleId
+        )
+      );
+    } else {
+      setScheduleSelectedData(undefined);
     }
-  }, [schedulesDataArray, curriculumEditData.scheduleId]);
+  }, [curriculumEditData.scheduleId]);
 
   // SET CURRICULUM EDIT DATA WHEN SCHEDULE CHANGE
   useEffect(() => {
@@ -267,33 +235,22 @@ export function EditCurriculum() {
   // -------------------------- END OF SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
-  // CLASS DAY DATA ARRAY WITH ALL OPTIONS OF SELECT CLASS DAYS
-  const [classDaysDataArray, setClassDaysDataArray] =
-    useState<ClassDaySearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH CLASS DAY SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleClassDaySelectedData = (data: ClassDaySearchProps[]) => {
-    setClassDaysDataArray(data);
-  };
-
   // CLASS DAY SELECTED STATE DATA
   const [classDaySelectedData, setClassDaySelectedData] =
     useState<ClassDaySearchProps>();
 
   // SET CLASS DAY SELECTED STATE WHEN SELECT CLASS DAY
   useEffect(() => {
-    if (classDaysDataArray) {
-      if (curriculumEditData.classDayId !== "") {
-        setClassDaySelectedData(
-          classDaysDataArray!.find(
-            ({ id }) => id === curriculumEditData.classDayId
-          )
-        );
-      } else {
-        setClassDaySelectedData(undefined);
-      }
+    if (curriculumEditData.classDayId !== "") {
+      setClassDaySelectedData(
+        classDaysDatabaseData.find(
+          ({ id }) => id === curriculumEditData.classDayId
+        )
+      );
+    } else {
+      setClassDaySelectedData(undefined);
     }
-  }, [classDaysDataArray, curriculumEditData.classDayId]);
+  }, [curriculumEditData.classDayId]);
 
   // SET CURRICULUM EDIT DATA WHEN CLASS DAY CHANGE
   useEffect(() => {
@@ -306,37 +263,22 @@ export function EditCurriculum() {
   // -------------------------- END OF SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- TEACHER SELECT STATES AND FUNCTIONS -------------------------- //
-  // TEACHER DATA ARRAY WITH ALL OPTIONS OF SELECT TEACHERS
-  const [teachersDataArray, setTeachersDataArray] =
-    useState<TeacherSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH TEACHER SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleTeacherSelectedData = (data: TeacherSearchProps[]) => {
-    setTeachersDataArray(data);
-  };
-
-  useEffect(() => {
-    console.log("curriculumEditData", curriculumEditData);
-  }, [curriculumEditData]);
-
   // TEACHER SELECTED STATE DATA
   const [teacherSelectedData, setTeacherSelectedData] =
     useState<TeacherSearchProps>();
 
   // SET TEACHER SELECTED STATE WHEN SELECT TEACHER
   useEffect(() => {
-    if (teachersDataArray) {
-      if (curriculumEditData.teacherId !== "") {
-        setTeacherSelectedData(
-          teachersDataArray!.find(
-            ({ id }) => id === curriculumEditData.teacherId
-          )
-        );
-      } else {
-        setTeacherSelectedData(undefined);
-      }
+    if (curriculumEditData.teacherId !== "") {
+      setTeacherSelectedData(
+        teacherDatabaseData.find(
+          ({ id }) => id === curriculumEditData.teacherId
+        )
+      );
+    } else {
+      setTeacherSelectedData(undefined);
     }
-  }, [teachersDataArray, curriculumEditData.teacherId]);
+  }, [curriculumEditData.teacherId]);
 
   // SET CURRICULUM EDIT DATA WHEN TEACHER CHANGE
   useEffect(() => {
@@ -496,35 +438,26 @@ export function EditCurriculum() {
     setIsSubmitting(true);
 
     // CHECKING IF CURRICULUM EXISTS ON DATABASE
-    const curriculumRef = collection(db, "curriculum");
-    const q = query(
-      curriculumRef,
-      where("id", "==", curriculumEditData.curriculumId)
+
+    const curriculumExists = curriculumDatabaseData.find(
+      (curriculum) => curriculum.id === curriculumEditData.curriculumId
     );
-    const querySnapshot = await getDocs(q);
-    const promises: CurriculumSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as CurriculumSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
+    if (!curriculumExists) {
       // IF NOT EXISTS, RETURN ERROR
-      if (results.length === 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`Currículo não existe no banco de dados... ❕`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          })
-        );
-      } else {
-        // IF EXISTS, EDIT
-        editCurriculum();
-      }
-    });
+      return (
+        setIsSubmitting(false),
+        toast.error(`Currículo não existe no banco de dados... ❕`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        })
+      );
+    } else {
+      // IF EXISTS, EDIT
+      editCurriculum();
+    }
   };
 
   return (
@@ -571,11 +504,7 @@ export function EditCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schools"
-              handleData={handleSchoolSelectedData}
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 
@@ -615,7 +544,6 @@ export function EditCurriculum() {
                 returnId
                 dataType="schoolClasses"
                 schoolId={curriculumEditData.schoolId}
-                handleData={handleSchoolClassSelectedData}
               />
             ) : (
               <option disabled value={" -- select an option -- "}>
@@ -664,7 +592,6 @@ export function EditCurriculum() {
                 displaySchoolCourseAndSchedule
                 schoolId={curriculumEditData.schoolId}
                 schoolClassId={curriculumEditData.schoolClassId}
-                handleData={handleCurriculumSelectedData}
               />
             ) : (
               <option disabled value={" -- select an option -- "}>
@@ -764,6 +691,8 @@ export function EditCurriculum() {
             </div>
 
             {/* SCHEDULE SELECT */}
+            {/* {scheduleSelectedData !== undefined &&
+            scheduleSelectedData.id !== undefined ? ( */}
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="scheduleSelect"
@@ -801,10 +730,12 @@ export function EditCurriculum() {
                   returnId
                   dataType="schedules"
                   schoolId={curriculumEditData.schoolId}
-                  handleData={handleScheduleSelectedData}
+                  setSchedule
+                  scheduleId={scheduleSelectedData?.id}
                 />
               </select>
             </div>
+            {/* ) : null} */}
 
             {/* TRANSITION START */}
             <div className="flex gap-2 items-center">
@@ -901,7 +832,11 @@ export function EditCurriculum() {
               <select
                 id="classDaySelect"
                 disabled={isSubmitting}
-                value={curriculumEditData.classDayId}
+                value={
+                  classDaySelectedData?.id === curriculumEditData.classDayId
+                    ? classDaySelectedData.id
+                    : curriculumEditData.classDayId
+                }
                 className={
                   errors.classDayId
                     ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -918,7 +853,8 @@ export function EditCurriculum() {
                 <SelectOptions
                   returnId
                   dataType="classDays"
-                  handleData={handleClassDaySelectedData}
+                  setClassDay
+                  classDayId={classDaySelectedData?.id}
                 />
               </select>
             </div>
@@ -948,7 +884,11 @@ export function EditCurriculum() {
               <select
                 id="teacherSelect"
                 disabled={isSubmitting}
-                value={curriculumEditData.teacherId}
+                value={
+                  teacherSelectedData?.id === curriculumEditData.teacherId
+                    ? teacherSelectedData.id
+                    : curriculumEditData.teacherId
+                }
                 className={
                   errors.teacherId
                     ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -965,7 +905,8 @@ export function EditCurriculum() {
                 <SelectOptions
                   returnId
                   dataType="teachers"
-                  handleData={handleTeacherSelectedData}
+                  setTeacher
+                  teacherId={teacherSelectedData?.id}
                 />
               </select>
             </div>

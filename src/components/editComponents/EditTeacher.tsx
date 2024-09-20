@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { getFunctions } from "firebase/functions";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,13 +7,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
 import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  updateDoc,
-  where,
+  doc, getFirestore, updateDoc
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -21,16 +15,24 @@ import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { editTeacherValidationSchema } from "../../@types/zodValidation";
 import {
-  AppUsersSearchProps,
   EditTeacherValidationZProps,
-  TeacherSearchProps,
+  TeacherSearchProps
 } from "../../@types";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditTeacher() {
+  // GET GLOBAL DATA
+  const { appUsersDatabaseData, teacherDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // CREATE USER CLOUD FUNCTION HOOK
   const [getAuthUser] = useHttpsCallable(getFunctions(app), "getAuthUser");
   const [updateAppUserWithoutPassword] = useHttpsCallable(
@@ -78,15 +80,6 @@ export function EditTeacher() {
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
-  // TEACHER DATA ARRAY WITH ALL OPTIONS OF SELECT TEACHERS
-  const [teachersDataArray, setTeachersDataArray] =
-    useState<TeacherSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH TEACHER SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleTeacherSelectedData = (data: TeacherSearchProps[]) => {
-    setTeachersDataArray(data);
-  };
-
   // TEACHER SELECTED STATE DATA
   const [teacherSelectedData, setTeacherSelectedData] =
     useState<TeacherSearchProps>();
@@ -96,7 +89,7 @@ export function EditTeacher() {
     setIsEdit(false);
     if (teacherData.teacherId !== "") {
       setTeacherSelectedData(
-        teachersDataArray!.find(({ id }) => id === teacherData.teacherId)
+        teacherDatabaseData.find(({ id }) => id === teacherData.teacherId)
       );
     } else {
       setTeacherSelectedData(undefined);
@@ -226,142 +219,86 @@ export function EditTeacher() {
     const user: any = await getAuthUser(teacherData.teacherId);
     // IF YES, EDIT ALSO
     if (user !== undefined) {
-      // FIREBASE DATABASE REFERENCE
-      const dataRef = collection(db, "appUsers");
-
-      // ---------- CHECKING IF PHONE EXISTS ON DATABASE ---------- //
-      const phoneQuery = query(dataRef, where("phone", "==", data.phone));
-      const phoneSnapshot = await getDocs(phoneQuery);
-      const promisesPhone: AppUsersSearchProps[] = [];
-      phoneSnapshot.forEach((doc) => {
-        const promise = doc.data() as AppUsersSearchProps;
-        promisesPhone.push(promise);
-      });
-      Promise.all(promisesPhone).then(async (results) => {
+      const teacherPhoneExist = appUsersDatabaseData.find(
+        (teacher) => teacher.phone === data.phone
+      );
+      // IF EXISTS, RETURN ERROR
+      if (teacherPhoneExist) {
+        return (
+          setIsSubmitting(false),
+          toast.error(`Telefone já registrado em nosso banco de dados... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
+        );
+      } else {
+        const teacherEmailExist = appUsersDatabaseData.find(
+          (teacher) => teacher.email === data.email
+        );
         // IF EXISTS, RETURN ERROR
-        if (results.length !== 0 && teacherSelectedData?.phone !== data.phone) {
+        if (teacherEmailExist) {
           return (
             setIsSubmitting(false),
-            toast.error(
-              `Telefone já registrado em nosso banco de dados... ❕`,
-              {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              }
-            )
+            toast.error(`E-mail já registrado em nosso banco de dados... ❕`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            })
           );
         } else {
-          // ---------- CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
-          const emailQuery = query(dataRef, where("email", "==", data.email));
-          const emailSnapshot = await getDocs(emailQuery);
-          const promisesEmail: AppUsersSearchProps[] = [];
-          emailSnapshot.forEach((doc) => {
-            const promise = doc.data() as AppUsersSearchProps;
-            promisesEmail.push(promise);
-          });
-          Promise.all(promisesEmail).then(async (results) => {
-            // IF EXISTS, RETURN ERROR
-            if (
-              results.length !== 0 &&
-              teacherSelectedData?.email !== data.email
-            ) {
-              return (
-                setIsSubmitting(false),
-                toast.error(
-                  `E-mail já registrado em nosso banco de dados... ❕`,
-                  {
-                    theme: "colored",
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    autoClose: 3000,
-                  }
-                )
-              );
-            } else {
-              const dataForAuth = {
-                ...data,
-                role: "teacher",
-                id: user!.data.uid,
-              };
-              // EDIT FIREBASE AUTH DATA ONLY WITHOUT CHANGE PASSWORD -> FOR EDIT PASSWORD GO TO EDITUSER
-              await updateAppUserWithoutPassword(dataForAuth);
-              // EDIT CALL
-              await editTeacher();
-            }
-          });
-          // ---------- END OF CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
+          const dataForAuth = {
+            ...data,
+            role: "teacher",
+            id: user!.data.uid,
+          };
+          // EDIT FIREBASE AUTH DATA ONLY WITHOUT CHANGE PASSWORD -> FOR EDIT PASSWORD GO TO EDITUSER
+          await updateAppUserWithoutPassword(dataForAuth);
+          // EDIT CALL
+          await editTeacher();
         }
-      });
-      // ---------- END OF CHECKING IF PHONE EXISTS ON DATABASE ---------- //
+      }
     } else {
-      // FIREBASE DATABASE REFERENCE
-      const dataRef = collection(db, "appUsers");
-
-      // ---------- CHECKING IF PHONE EXISTS ON DATABASE ---------- //
-      const phoneQuery = query(dataRef, where("phone", "==", data.phone));
-      const phoneSnapshot = await getDocs(phoneQuery);
-      const promisesPhone: AppUsersSearchProps[] = [];
-      phoneSnapshot.forEach((doc) => {
-        const promise = doc.data() as AppUsersSearchProps;
-        promisesPhone.push(promise);
-      });
-      Promise.all(promisesPhone).then(async (results) => {
+      const teacherPhoneExist = appUsersDatabaseData.find(
+        (teacher) => teacher.phone === data.phone
+      );
+      // IF EXISTS, RETURN ERROR
+      if (teacherPhoneExist) {
+        return (
+          setIsSubmitting(false),
+          toast.error(`Telefone já registrado em nosso banco de dados... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
+        );
+      } else {
+        const teacherEmailExist = appUsersDatabaseData.find(
+          (teacher) => teacher.email === data.email
+        );
         // IF EXISTS, RETURN ERROR
-        if (results.length !== 0 && teacherSelectedData?.phone !== data.phone) {
+        if (teacherEmailExist) {
           return (
             setIsSubmitting(false),
-            toast.error(
-              `Telefone já registrado em nosso banco de dados... ❕`,
-              {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              }
-            )
+            toast.error(`E-mail já registrado em nosso banco de dados... ❕`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            })
           );
         } else {
-          // ---------- CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
-          const emailQuery = query(dataRef, where("email", "==", data.email));
-          const emailSnapshot = await getDocs(emailQuery);
-          const promisesEmail: AppUsersSearchProps[] = [];
-          emailSnapshot.forEach((doc) => {
-            const promise = doc.data() as AppUsersSearchProps;
-            promisesEmail.push(promise);
-          });
-          Promise.all(promisesEmail).then(async (results) => {
-            // IF EXISTS, RETURN ERROR
-            if (
-              results.length !== 0 &&
-              teacherSelectedData?.email !== data.email
-            ) {
-              return (
-                setIsSubmitting(false),
-                toast.error(
-                  `E-mail já registrado em nosso banco de dados... ❕`,
-                  {
-                    theme: "colored",
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    autoClose: 3000,
-                  }
-                )
-              );
-            } else {
-              // EDIT CALL
-              await editTeacher();
-            }
-          });
-          // ---------- END OF CHECKING IF EMAIL EXISTS ON DATABASE ---------- //
+          // EDIT CALL
+          await editTeacher();
         }
-      });
-      // ---------- END OF CHECKING IF PHONE EXISTS ON DATABASE ---------- //
+      }
     }
   };
 
@@ -414,11 +351,7 @@ export function EditTeacher() {
               setIsSelected(true);
             }}
           >
-            <SelectOptions
-              returnId
-              handleData={handleTeacherSelectedData}
-              dataType="teachers"
-            />
+            <SelectOptions returnId dataType="teachers" />
           </select>
         </div>
 

@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import cep from "cep-promise";
 import { v4 as uuidv4 } from "uuid";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
@@ -10,16 +10,10 @@ import DatePicker, { DateObject } from "react-multi-date-picker";
 import {
   arrayRemove,
   arrayUnion,
-  collection,
   doc,
-  getDocs,
   getFirestore,
-  onSnapshot,
-  orderBy,
-  query,
   Timestamp,
   updateDoc,
-  where,
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -29,20 +23,17 @@ import { editStudentValidationSchema } from "../../@types/zodValidation";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 import {
   ClassDaySearchProps,
+  CurriculumArrayProps,
   CurriculumSearchProps,
   EditStudentValidationZProps,
   ExcludeCurriculumProps,
   ExcludeFamilyProps,
-  ScheduleSearchProps,
   SchoolClassSearchProps,
   SchoolCourseSearchProps,
   SchoolSearchProps,
   SearchCurriculumValidationZProps,
   StudentSearchProps,
-  SubCollectionDetailsProps,
   SubCollectionFamilyDetailsProps,
-  SubCollectionFamilyProps,
-  SubCollectionProps,
   ToggleClassDaysFunctionProps,
 } from "../../@types";
 import {
@@ -55,11 +46,26 @@ import {
   testaCPF,
   weekDays,
 } from "../../custom";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditStudent() {
+  // GET GLOBAL DATA
+  const {
+    classDaysDatabaseData,
+    curriculumDatabaseData,
+    scheduleDatabaseData,
+    schoolDatabaseData,
+    schoolClassDatabaseData,
+    schoolCourseDatabaseData,
+    studentsDatabaseData,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
+
   // STUDENT DATA
   const [studentData, setStudentData] = useState({
     schoolId: "",
@@ -152,8 +158,13 @@ export function EditStudent() {
     indexDays: [] as number[],
   });
 
+  type NewPricesProps = {
+    appliedPrice: number;
+    fullPrice: number;
+  };
+
   // NEW PRICES STATE
-  const [newPrices, setNewPrices] = useState({
+  const [newPrices, setNewPrices] = useState<NewPricesProps>({
     appliedPrice: 0,
     fullPrice: 0,
   });
@@ -190,15 +201,6 @@ export function EditStudent() {
   const [isEdit, setIsEdit] = useState(false);
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
-  const [schoolsDataArray, setSchoolsDataArray] =
-    useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolsDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
@@ -212,7 +214,7 @@ export function EditStudent() {
     setStudentSelectedData(undefined);
     if (studentData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolsDataArray!.find(({ id }) => id === studentData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === studentData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -236,15 +238,6 @@ export function EditStudent() {
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
-  const [schoolClassesDataArray, setSchoolClassesDataArray] =
-    useState<SchoolClassSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
-    setSchoolClassesDataArray(data);
-  };
-
   // SCHOOL CLASS SELECTED STATE DATA
   const [schoolClassSelectedData, setSchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
@@ -257,7 +250,7 @@ export function EditStudent() {
     setStudentSelectedData(undefined);
     if (studentData.schoolClassId !== "") {
       setSchoolSelectedData(
-        schoolClassesDataArray!.find(
+        schoolClassDatabaseData.find(
           ({ id }) => id === studentData.schoolClassId
         )
       );
@@ -280,15 +273,6 @@ export function EditStudent() {
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
-  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT CURRICULUM
-  const [curriculumDataArray, setCurriculumDataArray] =
-    useState<CurriculumSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH CURRICULUM SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleCurriculumSelectedData = (data: CurriculumSearchProps[]) => {
-    setCurriculumDataArray(data);
-  };
-
   // CURRICULUM SELECTED STATE DATA
   const [curriculumSelectedData, setCurriculumSelectedData] =
     useState<CurriculumSearchProps>();
@@ -296,25 +280,32 @@ export function EditStudent() {
   // SET CURRICULUM SELECTED STATE WHEN SELECT CURRICULUM
   useEffect(() => {
     if (curriculumSelectedData) {
-      const handleSchoolCoursePrizes = async () => {
-        const q = query(
-          collection(db, "schoolCourses"),
-          where("id", "==", curriculumSelectedData.schoolCourseId)
-        );
-        const querySnapshot = await getDocs(q);
-        const promises: SchoolCourseSearchProps[] = [];
-        querySnapshot.forEach((doc) => {
-          const promise = doc.data() as SchoolCourseSearchProps;
-          promises.push(promise);
-        });
-      };
-      handleSchoolCoursePrizes();
+      // const handleSchoolCoursePrizes = async () => {
+      //   const schoolCoursePrizes = schoolCourseDatabaseData.filter(
+      //     (schoolCourse) =>
+      //       schoolCourse.id === curriculumSelectedData.schoolCourseId
+      //   );
+      //   console.log(schoolCoursePrizes);
+      //   // const q = query(
+      //   //   collection(db, "schoolCourses"),
+      //   //   where("id", "==", curriculumSelectedData.schoolCourseId)
+      //   // );
+      //   // const querySnapshot = await getDocs(q);
+      //   // const promises: SchoolCourseSearchProps[] = [];
+      //   // querySnapshot.forEach((doc) => {
+      //   //   const promise = doc.data() as SchoolCourseSearchProps;
+      //   //   promises.push(promise);
+      //   // });
+      // };
+      // handleSchoolCoursePrizes();
       setIsEdit(false);
       setIsSelected(false);
       setStudentSelectedData(undefined);
       if (studentData.curriculumId !== "") {
         setCurriculumSelectedData(
-          curriculumDataArray!.find(({ id }) => id === studentData.curriculumId)
+          curriculumDatabaseData.find(
+            ({ id }) => id === studentData.curriculumId
+          )
         );
       } else {
         setCurriculumSelectedData(undefined);
@@ -540,15 +531,6 @@ export function EditStudent() {
   // -------------------------- END OF CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- STUDENT SELECT STATES AND FUNCTIONS -------------------------- //
-  // STUDENT DATA ARRAY WITH ALL OPTIONS OF SELECT STUDENTS
-  const [studentsDataArray, setStudentsDataArray] =
-    useState<SubCollectionProps[]>();
-
-  // FUNCTION THAT WORKS WITH STUDENT SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleStudentSelectedData = (data: SubCollectionProps[]) => {
-    setStudentsDataArray(data);
-  };
-
   // STUDENT SELECTED STATE DATA
   const [studentSelectedData, setStudentSelectedData] =
     useState<StudentSearchProps>();
@@ -694,21 +676,26 @@ export function EditStudent() {
     if (studentData.studentId !== "") {
       setIsEdit(false);
       setIsSelected(true);
-      studentsDataArray?.map(async (data: SubCollectionProps) => {
-        if (data.id === studentData.studentId) {
-          const queryStudent = query(
-            collection(db, "students"),
-            where("id", "==", data.id)
-          );
-          const getStudentFullData = await getDocs(queryStudent);
-          getStudentFullData.forEach(async (doc) => {
-            const dataStudent = doc.data() as StudentSearchProps;
-            if (dataStudent.id === studentData.studentId) {
-              setStudentSelectedData(dataStudent);
-            }
-          });
+      studentsDatabaseData.map((student) => {
+        if (student.id === studentData.studentId) {
+          setStudentSelectedData(student);
         }
       });
+      // studentsDatabaseData.map(async (data: SubCollectionProps) => {
+      //   if (data.id === studentData.studentId) {
+      //     const queryStudent = query(
+      //       collection(db, "students"),
+      //       where("id", "==", data.id)
+      //     );
+      //     const getStudentFullData = await getDocs(queryStudent);
+      //     getStudentFullData.forEach(async (doc) => {
+      //       const dataStudent = doc.data() as StudentSearchProps;
+      //       if (dataStudent.id === studentData.studentId) {
+      //         setStudentSelectedData(dataStudent);
+      //       }
+      //     });
+      //   }
+      // });
     }
   }, [studentData.studentId]);
 
@@ -719,20 +706,29 @@ export function EditStudent() {
 
   // STUDENT CURRICULUM DETAILS STATE
   const [studentCurriculumDetails, setStudentCurriculumDetails] = useState<
-    SubCollectionDetailsProps[]
+    CurriculumArrayProps[]
   >([]);
 
   // SET STUDENT EDIT ARRAYS
   // SET STUDENT FAMILY DETAILS
   const handleStudentFamilyDetails = async () => {
-    const familyQuery = query(
-      collection(db, `/students/${studentData.studentId}/studentFamilyAtSchool`)
+    const foundedStudent = studentsDatabaseData.find(
+      (student) => student.id === studentData.studentId
     );
-    const getFamily = await getDocs(familyQuery);
-    getFamily.forEach((doc) => {
-      const detailsData = doc.data() as SubCollectionFamilyProps;
-      setStudentFamilyDetails(detailsData.detailsArray);
-    });
+
+    if (foundedStudent) {
+      setStudentFamilyDetails(foundedStudent.studentFamilyAtSchool);
+    }
+
+    // const familyQuery = query(
+    //   collection(db, `/students/${studentData.studentId}/studentFamilyAtSchool`)
+    // );
+    // const getFamily = await getDocs(familyQuery);
+    // getFamily.forEach((doc) => {
+    //   const detailsData = doc.data() as SubCollectionFamilyProps;
+
+    //   setStudentFamilyDetails(detailsData.detailsArray);
+    // });
   };
 
   // ARRAY TO STORE ORIGINAL STUDENT CLASS DAYS
@@ -742,13 +738,12 @@ export function EditStudent() {
 
   // SET STUDENT CURRICULUM DETAILS
   const handleStudentCurriculumDetails = async () => {
-    const curriculumQuery = query(
-      collection(db, `/students/${studentData.studentId}/studentCurriculum`)
+    const foundedStudent = studentsDatabaseData.find(
+      (student) => student.id === studentData.studentId
     );
-    const getCurriculum = await getDocs(curriculumQuery);
-    getCurriculum.forEach((doc) => {
-      const detailsData = doc.data() as SubCollectionProps;
-      detailsData.detailsArray.map((curriculumDetail) => {
+
+    if (foundedStudent) {
+      foundedStudent.curriculumIds.map((curriculumDetail) => {
         setStudentCurriculumDetails((studentCurriculumDetails) => [
           ...studentCurriculumDetails,
           curriculumDetail,
@@ -759,29 +754,63 @@ export function EditStudent() {
         });
         setOriginalStudentClassDays(curriculumDetail.indexDays);
       });
-    });
+    }
+
+    // const curriculumQuery = query(
+    //   collection(db, `/students/${studentData.studentId}/studentCurriculum`)
+    // );
+    // const getCurriculum = await getDocs(curriculumQuery);
+
+    // getCurriculum.forEach((doc) => {
+    //   const detailsData = doc.data() as SubCollectionProps;
+
+    //   detailsData.detailsArray.map((curriculumDetail) => {
+    //     setStudentCurriculumDetails((studentCurriculumDetails) => [
+    //       ...studentCurriculumDetails,
+    //       curriculumDetail,
+    //     ]);
+    //     setNewStudentData({
+    //       ...newStudentData,
+    //       indexDays: curriculumDetail.indexDays,
+    //     });
+    //     setOriginalStudentClassDays(curriculumDetail.indexDays);
+    //   });
+    // });
   };
 
   // SET STUDENT EXPERIMENTAL CURRICULUM DETAILS
   const handleStudentExperimentalCurriculumDetails = async () => {
-    const experimentalCurriculumQuery = query(
-      collection(
-        db,
-        `/students/${studentData.studentId}/studentExperimentalCurriculum`
-      )
+    const foundedStudent = studentsDatabaseData.find(
+      (student) => student.id === studentData.studentId
     );
-    const getExperimentalCurriculum = await getDocs(
-      experimentalCurriculumQuery
-    );
-    getExperimentalCurriculum.forEach((doc) => {
-      const detailsData = doc.data() as SubCollectionProps;
-      detailsData.detailsArray.map((curriculumDetail) => {
+
+    if (foundedStudent) {
+      foundedStudent.experimentalCurriculumIds.map((curriculumDetail) => {
         setStudentCurriculumDetails((studentCurriculumDetails) => [
           ...studentCurriculumDetails,
           curriculumDetail,
         ]);
       });
-    });
+    }
+
+    // const experimentalCurriculumQuery = query(
+    //   collection(
+    //     db,
+    //     `/students/${studentData.studentId}/studentExperimentalCurriculum`
+    //   )
+    // );
+    // const getExperimentalCurriculum = await getDocs(
+    //   experimentalCurriculumQuery
+    // );
+    // getExperimentalCurriculum.forEach((doc) => {
+    //   const detailsData = doc.data() as SubCollectionProps;
+    //   detailsData.detailsArray.map((curriculumDetail) => {
+    //     setStudentCurriculumDetails((studentCurriculumDetails) => [
+    //       ...studentCurriculumDetails,
+    //       curriculumDetail,
+    //     ]);
+    //   });
+    // });
   };
 
   // SET STUDENT FAMILY ARRAY DETAILS WHEN STUDENT IS SELECTED
@@ -1077,15 +1106,6 @@ export function EditStudent() {
   // -------------------------- END OF STUDENT EDIT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- NEW FAMILY STATES AND FUNCTIONS -------------------------- //
-  // NEW FAMILY DATA ARRAY WITH ALL OPTIONS OF SELECT NEW FAMILY
-  const [newFamilyDataArray, setNewFamilyDataArray] =
-    useState<StudentSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH NEW FAMILY SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleNewFamilyDetailsData = (data: StudentSearchProps[]) => {
-    setNewFamilyDataArray(data);
-  };
-
   // NEW FAMILY SELECTED STATE DATA
   const [newFamilySelectedData, setNewFamilySelectedData] =
     useState<StudentSearchProps>();
@@ -1094,7 +1114,7 @@ export function EditStudent() {
   useEffect(() => {
     if (newStudentData.familyId !== "") {
       setNewFamilySelectedData(
-        newFamilyDataArray!.find(({ id }) => id === newStudentData.familyId)
+        studentsDatabaseData.find(({ id }) => id === newStudentData.familyId)
       );
     } else {
       setNewSchoolSelectedData(undefined);
@@ -1143,15 +1163,6 @@ export function EditStudent() {
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
   const [newClassError, setNewClassError] = useState(false);
 
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
-  const [newSchoolsDataArray, setNewSchoolsDataArray] =
-    useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleNewSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setNewSchoolsDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [newSchoolSelectedData, setNewSchoolSelectedData] =
     useState<SchoolSearchProps>();
@@ -1161,7 +1172,7 @@ export function EditStudent() {
     setNewSchoolClassSelectedData(undefined);
     if (curriculumData.schoolId !== "") {
       setNewSchoolSelectedData(
-        newSchoolsDataArray!.find(({ id }) => id === curriculumData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === curriculumData.schoolId)
       );
     } else {
       setNewSchoolSelectedData(undefined);
@@ -1182,15 +1193,6 @@ export function EditStudent() {
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
-  const [newSchoolClassesDataArray, setNewSchoolClassesDataArray] =
-    useState<SchoolClassSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleNewSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
-    setNewSchoolClassesDataArray(data);
-  };
-
   // SCHOOL CLASS SELECTED STATE DATA
   const [newSchoolClassSelectedData, setNewSchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
@@ -1199,7 +1201,7 @@ export function EditStudent() {
   useEffect(() => {
     if (curriculumData.schoolClassId !== "") {
       setNewSchoolClassSelectedData(
-        newSchoolClassesDataArray!.find(
+        schoolClassDatabaseData.find(
           ({ id }) => id === curriculumData.schoolClassId
         )
       );
@@ -1220,17 +1222,6 @@ export function EditStudent() {
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL COURSE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL COURSES
-  const [newSchoolCoursesDataArray, setNewSchoolCoursesDataArray] =
-    useState<SchoolCourseSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL COURSE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleNewSchoolCourseSelectedData = (
-    data: SchoolCourseSearchProps[]
-  ) => {
-    setNewSchoolCoursesDataArray(data);
-  };
-
   // SCHOOL COURSE SELECTED STATE DATA
   const [newSchoolCourseSelectedData, setNewSchoolCourseSelectedData] =
     useState<SchoolCourseSearchProps>();
@@ -1239,7 +1230,7 @@ export function EditStudent() {
   useEffect(() => {
     if (curriculumData.schoolCourseId !== "") {
       setNewSchoolCourseSelectedData(
-        newSchoolCoursesDataArray!.find(
+        schoolCourseDatabaseData.find(
           ({ id }) => id === curriculumData.schoolCourseId
         )
       );
@@ -1250,40 +1241,72 @@ export function EditStudent() {
 
   // SET SCHOOL COURSE PRICES WHEN SELECTED COURSE
   useEffect(() => {
-    if (newSchoolCourseSelectedData) {
-      setNewStudentData({
-        ...newStudentData,
-        curriculumCourseBundleDays: newSchoolCourseSelectedData.bundleDays,
-        curriculumCoursePriceBundle: newSchoolCourseSelectedData.priceBundle,
-        curriculumCoursePriceUnit: newSchoolCourseSelectedData.priceUnit,
-      });
+    if (newStudentData.curriculum) {
+      const foundedCurriculum = curriculumDatabaseData.find(
+        (curriculum) => curriculum.id === newStudentData.curriculum
+      );
+
+      if (foundedCurriculum) {
+        const foundedSchoolCourse = schoolCourseDatabaseData.find(
+          (schoolCourse) => schoolCourse.id === foundedCurriculum.schoolCourseId
+        );
+        if (foundedSchoolCourse) {
+          setNewStudentData({
+            ...newStudentData,
+            curriculumCourseBundleDays: foundedSchoolCourse.bundleDays,
+            curriculumCoursePriceBundle: foundedSchoolCourse.priceBundle,
+            curriculumCoursePriceUnit: foundedSchoolCourse.priceUnit,
+          });
+          console.log("mudou", foundedSchoolCourse);
+        }
+      }
     }
-  }, [newSchoolCourseSelectedData]);
+  }, [newStudentData.curriculum, newClass]);
+
+  useEffect(() => {
+    console.log(
+      "newStudentData.curriculumCoursePriceBundle",
+      newStudentData.curriculumCoursePriceBundle
+    );
+    console.log(
+      "newStudentData.curriculumCoursePriceUnit",
+      newStudentData.curriculumCoursePriceUnit
+    );
+  }, [
+    newStudentData.curriculumCoursePriceBundle,
+    newStudentData.curriculumCoursePriceUnit,
+  ]);
 
   // -------------------------- END OF SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHEDULES DETAILS ARRAY STATE
-  const [newSchedulesDetailsData, setNewSchedulesDetailsData] = useState<
-    ScheduleSearchProps[]
-  >([]);
+  // const [newSchedulesDetailsData, setNewSchedulesDetailsData] = useState<
+  //   ScheduleSearchProps[]
+  // >([]);
 
   // GETTING SCHEDULES DATA
-  const handleNewSchedulesDetails = async () => {
-    const q = query(collection(db, "schedules"));
-    const querySnapshot = await getDocs(q);
-    const promises: ScheduleSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as ScheduleSearchProps;
-      promises.push(promise);
-    });
-    setNewSchedulesDetailsData(promises);
-  };
+  // const handleNewSchedulesDetails = async () => {
+
+  //   const filterSchedules = scheduleDatabaseData.find(
+  //     (schedule) =>
+  //       schedule.id === newStudentData.experimentalCurriculumClassDayId
+  //   );
+
+  //   const q = query(collection(db, "schedules"));
+  //   const querySnapshot = await getDocs(q);
+  //   const promises: ScheduleSearchProps[] = [];
+  //   querySnapshot.forEach((doc) => {
+  //     const promise = doc.data() as ScheduleSearchProps;
+  //     promises.push(promise);
+  //   });
+  //   setNewSchedulesDetailsData(promises);
+  // };
 
   // GETTING SCHEDULES DETAILS
-  useEffect(() => {
-    handleNewSchedulesDetails();
-  }, []);
+  // useEffect(() => {
+  //   handleNewSchedulesDetails();
+  // }, []);
   // -------------------------- END OF SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- CURRICULUM STATES AND FUNCTIONS -------------------------- //
@@ -1295,35 +1318,52 @@ export function EditStudent() {
   // GETTING CURRICULUM DATA
   const handleNewAvailableCoursesData = async () => {
     if (curriculumData.schoolCourseId === "all") {
-      const q = query(
-        collection(db, "curriculum"),
-        where("schoolId", "==", curriculumData.schoolId),
-        where("schoolClassId", "==", curriculumData.schoolClassId),
-        orderBy("name")
+      const filterCurriculum = curriculumDatabaseData.filter(
+        (curriculum) =>
+          curriculum.schoolId === curriculumData.schoolId &&
+          curriculum.schoolClassId === curriculumData.schoolClassId
       );
-      const querySnapshot = await getDocs(q);
-      const promises: CurriculumSearchProps[] = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data() as CurriculumSearchProps;
-        promises.push(promise);
-      });
-      setNewCurriculumCoursesData(promises);
+      setNewCurriculumCoursesData(filterCurriculum);
     } else {
-      const q = query(
-        collection(db, "curriculum"),
-        where("schoolId", "==", curriculumData.schoolId),
-        where("schoolClassId", "==", curriculumData.schoolClassId),
-        where("schoolCourseId", "==", curriculumData.schoolCourseId),
-        orderBy("name")
+      const filterCurriculum = curriculumDatabaseData.filter(
+        (curriculum) =>
+          curriculum.schoolId === curriculumData.schoolId &&
+          curriculum.schoolClassId === curriculumData.schoolClassId &&
+          curriculum.schoolCourseId === curriculumData.schoolCourseId
       );
-      const querySnapshot = await getDocs(q);
-      const promises: CurriculumSearchProps[] = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data() as CurriculumSearchProps;
-        promises.push(promise);
-      });
-      setNewCurriculumCoursesData(promises);
+      setNewCurriculumCoursesData(filterCurriculum);
     }
+
+    // if (curriculumData.schoolCourseId === "all") {
+    //   const q = query(
+    //     collection(db, "curriculum"),
+    //     where("schoolId", "==", curriculumData.schoolId),
+    //     where("schoolClassId", "==", curriculumData.schoolClassId),
+    //     orderBy("name")
+    //   );
+    //   const querySnapshot = await getDocs(q);
+    //   const promises: CurriculumSearchProps[] = [];
+    //   querySnapshot.forEach((doc) => {
+    //     const promise = doc.data() as CurriculumSearchProps;
+    //     promises.push(promise);
+    //   });
+    //   setNewCurriculumCoursesData(promises);
+    // } else {
+    //   const q = query(
+    //     collection(db, "curriculum"),
+    //     where("schoolId", "==", curriculumData.schoolId),
+    //     where("schoolClassId", "==", curriculumData.schoolClassId),
+    //     where("schoolCourseId", "==", curriculumData.schoolCourseId),
+    //     orderBy("name")
+    //   );
+    //   const querySnapshot = await getDocs(q);
+    //   const promises: CurriculumSearchProps[] = [];
+    //   querySnapshot.forEach((doc) => {
+    //     const promise = doc.data() as CurriculumSearchProps;
+    //     promises.push(promise);
+    //   });
+    //   setNewCurriculumCoursesData(promises);
+    // }
   };
 
   // GET AVAILABLE COURSES DATA WHEN SCHOOL COURSE CHANGE
@@ -1343,23 +1383,33 @@ export function EditStudent() {
   // GET CLASS DAY FULL DATA WHEN HAVE CURRICULUM SELECTED DATA
   useEffect(() => {
     const handleNewCurriculumClassDayFullData = async () => {
-      if (newStudentData.curriculumClassDayId !== "") {
-        const q = query(
-          collection(db, "classDays"),
-          where("id", "==", newStudentData.curriculumClassDayId)
-        );
-        const unsubscribe = onSnapshot(q, (querySnapShot) => {
-          const promises: ClassDaySearchProps[] = [];
-          querySnapShot.forEach((doc) => {
-            const promise = doc.data() as ClassDaySearchProps;
-            promises.push(promise);
-          });
-          setClassDayCurriculumSelectedData(promises[0]);
-        });
-        console.log(unsubscribe);
+      const filterClassDays = classDaysDatabaseData.find(
+        (classDays) => classDays.id === newStudentData.curriculumClassDayId
+      );
+
+      if (filterClassDays) {
+        setClassDayCurriculumSelectedData(filterClassDays);
       } else {
         setClassDayCurriculumSelectedData(undefined);
       }
+
+      // if (newStudentData.curriculumClassDayId !== "") {
+      //   const q = query(
+      //     collection(db, "classDays"),
+      //     where("id", "==", newStudentData.curriculumClassDayId)
+      //   );
+      //   const unsubscribe = onSnapshot(q, (querySnapShot) => {
+      //     const promises: ClassDaySearchProps[] = [];
+      //     querySnapShot.forEach((doc) => {
+      //       const promise = doc.data() as ClassDaySearchProps;
+      //       promises.push(promise);
+      //     });
+      //     setClassDayCurriculumSelectedData(promises[0]);
+      //   });
+      //   console.log(unsubscribe);
+      // } else {
+      //   setClassDayCurriculumSelectedData(undefined);
+      // }
     };
     handleNewCurriculumClassDayFullData();
   }, [newStudentData.curriculumClassDayId]);
@@ -1455,23 +1505,34 @@ export function EditStudent() {
   // GET CLASS DAY FULL DATA WHEN HAVE EXPERIMENTAL CURRICULUM SELECTED DATA
   useEffect(() => {
     const handleNewExperimentalCurriculumClassDayFullData = async () => {
-      if (newStudentData.experimentalCurriculumClassDayId !== "") {
-        const q = query(
-          collection(db, "classDays"),
-          where("id", "==", newStudentData.experimentalCurriculumClassDayId)
-        );
-        const unsubscribe = onSnapshot(q, (querySnapShot) => {
-          const promises: ClassDaySearchProps[] = [];
-          querySnapShot.forEach((doc) => {
-            const promise = doc.data() as ClassDaySearchProps;
-            promises.push(promise);
-          });
-          setClassDayExperimentalCurriculumSelectedData(promises[0]);
-        });
-        console.log(unsubscribe);
+      const filterClassDays = classDaysDatabaseData.find(
+        (classDays) =>
+          classDays.id === newStudentData.experimentalCurriculumClassDayId
+      );
+
+      if (filterClassDays) {
+        setClassDayExperimentalCurriculumSelectedData(filterClassDays);
       } else {
         setClassDayExperimentalCurriculumSelectedData(undefined);
       }
+
+      // if (newStudentData.experimentalCurriculumClassDayId !== "") {
+      //   const q = query(
+      //     collection(db, "classDays"),
+      //     where("id", "==", newStudentData.experimentalCurriculumClassDayId)
+      //   );
+      //   const unsubscribe = onSnapshot(q, (querySnapShot) => {
+      //     const promises: ClassDaySearchProps[] = [];
+      //     querySnapShot.forEach((doc) => {
+      //       const promise = doc.data() as ClassDaySearchProps;
+      //       promises.push(promise);
+      //     });
+      //     setClassDayExperimentalCurriculumSelectedData(promises[0]);
+      //   });
+      //   console.log(unsubscribe);
+      // } else {
+      //   setClassDayExperimentalCurriculumSelectedData(undefined);
+      // }
     };
     handleNewExperimentalCurriculumClassDayFullData();
   }, [newStudentData.experimentalCurriculumClassDayId]);
@@ -1481,17 +1542,6 @@ export function EditStudent() {
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
   // EXPERIMENTAL CLASS ERROR STATE
   const [experimentalClassError, setExperimentalClassError] = useState(false);
-
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
-  const [newExperimentalSchoolsDataArray, setNewExperimentalSchoolsDataArray] =
-    useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleNewExperimentalSchoolSelectedData = (
-    data: SchoolSearchProps[]
-  ) => {
-    setNewExperimentalSchoolsDataArray(data);
-  };
 
   // SCHOOL SELECTED STATE DATA
   const [
@@ -1504,7 +1554,7 @@ export function EditStudent() {
     setNewExperimentalSchoolClassSelectedData(undefined);
     if (experimentalCurriculumData.schoolId !== "") {
       setNewExperimentalSchoolSelectedData(
-        newExperimentalSchoolsDataArray!.find(
+        schoolDatabaseData.find(
           ({ id }) => id === experimentalCurriculumData.schoolId
         )
       );
@@ -1531,19 +1581,6 @@ export function EditStudent() {
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
-  const [
-    newExperimentalSchoolClassesDataArray,
-    setNewExperimentalSchoolClassesDataArray,
-  ] = useState<SchoolClassSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleNewExperimentalSchoolClassSelectedData = (
-    data: SchoolClassSearchProps[]
-  ) => {
-    setNewExperimentalSchoolClassesDataArray(data);
-  };
-
   // SCHOOL CLASS SELECTED STATE DATA
   const [
     newExperimentalSchoolClassSelectedData,
@@ -1554,7 +1591,7 @@ export function EditStudent() {
   useEffect(() => {
     if (experimentalCurriculumData.schoolClassId !== "") {
       setNewExperimentalSchoolClassSelectedData(
-        newExperimentalSchoolClassesDataArray!.find(
+        schoolClassDatabaseData.find(
           ({ id }) => id === experimentalCurriculumData.schoolClassId
         )
       );
@@ -1577,19 +1614,6 @@ export function EditStudent() {
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL COURSE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL COURSES
-  const [
-    newExperimentalSchoolCoursesDataArray,
-    setExperimentalNewSchoolCoursesDataArray,
-  ] = useState<SchoolCourseSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL COURSE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleNewExperimentalSchoolCourseSelectedData = (
-    data: SchoolCourseSearchProps[]
-  ) => {
-    setExperimentalNewSchoolCoursesDataArray(data);
-  };
-
   // SCHOOL COURSE SELECTED STATE DATA
   const [
     newExperimentalSchoolCourseSelectedData,
@@ -1600,7 +1624,7 @@ export function EditStudent() {
   useEffect(() => {
     if (experimentalCurriculumData.schoolCourseId !== "") {
       setNewExperimentalSchoolCourseSelectedData(
-        newExperimentalSchoolCoursesDataArray!.find(
+        schoolCourseDatabaseData.find(
           ({ id }) => id === experimentalCurriculumData.schoolCourseId
         )
       );
@@ -1620,39 +1644,57 @@ export function EditStudent() {
   // GETTING CURRICULUM DATA
   const handleNewAvailableExperimentalCoursesData = async () => {
     if (experimentalCurriculumData.schoolCourseId === "all") {
-      const q = query(
-        collection(db, "curriculum"),
-        where("schoolId", "==", experimentalCurriculumData.schoolId),
-        where("schoolClassId", "==", experimentalCurriculumData.schoolClassId),
-        orderBy("name")
+      const filterCurriculum = curriculumDatabaseData.filter(
+        (curriculum) =>
+          curriculum.schoolId === experimentalCurriculumData.schoolId &&
+          curriculum.schoolClassId === experimentalCurriculumData.schoolClassId
       );
-      const querySnapshot = await getDocs(q);
-      const promises: CurriculumSearchProps[] = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data() as CurriculumSearchProps;
-        promises.push(promise);
-      });
-      setNewExperimentalCurriculumCoursesData(promises);
+      setNewExperimentalCurriculumCoursesData(filterCurriculum);
     } else {
-      const q = query(
-        collection(db, "curriculum"),
-        where("schoolId", "==", experimentalCurriculumData.schoolId),
-        where("schoolClassId", "==", experimentalCurriculumData.schoolClassId),
-        where(
-          "schoolCourseId",
-          "==",
-          experimentalCurriculumData.schoolCourseId
-        ),
-        orderBy("name")
+      const filterCurriculum = curriculumDatabaseData.filter(
+        (curriculum) =>
+          curriculum.schoolId === experimentalCurriculumData.schoolId &&
+          curriculum.schoolClassId ===
+            experimentalCurriculumData.schoolClassId &&
+          curriculum.schoolCourseId ===
+            experimentalCurriculumData.schoolCourseId
       );
-      const querySnapshot = await getDocs(q);
-      const promises: CurriculumSearchProps[] = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data() as CurriculumSearchProps;
-        promises.push(promise);
-      });
-      setNewExperimentalCurriculumCoursesData(promises);
+      setNewExperimentalCurriculumCoursesData(filterCurriculum);
     }
+    // if (experimentalCurriculumData.schoolCourseId === "all") {
+    //   const q = query(
+    //     collection(db, "curriculum"),
+    //     where("schoolId", "==", experimentalCurriculumData.schoolId),
+    //     where("schoolClassId", "==", experimentalCurriculumData.schoolClassId),
+    //     orderBy("name")
+    //   );
+    //   const querySnapshot = await getDocs(q);
+    //   const promises: CurriculumSearchProps[] = [];
+    //   querySnapshot.forEach((doc) => {
+    //     const promise = doc.data() as CurriculumSearchProps;
+    //     promises.push(promise);
+    //   });
+    //   setNewExperimentalCurriculumCoursesData(promises);
+    // } else {
+    //   const q = query(
+    //     collection(db, "curriculum"),
+    //     where("schoolId", "==", experimentalCurriculumData.schoolId),
+    //     where("schoolClassId", "==", experimentalCurriculumData.schoolClassId),
+    //     where(
+    //       "schoolCourseId",
+    //       "==",
+    //       experimentalCurriculumData.schoolCourseId
+    //     ),
+    //     orderBy("name")
+    //   );
+    //   const querySnapshot = await getDocs(q);
+    //   const promises: CurriculumSearchProps[] = [];
+    //   querySnapshot.forEach((doc) => {
+    //     const promise = doc.data() as CurriculumSearchProps;
+    //     promises.push(promise);
+    //   });
+    //   setNewExperimentalCurriculumCoursesData(promises);
+    // }
   };
 
   // GET AVAILABLE COURSES DATA WHEN SCHOOL COURSE CHANGE
@@ -1826,6 +1868,10 @@ export function EditStudent() {
     othersPriceSum: 0,
   });
 
+  useEffect(() => {
+    console.log(curriculumDatePriceCalc);
+  }, [curriculumDatePriceCalc]);
+
   // CHECKING IF STUDENT WILL HAVE CURRICULUM AFTER CHANGINGS
   useEffect(() => {
     setCurriculumDatePriceCalc({
@@ -1837,170 +1883,227 @@ export function EditStudent() {
   // CALC OF MOST EXPENSIVE COURSE PRICE AND SUM THE SMALLEST VALUES
   useEffect(() => {
     if (
-      curriculumDatePriceCalc.mostExpensiveCourse === 0 &&
+      curriculumDatePriceCalc.mostExpensiveCourse === 0 ||
       curriculumDatePriceCalc.othersPriceSum === 0
     ) {
       excludeCurriculum.map((curriculumDetail: ExcludeCurriculumProps) => {
-        if (
-          curriculumDetail.price >
-            curriculumDatePriceCalc.mostExpensiveCourse &&
-          !curriculumDetail.exclude
-        ) {
-          setCurriculumDatePriceCalc({
-            ...curriculumDatePriceCalc,
-            mostExpensiveCourse: curriculumDetail.price,
-          });
-        } else {
-          setCurriculumDatePriceCalc({
-            ...curriculumDatePriceCalc,
-            othersPriceSum:
-              curriculumDatePriceCalc.othersPriceSum + curriculumDetail.price,
-          });
+        if (!curriculumDetail.exclude) {
+          if (
+            curriculumDetail.price > curriculumDatePriceCalc.mostExpensiveCourse
+          ) {
+            setCurriculumDatePriceCalc({
+              ...curriculumDatePriceCalc,
+              mostExpensiveCourse: curriculumDetail.price,
+            });
+          } else {
+            setCurriculumDatePriceCalc({
+              ...curriculumDatePriceCalc,
+              othersPriceSum:
+                curriculumDatePriceCalc.othersPriceSum + curriculumDetail.price,
+            });
+          }
         }
       });
     }
+    // if (
+    //   curriculumDatePriceCalc.mostExpensiveCourse === 0 &&
+    //   curriculumDatePriceCalc.othersPriceSum === 0
+    // ) {
+    //   excludeCurriculum.forEach((curriculumDetail) => {
+    //     if (!curriculumDetail.exclude) {
+    //       if (
+    //         curriculumDetail.price > curriculumDatePriceCalc.mostExpensiveCourse
+    //       ) {
+    //         setCurriculumDatePriceCalc({
+    //           ...curriculumDatePriceCalc,
+    //           mostExpensiveCourse: curriculumDetail.price,
+    //         });
+    //       } else {
+    //         setCurriculumDatePriceCalc({
+    //           ...curriculumDatePriceCalc,
+    //           othersPriceSum:
+    //             curriculumDatePriceCalc.othersPriceSum + curriculumDetail.price,
+    //         });
+    //       }
+    //     }
+    //   });
+    //   // excludeCurriculum.map((curriculumDetail: ExcludeCurriculumProps) => {
+    //   //   console.log(curriculumDatePriceCalc.mostExpensiveCourse);
+    //   //   console.log(curriculumDatePriceCalc.othersPriceSum);
+
+    //   //   if (!curriculumDetail.exclude) {
+    //   //     if (
+    //   //       curriculumDetail.price > curriculumDatePriceCalc.mostExpensiveCourse
+    //   //     ) {
+    //   //       setCurriculumDatePriceCalc({
+    //   //         ...curriculumDatePriceCalc,
+    //   //         mostExpensiveCourse: curriculumDetail.price,
+    //   //       });
+    //   //     } else {
+    //   //       setCurriculumDatePriceCalc({
+    //   //         ...curriculumDatePriceCalc,
+    //   //         othersPriceSum:
+    //   //           curriculumDatePriceCalc.othersPriceSum + curriculumDetail.price,
+    //   //       });
+    //   //     }
+    //   //   }
+    //   //   console.log("passei aqui");
+    //   // });
+    // }
   }, [curriculumDatePriceCalc]);
 
   function handleValueWithoutDiscount() {
-    let haveCurriculumWill = false;
-    excludeCurriculum.map((curriculumExclude) => {
-      if (!curriculumExclude.exclude) {
-        haveCurriculumWill = true;
-      } else {
-        haveCurriculumWill = false;
-      }
-    });
-    if (studentEditData.customDiscount) {
-      // if (willHaveCurriculum) {
-      if (haveCurriculumWill) {
-        if (newClass.enrolledDays.length === 0) {
-          setNewPrices({
-            appliedPrice: studentEditData.fullPrice,
-            fullPrice: studentEditData.fullPrice,
-          });
-        }
-        if (newClass.enrolledDays.length === 1) {
-          setNewPrices({
-            appliedPrice:
-              studentEditData.fullPrice +
-              newStudentData.curriculumCoursePriceUnit,
-            fullPrice:
-              studentEditData.fullPrice +
-              newStudentData.curriculumCoursePriceUnit,
-          });
-        }
-        if (newClass.enrolledDays.length > 1) {
-          const result = Math.floor(
-            newClass.enrolledDays.length /
-              newStudentData.curriculumCourseBundleDays
-          );
-          const rest =
-            newClass.enrolledDays.length %
-            newStudentData.curriculumCourseBundleDays;
-          setNewPrices({
-            appliedPrice:
-              studentEditData.fullPrice +
-              result * newStudentData.curriculumCoursePriceBundle +
-              rest * newStudentData.curriculumCoursePriceUnit,
-            fullPrice:
-              studentEditData.fullPrice +
-              result * newStudentData.curriculumCoursePriceBundle +
-              rest * newStudentData.curriculumCoursePriceUnit,
-          });
-        }
-      } else {
-        if (newClass.enrolledDays.length === 0) {
-          setNewPrices({
-            appliedPrice: 0,
-            fullPrice: 0,
-          });
-        }
-        if (newClass.enrolledDays.length === 1) {
-          setNewPrices({
-            appliedPrice: newStudentData.curriculumCoursePriceUnit,
-            fullPrice: newStudentData.curriculumCoursePriceUnit,
-          });
-        }
-        if (newClass.enrolledDays.length > 1) {
-          const result = Math.floor(
-            newClass.enrolledDays.length /
-              newStudentData.curriculumCourseBundleDays
-          );
-          const rest =
-            newClass.enrolledDays.length %
-            newStudentData.curriculumCourseBundleDays;
-          setNewPrices({
-            appliedPrice:
-              result * newStudentData.curriculumCoursePriceBundle +
-              rest * newStudentData.curriculumCoursePriceUnit,
-            fullPrice:
-              result * newStudentData.curriculumCoursePriceBundle +
-              rest * newStudentData.curriculumCoursePriceUnit,
-          });
-        }
-      }
-      // } else if (willHaveCurriculum) {
-    } else if (haveCurriculumWill) {
-      if (studentEditData.addCurriculum) {
-        handleValueAddCurriculum();
-      } else {
-        setNewPrices({
-          appliedPrice: studentEditData.appliedPrice,
-          fullPrice: studentEditData.fullPrice,
-        });
-      }
+    const remainingCurriculum = excludeCurriculum.filter(
+      (curriculum) => !curriculum.exclude
+    );
+    console.log("remainingCurriculum", remainingCurriculum);
+    if (remainingCurriculum.length > 0) {
+      setNewPrices({
+        appliedPrice: remainingCurriculum[0].price,
+        fullPrice: remainingCurriculum[0].price,
+      });
     } else {
-      if (studentEditData.addCurriculum) {
-        handleValueAddCurriculum();
-      } else {
-        setNewPrices({
-          appliedPrice: 0,
-          fullPrice: 0,
-        });
-      }
+      setNewPrices({
+        appliedPrice: 0,
+        fullPrice: 0,
+      });
     }
   }
 
   function handleValueWithEmployeeDiscount() {
+    let haveCurriculumWill = false;
+    excludeCurriculum.find((curriculumExclude) => {
+      if (!curriculumExclude.exclude) {
+        haveCurriculumWill = true;
+      }
+    });
     const priceUnitDiscount = +(
       newStudentData.curriculumCoursePriceUnit * employeeDiscountValue
     ).toFixed(2);
     const priceBundleDiscount = +(
       newStudentData.curriculumCoursePriceBundle * employeeDiscountValue
     ).toFixed(2);
-    if (newClass.enrolledDays.length === 0) {
-      setNewPrices({
-        appliedPrice: studentEditData.fullPrice * employeeDiscountValue,
-        fullPrice: studentEditData.fullPrice,
+    // if (willHaveCurriculum) {
+    if (haveCurriculumWill) {
+      const curriculumsAfterChanging = excludeCurriculum.filter(
+        (curriculum) => !curriculum.exclude
+      );
+      let biggerPrice = 0;
+      let olderBiggerPrice = 0;
+      let otherSumPrices = 0;
+      curriculumsAfterChanging.map((curriculum) => {
+        if (curriculum.price > biggerPrice) {
+          olderBiggerPrice = biggerPrice;
+          biggerPrice = curriculum.price;
+          otherSumPrices = olderBiggerPrice + otherSumPrices;
+        } else {
+          otherSumPrices = otherSumPrices + curriculum.price;
+        }
       });
-    }
-    if (newClass.enrolledDays.length === 1) {
-      setNewPrices({
-        appliedPrice:
-          studentEditData.fullPrice * employeeDiscountValue + priceUnitDiscount,
-        fullPrice:
-          studentEditData.fullPrice + newStudentData.curriculumCoursePriceUnit,
-      });
-    }
-    if (newClass.enrolledDays.length > 1) {
+      let newBiggerPrice = 0;
+      let newOtherSumPrices = 0;
       const result = Math.floor(
         newClass.enrolledDays.length / newStudentData.curriculumCourseBundleDays
       );
       const rest =
         newClass.enrolledDays.length %
         newStudentData.curriculumCourseBundleDays;
+      let newCoursePrice;
+      if (isNaN(result) || isNaN(rest)) {
+        newCoursePrice = 0;
+      } else {
+        newCoursePrice =
+          result * newStudentData.curriculumCoursePriceBundle +
+          rest * newStudentData.curriculumCoursePriceUnit;
+      }
+      if (biggerPrice < newCoursePrice) {
+        newBiggerPrice = newCoursePrice;
+        newOtherSumPrices = biggerPrice + otherSumPrices;
+      } else {
+        newBiggerPrice = biggerPrice;
+        newOtherSumPrices = otherSumPrices + newCoursePrice;
+      }
       setNewPrices({
         appliedPrice:
-          studentEditData.fullPrice * employeeDiscountValue +
-          result * priceBundleDiscount +
-          rest * priceUnitDiscount,
-        fullPrice:
-          studentEditData.fullPrice +
-          result * newStudentData.curriculumCoursePriceBundle +
-          rest * newStudentData.curriculumCoursePriceUnit,
+          newBiggerPrice * employeeDiscountValue + newOtherSumPrices,
+        fullPrice: newBiggerPrice + newOtherSumPrices,
+      });
+    } else if (studentEditData.addCurriculum) {
+      if (newClass.enrolledDays.length === 0) {
+        setNewPrices({
+          appliedPrice: 0,
+          fullPrice: 0,
+        });
+      }
+      if (newClass.enrolledDays.length === 1) {
+        setNewPrices({
+          appliedPrice: priceUnitDiscount,
+          fullPrice: newStudentData.curriculumCoursePriceUnit,
+        });
+      }
+      if (newClass.enrolledDays.length > 1) {
+        const result = Math.floor(
+          newClass.enrolledDays.length /
+            newStudentData.curriculumCourseBundleDays
+        );
+        const rest =
+          newClass.enrolledDays.length %
+          newStudentData.curriculumCourseBundleDays;
+        setNewPrices({
+          appliedPrice: result * priceBundleDiscount + rest * priceUnitDiscount,
+          fullPrice:
+            result * newStudentData.curriculumCoursePriceBundle +
+            rest * newStudentData.curriculumCoursePriceUnit,
+        });
+      }
+    } else {
+      setNewPrices({
+        appliedPrice: 0,
+        fullPrice: 0,
       });
     }
   }
+
+  // function handleValueWithEmployeeDiscount() {
+  //   const priceUnitDiscount = +(
+  //     newStudentData.curriculumCoursePriceUnit * employeeDiscountValue
+  //   ).toFixed(2);
+  //   const priceBundleDiscount = +(
+  //     newStudentData.curriculumCoursePriceBundle * employeeDiscountValue
+  //   ).toFixed(2);
+  //   if (newClass.enrolledDays.length === 0) {
+  //     setNewPrices({
+  //       appliedPrice: studentEditData.fullPrice * employeeDiscountValue,
+  //       fullPrice: studentEditData.fullPrice,
+  //     });
+  //   }
+  //   if (newClass.enrolledDays.length === 1) {
+  //     setNewPrices({
+  //       appliedPrice:
+  //         studentEditData.fullPrice * employeeDiscountValue + priceUnitDiscount,
+  //       fullPrice:
+  //         studentEditData.fullPrice + newStudentData.curriculumCoursePriceUnit,
+  //     });
+  //   }
+  //   if (newClass.enrolledDays.length > 1) {
+  //     const result = Math.floor(
+  //       newClass.enrolledDays.length / newStudentData.curriculumCourseBundleDays
+  //     );
+  //     const rest =
+  //       newClass.enrolledDays.length %
+  //       newStudentData.curriculumCourseBundleDays;
+  //     setNewPrices({
+  //       appliedPrice:
+  //         studentEditData.fullPrice * employeeDiscountValue +
+  //         result * priceBundleDiscount +
+  //         rest * priceUnitDiscount,
+  //       fullPrice:
+  //         studentEditData.fullPrice +
+  //         result * newStudentData.curriculumCoursePriceBundle +
+  //         rest * newStudentData.curriculumCoursePriceUnit,
+  //     });
+  //   }
+  // }
 
   function handleValueWithCustomDiscount() {
     let haveCurriculumWill = false;
@@ -2030,43 +2133,50 @@ export function EditStudent() {
       ).toFixed(2);
       // if (willHaveCurriculum) {
       if (haveCurriculumWill) {
-        if (newClass.enrolledDays.length === 0) {
-          setNewPrices({
-            appliedPrice: +(
-              studentEditData.fullPrice * customDiscountFinalValue
-            ).toFixed(2),
-            fullPrice: studentEditData.fullPrice,
-          });
+        const curriculumsAfterChanging = excludeCurriculum.filter(
+          (curriculum) => !curriculum.exclude
+        );
+        let biggerPrice = 0;
+        let olderBiggerPrice = 0;
+        let otherSumPrices = 0;
+        curriculumsAfterChanging.map((curriculum) => {
+          if (curriculum.price > biggerPrice) {
+            olderBiggerPrice = biggerPrice;
+            biggerPrice = curriculum.price;
+            otherSumPrices = olderBiggerPrice + otherSumPrices;
+          } else {
+            otherSumPrices = otherSumPrices + curriculum.price;
+          }
+        });
+        let newBiggerPrice = 0;
+        let newOtherSumPrices = 0;
+        const result = Math.floor(
+          newClass.enrolledDays.length /
+            newStudentData.curriculumCourseBundleDays
+        );
+        const rest =
+          newClass.enrolledDays.length %
+          newStudentData.curriculumCourseBundleDays;
+        let newCoursePrice;
+        if (isNaN(result) || isNaN(rest)) {
+          newCoursePrice = 0;
+        } else {
+          newCoursePrice =
+            result * newStudentData.curriculumCoursePriceBundle +
+            rest * newStudentData.curriculumCoursePriceUnit;
         }
-        if (newClass.enrolledDays.length === 1) {
-          setNewPrices({
-            appliedPrice:
-              studentEditData.fullPrice * customDiscountFinalValue +
-              priceUnitDiscount,
-            fullPrice:
-              studentEditData.fullPrice +
-              newStudentData.curriculumCoursePriceUnit,
-          });
+        if (biggerPrice < newCoursePrice) {
+          newBiggerPrice = newCoursePrice;
+          newOtherSumPrices = biggerPrice + otherSumPrices;
+        } else {
+          newBiggerPrice = biggerPrice;
+          newOtherSumPrices = otherSumPrices + newCoursePrice;
         }
-        if (newClass.enrolledDays.length > 1) {
-          const result = Math.floor(
-            newClass.enrolledDays.length /
-              newStudentData.curriculumCourseBundleDays
-          );
-          const rest =
-            newClass.enrolledDays.length %
-            newStudentData.curriculumCourseBundleDays;
-          setNewPrices({
-            appliedPrice:
-              studentEditData.fullPrice * customDiscountFinalValue +
-              result * priceBundleDiscount +
-              rest * priceUnitDiscount,
-            fullPrice:
-              studentEditData.fullPrice +
-              result * newStudentData.curriculumCoursePriceBundle +
-              rest * newStudentData.curriculumCoursePriceUnit,
-          });
-        }
+        setNewPrices({
+          appliedPrice:
+            newBiggerPrice * customDiscountFinalValue + newOtherSumPrices,
+          fullPrice: newBiggerPrice + newOtherSumPrices,
+        });
       } else {
         if (newClass.enrolledDays.length === 0) {
           setNewPrices({
@@ -2106,65 +2216,116 @@ export function EditStudent() {
     if (studentEditData.addCurriculum) {
       handleValueAddCurriculum();
     } else {
-      setNewPrices({
-        appliedPrice:
-          curriculumDatePriceCalc.mostExpensiveCourse +
-          curriculumDatePriceCalc.othersPriceSum * secondCourseDiscountValue,
-        fullPrice:
-          curriculumDatePriceCalc.mostExpensiveCourse +
-          curriculumDatePriceCalc.othersPriceSum,
+      let haveCurriculumWill = false;
+      excludeCurriculum.find((curriculumExclude) => {
+        if (!curriculumExclude.exclude) {
+          haveCurriculumWill = true;
+        }
       });
+      const priceUnitDiscount = +(
+        newStudentData.curriculumCoursePriceUnit * secondCourseDiscountValue
+      ).toFixed(2);
+      const priceBundleDiscount = +(
+        newStudentData.curriculumCoursePriceBundle * secondCourseDiscountValue
+      ).toFixed(2);
+      // if (willHaveCurriculum) {
+      if (haveCurriculumWill) {
+        const curriculumsAfterChanging = excludeCurriculum.filter(
+          (curriculum) => !curriculum.exclude
+        );
+        let biggerPrice = 0;
+        let olderBiggerPrice = 0;
+        let otherSumPrices = 0;
+        curriculumsAfterChanging.map((curriculum) => {
+          if (curriculum.price > biggerPrice) {
+            olderBiggerPrice = biggerPrice;
+            biggerPrice = curriculum.price;
+            otherSumPrices = olderBiggerPrice + otherSumPrices;
+          } else {
+            otherSumPrices = otherSumPrices + curriculum.price;
+          }
+        });
+        let newBiggerPrice = 0;
+        let newOtherSumPrices = 0;
+        const result = Math.floor(
+          newClass.enrolledDays.length /
+            newStudentData.curriculumCourseBundleDays
+        );
+        const rest =
+          newClass.enrolledDays.length %
+          newStudentData.curriculumCourseBundleDays;
+        let newCoursePrice;
+        if (isNaN(result) || isNaN(rest)) {
+          newCoursePrice = 0;
+        } else {
+          newCoursePrice =
+            result * newStudentData.curriculumCoursePriceBundle +
+            rest * newStudentData.curriculumCoursePriceUnit;
+        }
+        if (biggerPrice < newCoursePrice) {
+          newBiggerPrice = newCoursePrice;
+          newOtherSumPrices = biggerPrice + otherSumPrices;
+        } else {
+          newBiggerPrice = biggerPrice;
+          newOtherSumPrices = otherSumPrices + newCoursePrice;
+        }
+        setNewPrices({
+          appliedPrice:
+            newBiggerPrice * secondCourseDiscountValue + newOtherSumPrices,
+          fullPrice: newBiggerPrice + newOtherSumPrices,
+        });
+      } else if (studentEditData.addCurriculum) {
+        if (newClass.enrolledDays.length === 0) {
+          setNewPrices({
+            appliedPrice: 0,
+            fullPrice: 0,
+          });
+        }
+        if (newClass.enrolledDays.length === 1) {
+          setNewPrices({
+            appliedPrice: priceUnitDiscount,
+            fullPrice: newStudentData.curriculumCoursePriceUnit,
+          });
+        }
+        if (newClass.enrolledDays.length > 1) {
+          const result = Math.floor(
+            newClass.enrolledDays.length /
+              newStudentData.curriculumCourseBundleDays
+          );
+          const rest =
+            newClass.enrolledDays.length %
+            newStudentData.curriculumCourseBundleDays;
+          setNewPrices({
+            appliedPrice:
+              result * priceBundleDiscount + rest * priceUnitDiscount,
+            fullPrice:
+              result * newStudentData.curriculumCoursePriceBundle +
+              rest * newStudentData.curriculumCoursePriceUnit,
+          });
+        }
+      } else {
+        setNewPrices({
+          appliedPrice: 0,
+          fullPrice: 0,
+        });
+      }
+
+      // setNewPrices({
+      //   appliedPrice:
+      //     curriculumDatePriceCalc.mostExpensiveCourse +
+      //     curriculumDatePriceCalc.othersPriceSum * secondCourseDiscountValue,
+      //   fullPrice:
+      //     curriculumDatePriceCalc.mostExpensiveCourse +
+      //     curriculumDatePriceCalc.othersPriceSum,
+      // });
     }
   }
 
   function handleValueAddFamilyDiscount() {
-    const priceUnitDiscount = +(
-      newStudentData.curriculumCoursePriceUnit * familyDiscountValue
-    ).toFixed(2);
-    const priceBundleDiscount = +(
-      newStudentData.curriculumCoursePriceBundle * familyDiscountValue
-    ).toFixed(2);
-    if (newClass.enrolledDays.length === 0) {
-      setNewPrices({
-        appliedPrice: studentEditData.fullPrice * familyDiscountValue,
-        fullPrice: studentEditData.fullPrice,
-      });
-    }
-    if (newClass.enrolledDays.length === 1) {
-      setNewPrices({
-        appliedPrice:
-          studentEditData.fullPrice * familyDiscountValue + priceUnitDiscount,
-        fullPrice:
-          studentEditData.fullPrice + newStudentData.curriculumCoursePriceUnit,
-      });
-    }
-    if (newClass.enrolledDays.length > 1) {
-      const result = Math.floor(
-        newClass.enrolledDays.length / newStudentData.curriculumCourseBundleDays
-      );
-      const rest =
-        newClass.enrolledDays.length %
-        newStudentData.curriculumCourseBundleDays;
-      setNewPrices({
-        appliedPrice:
-          studentEditData.fullPrice * familyDiscountValue +
-          result * priceBundleDiscount +
-          rest * priceUnitDiscount,
-        fullPrice:
-          studentEditData.fullPrice +
-          result * newStudentData.curriculumCoursePriceBundle +
-          rest * newStudentData.curriculumCoursePriceUnit,
-      });
-    }
-  }
-
-  function handleValueWithFamilyDiscount() {
     let haveCurriculumWill = false;
-    excludeCurriculum.map((curriculumExclude) => {
+    excludeCurriculum.find((curriculumExclude) => {
       if (!curriculumExclude.exclude) {
         haveCurriculumWill = true;
-      } else {
-        haveCurriculumWill = false;
       }
     });
     const priceUnitDiscount = +(
@@ -2175,41 +2336,49 @@ export function EditStudent() {
     ).toFixed(2);
     // if (willHaveCurriculum) {
     if (haveCurriculumWill) {
-      if (newClass.enrolledDays.length === 0) {
-        setNewPrices({
-          appliedPrice: studentEditData.fullPrice * familyDiscountValue,
-          fullPrice: studentEditData.fullPrice,
-        });
+      const curriculumsAfterChanging = excludeCurriculum.filter(
+        (curriculum) => !curriculum.exclude
+      );
+      let biggerPrice = 0;
+      let olderBiggerPrice = 0;
+      let otherSumPrices = 0;
+      curriculumsAfterChanging.map((curriculum) => {
+        if (curriculum.price > biggerPrice) {
+          olderBiggerPrice = biggerPrice;
+          biggerPrice = curriculum.price;
+          otherSumPrices = olderBiggerPrice + otherSumPrices;
+        } else {
+          otherSumPrices = otherSumPrices + curriculum.price;
+        }
+      });
+      let newBiggerPrice = 0;
+      let newOtherSumPrices = 0;
+      const result = Math.floor(
+        newClass.enrolledDays.length / newStudentData.curriculumCourseBundleDays
+      );
+      const rest =
+        newClass.enrolledDays.length %
+        newStudentData.curriculumCourseBundleDays;
+      let newCoursePrice;
+      if (isNaN(result) || isNaN(rest)) {
+        newCoursePrice = 0;
+      } else {
+        newCoursePrice =
+          result * newStudentData.curriculumCoursePriceBundle +
+          rest * newStudentData.curriculumCoursePriceUnit;
       }
-      if (newClass.enrolledDays.length === 1) {
-        setNewPrices({
-          appliedPrice:
-            studentEditData.fullPrice * familyDiscountValue + priceUnitDiscount,
-          fullPrice:
-            studentEditData.fullPrice +
-            newStudentData.curriculumCoursePriceUnit,
-        });
+      if (biggerPrice < newCoursePrice) {
+        newBiggerPrice = newCoursePrice;
+        newOtherSumPrices = biggerPrice + otherSumPrices;
+      } else {
+        newBiggerPrice = biggerPrice;
+        newOtherSumPrices = otherSumPrices + newCoursePrice;
       }
-      if (newClass.enrolledDays.length > 1) {
-        const result = Math.floor(
-          newClass.enrolledDays.length /
-            newStudentData.curriculumCourseBundleDays
-        );
-        const rest =
-          newClass.enrolledDays.length %
-          newStudentData.curriculumCourseBundleDays;
-        setNewPrices({
-          appliedPrice:
-            studentEditData.fullPrice * familyDiscountValue +
-            result * priceBundleDiscount +
-            rest * priceUnitDiscount,
-          fullPrice:
-            studentEditData.fullPrice +
-            result * newStudentData.curriculumCoursePriceBundle +
-            rest * newStudentData.curriculumCoursePriceUnit,
-        });
-      }
-    } else {
+      setNewPrices({
+        appliedPrice: newBiggerPrice * familyDiscountValue + newOtherSumPrices,
+        fullPrice: newBiggerPrice + newOtherSumPrices,
+      });
+    } else if (studentEditData.addCurriculum) {
       if (newClass.enrolledDays.length === 0) {
         setNewPrices({
           appliedPrice: 0,
@@ -2237,91 +2406,72 @@ export function EditStudent() {
             rest * newStudentData.curriculumCoursePriceUnit,
         });
       }
+    } else {
+      setNewPrices({
+        appliedPrice: 0,
+        fullPrice: 0,
+      });
     }
   }
 
-  function handleValueAddCurriculum() {
+  function handleValueWithFamilyDiscount() {
     let haveCurriculumWill = false;
-    excludeCurriculum.map((curriculumExclude) => {
+    excludeCurriculum.find((curriculumExclude) => {
       if (!curriculumExclude.exclude) {
         haveCurriculumWill = true;
-      } else {
-        haveCurriculumWill = false;
       }
     });
     const priceUnitDiscount = +(
-      newStudentData.curriculumCoursePriceUnit * secondCourseDiscountValue
+      newStudentData.curriculumCoursePriceUnit * familyDiscountValue
     ).toFixed(2);
     const priceBundleDiscount = +(
-      newStudentData.curriculumCoursePriceBundle * secondCourseDiscountValue
+      newStudentData.curriculumCoursePriceBundle * familyDiscountValue
     ).toFixed(2);
     // if (willHaveCurriculum) {
     if (haveCurriculumWill) {
-      if (newClass.enrolledDays.length === 0) {
-        setNewPrices({
-          appliedPrice:
-            curriculumDatePriceCalc.mostExpensiveCourse +
-            curriculumDatePriceCalc.othersPriceSum,
-          fullPrice:
-            curriculumDatePriceCalc.mostExpensiveCourse +
-            curriculumDatePriceCalc.othersPriceSum,
-        });
-      }
-      if (newClass.enrolledDays.length === 1) {
-        setNewPrices({
-          appliedPrice:
-            curriculumDatePriceCalc.mostExpensiveCourse +
-            curriculumDatePriceCalc.othersPriceSum * secondCourseDiscountValue +
-            priceUnitDiscount,
-          fullPrice:
-            curriculumDatePriceCalc.mostExpensiveCourse +
-            curriculumDatePriceCalc.othersPriceSum +
-            newStudentData.curriculumCoursePriceUnit,
-        });
-      }
-      if (newClass.enrolledDays.length > 1) {
-        const result = Math.floor(
-          newClass.enrolledDays.length /
-            newStudentData.curriculumCourseBundleDays
-        );
-        const rest =
-          newClass.enrolledDays.length %
-          newStudentData.curriculumCourseBundleDays;
-        const newCourseTotalValue =
+      const curriculumsAfterChanging = excludeCurriculum.filter(
+        (curriculum) => !curriculum.exclude
+      );
+      let biggerPrice = 0;
+      let olderBiggerPrice = 0;
+      let otherSumPrices = 0;
+      curriculumsAfterChanging.map((curriculum) => {
+        if (curriculum.price > biggerPrice) {
+          olderBiggerPrice = biggerPrice;
+          biggerPrice = curriculum.price;
+          otherSumPrices = olderBiggerPrice + otherSumPrices;
+        } else {
+          otherSumPrices = otherSumPrices + curriculum.price;
+        }
+      });
+      let newBiggerPrice = 0;
+      let newOtherSumPrices = 0;
+      const result = Math.floor(
+        newClass.enrolledDays.length / newStudentData.curriculumCourseBundleDays
+      );
+      const rest =
+        newClass.enrolledDays.length %
+        newStudentData.curriculumCourseBundleDays;
+      let newCoursePrice;
+      if (isNaN(result) || isNaN(rest)) {
+        newCoursePrice = 0;
+      } else {
+        newCoursePrice =
           result * newStudentData.curriculumCoursePriceBundle +
           rest * newStudentData.curriculumCoursePriceUnit;
-        if (curriculumDatePriceCalc.mostExpensiveCourse > newCourseTotalValue) {
-          setNewPrices({
-            appliedPrice:
-              curriculumDatePriceCalc.mostExpensiveCourse +
-              curriculumDatePriceCalc.othersPriceSum *
-                secondCourseDiscountValue +
-              result * priceBundleDiscount +
-              rest * priceUnitDiscount,
-            fullPrice:
-              curriculumDatePriceCalc.mostExpensiveCourse +
-              curriculumDatePriceCalc.othersPriceSum +
-              result * newStudentData.curriculumCoursePriceBundle +
-              rest * newStudentData.curriculumCoursePriceUnit,
-          });
-        } else {
-          setNewPrices({
-            appliedPrice:
-              result * newStudentData.curriculumCoursePriceBundle +
-              rest * newStudentData.curriculumCoursePriceUnit +
-              curriculumDatePriceCalc.mostExpensiveCourse *
-                secondCourseDiscountValue +
-              curriculumDatePriceCalc.othersPriceSum *
-                secondCourseDiscountValue,
-            fullPrice:
-              result * newStudentData.curriculumCoursePriceBundle +
-              rest * newStudentData.curriculumCoursePriceUnit +
-              curriculumDatePriceCalc.mostExpensiveCourse +
-              curriculumDatePriceCalc.othersPriceSum,
-          });
-        }
       }
-    } else {
+      if (biggerPrice < newCoursePrice) {
+        newBiggerPrice = newCoursePrice;
+        newOtherSumPrices = biggerPrice + otherSumPrices;
+      } else {
+        newBiggerPrice = biggerPrice;
+        newOtherSumPrices = otherSumPrices + newCoursePrice;
+      }
+      setNewPrices({
+        appliedPrice: newBiggerPrice * familyDiscountValue + newOtherSumPrices,
+        fullPrice: newBiggerPrice + newOtherSumPrices,
+      });
+    } else if (studentEditData.addCurriculum) {
       if (newClass.enrolledDays.length === 0) {
         setNewPrices({
           appliedPrice: 0,
@@ -2330,7 +2480,7 @@ export function EditStudent() {
       }
       if (newClass.enrolledDays.length === 1) {
         setNewPrices({
-          appliedPrice: newStudentData.curriculumCoursePriceUnit,
+          appliedPrice: priceUnitDiscount,
           fullPrice: newStudentData.curriculumCoursePriceUnit,
         });
       }
@@ -2343,27 +2493,247 @@ export function EditStudent() {
           newClass.enrolledDays.length %
           newStudentData.curriculumCourseBundleDays;
         setNewPrices({
-          appliedPrice:
-            result * newStudentData.curriculumCoursePriceBundle +
-            rest * priceUnitDiscount,
+          appliedPrice: result * priceBundleDiscount + rest * priceUnitDiscount,
           fullPrice:
             result * newStudentData.curriculumCoursePriceBundle +
             rest * newStudentData.curriculumCoursePriceUnit,
         });
       }
+    } else {
+      setNewPrices({
+        appliedPrice: 0,
+        fullPrice: 0,
+      });
     }
   }
 
-  // SET MONTHLY PAYMENT WHEN SCHOOL COURSE PRICE, OR ADD FAMILY, OR EMPLOYEE DISCOUNT CHANGE
-  useEffect(() => {
+  function handleValueAddCurriculum() {
     let haveCurriculumWill = false;
-    excludeCurriculum.map((curriculumExclude) => {
+    excludeCurriculum.find((curriculumExclude) => {
       if (!curriculumExclude.exclude) {
         haveCurriculumWill = true;
-      } else {
-        haveCurriculumWill = false;
       }
     });
+    const priceUnitDiscount = +(
+      newStudentData.curriculumCoursePriceUnit * secondCourseDiscountValue
+    ).toFixed(2);
+    const priceBundleDiscount = +(
+      newStudentData.curriculumCoursePriceBundle * secondCourseDiscountValue
+    ).toFixed(2);
+    // if (willHaveCurriculum) {
+
+    if (haveCurriculumWill) {
+      const curriculumsAfterChanging = excludeCurriculum.filter(
+        (curriculum) => !curriculum.exclude
+      );
+      let biggerPrice = 0;
+      let olderBiggerPrice = 0;
+      let otherSumPrices = 0;
+      curriculumsAfterChanging.map((curriculum) => {
+        if (curriculum.price > biggerPrice) {
+          olderBiggerPrice = biggerPrice;
+          biggerPrice = curriculum.price;
+          otherSumPrices = olderBiggerPrice + otherSumPrices;
+        } else {
+          otherSumPrices = otherSumPrices + curriculum.price;
+        }
+      });
+      let newBiggerPrice = 0;
+      let newOtherSumPrices = 0;
+      const result = Math.floor(
+        newClass.enrolledDays.length / newStudentData.curriculumCourseBundleDays
+      );
+      const rest =
+        newClass.enrolledDays.length %
+        newStudentData.curriculumCourseBundleDays;
+      let newCoursePrice;
+      if (isNaN(result) || isNaN(rest)) {
+        newCoursePrice = 0;
+      } else {
+        newCoursePrice =
+          result * newStudentData.curriculumCoursePriceBundle +
+          rest * newStudentData.curriculumCoursePriceUnit;
+      }
+      if (biggerPrice < newCoursePrice) {
+        newBiggerPrice = newCoursePrice;
+        newOtherSumPrices = biggerPrice + otherSumPrices;
+      } else {
+        newBiggerPrice = biggerPrice;
+        newOtherSumPrices = otherSumPrices + newCoursePrice;
+      }
+      setNewPrices({
+        appliedPrice:
+          newBiggerPrice * secondCourseDiscountValue + newOtherSumPrices,
+        fullPrice: newBiggerPrice + newOtherSumPrices,
+      });
+    } else if (studentEditData.addCurriculum) {
+      if (newClass.enrolledDays.length === 0) {
+        setNewPrices({
+          appliedPrice: 0,
+          fullPrice: 0,
+        });
+      }
+      if (newClass.enrolledDays.length === 1) {
+        setNewPrices({
+          appliedPrice: priceUnitDiscount,
+          fullPrice: newStudentData.curriculumCoursePriceUnit,
+        });
+      }
+      if (newClass.enrolledDays.length > 1) {
+        const result = Math.floor(
+          newClass.enrolledDays.length /
+            newStudentData.curriculumCourseBundleDays
+        );
+        const rest =
+          newClass.enrolledDays.length %
+          newStudentData.curriculumCourseBundleDays;
+        setNewPrices({
+          appliedPrice: result * priceBundleDiscount + rest * priceUnitDiscount,
+          fullPrice:
+            result * newStudentData.curriculumCoursePriceBundle +
+            rest * newStudentData.curriculumCoursePriceUnit,
+        });
+      }
+    } else {
+      setNewPrices({
+        appliedPrice: 0,
+        fullPrice: 0,
+      });
+    }
+
+    // if (haveCurriculumWill) {
+    //   if (newClass.enrolledDays.length === 0) {
+    //     setNewPrices({
+    //       appliedPrice:
+    //         curriculumDatePriceCalc.mostExpensiveCourse +
+    //         curriculumDatePriceCalc.othersPriceSum,
+    //       fullPrice:
+    //         curriculumDatePriceCalc.mostExpensiveCourse +
+    //         curriculumDatePriceCalc.othersPriceSum,
+    //     });
+    //   }
+    //   if (newClass.enrolledDays.length === 1) {
+    //     setNewPrices({
+    //       appliedPrice:
+    //         curriculumDatePriceCalc.mostExpensiveCourse +
+    //         curriculumDatePriceCalc.othersPriceSum * secondCourseDiscountValue +
+    //         priceUnitDiscount,
+    //       fullPrice:
+    //         curriculumDatePriceCalc.mostExpensiveCourse +
+    //         curriculumDatePriceCalc.othersPriceSum +
+    //         newStudentData.curriculumCoursePriceUnit,
+    //     });
+    //   }
+    //   if (newClass.enrolledDays.length > 1) {
+    //     const result = Math.floor(
+    //       newClass.enrolledDays.length /
+    //         newStudentData.curriculumCourseBundleDays
+    //     );
+    //     const rest =
+    //       newClass.enrolledDays.length %
+    //       newStudentData.curriculumCourseBundleDays;
+    //     const newCourseTotalValue =
+    //       result * newStudentData.curriculumCoursePriceBundle +
+    //       rest * newStudentData.curriculumCoursePriceUnit;
+    //     if (curriculumDatePriceCalc.mostExpensiveCourse > newCourseTotalValue) {
+    //       setNewPrices({
+    //         appliedPrice:
+    //           curriculumDatePriceCalc.mostExpensiveCourse +
+    //           curriculumDatePriceCalc.othersPriceSum *
+    //             secondCourseDiscountValue +
+    //           result * priceBundleDiscount +
+    //           rest * priceUnitDiscount,
+    //         fullPrice:
+    //           curriculumDatePriceCalc.mostExpensiveCourse +
+    //           curriculumDatePriceCalc.othersPriceSum +
+    //           result * newStudentData.curriculumCoursePriceBundle +
+    //           rest * newStudentData.curriculumCoursePriceUnit,
+    //       });
+    //     } else {
+    //       setNewPrices({
+    //         appliedPrice:
+    //           result * newStudentData.curriculumCoursePriceBundle +
+    //           rest * newStudentData.curriculumCoursePriceUnit +
+    //           curriculumDatePriceCalc.mostExpensiveCourse *
+    //             secondCourseDiscountValue +
+    //           curriculumDatePriceCalc.othersPriceSum *
+    //             secondCourseDiscountValue,
+    //         fullPrice:
+    //           result * newStudentData.curriculumCoursePriceBundle +
+    //           rest * newStudentData.curriculumCoursePriceUnit +
+    //           curriculumDatePriceCalc.mostExpensiveCourse +
+    //           curriculumDatePriceCalc.othersPriceSum,
+    //       });
+    //     }
+    //   }
+    // } else {
+    //   if (newClass.enrolledDays.length === 0) {
+    //     setNewPrices({
+    //       appliedPrice: 0,
+    //       fullPrice: 0,
+    //     });
+    //   }
+    //   if (newClass.enrolledDays.length === 1) {
+    //     setNewPrices({
+    //       appliedPrice: newStudentData.curriculumCoursePriceUnit,
+    //       fullPrice: newStudentData.curriculumCoursePriceUnit,
+    //     });
+    //   }
+    //   if (newClass.enrolledDays.length > 1) {
+    //     const result = Math.floor(
+    //       newClass.enrolledDays.length /
+    //         newStudentData.curriculumCourseBundleDays
+    //     );
+    //     const rest =
+    //       newClass.enrolledDays.length %
+    //       newStudentData.curriculumCourseBundleDays;
+    //     setNewPrices({
+    //       appliedPrice:
+    //         result * newStudentData.curriculumCoursePriceBundle +
+    //         rest * priceUnitDiscount,
+    //       fullPrice:
+    //         result * newStudentData.curriculumCoursePriceBundle +
+    //         rest * newStudentData.curriculumCoursePriceUnit,
+    //     });
+    //   }
+    // }
+  }
+
+  // STATE TO TOGGLE SHOW ADD FAMILY ON FORM
+  const [willHaveFamily, setWillHaveFamily] = useState(false);
+
+  // MONITORING EXCLUDE FAMILY TO SET WILL HAVE FAMILY
+  useEffect(() => {
+    let haveFamilyWill = false;
+    excludeFamily.map((familyExclude) => {
+      if (!familyExclude.exclude) {
+        haveFamilyWill = true;
+      } else {
+        haveFamilyWill = false;
+      }
+    });
+    setWillHaveFamily(haveFamilyWill);
+    // if (!willHaveFamily) {
+    //   setStudentEditData({ ...studentEditData, addFamily: false });
+    // }
+  }, [excludeFamily]);
+
+  useEffect(() => {
+    if (willHaveFamily) {
+      setStudentEditData({ ...studentEditData, addFamily: false });
+    }
+  }, [willHaveFamily]);
+
+  // SET MONTHLY PAYMENT WHEN SCHOOL COURSE PRICE, OR ADD FAMILY, OR EMPLOYEE DISCOUNT CHANGE
+  useEffect(() => {
+    // let haveCurriculumWill = false;
+    // excludeCurriculum.map((curriculumExclude) => {
+    //   if (!curriculumExclude.exclude) {
+    //     haveCurriculumWill = true;
+    //   } else {
+    //     haveCurriculumWill = false;
+    //   }
+    // });
     let haveFamilyWill = false;
     excludeFamily.map((familyExclude) => {
       if (!familyExclude.exclude) {
@@ -2388,39 +2758,47 @@ export function EditStudent() {
       }
 
       // PRICE CALC IF FAMILY DISCOUNT IS APPLIED
-      else if (studentEditData.familyDiscount) {
-        // PRICE CALC IF HAVE FAMILY
-        // if (willHaveFamily) {
-        if (haveFamilyWill) {
-          handleValueWithFamilyDiscount();
-        } else {
-          // PRICE CALC IF HAVE FAMILY, DELETE OLDER FAMILY AND ADD NEW FAMILY
-          if (studentEditData.addFamily) {
-            handleValueAddFamilyDiscount();
-          }
-          // PRICE CALC IF HAVE FAMILY BUT DONT AFTER CHANGES (APPLIYNG SECOND COURSE DISCOUNT LOGIC)
-          else {
-            // PRICE CALC WITH SECOND COURSE DISCOUNT
-            // if (willHaveCurriculum) {
-            if (haveCurriculumWill) {
-              handleValueSecondCourseDiscount();
-            }
-            // PRICE CALC WITHOUT ANY DISCOUNTS
-            else {
-              handleValueWithoutDiscount();
-            }
-          }
-        }
+      // if (studentEditData.familyDiscount) {
+      // PRICE CALC IF HAVE FAMILY
+      // if (willHaveFamily) {
+      else if (haveFamilyWill && studentEditData.familyDiscount) {
+        handleValueWithFamilyDiscount();
       }
+      // else {
+      //   // PRICE CALC IF HAVE FAMILY, DELETE OLDER FAMILY AND ADD NEW FAMILY
+      //   if (studentEditData.addFamily) {
+      //     handleValueAddFamilyDiscount();
+      //   }
+      //   // PRICE CALC IF HAVE FAMILY BUT DONT AFTER CHANGES (APPLIYNG SECOND COURSE DISCOUNT LOGIC)
+      //   else {
+      //     // PRICE CALC WITH SECOND COURSE DISCOUNT
+      //     // if (willHaveCurriculum) {
+      //     if (haveCurriculumWill) {
+      //       handleValueSecondCourseDiscount();
+      //     }
+      //     // PRICE CALC WITHOUT ANY DISCOUNTS
+      //     else {
+      //       handleValueWithoutDiscount();
+      //     }
+      //   }
+      // }
+      // }
       // PRICE CALC IF HAVEN'T FAMILY AND ADD NEW FAMILY
       else if (studentEditData.addFamily) {
         handleValueAddFamilyDiscount();
       }
+
+      // PRICE CALC WITH SECOND COURSE DISCOUNT
+      // if (willHaveCurriculum) {
+      else if (newStudentData.curriculum) {
+        handleValueSecondCourseDiscount();
+      }
+
       // PRICE CALC WITH SECOND COURSE DISCOUNT
       else {
         const checkExistentCurriculum = [] as string[];
-        excludeCurriculum.map((curriculumDetail: SubCollectionDetailsProps) => {
-          if (!curriculumDetail.isExperimental) {
+        excludeCurriculum.map((curriculumDetail) => {
+          if (!curriculumDetail.exclude) {
             checkExistentCurriculum.push(curriculumDetail.id);
           }
         });
@@ -2429,18 +2807,13 @@ export function EditStudent() {
             ...studentEditData,
             secondCourseDiscount: false,
           });
+          handleValueWithoutDiscount();
         } else {
           setStudentEditData({
             ...studentEditData,
             secondCourseDiscount: true,
           });
-        }
-        if (studentEditData.secondCourseDiscount) {
           handleValueSecondCourseDiscount();
-        }
-        // PRICE CALC WITHOUT ANY DISCOUNTS
-        else {
-          handleValueWithoutDiscount();
         }
       }
     }
@@ -2912,51 +3285,107 @@ export function EditStudent() {
       excludeExperimentalCurriculum.map(async (curriculumToExclude) => {
         if (curriculumToExclude.exclude && curriculumToExclude.isExperimental) {
           // UPDATE STUDENT (DELETE EXPERIMENTAL CURRICULUM)
-          await updateDoc(
-            doc(
-              db,
-              `students/${data.id}/studentExperimentalCurriculum`,
-              data.id
-            ),
-            {
-              idsArray: arrayRemove(curriculumToExclude.id),
-              detailsArray: arrayRemove({
-                date: curriculumToExclude.date,
-                id: curriculumToExclude.id,
-                indexDays: [],
-                isExperimental: curriculumToExclude.isExperimental,
-                name: curriculumToExclude.name,
-              }),
-            }
-          );
+          await updateDoc(doc(db, "students", data.id), {
+            experimentalCurriculumIds: arrayRemove({
+              date: curriculumToExclude.date,
+              id: curriculumToExclude.id,
+              indexDays: [],
+              isExperimental: curriculumToExclude.isExperimental,
+              name: curriculumToExclude.name,
+              price: curriculumToExclude.price,
+            }),
+          });
+
+          // UPDATE CURRICULUM (DELETE EXPERIMENTAL STUDENT)
+          await updateDoc(doc(db, "curriculum", curriculumToExclude.id), {
+            experimentalStudents: arrayRemove({
+              date: Timestamp.fromDate(
+                new Date(newStudentData.curriculumInitialDate)
+              ),
+              id: data.id,
+              isExperimental: curriculumToExclude.isExperimental,
+              name: data.name,
+              indexDays: curriculumToExclude.indexDays,
+              price: curriculumToExclude.price,
+            }),
+          });
+
+          // await updateDoc(
+          //   doc(
+          //     db,
+          //     `students/${data.id}/studentExperimentalCurriculum`,
+          //     data.id
+          //   ),
+          //   {
+          //     idsArray: arrayRemove(curriculumToExclude.id),
+          //     detailsArray: arrayRemove({
+          //       date: curriculumToExclude.date,
+          //       id: curriculumToExclude.id,
+          //       indexDays: [],
+          //       isExperimental: curriculumToExclude.isExperimental,
+          //       name: curriculumToExclude.name,
+          //     }),
+          //   }
+          // );
         }
       });
     }
 
     // CHECK IF SOME EXPERIMENTAL CURRICULUM WAS INCLUDED
     if (studentEditData.addExperimentalCurriculum) {
-      const addNewExperimentalCurriculum = async () => {
-        // UPDATE STUDENT (INSERT EXPERIMENTAL CURRICULUM)
-        await updateDoc(
-          doc(db, `students/${data.id}/studentExperimentalCurriculum`, data.id),
-          {
-            idsArray: arrayUnion(newStudentData.experimentalCurriculum),
-            detailsArray: arrayUnion({
-              date: Timestamp.fromDate(
-                new Date(newStudentData.experimentalCurriculumInitialDate)
-              ),
-              id: newStudentData.experimentalCurriculum,
-              indexDays: [],
-              isExperimental: true,
-              name: newStudentData.experimentalCurriculumName,
-            }),
-          }
-        );
-      };
-      addNewExperimentalCurriculum();
+      // UPDATE STUDENT (INSERT EXPERIMENTAL CURRICULUM)
+      await updateDoc(doc(db, "students", data.id), {
+        experimentalCurriculumIds: arrayUnion({
+          date: Timestamp.fromDate(
+            new Date(newStudentData.experimentalCurriculumInitialDate)
+          ),
+          id: newStudentData.experimentalCurriculum,
+          indexDays: [],
+          isExperimental: true,
+          name: newStudentData.experimentalCurriculumName,
+          price: newStudentData.curriculumCoursePriceBundle,
+        }),
+      });
+
+      // UPDATE CURRICULUM (INSERT EXPERIMENTAL STUDENT)
+      await updateDoc(
+        doc(db, "curriculum", newStudentData.experimentalCurriculum),
+        {
+          experimentalStudents: arrayUnion({
+            date: Timestamp.fromDate(
+              new Date(newStudentData.experimentalCurriculumInitialDate)
+            ),
+            id: data.id,
+            indexDays: [],
+            isExperimental: true,
+            name: data.name,
+            price: newStudentData.curriculumCoursePriceBundle,
+          }),
+        }
+      );
+
+      // const addNewExperimentalCurriculum = async () => {
+      //   // UPDATE STUDENT (INSERT EXPERIMENTAL CURRICULUM)
+      //   await updateDoc(
+      //     doc(db, `students/${data.id}/studentExperimentalCurriculum`, data.id),
+      //     {
+      //       idsArray: arrayUnion(newStudentData.experimentalCurriculum),
+      //       detailsArray: arrayUnion({
+      //         date: Timestamp.fromDate(
+      //           new Date(newStudentData.experimentalCurriculumInitialDate)
+      //         ),
+      //         id: newStudentData.experimentalCurriculum,
+      //         indexDays: [],
+      //         isExperimental: true,
+      //         name: newStudentData.experimentalCurriculumName,
+      //       }),
+      //     }
+      //   );
+      // };
+      // addNewExperimentalCurriculum();
     }
 
-    // CHECK IF ADD CURRICULUM
+    // CHECK IF ADD CURRICULUM AND CONFIRM ADD
     if (studentEditData.addCurriculum && !newStudentData.confirmAddCurriculum) {
       return (
         setIsSubmitting(false),
@@ -3013,44 +3442,95 @@ export function EditStudent() {
           !curriculumToExclude.isExperimental
         ) {
           // UPDATE STUDENT (DELETE CURRICULUM)
-          await updateDoc(
-            doc(db, `students/${data.id}/studentCurriculum`, data.id),
-            {
-              idsArray: arrayRemove(curriculumToExclude.id),
-              detailsArray: arrayRemove({
-                date: curriculumToExclude.date,
-                id: curriculumToExclude.id,
-                isExperimental: curriculumToExclude.isExperimental,
-                name: curriculumToExclude.name,
-                indexDays: curriculumToExclude.indexDays,
-              }),
-            }
-          );
+          await updateDoc(doc(db, "students", data.id), {
+            curriculumIds: arrayRemove({
+              date: curriculumToExclude.date,
+              id: curriculumToExclude.id,
+              isExperimental: curriculumToExclude.isExperimental,
+              name: curriculumToExclude.name,
+              indexDays: curriculumToExclude.indexDays,
+              price: curriculumToExclude.price,
+            }),
+          });
+
+          // UPDATE CURRICULUM (DELETE STUDENT)
+          await updateDoc(doc(db, "curriculum", curriculumToExclude.id), {
+            students: arrayRemove({
+              date: curriculumToExclude.date,
+              id: data.id,
+              isExperimental: curriculumToExclude.isExperimental,
+              name: data.name,
+              indexDays: curriculumToExclude.indexDays,
+              price: curriculumToExclude.price,
+            }),
+          });
+
+          // await updateDoc(
+          //   doc(db, `students/${data.id}/studentCurriculum`, data.id),
+          //   {
+          //     idsArray: arrayRemove(curriculumToExclude.id),
+          //     detailsArray: arrayRemove({
+          //       date: curriculumToExclude.date,
+          //       id: curriculumToExclude.id,
+          //       isExperimental: curriculumToExclude.isExperimental,
+          //       name: curriculumToExclude.name,
+          //       indexDays: curriculumToExclude.indexDays,
+          //     }),
+          //   }
+          // );
         }
       });
     }
 
     // CHECK IF SOME CURRICULUM WAS INCLUDED
     if (studentEditData.addCurriculum) {
-      const addNewCurriculum = async () => {
-        // UPDATE STUDENT (INSERT CURRICULUM)
-        await updateDoc(
-          doc(db, `students/${data.id}/studentCurriculum`, data.id),
-          {
-            idsArray: arrayUnion(newStudentData.curriculum),
-            detailsArray: arrayUnion({
-              date: Timestamp.fromDate(
-                new Date(newStudentData.curriculumInitialDate)
-              ),
-              id: newStudentData.curriculum,
-              isExperimental: false,
-              name: newStudentData.curriculumName,
-              indexDays: newClass.enrolledDays,
-            }),
-          }
-        );
-      };
-      addNewCurriculum();
+      // UPDATE STUDENT (INSERT CURRICULUM)
+      await updateDoc(doc(db, "students", data.id), {
+        curriculumIds: arrayUnion({
+          date: Timestamp.fromDate(
+            new Date(newStudentData.curriculumInitialDate)
+          ),
+          id: newStudentData.curriculum,
+          isExperimental: false,
+          name: newStudentData.curriculumName,
+          indexDays: newClass.enrolledDays,
+          price: newStudentData.curriculumCoursePriceBundle,
+        }),
+      });
+
+      // UPDATE CURRICULUM (INSERT STUDENT)
+      await updateDoc(doc(db, "curriculum", newStudentData.curriculum), {
+        students: arrayUnion({
+          date: Timestamp.fromDate(
+            new Date(newStudentData.curriculumInitialDate)
+          ),
+          id: data.id,
+          indexDays: newClass.enrolledDays,
+          isExperimental: false,
+          name: data.name,
+          price: newStudentData.curriculumCoursePriceBundle,
+        }),
+      });
+
+      // const addNewCurriculum = async () => {
+      //   // UPDATE STUDENT (INSERT CURRICULUM)
+      //   await updateDoc(
+      //     doc(db, `students/${data.id}/studentCurriculum`, data.id),
+      //     {
+      //       idsArray: arrayUnion(newStudentData.curriculum),
+      //       detailsArray: arrayUnion({
+      //         date: Timestamp.fromDate(
+      //           new Date(newStudentData.curriculumInitialDate)
+      //         ),
+      //         id: newStudentData.curriculum,
+      //         isExperimental: false,
+      //         name: newStudentData.curriculumName,
+      //         indexDays: newClass.enrolledDays,
+      //       }),
+      //     }
+      //   );
+      // };
+      // addNewCurriculum();
     }
 
     // CHECK IF ADD FAMILY
@@ -3110,38 +3590,126 @@ export function EditStudent() {
     }
 
     // CHECK IF SOME FAMILY WAS EXCLUDED
-    if (newStudentFamilyArray.length !== studentFamilyDetails!.length) {
+    if (
+      newStudentFamilyArray.length !==
+      studentSelectedData?.studentFamilyAtSchool.length
+    ) {
+      // VERIFY IF USER HAVE SOME FAMILY AFTER EXCLUSION
+      let haveFamily = false;
+      excludeFamily.map((family) => {
+        if (!family.exclude) {
+          haveFamily = true;
+        }
+      });
+
       excludeFamily.map(async (familyToExclude) => {
         if (familyToExclude.exclude) {
           // UPDATE STUDENT (DELETE FAMILY FROM STUDENT DATABASE)
-          await updateDoc(
-            doc(db, `students/${data.id}/studentFamilyAtSchool`, data.id),
-            {
-              idsArray: arrayRemove(familyToExclude.id),
-              detailsArray: arrayRemove({
-                applyDiscount: familyToExclude.applyDiscount,
-                id: familyToExclude.id,
-                name: familyToExclude.name,
-              }),
-            }
-          );
+          await updateDoc(doc(db, "students", data.id), {
+            familyDiscount: haveFamily,
+            studentFamilyAtSchool: arrayRemove({
+              applyDiscount: familyToExclude.applyDiscount,
+              id: familyToExclude.id,
+              name: familyToExclude.name,
+            }),
+          });
+
+          // await updateDoc(
+          //   doc(db, `students/${data.id}/studentFamilyAtSchool`, data.id),
+          //   {
+          //     idsArray: arrayRemove(familyToExclude.id),
+          //     detailsArray: arrayRemove({
+          //       applyDiscount: familyToExclude.applyDiscount,
+          //       id: familyToExclude.id,
+          //       name: familyToExclude.name,
+          //     }),
+          //   }
+          // );
           // IF YOU ADDED FAMILY IN BOTH DIRECTIONS UNCOMMENT THIS SECTION FOR DELETE STUDENT FROM FAMILY DATABASE
           // UPDATE FAMILY (DELETE STUDENT FROM FAMILY DATABASE)
-          await updateDoc(
-            doc(
-              db,
-              `students/${familyToExclude.id}/studentFamilyAtSchool`,
-              familyToExclude.id
-            ),
-            {
-              idsArray: arrayRemove(data.id),
-              detailsArray: arrayRemove({
+
+          // IF APPLY DISCOUNT OF ACCOUNT TO EDIT IS FALSE THEN GO TO FAMILY (WHICH IS REQUIRED TO BE TRUE ON APPLY DISCOUNT), EXCLUDE FAMILY AND RECALCULATE DISCOUNT
+          if (!familyToExclude.applyDiscount) {
+            const familyData = studentsDatabaseData.find(
+              (student) => student.id === familyToExclude.id
+            );
+            if (familyData) {
+              let otherFamilyApplyDiscount = false;
+              familyData.studentFamilyAtSchool.map((family) => {
+                if (family.applyDiscount) {
+                  otherFamilyApplyDiscount = true;
+                }
+              });
+              if (!otherFamilyApplyDiscount) {
+                await updateDoc(doc(db, "students", familyToExclude.id), {
+                  familyDiscount: otherFamilyApplyDiscount,
+                  studentFamilyAtSchool: arrayRemove({
+                    applyDiscount: !familyToExclude.applyDiscount,
+                    id: data.id,
+                    name: data.name,
+                  }),
+                });
+              } else {
+                if (familyData.curriculumIds.length <= 1) {
+                  await updateDoc(doc(db, "students", familyToExclude.id), {
+                    familyDiscount: otherFamilyApplyDiscount,
+                    studentFamilyAtSchool: arrayRemove({
+                      applyDiscount: !familyToExclude.applyDiscount,
+                      id: data.id,
+                      name: data.name,
+                    }),
+                    appliedPrice: familyData.fullPrice,
+                  });
+                } else {
+                  let biggerPrice = 0;
+                  let othersPricesSum = 0;
+                  familyData.curriculumIds.map((curriculum) => {
+                    if (curriculum.price > biggerPrice) {
+                      biggerPrice = curriculum.price;
+                    } else {
+                      othersPricesSum = othersPricesSum + curriculum.price;
+                    }
+                  });
+                  await updateDoc(doc(db, "students", familyToExclude.id), {
+                    familyDiscount: otherFamilyApplyDiscount,
+                    studentFamilyAtSchool: arrayRemove({
+                      applyDiscount: !familyToExclude.applyDiscount,
+                      id: data.id,
+                      name: data.name,
+                    }),
+                    appliedPrice:
+                      biggerPrice * secondCourseDiscountValue + othersPricesSum,
+                    fullPrice: biggerPrice + othersPricesSum,
+                  });
+                }
+              }
+            }
+          } else {
+            await updateDoc(doc(db, "students", familyToExclude.id), {
+              familyDiscount: haveFamily,
+              studentFamilyAtSchool: arrayRemove({
                 applyDiscount: !familyToExclude.applyDiscount,
                 id: data.id,
                 name: data.name,
               }),
-            }
-          );
+            });
+          }
+
+          // await updateDoc(
+          //   doc(
+          //     db,
+          //     `students/${familyToExclude.id}/studentFamilyAtSchool`,
+          //     familyToExclude.id
+          //   ),
+          //   {
+          //     idsArray: arrayRemove(data.id),
+          //     detailsArray: arrayRemove({
+          //       applyDiscount: !familyToExclude.applyDiscount,
+          //       id: data.id,
+          //       name: data.name,
+          //     }),
+          //   }
+          // );
         }
       });
     }
@@ -3150,34 +3718,51 @@ export function EditStudent() {
     if (studentEditData.addFamily) {
       const addNewFamily = async () => {
         // UPDATE STUDENT (INSERT FAMILY TO STUDENT DATABASE)
-        await updateDoc(
-          doc(db, `students/${data.id}/studentFamilyAtSchool`, data.id),
-          {
-            idsArray: arrayUnion(newStudentData.familyId),
-            detailsArray: arrayUnion({
-              applyDiscount: true,
-              id: newStudentData.familyId,
-              name: newStudentData.familyName,
-            }),
-          }
-        );
+        await updateDoc(doc(db, "students", data.id), {
+          familyDiscount: true,
+          studentFamilyAtSchool: arrayUnion({
+            applyDiscount: true,
+            id: newStudentData.familyId,
+            name: newStudentData.familyName,
+          }),
+        });
+
+        // await updateDoc(
+        //   doc(db, `students/${data.id}/studentFamilyAtSchool`, data.id),
+        //   {
+        //     idsArray: arrayUnion(newStudentData.familyId),
+        //     detailsArray: arrayUnion({
+        //       applyDiscount: true,
+        //       id: newStudentData.familyId,
+        //       name: newStudentData.familyName,
+        //     }),
+        //   }
+        // );
         // IF YOU WANT CREATE FAMILY IN BOTH DIRECTIONS UNCOMMENT THIS SECTION FOR INSERT STUDENT TO FAMILY DATABASE
         // UPDATE FAMILY (INSERT STUDENT TO FAMILY DATABASE)
-        await updateDoc(
-          doc(
-            db,
-            `students/${newStudentData.familyId}/studentFamilyAtSchool`,
-            newStudentData.familyId
-          ),
-          {
-            idsArray: arrayUnion(data.id),
-            detailsArray: arrayUnion({
-              applyDiscount: false,
-              id: data.id,
-              name: data.name,
-            }),
-          }
-        );
+        await updateDoc(doc(db, "students", newStudentData.familyId), {
+          studentFamilyAtSchool: arrayUnion({
+            applyDiscount: false,
+            id: data.id,
+            name: data.name,
+          }),
+        });
+
+        // await updateDoc(
+        //   doc(
+        //     db,
+        //     `students/${newStudentData.familyId}/studentFamilyAtSchool`,
+        //     newStudentData.familyId
+        //   ),
+        //   {
+        //     idsArray: arrayUnion(data.id),
+        //     detailsArray: arrayUnion({
+        //       applyDiscount: false,
+        //       id: data.id,
+        //       name: data.name,
+        //     }),
+        //   }
+        // );
       };
       addNewFamily();
     }
@@ -3221,92 +3806,172 @@ export function EditStudent() {
     }
 
     // CHECKING IF STUDENT EXISTS ON CURRRICULUM DATABASE
-    const studentRef = collection(db, "students");
-    const q = query(studentRef, where("id", "==", data.id));
-    const querySnapshot = await getDocs(q);
-    const promises: StudentSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as StudentSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
+    const foundedStudent = studentsDatabaseData.find(
+      (student) => student.id === data.id
+    );
+
+    if (!foundedStudent) {
       // IF NO EXISTS, RETURN ERROR
-      if (results.length === 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`Aluno não existe no banco de dados...... ❕`, {
+      return (
+        setIsSubmitting(false),
+        toast.error(`Aluno não existe no banco de dados...... ❕`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        })
+      );
+    } else {
+      // IF EXISTS, EDIT
+      // STUDENT DATA OBJECT
+      const updateData = {
+        name: data.name,
+        email: data.email,
+        birthDate: Timestamp.fromDate(new Date(dateSubmitToString)),
+        "address.street": data.address.street,
+        "address.number": data.address.number,
+        "address.complement": data.address.complement,
+        "address.neighborhood": data.address.neighborhood,
+        "address.city": data.address.city,
+        "address.state": data.address.state,
+        "address.cep": data.address.cep,
+        phone: `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`,
+        phoneSecondary:
+          data.phoneSecondary.ddd === "DDD"
+            ? ""
+            : `+55${data.phoneSecondary.ddd}${data.phoneSecondary.prefix}${data.phoneSecondary.suffix}`,
+        phoneTertiary:
+          data.phoneTertiary.ddd === "DDD"
+            ? ""
+            : `+55${data.phoneTertiary.ddd}${data.phoneTertiary.prefix}${data.phoneTertiary.suffix}`,
+        responsible: data.responsible,
+        responsibleDocument: data.responsibleDocument,
+        financialResponsible: data.financialResponsible,
+        financialResponsibleDocument: data.financialResponsibleDocument,
+        enrolmentFee: data.enrolmentFee,
+        fullPrice: data.fullPrice,
+        appliedPrice: data.appliedPrice,
+        enrolmentExemption: data.enrolmentExemption,
+        customDiscount: data.customDiscount,
+        customDiscountValue: data.customDiscountValue,
+        employeeDiscount: data.employeeDiscount,
+        secondCourseDiscount: data.secondCourseDiscount,
+      };
+      // EDIT STUDENT FUNCTION
+      const editStudent = async () => {
+        try {
+          await updateDoc(doc(db, "students", data.id), updateData);
+          resetForm();
+          toast.success(`${data.name} alterado com sucesso! 👌`, {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
             autoClose: 3000,
-          })
-        );
-      } else {
-        // IF EXISTS, EDIT
-        // STUDENT DATA OBJECT
-        const updateData = {
-          name: data.name,
-          email: data.email,
-          birthDate: Timestamp.fromDate(new Date(dateSubmitToString)),
-          "address.street": data.address.street,
-          "address.number": data.address.number,
-          "address.complement": data.address.complement,
-          "address.neighborhood": data.address.neighborhood,
-          "address.city": data.address.city,
-          "address.state": data.address.state,
-          "address.cep": data.address.cep,
-          phone: `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`,
-          phoneSecondary:
-            data.phoneSecondary.ddd === "DDD"
-              ? ""
-              : `+55${data.phoneSecondary.ddd}${data.phoneSecondary.prefix}${data.phoneSecondary.suffix}`,
-          phoneTertiary:
-            data.phoneTertiary.ddd === "DDD"
-              ? ""
-              : `+55${data.phoneTertiary.ddd}${data.phoneTertiary.prefix}${data.phoneTertiary.suffix}`,
-          responsible: data.responsible,
-          responsibleDocument: data.responsibleDocument,
-          financialResponsible: data.financialResponsible,
-          financialResponsibleDocument: data.financialResponsibleDocument,
-          enrolmentFee: data.enrolmentFee,
-          fullPrice: data.fullPrice,
-          appliedPrice: data.appliedPrice,
-          enrolmentExemption: data.enrolmentExemption,
-          customDiscount: data.customDiscount,
-          customDiscountValue: data.customDiscountValue,
-          employeeDiscount: data.employeeDiscount,
-          familyDiscount: data.familyDiscount,
-          secondCourseDiscount: data.secondCourseDiscount,
-        };
-        // EDIT STUDENT FUNCTION
-        const editStudent = async () => {
-          try {
-            await updateDoc(doc(db, "students", data.id), updateData);
-            resetForm();
-            toast.success(`${data.name} alterado com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          }
-        };
-        editStudent();
-      }
-    });
+          });
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
+      editStudent();
+    }
+
+    // const studentRef = collection(db, "students");
+    // const q = query(studentRef, where("id", "==", data.id));
+    // const querySnapshot = await getDocs(q);
+    // const promises: StudentSearchProps[] = [];
+    // querySnapshot.forEach((doc) => {
+    //   const promise = doc.data() as StudentSearchProps;
+    //   promises.push(promise);
+    // });
+    // Promise.all(promises).then((results) => {
+    //   // IF NO EXISTS, RETURN ERROR
+    //   if (results.length === 0) {
+    //     return (
+    //       setIsSubmitting(false),
+    //       toast.error(`Aluno não existe no banco de dados...... ❕`, {
+    //         theme: "colored",
+    //         closeOnClick: true,
+    //         pauseOnHover: true,
+    //         draggable: true,
+    //         autoClose: 3000,
+    //       })
+    //     );
+    //   } else {
+    //     // IF EXISTS, EDIT
+    //     // STUDENT DATA OBJECT
+    //     const updateData = {
+    //       name: data.name,
+    //       email: data.email,
+    //       birthDate: Timestamp.fromDate(new Date(dateSubmitToString)),
+    //       "address.street": data.address.street,
+    //       "address.number": data.address.number,
+    //       "address.complement": data.address.complement,
+    //       "address.neighborhood": data.address.neighborhood,
+    //       "address.city": data.address.city,
+    //       "address.state": data.address.state,
+    //       "address.cep": data.address.cep,
+    //       phone: `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`,
+    //       phoneSecondary:
+    //         data.phoneSecondary.ddd === "DDD"
+    //           ? ""
+    //           : `+55${data.phoneSecondary.ddd}${data.phoneSecondary.prefix}${data.phoneSecondary.suffix}`,
+    //       phoneTertiary:
+    //         data.phoneTertiary.ddd === "DDD"
+    //           ? ""
+    //           : `+55${data.phoneTertiary.ddd}${data.phoneTertiary.prefix}${data.phoneTertiary.suffix}`,
+    //       responsible: data.responsible,
+    //       responsibleDocument: data.responsibleDocument,
+    //       financialResponsible: data.financialResponsible,
+    //       financialResponsibleDocument: data.financialResponsibleDocument,
+    //       enrolmentFee: data.enrolmentFee,
+    //       fullPrice: data.fullPrice,
+    //       appliedPrice: data.appliedPrice,
+    //       enrolmentExemption: data.enrolmentExemption,
+    //       customDiscount: data.customDiscount,
+    //       customDiscountValue: data.customDiscountValue,
+    //       employeeDiscount: data.employeeDiscount,
+    //       familyDiscount: data.familyDiscount,
+    //       secondCourseDiscount: data.secondCourseDiscount,
+    //     };
+    //     // EDIT STUDENT FUNCTION
+    //     const editStudent = async () => {
+    //       try {
+    //         await updateDoc(doc(db, "students", data.id), updateData);
+    //         resetForm();
+    //         toast.success(`${data.name} alterado com sucesso! 👌`, {
+    //           theme: "colored",
+    //           closeOnClick: true,
+    //           pauseOnHover: true,
+    //           draggable: true,
+    //           autoClose: 3000,
+    //         });
+    //         setIsSubmitting(false);
+    //       } catch (error) {
+    //         console.log("ESSE É O ERROR", error);
+    //         toast.error(`Ocorreu um erro... 🤯`, {
+    //           theme: "colored",
+    //           closeOnClick: true,
+    //           pauseOnHover: true,
+    //           draggable: true,
+    //           autoClose: 3000,
+    //         });
+    //         setIsSubmitting(false);
+    //       }
+    //     };
+    //     editStudent();
+    //   }
+    // });
   };
 
   return (
@@ -3356,11 +4021,7 @@ export function EditStudent() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schools"
-              handleData={handleSchoolSelectedData}
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 
@@ -3398,7 +4059,6 @@ export function EditStudent() {
             <SelectOptions
               returnId
               dataType="schoolClasses"
-              handleData={handleSchoolClassSelectedData}
               schoolId={studentData.schoolId}
             />
           </select>
@@ -3439,7 +4099,6 @@ export function EditStudent() {
               returnId
               dataType="curriculum"
               displaySchoolCourseAndSchedule
-              handleData={handleCurriculumSelectedData}
               schoolId={studentData.schoolId}
               schoolClassId={studentData.schoolClassId}
             />
@@ -3481,10 +4140,7 @@ export function EditStudent() {
           >
             <SelectOptions
               returnId
-              dataType="allStudents"
-              handleData={handleStudentSelectedData}
-              schoolId={studentData.schoolId}
-              schoolClassId={studentData.schoolClassId}
+              dataType="searchStudent"
               curriculumId={studentData.curriculumId}
             />
           </select>
@@ -4574,11 +5230,7 @@ export function EditStudent() {
                       });
                     }}
                   >
-                    <SelectOptions
-                      returnId
-                      dataType="schools"
-                      handleData={handleNewExperimentalSchoolSelectedData}
-                    />
+                    <SelectOptions returnId dataType="schools" />
                   </select>
                 </div>
 
@@ -4624,7 +5276,6 @@ export function EditStudent() {
                       returnId
                       dataType="schoolClasses"
                       schoolId={experimentalCurriculumData.schoolId}
-                      handleData={handleNewExperimentalSchoolClassSelectedData}
                     />
                   </select>
                 </div>
@@ -4666,11 +5317,7 @@ export function EditStudent() {
                       });
                     }}
                   >
-                    <SelectOptions
-                      returnId
-                      dataType="schoolCourses"
-                      handleData={handleNewExperimentalSchoolCourseSelectedData}
-                    />
+                    <SelectOptions returnId dataType="schoolCourses" />
                     <option value={"all"}>Todas as Modalidades</option>
                   </select>
                 </div>
@@ -4734,7 +5381,7 @@ export function EditStudent() {
                                     <p>Turma: {curriculum.schoolClass}</p>
                                   ) : null}
                                   <p>Modalidade: {curriculum.schoolCourse}</p>
-                                  {newSchedulesDetailsData.map((details) =>
+                                  {scheduleDatabaseData.map((details) =>
                                     details.name === curriculum.schedule
                                       ? `Horário: De ${details.classStart.slice(
                                           0,
@@ -5021,11 +5668,7 @@ export function EditStudent() {
                       });
                     }}
                   >
-                    <SelectOptions
-                      returnId
-                      dataType="schools"
-                      handleData={handleNewSchoolSelectedData}
-                    />
+                    <SelectOptions returnId dataType="schools" />
                   </select>
                 </div>
 
@@ -5080,7 +5723,6 @@ export function EditStudent() {
                       returnId
                       dataType="schoolClasses"
                       schoolId={curriculumData.schoolId}
-                      handleData={handleNewSchoolClassSelectedData}
                     />
                   </select>
                 </div>
@@ -5131,11 +5773,7 @@ export function EditStudent() {
                       });
                     }}
                   >
-                    <SelectOptions
-                      returnId
-                      dataType="schoolCourses"
-                      handleData={handleNewSchoolCourseSelectedData}
-                    />
+                    <SelectOptions returnId dataType="schoolCourses" />
                     <option value={"all"}>Todas as Modalidades</option>
                   </select>
                 </div>
@@ -5210,7 +5848,7 @@ export function EditStudent() {
                                   <p>Turma: {curriculum.schoolClass}</p>
                                 ) : null}
                                 <p>Modalidade: {curriculum.schoolCourse}</p>
-                                {newSchedulesDetailsData.map((details) =>
+                                {scheduleDatabaseData.map((details) =>
                                   details.name === curriculum.schedule
                                     ? `Horário: De ${details.classStart.slice(
                                         0,
@@ -5499,32 +6137,36 @@ export function EditStudent() {
               : null}
 
             {/** CHECKBOX ADD FAMILY */}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="addFamily"
-                className={
-                  errors.addFamily
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
-                Adicionar Familiar ?{" "}
-              </label>
-              <div className="w-3/4 flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  name="addFamily"
-                  className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                  checked={studentEditData.addFamily}
-                  onChange={() => {
-                    setStudentEditData({
-                      ...studentEditData,
-                      addFamily: !studentEditData.addFamily,
-                    });
-                  }}
-                />
+            {studentSelectedData &&
+            studentSelectedData.studentFamilyAtSchool.length > 0 &&
+            willHaveFamily ? null : (
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="addFamily"
+                  className={
+                    errors.addFamily
+                      ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                      : "w-1/4 text-right"
+                  }
+                >
+                  Adicionar Familiar ?{" "}
+                </label>
+                <div className="w-3/4 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="addFamily"
+                    className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                    checked={!willHaveFamily && studentEditData.addFamily}
+                    onChange={() => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        addFamily: !studentEditData.addFamily,
+                      });
+                    }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/** ADD FAMILY */}
             {studentEditData.addFamily ? (
@@ -5701,12 +6343,9 @@ export function EditStudent() {
                     {newStudentData.newFamilyCurriculumId ? (
                       <SelectOptions
                         returnId
-                        dataType="allStudents"
-                        onlyEnrolledStudents
+                        dataType="searchEnrolledStudent"
+                        dontShowMyself
                         studentId={studentData.studentId}
-                        handleData={handleNewFamilyDetailsData}
-                        schoolId={newStudentData.newFamilySchoolId}
-                        schoolClassId={newStudentData.newFamilySchoolClassId}
                         curriculumId={newStudentData.newFamilyCurriculumId}
                       />
                     ) : (

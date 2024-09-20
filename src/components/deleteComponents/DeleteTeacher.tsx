@@ -1,18 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  where,
-} from "firebase/firestore";
+import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -24,11 +16,22 @@ import {
   EditTeacherValidationZProps,
   TeacherSearchProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
+import { useHttpsCallable } from "react-firebase-hooks/functions";
+import { getFunctions } from "firebase/functions";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function DeleteTeacher() {
+  // GET GLOBAL DATA
+  const { curriculumDatabaseData, teacherDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // TEACHER DATA
   const [teacherData, setTeacherData] = useState<DeleteTeacherValidationZProps>(
     {
@@ -70,25 +73,16 @@ export function DeleteTeacher() {
 
   // TEACHER SELECTED STATE
   const [isSelected, setIsSelected] = useState(false);
-
-  // TEACHER DATA ARRAY WITH ALL OPTIONS OF SELECT TEACHERS
-  const [teachersDataArray, setTeachersDataArray] =
-    useState<TeacherSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH TEACHER SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleTeacherSelectedData = (data: TeacherSearchProps[]) => {
-    setTeachersDataArray(data);
-  };
-
   // TEACHER SELECTED STATE DATA
   const [teacherSelectedData, setTeacherSelectedData] =
     useState<TeacherSearchProps>();
 
   // SET TEACHER SELECTED STATE WHEN SELECT TEACHER
   useEffect(() => {
+    setTeacherData({ ...teacherData, confirmDelete: false });
     if (teacherData.teacherId !== "") {
       setTeacherSelectedData(
-        teachersDataArray!.find(({ id }) => id === teacherData.teacherId)
+        teacherDatabaseData.find(({ id }) => id === teacherData.teacherId)
       );
     } else {
       setTeacherSelectedData(undefined);
@@ -111,6 +105,9 @@ export function DeleteTeacher() {
       });
     }
   }, [teacherSelectedData]);
+
+  // DELETE USER CLOUD FUNCTION HOOK
+  const [deleteAppUser] = useHttpsCallable(getFunctions(app), "deleteAppUser");
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -168,6 +165,37 @@ export function DeleteTeacher() {
   > = async (data) => {
     setIsSubmitting(true);
 
+    const deleteTeacher = async () => {
+      try {
+        if (teacherSelectedData?.haveAccount) {
+          await deleteAppUser(data.teacherId);
+          await deleteDoc(doc(db, "appUsers", data.teacherId));
+        }
+        await deleteDoc(doc(db, "teachers", data.teacherId));
+        resetForm();
+        toast.success(`Professor excluído com sucesso! 👌`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      } finally {
+        resetForm();
+      }
+    };
+
     // CHECK DELETE CONFIRMATION
     if (!data.confirmDelete) {
       setIsSubmitting(false);
@@ -184,65 +212,99 @@ export function DeleteTeacher() {
     }
 
     // CHECKING IF TEACHER EXISTS ON DATABASE
-    const teacherRef = collection(db, "curriculum");
-    const q = query(teacherRef, where("teacher", "==", teacherFullData.name));
-    const querySnapshot = await getDocs(q);
-    const promises: TeacherSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as TeacherSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(
-            `Professor incluído em ${results.length} ${
-              results.length === 1 ? "Currículo" : "Currículos"
-            }, exclua ou altere primeiramente ${
-              results.length === 1 ? "o Currículo" : "os Currículos"
-            } e depois exclua o Professor ${teacherFullData.name}... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          )
-        );
-      } else {
-        // IF NO EXISTS, DELETE
-        const deleteTeacher = async () => {
-          try {
-            await deleteDoc(doc(db, "teachers", data.teacherId));
-            resetForm();
-            toast.success(`Professor excluído com sucesso! 👌`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
-          } finally {
-            resetForm();
+
+    // SEARCH CURRICULUM WITH THIS TEACHER
+    const teacherExistsOnCurriculum = curriculumDatabaseData.filter(
+      (curriculum) => curriculum.teacherId === teacherData.teacherId
+    );
+
+    // IF EXISTS, RETURN ERROR
+    if (teacherExistsOnCurriculum.length !== 0) {
+      return (
+        setTeacherData({ ...teacherData, confirmDelete: false }),
+        setIsSubmitting(false),
+        toast.error(
+          `Professor incluído em ${
+            teacherExistsOnCurriculum.length === 1 ? "Currículo" : "Currículos"
+          }, exclua ou altere primeiramente ${
+            teacherExistsOnCurriculum.length === 1
+              ? "o Currículo"
+              : "os Currículos"
+          } e depois exclua o Professor ${teacherFullData.name}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
           }
-        };
-        deleteTeacher();
-      }
-    });
+        )
+      );
+    } else {
+      // IF NO EXISTS, DELETE
+      deleteTeacher();
+    }
+
+    // // CHECKING IF TEACHER EXISTS ON DATABASE
+    // const teacherRef = collection(db, "curriculum");
+    // const q = query(teacherRef, where("teacher", "==", teacherFullData.name));
+    // const querySnapshot = await getDocs(q);
+    // const promises: TeacherSearchProps[] = [];
+    // querySnapshot.forEach((doc) => {
+    //   const promise = doc.data() as TeacherSearchProps;
+    //   promises.push(promise);
+    // });
+    // Promise.all(promises).then((results) => {
+    //   // IF EXISTS, RETURN ERROR
+    //   if (results.length !== 0) {
+    //     return (
+    //       setIsSubmitting(false),
+    //       toast.error(
+    //         `Professor incluído em ${results.length} ${
+    //           results.length === 1 ? "Currículo" : "Currículos"
+    //         }, exclua ou altere primeiramente ${
+    //           results.length === 1 ? "o Currículo" : "os Currículos"
+    //         } e depois exclua o Professor ${teacherFullData.name}... ❕`,
+    //         {
+    //           theme: "colored",
+    //           closeOnClick: true,
+    //           pauseOnHover: true,
+    //           draggable: true,
+    //           autoClose: 3000,
+    //         }
+    //       )
+    //     );
+    //   } else {
+    //     // IF NO EXISTS, DELETE
+    //     const deleteTeacher = async () => {
+    //       try {
+    //         await deleteDoc(doc(db, "teachers", data.teacherId));
+    //         resetForm();
+    //         toast.success(`Professor excluído com sucesso! 👌`, {
+    //           theme: "colored",
+    //           closeOnClick: true,
+    //           pauseOnHover: true,
+    //           draggable: true,
+    //           autoClose: 3000,
+    //         });
+    //         setIsSubmitting(false);
+    //       } catch (error) {
+    //         console.log("ESSE É O ERROR", error);
+    //         toast.error(`Ocorreu um erro... 🤯`, {
+    //           theme: "colored",
+    //           closeOnClick: true,
+    //           pauseOnHover: true,
+    //           draggable: true,
+    //           autoClose: 3000,
+    //         });
+    //         setIsSubmitting(false);
+    //       } finally {
+    //         resetForm();
+    //       }
+    //     };
+    //     deleteTeacher();
+    //   }
+    // });
   };
 
   return (
@@ -290,11 +352,7 @@ export function DeleteTeacher() {
               setIsSelected(true);
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="teachers"
-              handleData={handleTeacherSelectedData}
-            />
+            <SelectOptions returnId dataType="teachers" />
           </select>
         </div>
 

@@ -24,9 +24,8 @@ const db = getFirestore(app);
 
 export function DeleteUser() {
   // GET GLOBAL DATA
-  const { isSubmitting, userFullData, setIsSubmitting } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const { appUsersDatabaseData, isSubmitting, userFullData, setIsSubmitting } =
+    useContext(GlobalDataContext) as GlobalDataContextType;
 
   // DELETE USER CLOUD FUNCTION HOOK
   const [deleteAppUser] = useHttpsCallable(getFunctions(app), "deleteAppUser");
@@ -40,21 +39,15 @@ export function DeleteUser() {
   // USER SELECTED ACTIVE STATES
   const [isSelected, setIsSelected] = useState(false);
 
-  // USER DATA ARRAY WITH ALL OPTIONS OF SELECT USERS
-  const [usersDataArray, setUsersDataArray] = useState<UserFullDataProps[]>();
-
-  // FUNCTION THAT WORKS WITH USER SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleUserSelectedData = (data: UserFullDataProps[]) => {
-    setUsersDataArray(data);
-  };
-
   // USER SELECTED STATE DATA
   const [userSelectedData, setUserSelectedData] = useState<UserFullDataProps>();
 
   // SET USER SELECTED STATE WHEN SELECT USER
   useEffect(() => {
     if (userData.id !== "") {
-      setUserSelectedData(usersDataArray!.find(({ id }) => id === userData.id));
+      setUserSelectedData(
+        appUsersDatabaseData.find(({ id }) => id === userData.id)
+      );
     } else {
       setUserSelectedData(undefined);
     }
@@ -220,20 +213,11 @@ export function DeleteUser() {
                   setIsSelected(true);
                 }}
               >
-                {userFullData?.role === "root" ? (
-                  <SelectOptions
-                    returnId
-                    handleData={handleUserSelectedData}
-                    dataType="appUsers"
-                    displayAdmins
-                  />
-                ) : (
-                  <SelectOptions
-                    returnId
-                    handleData={handleUserSelectedData}
-                    dataType="appUsers"
-                  />
-                )}
+                <SelectOptions
+                  returnId
+                  dataType="appUsers"
+                  displayAdmins={userFullData?.role === "root" ? true : false}
+                />
               </select>
             </div>
 

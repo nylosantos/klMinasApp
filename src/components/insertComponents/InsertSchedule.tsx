@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import DatePicker from "react-multi-date-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,30 +8,31 @@ import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import TimePicker from "react-multi-date-picker/plugins/time_picker";
 import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
+  doc, getFirestore, serverTimestamp,
+  setDoc
 } from "firebase/firestore";
 
 import { createScheduleValidationSchema } from "../../@types/zodValidation";
 import {
-  CreateScheduleValidationZProps,
-  ScheduleSearchProps,
-  SchoolSearchProps,
+  CreateScheduleValidationZProps, SchoolSearchProps
 } from "../../@types";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertSchedule() {
+  // GET GLOBAL DATA
+  const { schoolDatabaseData, scheduleDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // SCHEDULE DATA
   const [scheduleData, setScheduleData] =
     useState<CreateScheduleValidationZProps>({
@@ -52,15 +53,6 @@ export function InsertSchedule() {
     schoolId: "",
   });
 
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
-  const [schoolsDataArray, setSchoolsDataArray] =
-    useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolsDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
@@ -70,7 +62,7 @@ export function InsertSchedule() {
     if (schoolData.schoolId !== "") {
       setScheduleData({ ...scheduleData, confirmInsert: false });
       setSchoolSelectedData(
-        schoolsDataArray!.find(({ id }) => id === schoolData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === schoolData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -176,7 +168,7 @@ export function InsertSchedule() {
         const commonId = uuidv4();
         await setDoc(doc(db, "schedules", commonId), {
           id: commonId,
-          name: `Horário ${data.name}`,
+          name: data.name,
           transitionStart: data.transitionStart,
           transitionEnd: data.transitionEnd,
           classStart: data.classStart,
@@ -187,13 +179,16 @@ export function InsertSchedule() {
           timestamp: serverTimestamp(),
         });
         resetForm();
-        toast.success(`Horário ${data.name} criado com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
+        toast.success(
+          `Horário ${data.name} criado com sucesso no ${data.schoolName}! 👌`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        );
         setIsSubmitting(false);
       } catch (error) {
         console.log("ESSE É O ERROR", error);
@@ -224,36 +219,30 @@ export function InsertSchedule() {
     }
 
     // CHECKING IF SCHEDULE EXISTS ON DATABASE
-    const schedulesRef = collection(db, "schedules");
-    const q = query(schedulesRef, where("name", "==", `Horário ${data.name}`));
-    const querySnapshot = await getDocs(q);
-    const promises: ScheduleSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as ScheduleSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(
-            `Horário ${data.name} já existe no nosso banco de dados... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          )
-        );
-      } else {
-        // IF NOT EXISTS, CREATE
+    const scheduleExists = scheduleDatabaseData.find(
+      (schedule) =>
+        schedule.name === `${data.name}` &&
+        data.schoolName === schedule.schoolName
+    );
 
-        addSchedule();
-      }
-    });
+    if (scheduleExists) {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Horário ${data.name} já existe no nosso banco de dados... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else {
+      // IF NOT EXISTS, CREATE
+      addSchedule();
+    }
   };
 
   return (
@@ -300,11 +289,7 @@ export function InsertSchedule() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              handleData={handleSchoolSelectedData}
-              dataType="schools"
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 
@@ -532,7 +517,7 @@ export function InsertSchedule() {
           />
           <label htmlFor="confirmInsert" className="text-sm">
             {scheduleData.name
-              ? `Confirmar criação do ${scheduleData.name}`
+              ? `Confirmar criação do horário ${scheduleData.name} no ${scheduleData.schoolName}`
               : `Confirmar criação`}
           </label>
         </div>

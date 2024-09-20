@@ -1,18 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  where,
-} from "firebase/firestore";
+import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -22,11 +14,20 @@ import {
   DeleteScheduleValidationZProps,
   ScheduleSearchProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function DeleteSchedule() {
+  // GET GLOBAL DATA
+  const { curriculumDatabaseData, scheduleDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // SCHEDULE DATA
   const [scheduleData, setScheduleData] =
     useState<DeleteScheduleValidationZProps>({
@@ -44,9 +45,10 @@ export function DeleteSchedule() {
 
   // RESET SCHOOL CLASS, SCHOOL COURSE AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
   useEffect(() => {
-    (
-      document.getElementById("scheduleSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    setScheduleData({ ...scheduleData, confirmDelete: false }),
+      ((
+        document.getElementById("scheduleSelect") as HTMLSelectElement
+      ).selectedIndex = 0);
     setScheduleData({
       schoolId: school.id,
       scheduleName: "",
@@ -56,25 +58,17 @@ export function DeleteSchedule() {
   }, [school.id]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
-  // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
-  const [schedulesDataArray, setSchedulesDataArray] =
-    useState<ScheduleSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleScheduleSelectedData = (data: ScheduleSearchProps[]) => {
-    setSchedulesDataArray(data);
-  };
-
-  // SCHOOL CLASS SELECTED STATE DATA
+  // -------------------------- SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
+  // SCHEDULE SELECTED STATE DATA
   const [scheduleSelectedData, setScheduleSelectedData] =
     useState<ScheduleSearchProps>();
 
-  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  // SET SCHEDULE SELECTED STATE WHEN SELECT SCHEDULE
   useEffect(() => {
+    setScheduleData({ ...scheduleData, confirmDelete: false });
     if (scheduleData.scheduleId !== "") {
       setScheduleSelectedData(
-        schedulesDataArray!.find(({ id }) => id === scheduleData.scheduleId)
+        scheduleDatabaseData.find(({ id }) => id === scheduleData.scheduleId)
       );
     } else {
       setScheduleSelectedData(undefined);
@@ -90,7 +84,7 @@ export function DeleteSchedule() {
     }
   }, [scheduleSelectedData]);
 
-  // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
+  // -------------------------- END OF SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
 
   // SCHEDULE SELECTED STATE
   const [isSelected, setIsSelected] = useState(false);
@@ -135,6 +129,7 @@ export function DeleteSchedule() {
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
+    setValue("schoolId", scheduleData.schoolId);
     setValue("scheduleId", scheduleData.scheduleId);
     setValue("scheduleName", scheduleData.scheduleName);
     setValue("confirmDelete", scheduleData.confirmDelete);
@@ -143,6 +138,7 @@ export function DeleteSchedule() {
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
     const fullErrors = [
+      errors.schoolId,
       errors.scheduleId,
       errors.scheduleName,
       errors.confirmDelete,
@@ -206,39 +202,72 @@ export function DeleteSchedule() {
     }
 
     // CHECKING IF SCHEDULE EXISTS ON DATABASE
-    const schedulesRef = collection(db, "curriculum");
-    const q = query(schedulesRef, where("schedule", "==", data.scheduleName));
-    const querySnapshot = await getDocs(q);
-    const promises: ScheduleSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as ScheduleSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(
-            `Horário incluído em ${results.length} ${
-              results.length === 1 ? "Currículo" : "Currículos"
-            }, exclua ou altere primeiramente ${
-              results.length === 1 ? "o Currículo" : "os Currículos"
-            } e depois exclua o ${data.scheduleName}... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          )
-        );
-      } else {
-        // IF NO EXISTS, DELETE
-        deleteSchedule();
-      }
-    });
+
+    // SEARCH CURRICULUM WITH THIS SCHEDULE
+    const scheduleExistsOnCurriculum = curriculumDatabaseData.filter(
+      (curriculum) => curriculum.scheduleId === scheduleData.scheduleId
+    );
+
+    // IF EXISTS, RETURN ERROR
+    if (scheduleExistsOnCurriculum.length !== 0) {
+      return (
+        setScheduleData({ ...scheduleData, confirmDelete: false }),
+        setIsSubmitting(false),
+        toast.error(
+          `Horário incluído em ${scheduleExistsOnCurriculum.length} ${
+            scheduleExistsOnCurriculum.length === 1 ? "Currículo" : "Currículos"
+          }, exclua ou altere primeiramente ${
+            scheduleExistsOnCurriculum.length === 1
+              ? "o Currículo"
+              : "os Currículos"
+          } e depois exclua o ${data.scheduleName}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else {
+      // IF NO EXISTS, DELETE
+      deleteSchedule();
+    }
+
+    // const schedulesRef = collection(db, "curriculum");
+    // const q = query(schedulesRef, where("schedule", "==", data.scheduleName));
+    // const querySnapshot = await getDocs(q);
+    // const promises: ScheduleSearchProps[] = [];
+    // querySnapshot.forEach((doc) => {
+    //   const promise = doc.data() as ScheduleSearchProps;
+    //   promises.push(promise);
+    // });
+    // Promise.all(promises).then((results) => {
+    //   // IF EXISTS, RETURN ERROR
+    //   if (results.length !== 0) {
+    //     return (
+    //       setIsSubmitting(false),
+    //       toast.error(
+    //         `Horário incluído em ${results.length} ${
+    //           results.length === 1 ? "Currículo" : "Currículos"
+    //         }, exclua ou altere primeiramente ${
+    //           results.length === 1 ? "o Currículo" : "os Currículos"
+    //         } e depois exclua o ${data.scheduleName}... ❕`,
+    //         {
+    //           theme: "colored",
+    //           closeOnClick: true,
+    //           pauseOnHover: true,
+    //           draggable: true,
+    //           autoClose: 3000,
+    //         }
+    //       )
+    //     );
+    //   } else {
+    //     // IF NO EXISTS, DELETE
+    //     deleteSchedule();
+    //   }
+    // });
   };
 
   return (
@@ -318,7 +347,6 @@ export function DeleteSchedule() {
               returnId
               dataType="schedules"
               schoolId={scheduleData.schoolId}
-              handleData={handleScheduleSelectedData}
             />
           </select>
         </div>

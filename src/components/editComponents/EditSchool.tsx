@@ -1,17 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  updateDoc,
-  where,
+  doc, getFirestore, updateDoc
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -19,11 +13,20 @@ import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { editSchoolValidationSchema } from "../../@types/zodValidation";
 import { EditSchoolValidationZProps, SchoolSearchProps } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditSchool() {
+  // GET GLOBAL DATA
+  const { schoolDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // SCHOOL DATA
   const [schoolData, setSchoolData] = useState({
     schoolId: "",
@@ -39,30 +42,16 @@ export function EditSchool() {
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
-  const [schoolsDataArray, setSchoolsDataArray] =
-    useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolsDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
-
-  useEffect(() => {
-    console.log("schoolSelectedData: ", schoolSelectedData);
-    console.log("schoolEditData: ", schoolEditData);
-  }, [schoolSelectedData, schoolEditData]);
 
   // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
   useEffect(() => {
     setIsEdit(false);
     if (schoolData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolsDataArray!.find(({ id }) => id === schoolData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === schoolData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -161,32 +150,25 @@ export function EditSchool() {
     };
 
     // CHECKING IF SCHOOL EXISTS ON DATABASE
-    const schoolRef = collection(db, "schools");
-    const q = query(schoolRef, where("id", "==", schoolData.schoolId));
-    const querySnapshot = await getDocs(q);
-    const promises: SchoolSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as SchoolSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
+    const schoolExists = schoolDatabaseData.find(
+      (school) => school.id === schoolData.schoolId
+    );
+    if (!schoolExists) {
       // IF NOT EXISTS, RETURN ERROR
-      if (results.length === 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`Colégio não existe no banco de dados... ❕`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          })
-        );
-      } else {
-        // IF EXISTS, EDIT
-        editSchool();
-      }
-    });
+      return (
+        setIsSubmitting(false),
+        toast.error(`Colégio não existe no banco de dados... ❕`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        })
+      );
+    } else {
+      // IF EXISTS, EDIT
+      editSchool();
+    }
   };
 
   return (
@@ -236,11 +218,7 @@ export function EditSchool() {
               setIsSelected(true);
             }}
           >
-            <SelectOptions
-              returnId
-              handleData={handleSchoolSelectedData}
-              dataType="schools"
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 

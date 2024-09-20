@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
-import { AppUsersSearchProps, ButtonSignProps } from "../../@types";
+import { ButtonSignProps, UserFullDataProps } from "../../@types";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -49,9 +49,9 @@ export function ButtonSignInGoogle({
       const userRef = collection(db, "appUsers");
       const q = query(userRef, where("id", "==", result.user.uid));
       const querySnapshot = await getDocs(q);
-      const promises: AppUsersSearchProps[] = [];
+      const promises: UserFullDataProps[] = [];
       querySnapshot.forEach((doc) => {
-        const promise = doc.data() as AppUsersSearchProps;
+        const promise = doc.data() as UserFullDataProps;
         promises.push(promise);
       });
       Promise.all(promises).then((results) => {

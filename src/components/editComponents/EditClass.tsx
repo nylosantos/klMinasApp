@@ -1,18 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+import { doc, getFirestore, updateDoc } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -23,11 +15,20 @@ import {
   SchoolClassSearchProps,
   SchoolSearchProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditClass() {
+  // GET GLOBAL DATA
+  const { schoolDatabaseData, schoolClassDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // SCHOOL CLASS DATA
   const [schoolClassData, setSchoolClassData] = useState({
     schoolClassId: "",
@@ -46,15 +47,6 @@ export function EditClass() {
   const [isEdit, setIsEdit] = useState(false);
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
-  const [schoolsDataArray, setSchoolsDataArray] =
-    useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolsDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
@@ -66,7 +58,7 @@ export function EditClass() {
     setSchoolClassSelectedData(undefined);
     if (schoolClassData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolsDataArray!.find(({ id }) => id === schoolClassData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === schoolClassData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -75,15 +67,6 @@ export function EditClass() {
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
-  const [schoolClassesDataArray, setSchoolClassesDataArray] =
-    useState<SchoolClassSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
-    setSchoolClassesDataArray(data);
-  };
-
   // SCHOOL CLASS SELECTED STATE DATA
   const [schoolClassSelectedData, setSchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
@@ -105,7 +88,7 @@ export function EditClass() {
   useEffect(() => {
     if (schoolClassData.schoolClassId !== "") {
       setSchoolClassSelectedData(
-        schoolClassesDataArray!.find(
+        schoolClassDatabaseData.find(
           ({ id }) => id === schoolClassData.schoolClassId
         )
       );
@@ -218,37 +201,31 @@ export function EditClass() {
       }
     };
 
-    // CHECKING IF SCHOOL EXISTS ON CURRRICULUM DATABASE
-    const schoolClassRef = collection(db, "schoolClasses");
-    const q = query(
-      schoolClassRef,
-      where("id", "==", schoolClassData.schoolClassId)
+    // CHECKING IF SCHOOL EXISTS ON DATABASE
+    const schoolClass = schoolClassDatabaseData.find(
+      (schoolClass) => schoolClass.id === schoolClassData.schoolClassId
     );
-    const querySnapshot = await getDocs(q);
-    const promises: SchoolClassSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as SchoolClassSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF NO EXISTS, RETURN ERROR
-      if (results.length === 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`Turma não existe no banco de dados...... ❕`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          })
-        );
-      } else {
-        // IF EXISTS, EDIT
-        editSchoolClass();
-      }
-    });
+    if (!schoolClass) {
+      // IF NOT EXISTS, RETURN ERROR
+      return (
+        setIsSubmitting(false),
+        toast.error(`Turma não existe no banco de dados...... ❕`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        })
+      );
+    } else {
+      // IF EXISTS, EDIT
+      editSchoolClass();
+    }
   };
+
+  useEffect(() => {
+    console.log(schoolClassEditData);
+  }, [schoolClassEditData]);
 
   return (
     <div className="flex flex-col container text-center">
@@ -296,11 +273,7 @@ export function EditClass() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              handleData={handleSchoolSelectedData}
-              dataType="schools"
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 
@@ -338,7 +311,6 @@ export function EditClass() {
           >
             <SelectOptions
               returnId
-              handleData={handleSchoolClassSelectedData}
               dataType="schoolClasses"
               schoolId={schoolClassData.schoolId}
             />
@@ -415,36 +387,64 @@ export function EditClass() {
               >
                 Disponibilidade:{" "}
               </label>
-              <select
-                name="available"
-                defaultValue={schoolClassSelectedData?.available}
-                onChange={(e) => {
-                  e.target.value === "open" ||
-                  e.target.value === "closed" ||
-                  e.target.value === "waitingList"
-                    ? setSchoolClassEditData({
+              <div className="flex w-3/4 px-2 py-1 gap-10 justify-start items-center">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={
+                      schoolClassEditData.available === "open" ? true : false
+                    }
+                    className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                    value="open"
+                    name="classAvailable"
+                    onChange={() =>
+                      setSchoolClassEditData({
                         ...schoolClassEditData,
-                        available: e.target.value,
+                        available: "open",
                       })
-                    : setSchoolClassEditData({
+                    }
+                  />{" "}
+                  Aberta
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={
+                      schoolClassEditData.available === "closed" ? true : false
+                    }
+                    className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                    value="closed"
+                    name="classAvailable"
+                    onChange={() =>
+                      setSchoolClassEditData({
                         ...schoolClassEditData,
                         available: "closed",
-                      });
-                }}
-                className={
-                  errors.available
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-              >
-                <option disabled value={" -- select an option -- "}>
-                  {" "}
-                  -- Selecione --{" "}
-                </option>
-                <option value={"open"}>Turma Aberta</option>
-                <option value={"closed"}>Turma Fechada</option>
-                <option value={"waitingList"}>Lista de Espera</option>
-              </select>
+                      })
+                    }
+                  />{" "}
+                  Fechada
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={
+                      schoolClassEditData.available === "waitingList"
+                        ? true
+                        : false
+                    }
+                    className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                    value="waitingList"
+                    name="classAvailable"
+                    onChange={() =>
+                      setSchoolClassEditData({
+                        ...schoolClassEditData,
+                        available: "waitingList",
+                      })
+                    }
+                  />{" "}
+                  Lista de Espera
+                </label>
+              </div>
             </div>
 
             {/* SUBMIT AND RESET BUTTONS */}

@@ -1,13 +1,14 @@
-import express from "express";
-import cors from "cors";
-import { https } from "firebase-functions";
-import { apps, initializeApp, auth, firestore } from "firebase-admin";
+import { https } from "firebase-functions/v1";
+import * as admin from "firebase-admin";
+import { auth, firestore } from "firebase-admin";
+import * as express from "express";
+import * as cors from "cors";
 
 const app = express();
 app.use(cors({ origin: true }));
 
-if (apps.length === 0) {
-  initializeApp();
+if (admin.apps.length === 0) {
+  admin.initializeApp();
 }
 
 export const createAppUser = https.onCall(async (data) => {
@@ -32,7 +33,7 @@ export const createAppUser = https.onCall(async (data) => {
 });
 
 export const deleteAppUser = https.onCall((data) => {
-  const deleteAllPlaces = async (data) => {
+  const deleteAllPlaces = async (data: { id: string }) => {
     await auth().deleteUser(data.id);
     await firestore().collection("appUsers").doc(data.id).delete();
   };
@@ -87,3 +88,11 @@ export const getAuthUser = https.onCall(async (data) => {
       return userRecord;
     });
 });
+
+// Start writing functions
+// https://firebase.google.com/docs/functions/typescript
+
+// export const helloWorld = onRequest((request, response) => {
+//   logger.info("Hello logs!", {structuredData: true});
+//   response.send("Hello from Firebase!");
+// });

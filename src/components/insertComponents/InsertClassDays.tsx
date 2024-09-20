@@ -1,19 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
+  doc, getFirestore, serverTimestamp,
+  setDoc
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -21,16 +15,24 @@ import { ClassDays } from "../formComponents/ClassDays";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { createClassDaysValidationSchema } from "../../@types/zodValidation";
 import {
-  ClassDaySearchProps,
   CreateClassDaysValidationZProps,
-  ToggleClassDaysFunctionProps,
+  ToggleClassDaysFunctionProps
 } from "../../@types";
 import { classDayIndexNames } from "../../custom";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertClassDays() {
+  // GET GLOBAL DATA
+  const { classDaysDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // CLASS DAY DATA
   const [classDaysData, setClassDaysData] =
     useState<CreateClassDaysValidationZProps>({
@@ -395,44 +397,29 @@ export function InsertClassDays() {
     };
 
     // CHECKING IF CLASS DAY EXISTS ON DATABASE
-    const classDaysRef = collection(db, "classDays");
-    const q = query(
-      classDaysRef,
-      where("sunday", "==", data.sunday),
-      where("monday", "==", data.monday),
-      where("tuesday", "==", data.tuesday),
-      where("wednesday", "==", data.wednesday),
-      where("thursday", "==", data.thursday),
-      where("friday", "==", data.friday),
-      where("saturday", "==", data.saturday)
+
+    const classDaysExist = classDaysDatabaseData.find(
+      (classDay) => classDay.name === data.name
     );
-    const querySnapshot = await getDocs(q);
-    const promises: ClassDaySearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as ClassDaySearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(
-            `Um identificador com os dias selecionados já existe no nosso banco de dados: ${results[0].name} ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          )
-        );
-      } else {
-        // IF NOT EXISTS, CREATE
-        addClassDays();
-      }
-    });
+    // IF EXISTS, RETURN ERROR
+    if (classDaysExist) {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Um identificador com os dias selecionados já existe no nosso banco de dados: ${data.name} ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else {
+      // IF NOT EXISTS, CREATE
+      addClassDays();
+    }
   };
 
   return (

@@ -30,9 +30,8 @@ const db = getFirestore(app);
 
 export function EditUser() {
   // GET GLOBAL DATA
-  const { isSubmitting, setIsSubmitting } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const { appUsersDatabaseData, isSubmitting, userFullData, setIsSubmitting } =
+    useContext(GlobalDataContext) as GlobalDataContextType;
 
   // EDIT USER WITHOUT CHANGING PASSWORD CLOUD FUNCTION HOOK
   const [updateAppUserWithoutPassword] = useHttpsCallable(
@@ -88,14 +87,6 @@ export function EditUser() {
   const [isEdit, setIsEdit] = useState(false);
 
   // -------------------------- USER SELECT STATES AND FUNCTIONS -------------------------- //
-  // USER DATA ARRAY WITH ALL OPTIONS OF SELECT USERS
-  const [usersDataArray, setUsersDataArray] = useState<UserFullDataProps[]>();
-
-  // FUNCTION THAT WORKS WITH USER SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleUserSelectedData = (data: UserFullDataProps[]) => {
-    setUsersDataArray(data);
-  };
-
   // USER SELECTED STATE DATA
   const [userSelectedData, setUserSelectedData] = useState<UserFullDataProps>();
 
@@ -104,7 +95,7 @@ export function EditUser() {
     setIsEdit(false);
     if (userEditData.id !== "") {
       setUserSelectedData(
-        usersDataArray!.find(({ id }) => id === userEditData.id)
+        appUsersDatabaseData.find(({ id }) => id === userEditData.id)
       );
     } else {
       setUserSelectedData(undefined);
@@ -273,7 +264,8 @@ export function EditUser() {
               name: data.name,
               email: data.email,
               phone: data.phone,
-              timestamp: serverTimestamp(),
+              haveAccount: true,
+              updatedAt: serverTimestamp(),
             });
             toast.success(`${data.name} editado com sucesso! 👌`, {
               theme: "colored",
@@ -341,7 +333,8 @@ export function EditUser() {
             name: data.name,
             email: data.email,
             phone: data.phone,
-            timestamp: serverTimestamp(),
+            haveAccount: true,
+            updatedAt: serverTimestamp(),
           });
           toast.success(`${data.name} editado com sucesso! 👌`, {
             theme: "colored",
@@ -426,8 +419,8 @@ export function EditUser() {
             }}
           >
             <SelectOptions
+              displayAdmins={userFullData?.role === "root" ? true : false}
               returnId
-              handleData={handleUserSelectedData}
               dataType="appUsers"
             />
           </select>

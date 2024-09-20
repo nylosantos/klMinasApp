@@ -1,14 +1,26 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { createContext, useEffect, useState } from "react";
 import { app, initFirebase } from "../db/Firebase";
 import { Auth, getAuth, User } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { AppUsersSearchProps } from "../@types";
+import {
+  ClassDaySearchProps,
+  CurriculumSearchProps,
+  ScheduleSearchProps,
+  SchoolClassSearchProps,
+  SchoolCourseSearchProps,
+  SchoolSearchProps,
+  StudentSearchProps,
+  TeacherSearchProps,
+  UserFullDataProps,
+} from "../@types";
 import { toast } from "react-toastify";
 import {
   collection,
   getDocs,
   getFirestore,
+  onSnapshot,
   query,
   where,
 } from "firebase/firestore";
@@ -24,9 +36,20 @@ export type GlobalDataContextType = {
   login: boolean;
   logged: boolean;
   page: SetPageProps;
+  // DATABASE DATA
+  appUsersDatabaseData: UserFullDataProps[];
+  schoolDatabaseData: SchoolSearchProps[];
+  schoolClassDatabaseData: SchoolClassSearchProps[];
+  schoolCourseDatabaseData: SchoolCourseSearchProps[];
+  scheduleDatabaseData: ScheduleSearchProps[];
+  teacherDatabaseData: TeacherSearchProps[];
+  curriculumDatabaseData: CurriculumSearchProps[];
+  studentsDatabaseData: StudentSearchProps[];
+  classDaysDatabaseData: ClassDaySearchProps[];
+  // END OF DATABASE DATA
   theme: "dark" | "light" | null;
   user: User | null | undefined;
-  userFullData: AppUsersSearchProps | undefined;
+  userFullData: UserFullDataProps | undefined;
   userLoading: boolean;
   setIsSubmitting: (option: boolean) => void;
   setLogged: (option: boolean) => void;
@@ -87,7 +110,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   const [login, setLogin] = useState(true);
 
   // USER DATA STATE
-  const [userFullData, setUserFullData] = useState<AppUsersSearchProps>();
+  const [userFullData, setUserFullData] = useState<UserFullDataProps>();
 
   // HANDLE USER DATA FUNCTION
   const handleUserFullData = async (user: User | null | undefined) => {
@@ -96,12 +119,13 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       const userRef = collection(db, "appUsers");
       const q = query(userRef, where("id", "==", user.uid));
       const querySnapshot = await getDocs(q);
-      const promises: AppUsersSearchProps[] = [];
+      const promises: UserFullDataProps[] = [];
       querySnapshot.forEach((doc) => {
-        const promise = doc.data() as AppUsersSearchProps;
+        const promise = doc.data() as UserFullDataProps;
         promises.push(promise);
       });
       Promise.all(promises).then((results) => {
+        handleData();
         setUserFullData(results[0]);
         setLogged(true);
         setIsSubmitting(false);
@@ -144,6 +168,181 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     show: "Dashboard",
   });
 
+  // -------------------------------------------------- DATABASE CONTEXT LISTENERS -----------------------------------------------//
+  // SCHOOL DATA STATE
+  const [schoolDatabaseData, setSchoolDatabaseData] = useState<
+    SchoolSearchProps[]
+  >([]);
+
+  // SCHOOL CLASS DATA STATE
+  const [schoolClassDatabaseData, setSchoolClassDatabaseData] = useState<
+    SchoolClassSearchProps[]
+  >([]);
+
+  // SCHOOL COURSE DATA STATE
+  const [schoolCourseDatabaseData, setSchoolCourseDatabaseData] = useState<
+    SchoolCourseSearchProps[]
+  >([]);
+
+  // SCHEDULE DATA STATE
+  const [scheduleDatabaseData, setScheduleDatabaseData] = useState<
+    ScheduleSearchProps[]
+  >([]);
+
+  // TEACHER DATA STATE
+  const [teacherDatabaseData, setTeacherDatabaseData] = useState<
+    TeacherSearchProps[]
+  >([]);
+
+  // CURRICULUM DATA STATE
+  const [curriculumDatabaseData, setCurriculumDatabaseData] = useState<
+    CurriculumSearchProps[]
+  >([]);
+
+  // STUDENTS DATA STATE
+  const [studentsDatabaseData, setStudentsDatabaseData] = useState<
+    StudentSearchProps[]
+  >([]);
+
+  // CLASS DAYS DATA STATE
+  const [classDaysDatabaseData, setClassDaysDatabaseData] = useState<
+    ClassDaySearchProps[]
+  >([]);
+
+  // APP USERS DATA STATE
+  const [appUsersDatabaseData, setAppUsersDatabaseData] = useState<
+    UserFullDataProps[]
+  >([]);
+
+  // GET DATA
+  async function handleData() {
+    // GET SCHOOL DATA
+    const schoolQuery = query(collection(db, "schools"));
+    const schoolListener = onSnapshot(schoolQuery, (querySnapshot) => {
+      const schoolDatabaseData: SchoolSearchProps[] = [];
+      querySnapshot.forEach((doc) => {
+        const school = doc.data() as SchoolSearchProps;
+        schoolDatabaseData.push(school);
+      });
+      setSchoolDatabaseData(
+        schoolDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
+      );
+    });
+    schoolListener;
+    // GET SCHOOL CLASS DATA
+    const schoolClassQuery = query(collection(db, "schoolClasses"));
+    const schoolClassListener = onSnapshot(
+      schoolClassQuery,
+      (querySnapshot) => {
+        const schoolClassDatabaseData: SchoolClassSearchProps[] = [];
+        querySnapshot.forEach((doc) => {
+          const schoolClass = doc.data() as SchoolClassSearchProps;
+          schoolClassDatabaseData.push(schoolClass);
+        });
+        setSchoolClassDatabaseData(
+          schoolClassDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
+        );
+      }
+    );
+
+    // GET SCHOOL COURSE DATA
+    const schoolCoursesQuery = query(collection(db, "schoolCourses"));
+    const schoolCoursesListener = onSnapshot(
+      schoolCoursesQuery,
+      (querySnapshot) => {
+        const schoolCoursesDatabaseData: SchoolCourseSearchProps[] = [];
+        querySnapshot.forEach((doc) => {
+          const schoolCourse = doc.data() as SchoolCourseSearchProps;
+          schoolCoursesDatabaseData.push(schoolCourse);
+        });
+        setSchoolCourseDatabaseData(
+          schoolCoursesDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
+        );
+      }
+    );
+
+    // GET SCHEDULE DATA
+    const schedulesQuery = query(collection(db, "schedules"));
+    const schedulesListener = onSnapshot(schedulesQuery, (querySnapshot) => {
+      const schedulesDatabaseData: ScheduleSearchProps[] = [];
+      querySnapshot.forEach((doc) => {
+        const schedule = doc.data() as ScheduleSearchProps;
+        schedulesDatabaseData.push(schedule);
+      });
+      setScheduleDatabaseData(
+        schedulesDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
+      );
+    });
+
+    // GET TEACHER DATA
+    const teachersQuery = query(collection(db, "teachers"));
+    const teachersListener = onSnapshot(teachersQuery, (querySnapshot) => {
+      const teachersDatabaseData: TeacherSearchProps[] = [];
+      querySnapshot.forEach((doc) => {
+        const teacher = doc.data() as TeacherSearchProps;
+        teachersDatabaseData.push(teacher);
+      });
+      setTeacherDatabaseData(
+        teachersDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
+      );
+    });
+
+    // GET CURRICULUM DATA
+    const curriculumsQuery = query(collection(db, "curriculum"));
+    const curriculumsListener = onSnapshot(
+      curriculumsQuery,
+      (querySnapshot) => {
+        const curriculumsDatabaseData: CurriculumSearchProps[] = [];
+        querySnapshot.forEach((doc) => {
+          const curriculum = doc.data() as CurriculumSearchProps;
+          curriculumsDatabaseData.push(curriculum);
+        });
+        setCurriculumDatabaseData(
+          curriculumsDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
+        );
+      }
+    );
+
+    // GET STUDENTS DATA
+    const studentsQuery = query(collection(db, "students"));
+    const studentsListener = onSnapshot(studentsQuery, (querySnapshot) => {
+      const studentsDatabaseData: StudentSearchProps[] = [];
+      querySnapshot.forEach((doc) => {
+        const curriculum = doc.data() as StudentSearchProps;
+        studentsDatabaseData.push(curriculum);
+      });
+      setStudentsDatabaseData(
+        studentsDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
+      );
+    });
+
+    // GET CLASS DAY DATA
+    const classDaysQuery = query(collection(db, "classDays"));
+    const classDaysListener = onSnapshot(classDaysQuery, (querySnapshot) => {
+      const classDaysDatabaseData: ClassDaySearchProps[] = [];
+      querySnapshot.forEach((doc) => {
+        const curriculum = doc.data() as ClassDaySearchProps;
+        classDaysDatabaseData.push(curriculum);
+      });
+      setClassDaysDatabaseData(
+        classDaysDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
+      );
+    });
+
+    // GET APP USERS DATA
+    const appUsersQuery = query(collection(db, "appUsers"));
+    const appUsersListener = onSnapshot(appUsersQuery, (querySnapshot) => {
+      const appUsersDatabaseData: UserFullDataProps[] = [];
+      querySnapshot.forEach((doc) => {
+        const appUser = doc.data() as UserFullDataProps;
+        appUsersDatabaseData.push(appUser);
+      });
+      setAppUsersDatabaseData(
+        appUsersDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
+      );
+    });
+  }
+
   return (
     <GlobalDataContext.Provider
       value={{
@@ -152,6 +351,17 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         logged,
         login,
         page,
+        // DATABASE DATA
+        appUsersDatabaseData,
+        schoolDatabaseData,
+        schoolClassDatabaseData,
+        schoolCourseDatabaseData,
+        scheduleDatabaseData,
+        teacherDatabaseData,
+        curriculumDatabaseData,
+        studentsDatabaseData,
+        classDaysDatabaseData,
+        // END OF DATABASE DATA
         theme,
         user,
         userFullData,

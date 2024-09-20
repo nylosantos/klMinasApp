@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import cep from "cep-promise";
 import { v4 as uuidv4 } from "uuid";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
@@ -15,7 +15,6 @@ import {
   getDocs,
   getFirestore,
   onSnapshot,
-  orderBy,
   query,
   serverTimestamp,
   setDoc,
@@ -53,11 +52,24 @@ import {
   StudentSearchProps,
   ToggleClassDaysFunctionProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertStudent() {
+  // GET GLOBAL DATA
+  const {
+    curriculumDatabaseData,
+    schoolDatabaseData,
+    schoolClassDatabaseData,
+    schoolCourseDatabaseData,
+    studentsDatabaseData,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
+
   // STUDENT DATA
   const [studentData, setStudentData] = useState<CreateStudentValidationZProps>(
     {
@@ -118,15 +130,6 @@ export function InsertStudent() {
   });
 
   // -------------------------- FAMILY SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // FAMILY SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL
-  const [familySchoolDataArray, setFamilySchoolDataArray] =
-    useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH FAMILY SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleFamilySchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setFamilySchoolDataArray(data);
-  };
-
   // FAMILY SCHOOL SELECTED STATE DATA
   const [, setFamilySchoolSelectedData] = useState<SchoolSearchProps>();
 
@@ -134,9 +137,7 @@ export function InsertStudent() {
   useEffect(() => {
     if (familyStudentData.schoolId !== "") {
       setFamilySchoolSelectedData(
-        familySchoolDataArray!.find(
-          ({ id }) => id === familyStudentData.schoolId
-        )
+        schoolDatabaseData.find(({ id }) => id === familyStudentData.schoolId)
       );
     } else {
       setFamilySchoolSelectedData(undefined);
@@ -145,17 +146,6 @@ export function InsertStudent() {
   // -------------------------- END OF FAMILY SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- FAMILY SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // FAMILY SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT FAMILY SCHOOL CLASS
-  const [familyschoolClassDataArray, setFamilySchoolClassDataArray] =
-    useState<SchoolClassSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH FAMILY SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleFamilySchoolClassSelectedData = (
-    data: SchoolClassSearchProps[]
-  ) => {
-    setFamilySchoolClassDataArray(data);
-  };
-
   // FAMILY SCHOOL CLASS SELECTED STATE DATA
   const [, setFamilySchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
@@ -164,7 +154,7 @@ export function InsertStudent() {
   useEffect(() => {
     if (familyStudentData.schoolClassId !== "") {
       setFamilySchoolClassSelectedData(
-        familyschoolClassDataArray!.find(
+        schoolClassDatabaseData.find(
           ({ id }) => id === familyStudentData.schoolClassId
         )
       );
@@ -175,44 +165,6 @@ export function InsertStudent() {
   // -------------------------- END OF FAMILY SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- FAMILY CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
-  // FAMILY CURRICULUM DATA ARRAY WITH ALL OPTIONS OF CURRICULUM
-  const [familyCurriculumDataArray, setFamilyCurriculumDataArray] =
-    useState<CurriculumSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH FAMILY CURRICULUM SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleFamilyCurriculumSelectedData = (
-    data: CurriculumSearchProps[]
-  ) => {
-    setFamilyCurriculumDataArray(data);
-  };
-
-  // FAMILY CURRICULUM SELECTED STATE DATA
-  const [, setFamilyCurriculumSelectedData] = useState<CurriculumSearchProps>();
-
-  // SET FAMILY CURRICULUM SELECTED STATE WHEN SELECT FAMILY CURRICULUM
-  useEffect(() => {
-    if (familyStudentData.curriculumId !== "") {
-      setFamilyCurriculumSelectedData(
-        familyCurriculumDataArray!.find(
-          ({ id }) => id === familyStudentData.curriculumId
-        )
-      );
-    } else {
-      setFamilyCurriculumSelectedData(undefined);
-    }
-  }, [familyStudentData.curriculumId]);
-  // -------------------------- END OF FAMILY CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
-
-  // -------------------------- FAMILY STUDENT SELECT STATES AND FUNCTIONS -------------------------- //
-  // FAMILY STUDENT DATA ARRAY WITH ALL OPTIONS OF CURRICULUM
-  const [familyStudentDataArray, setFamilyStudentDataArray] =
-    useState<StudentSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH FAMILY STUDENT SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleFamilyStudentSelectedData = (data: StudentSearchProps[]) => {
-    setFamilyStudentDataArray(data);
-  };
-
   // FAMILY STUDENT SELECTED STATE DATA
   const [familyStudentSelectedData, setFamilyStudentSelectedData] =
     useState<StudentSearchProps>();
@@ -221,7 +173,7 @@ export function InsertStudent() {
   useEffect(() => {
     if (familyStudentData.studentId !== "") {
       setFamilyStudentSelectedData(
-        familyStudentDataArray!.find(
+        studentsDatabaseData.find(
           ({ id }) => id === familyStudentData.studentId
         )
       );
@@ -320,14 +272,6 @@ export function InsertStudent() {
     });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL
-  const [schoolDataArray, setSchoolDataArray] = useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
@@ -336,7 +280,7 @@ export function InsertStudent() {
   useEffect(() => {
     if (curriculumData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolDataArray!.find(({ id }) => id === curriculumData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === curriculumData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -355,15 +299,6 @@ export function InsertStudent() {
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASS
-  const [schoolClassDataArray, setSchoolClassDataArray] =
-    useState<SchoolClassSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
-    setSchoolClassDataArray(data);
-  };
-
   // SCHOOL CLASS SELECTED STATE DATA
   const [schoolClassSelectedData, setSchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
@@ -372,7 +307,7 @@ export function InsertStudent() {
   useEffect(() => {
     if (curriculumData.schoolClassId !== "") {
       setSchoolClassSelectedData(
-        schoolClassDataArray!.find(
+        schoolClassDatabaseData.find(
           ({ id }) => id === curriculumData.schoolClassId
         )
       );
@@ -393,15 +328,6 @@ export function InsertStudent() {
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL COURSE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL COURSE
-  const [schoolCourseDataArray, setSchoolCourseDataArray] =
-    useState<SchoolCourseSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL COURSE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolCourseSelectedData = (data: SchoolCourseSearchProps[]) => {
-    setSchoolCourseDataArray(data);
-  };
-
   // SCHOOL COURSE SELECTED STATE DATA
   const [schoolCourseSelectedData, setSchoolCourseSelectedData] =
     useState<SchoolCourseSearchProps>();
@@ -410,7 +336,7 @@ export function InsertStudent() {
   useEffect(() => {
     if (curriculumData.schoolCourseId !== "") {
       setSchoolCourseSelectedData(
-        schoolCourseDataArray!.find(
+        schoolCourseDatabaseData.find(
           ({ id }) => id === curriculumData.schoolCourseId
         )
       );
@@ -1001,34 +927,20 @@ export function InsertStudent() {
   // GETTING CURRICULUM DATA
   const handleAvailableCoursesData = async () => {
     if (curriculumData.schoolCourseId === "all") {
-      const q = query(
-        collection(db, "curriculum"),
-        where("schoolId", "==", curriculumData.schoolId),
-        where("schoolClassId", "==", curriculumData.schoolClassId),
-        orderBy("name")
+      const filterCurriculum = curriculumDatabaseData.filter(
+        (curriculum) =>
+          curriculum.schoolId === curriculumData.schoolId &&
+          curriculum.schoolClassId === curriculumData.schoolClassId
       );
-      const querySnapshot = await getDocs(q);
-      const promises: CurriculumSearchProps[] = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data() as CurriculumSearchProps;
-        promises.push(promise);
-      });
-      setCurriculumCoursesData(promises);
+      setCurriculumCoursesData(filterCurriculum);
     } else {
-      const q = query(
-        collection(db, "curriculum"),
-        where("schoolId", "==", curriculumData.schoolId),
-        where("schoolClassId", "==", curriculumData.schoolClassId),
-        where("schoolCourseId", "==", curriculumData.schoolCourseId),
-        orderBy("name")
+      const filterCurriculum = curriculumDatabaseData.filter(
+        (curriculum) =>
+          curriculum.schoolId === curriculumData.schoolId &&
+          curriculum.schoolClassId === curriculumData.schoolClassId &&
+          curriculum.schoolCourseId === curriculumData.schoolCourseId
       );
-      const querySnapshot = await getDocs(q);
-      const promises: CurriculumSearchProps[] = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data() as CurriculumSearchProps;
-        promises.push(promise);
-      });
-      setCurriculumCoursesData(promises);
+      setCurriculumCoursesData(filterCurriculum);
     }
   };
 
@@ -1537,73 +1449,92 @@ export function InsertStudent() {
           paymentDay:
             data.paymentDay === "" ? standardPaymentDay : data.paymentDay,
           timestamp: serverTimestamp(),
+          experimentalCurriculumIds: newClass.isExperimental
+            ? arrayUnion({
+                id: data.curriculum,
+                name: newClass.name,
+                date: Timestamp.fromDate(new Date(newClass.date)),
+                isExperimental: true,
+                indexDays: [],
+                price: newClass.fullPrice,
+              })
+            : arrayUnion(),
+          curriculumIds: !newClass.isExperimental
+            ? arrayUnion({
+                id: data.curriculum,
+                name: newClass.name,
+                date: Timestamp.fromDate(new Date(newClass.date)),
+                isExperimental: false,
+                indexDays: newClass.enrolledDays,
+                price: newClass.fullPrice,
+              })
+            : arrayUnion(),
+          studentFamilyAtSchool: data.familyDiscount
+            ? arrayUnion({
+                id: data.familyAtSchoolId!,
+                name: familyStudentSelectedData?.name,
+                applyDiscount: true,
+              })
+            : arrayUnion(),
+          paymentRegister: paymentArray,
         });
         if (newClass.isExperimental) {
           // CREATING AN EXPERIMENTAL CURRICULUM
           // ADD STUDENT TO CURRICULUM TABLE ON EXPERIMENTAL STUDENTS COLLECTION
           await setDoc(
-            doc(
-              db,
-              `curriculum/${data.curriculum}/curriculumExperimentalStudents/${data.curriculum}`
-            ),
+            doc(db, "curriculum", data.curriculum),
             {
-              idsArray: arrayUnion(newStudentId),
-              detailsArray: arrayUnion({
+              experimentalStudents: arrayUnion({
                 id: newStudentId,
                 name: data.name,
                 date: Timestamp.fromDate(new Date(newClass.date)),
                 isExperimental: true,
                 indexDays: [],
+                price: newClass.fullPrice,
               }),
-              id: data.curriculum,
-              name: newClass.name,
             },
             { merge: true }
           );
           // ADD EXPERIMENTAL CURRICULUM TO STUDENT TABLE ON EXPERIMENTAL CURRICULUM COLLECTION
-          await setDoc(
-            doc(
-              db,
-              `students/${newStudentId}/studentExperimentalCurriculum/${newStudentId}`
-            ),
-            {
-              idsArray: arrayUnion(data.curriculum),
-              detailsArray: arrayUnion({
-                id: data.curriculum,
-                name: newClass.name,
-                date: Timestamp.fromDate(new Date(newClass.date)),
-                isExperimental: true,
-                indexDays: [],
-              }),
-              id: newStudentId,
-              name: data.name,
-            }
-          );
+          // await setDoc(
+          //   doc(
+          //     db,
+          //     `students/${newStudentId}/studentExperimentalCurriculum/${newStudentId}`
+          //   ),
+          //   {
+          //     idsArray: arrayUnion(data.curriculum),
+          //     detailsArray: arrayUnion({
+          //       id: data.curriculum,
+          //       name: newClass.name,
+          //       date: Timestamp.fromDate(new Date(newClass.date)),
+          //       isExperimental: true,
+          //       indexDays: [],
+          //     }),
+          //     id: newStudentId,
+          //     name: data.name,
+          //   }
+          // );
           // CREATE EMPTY STUDENT CURRICULUM COLLECTION
-          await setDoc(
-            doc(
-              db,
-              `students/${newStudentId}/studentCurriculum/${newStudentId}`
-            ),
-            {
-              idsArray: [],
-              detailsArray: [],
-              id: newStudentId,
-              name: data.name,
-              paymentRegister: paymentArray,
-            }
-          );
+          // await setDoc(
+          //   doc(
+          //     db,
+          //     `students/${newStudentId}/studentCurriculum/${newStudentId}`
+          //   ),
+          //   {
+          //     idsArray: [],
+          //     detailsArray: [],
+          //     id: newStudentId,
+          //     name: data.name,
+          //     paymentRegister: paymentArray,
+          //   }
+          // );
         } else {
           // CREATING AN ENROLLED CURRICULUM
           // ADD STUDENT TO CURRICULUM TABLE ON STUDENT COLLECTION
           await setDoc(
-            doc(
-              db,
-              `curriculum/${data.curriculum}/curriculumStudents/${data.curriculum}`
-            ),
+            doc(db, "curriculum", data.curriculum),
             {
-              idsArray: arrayUnion(newStudentId),
-              detailsArray: arrayUnion({
+              students: arrayUnion({
                 id: newStudentId,
                 name: data.name,
                 date: Timestamp.fromDate(new Date(newClass.date)),
@@ -1611,99 +1542,92 @@ export function InsertStudent() {
                 indexDays: newClass.enrolledDays,
                 price: newClass.fullPrice,
               }),
-              id: data.curriculum,
-              name: newClass.name,
             },
             { merge: true }
           );
           // ADD CURRICULUM TO STUDENT TABLE ON CURRICULUM COLLECTION
-          await setDoc(
-            doc(
-              db,
-              `students/${newStudentId}/studentCurriculum/${newStudentId}`
-            ),
-            {
-              idsArray: arrayUnion(data.curriculum),
-              detailsArray: arrayUnion({
-                id: data.curriculum,
-                name: newClass.name,
-                date: Timestamp.fromDate(new Date(newClass.date)),
-                isExperimental: false,
-                indexDays: newClass.enrolledDays,
-                price: newClass.fullPrice,
-              }),
-              id: newStudentId,
-              name: data.name,
-              paymentRegister: paymentArray,
-            }
-          );
+          // await setDoc(
+          //   doc(
+          //     db,
+          //     `students/${newStudentId}/studentCurriculum/${newStudentId}`
+          //   ),
+          //   {
+          //     idsArray: arrayUnion(data.curriculum),
+          //     detailsArray: arrayUnion({
+          //       id: data.curriculum,
+          //       name: newClass.name,
+          //       date: Timestamp.fromDate(new Date(newClass.date)),
+          //       isExperimental: false,
+          //       indexDays: newClass.enrolledDays,
+          //       price: newClass.fullPrice,
+          //     }),
+          //     id: newStudentId,
+          //     name: data.name,
+          //     paymentRegister: paymentArray,
+          //   }
+          // );
           // CREATE EMPTY STUDENT EXPERIMENTAL CURRICULUM COLLECTION
-          await setDoc(
-            doc(
-              db,
-              `students/${newStudentId}/studentExperimentalCurriculum/${newStudentId}`
-            ),
-            {
-              idsArray: [],
-              detailsArray: [],
-              id: newStudentId,
-              name: data.name,
-            }
-          );
+          // await setDoc(
+          //   doc(
+          //     db,
+          //     `students/${newStudentId}/studentExperimentalCurriculum/${newStudentId}`
+          //   ),
+          //   {
+          //     idsArray: [],
+          //     detailsArray: [],
+          //     id: newStudentId,
+          //     name: data.name,
+          //   }
+          // );
         }
         if (data.familyDiscount) {
           // CREATE STUDENT FAMILY'S INSIDE STUDENT TABLE
-          await setDoc(
-            doc(
-              db,
-              `students/${newStudentId}/studentFamilyAtSchool/${newStudentId}`
-            ),
-            {
-              idsArray: arrayUnion(data.familyAtSchoolId!),
-              detailsArray: arrayUnion({
-                id: data.familyAtSchoolId!,
-                name: familyStudentSelectedData?.name,
-                applyDiscount: true,
-              }),
-              id: newStudentId,
-              name: data.name,
-            },
-            { merge: true }
-          );
+          // await setDoc(
+          //   doc(
+          //     db,
+          //     `students/${newStudentId}/studentFamilyAtSchool/${newStudentId}`
+          //   ),
+          //   {
+          //     idsArray: arrayUnion(data.familyAtSchoolId!),
+          //     detailsArray: arrayUnion({
+          //       id: data.familyAtSchoolId!,
+          //       name: familyStudentSelectedData?.name,
+          //       applyDiscount: true,
+          //     }),
+          //     id: newStudentId,
+          //     name: data.name,
+          //   },
+          //   { merge: true }
+          // );
           // IF YOU WANT TO CREATE STUDENT INSIDE FAMILY TABLE COLLECTION, UNCOMMENT THIS SECTION
           await setDoc(
-            doc(
-              db,
-              `students/${data.familyAtSchoolId!}/studentFamilyAtSchool/${data.familyAtSchoolId!}`
-            ),
+            doc(db, "students", data.familyAtSchoolId!),
             {
-              idsArray: arrayUnion(newStudentId),
-              detailsArray: arrayUnion({
+              studentFamilyAtSchool: arrayUnion({
                 id: newStudentId,
                 name: data.name,
                 applyDiscount: false,
               }),
-              id: data.familyAtSchoolId!,
-              name: familyStudentSelectedData?.name,
-            },
-            { merge: true }
-          );
-        } else {
-          // CREATE EMPTY FAMILYATSCHOOL DOC
-          await setDoc(
-            doc(
-              db,
-              `students/${newStudentId}/studentFamilyAtSchool/${newStudentId}`
-            ),
-            {
-              idsArray: [],
-              detailsArray: [],
-              id: newStudentId,
-              name: data.name,
             },
             { merge: true }
           );
         }
+        // else {
+        // CREATE EMPTY FAMILYATSCHOOL DOC
+        // await setDoc(
+        //   doc(
+        //     db,
+        //     `students/${newStudentId}/studentFamilyAtSchool/${newStudentId}`
+        //   ),
+        //   {
+        //     idsArray: [],
+        //     detailsArray: [],
+        //     id: newStudentId,
+        //     name: data.name,
+        //   },
+        //   { merge: true }
+        // );
+        // }
         toast.success(`Aluno ${data.name} criado com sucesso! 👌`, {
           theme: "colored",
           closeOnClick: true,
@@ -2880,11 +2804,7 @@ export function InsertStudent() {
               setStudentData({ ...studentData, curriculum: "" });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schools"
-              handleData={handleSchoolSelectedData}
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 
@@ -2925,7 +2845,6 @@ export function InsertStudent() {
               availableAndWaitingClasses
               dataType="schoolClasses"
               schoolId={curriculumData.schoolId}
-              handleData={handleSchoolClassSelectedData}
             />
           </select>
         </div>
@@ -2962,11 +2881,7 @@ export function InsertStudent() {
               setStudentData({ ...studentData, curriculum: "" });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schoolCourses"
-              handleData={handleSchoolCourseSelectedData}
-            />
+            <SelectOptions returnId dataType="schoolCourses" />
             <option value={"all"}>Todas as Modalidades</option>
           </select>
         </div>
@@ -3436,11 +3351,7 @@ export function InsertStudent() {
                                   });
                                 }}
                               >
-                                <SelectOptions
-                                  returnId
-                                  dataType="schools"
-                                  handleData={handleFamilySchoolSelectedData}
-                                />
+                                <SelectOptions returnId dataType="schools" />
                               </select>
                             </div>
 
@@ -3488,9 +3399,6 @@ export function InsertStudent() {
                                     returnId
                                     dataType="schoolClasses"
                                     schoolId={familyStudentData.schoolId}
-                                    handleData={
-                                      handleFamilySchoolClassSelectedData
-                                    }
                                   />
                                 ) : (
                                   <option
@@ -3553,9 +3461,6 @@ export function InsertStudent() {
                                     schoolClassId={
                                       familyStudentData.schoolClassId
                                     }
-                                    handleData={
-                                      handleFamilyCurriculumSelectedData
-                                    }
                                   />
                                 ) : (
                                   <option value={" -- select an option -- "}>
@@ -3604,17 +3509,23 @@ export function InsertStudent() {
                                 }}
                               >
                                 {familyStudentData.curriculumId ? (
+                                  // <SelectOptions
+                                  //   returnId
+                                  //   dataType="enrolledStudents"
+                                  //   schoolId={familyStudentData.schoolId}
+                                  //   schoolClassId={
+                                  //     familyStudentData.schoolClassId
+                                  //   }
+                                  //   curriculumId={
+                                  //     familyStudentData.curriculumId
+                                  //   }
+                                  // />
                                   <SelectOptions
                                     returnId
-                                    dataType="enrolledStudents"
-                                    schoolId={familyStudentData.schoolId}
-                                    schoolClassId={
-                                      familyStudentData.schoolClassId
-                                    }
+                                    dataType="searchEnrolledStudent"
                                     curriculumId={
                                       familyStudentData.curriculumId
                                     }
-                                    handleData={handleFamilyStudentSelectedData}
                                   />
                                 ) : (
                                   <option

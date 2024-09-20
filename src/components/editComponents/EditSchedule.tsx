@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import DatePicker from "react-multi-date-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,13 +8,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import TimePicker from "react-multi-date-picker/plugins/time_picker";
 import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  updateDoc,
-  where,
+  doc, getFirestore, updateDoc
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -26,11 +20,20 @@ import {
   ScheduleSearchProps,
   SchoolSearchProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditSchedule() {
+  // GET GLOBAL DATA
+  const { schoolDatabaseData, scheduleDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // SCHEDULE DATA
   const [scheduleData, setScheduleData] = useState({
     scheduleId: "",
@@ -53,15 +56,6 @@ export function EditSchedule() {
   const [isEdit, setIsEdit] = useState(false);
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
-  const [schoolsDataArray, setSchoolsDataArray] =
-    useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolsDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
@@ -73,7 +67,7 @@ export function EditSchedule() {
     setScheduleSelectedData(undefined);
     if (scheduleData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolsDataArray!.find(({ id }) => id === scheduleData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === scheduleData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -82,15 +76,6 @@ export function EditSchedule() {
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHEDULE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHEDULES
-  const [schedulesDataArray, setSchedulesDataArray] =
-    useState<ScheduleSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHEDULE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleScheduleSelectedData = (data: ScheduleSearchProps[]) => {
-    setSchedulesDataArray(data);
-  };
-
   // SCHEDULE SELECTED STATE DATA
   const [scheduleSelectedData, setScheduleSelectedData] =
     useState<ScheduleSearchProps>();
@@ -116,7 +101,7 @@ export function EditSchedule() {
   useEffect(() => {
     if (scheduleData.scheduleId !== "") {
       setScheduleSelectedData(
-        schedulesDataArray!.find(({ id }) => id === scheduleData.scheduleId)
+        scheduleDatabaseData.find(({ id }) => id === scheduleData.scheduleId)
       );
     } else {
       setScheduleSelectedData(undefined);
@@ -248,32 +233,25 @@ export function EditSchedule() {
     };
 
     // CHECKING IF SCHEDULE EXISTS ON DATABASE
-    const scheduleRef = collection(db, "schedules");
-    const q = query(scheduleRef, where("id", "==", scheduleData.scheduleId));
-    const querySnapshot = await getDocs(q);
-    const promises: ScheduleSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as ScheduleSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF NO EXISTS, RETURN ERROR
-      if (results.length === 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`Horário não existe no banco de dados...... ❕`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          })
-        );
-      } else {
-        // IF EXISTS, EDIT
-        editSchedule();
-      }
-    });
+    const schedule = scheduleDatabaseData.find(
+      (schedule) => schedule.id === scheduleData.scheduleId
+    );
+    if (!schedule) {
+      // IF NOT EXISTS, RETURN ERROR
+      return (
+        setIsSubmitting(false),
+        toast.error(`Horário não existe no banco de dados...... ❕`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        })
+      );
+    } else {
+      // IF EXISTS, EDIT
+      editSchedule();
+    }
   };
 
   return (
@@ -322,11 +300,7 @@ export function EditSchedule() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              handleData={handleSchoolSelectedData}
-              dataType="schools"
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 
@@ -364,7 +338,6 @@ export function EditSchedule() {
           >
             <SelectOptions
               returnId
-              handleData={handleScheduleSelectedData}
               dataType="schedules"
               schoolId={scheduleData.schoolId}
             />

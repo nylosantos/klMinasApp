@@ -1,17 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  setDoc,
-  where,
+  doc, getFirestore, setDoc
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -25,11 +19,20 @@ import {
   ToggleClassDaysFunctionProps,
 } from "../../@types";
 import { classDayIndexNames } from "../../custom";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditClassDay() {
+  // GET GLOBAL DATA
+  const { classDaysDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // CLASS DAY DATA
   const [classDayData, setClassDayData] = useState({
     classDayId: "",
@@ -55,15 +58,6 @@ export function EditClassDay() {
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
-  // CLASS DAY DATA ARRAY WITH ALL OPTIONS OF SELECT CLASS DAYS
-  const [classDaysDataArray, setClassDaysDataArray] =
-    useState<ClassDaySearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH CLASS DAY SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleClassDaySelectedData = (data: ClassDaySearchProps[]) => {
-    setClassDaysDataArray(data);
-  };
-
   // CLASS DAY SELECTED STATE DATA
   const [classDaySelectedData, setClassDaySelectedData] =
     useState<ClassDaySearchProps>();
@@ -73,7 +67,7 @@ export function EditClassDay() {
     setIsEdit(false);
     if (classDayData.classDayId !== "") {
       setClassDaySelectedData(
-        classDaysDataArray!.find(({ id }) => id === classDayData.classDayId)
+        classDaysDatabaseData.find(({ id }) => id === classDayData.classDayId)
       );
     } else {
       setClassDaySelectedData(undefined);
@@ -461,32 +455,54 @@ export function EditClassDay() {
     };
 
     // CHECKING IF CLASS DAY EXISTS ON DATABASE
-    const classDayRef = collection(db, "classDays");
-    const q = query(classDayRef, where("id", "==", classDayData.classDayId));
-    const querySnapshot = await getDocs(q);
-    const promises: ClassDaySearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as ClassDaySearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
+    const classDays = classDaysDatabaseData.find(
+      (classDays) => classDays.id === classDayData.classDayId
+    );
+    if (!classDays) {
       // IF NOT EXISTS, RETURN ERROR
-      if (results.length === 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`Modalidade não existe no banco de dados... ❕`, {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Dias de aula selecionado não existe no banco de dados...... ❕`,
+          {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
             autoClose: 3000,
-          })
-        );
-      } else {
-        // IF EXISTS, EDIT
-        editClassDay();
-      }
-    });
+          }
+        )
+      );
+    } else {
+      // IF EXISTS, EDIT
+      editClassDay();
+    }
+    // const classDayRef = collection(db, "classDays");
+    // const q = query(classDayRef, where("id", "==", classDayData.classDayId));
+    // const querySnapshot = await getDocs(q);
+    // const promises: ClassDaySearchProps[] = [];
+    // querySnapshot.forEach((doc) => {
+    //   const promise = doc.data() as ClassDaySearchProps;
+    //   promises.push(promise);
+    // });
+    // Promise.all(promises).then((results) => {
+    //   // IF NOT EXISTS, RETURN ERROR
+    //   if (results.length === 0) {
+    //     return (
+    //       setIsSubmitting(false),
+    //       toast.error(`Modalidade não existe no banco de dados... ❕`, {
+    //         theme: "colored",
+    //         closeOnClick: true,
+    //         pauseOnHover: true,
+    //         draggable: true,
+    //         autoClose: 3000,
+    //       })
+    //     );
+    //   } else {
+    //     // IF EXISTS, EDIT
+    //     editClassDay();
+    //   }
+    // });
   };
 
   return (
@@ -536,11 +552,7 @@ export function EditClassDay() {
               setIsSelected(true);
             }}
           >
-            <SelectOptions
-              returnId
-              handleData={handleClassDaySelectedData}
-              dataType="classDays"
-            />
+            <SelectOptions returnId dataType="classDays" />
           </select>
         </div>
 

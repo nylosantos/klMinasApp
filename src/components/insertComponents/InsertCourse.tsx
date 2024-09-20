@@ -1,34 +1,36 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import CurrencyInput from "react-currency-input-field";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
+  doc, getFirestore, serverTimestamp,
+  setDoc
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import {
-  CreateCourseValidationZProps,
-  SchoolCourseSearchProps,
+  CreateCourseValidationZProps
 } from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { createCourseValidationSchema } from "../../@types/zodValidation";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertCourse() {
+  // GET GLOBAL DATA
+  const { schoolCourseDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // SCHOOL COURSE DATA
   const [courseData, setCourseData] = useState<CreateCourseValidationZProps>({
     name: "",
@@ -170,32 +172,28 @@ export function InsertCourse() {
     };
 
     // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
-    const courseRef = collection(db, "schoolCourses");
-    const q = query(courseRef, where("name", "==", data.name));
-    const querySnapshot = await getDocs(q);
-    const promises: SchoolCourseSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as SchoolCourseSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
+    const schoolCourseExist = schoolCourseDatabaseData.find(
+      (schoolCourse) => schoolCourse.name === data.name
+    );
+    if (schoolCourseExist) {
       // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`${data.name} já existe no nosso banco de dados... ❕`, {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `${data.name} já existe no nosso banco de dados mané ... ❕`,
+          {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
             autoClose: 3000,
-          })
-        );
-      } else {
-        // IF NOT EXISTS, CREATE
-        addCourse();
-      }
-    });
+          }
+        )
+      );
+    } else {
+      // IF NOT EXISTS, CREATE
+      addCourse();
+    }
   };
 
   return (

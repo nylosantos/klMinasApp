@@ -1,18 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import CurrencyInput from "react-currency-input-field";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  updateDoc,
-  where,
+  doc, getFirestore, updateDoc
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -23,11 +17,20 @@ import {
   EditSchoolCourseValidationZProps,
   SchoolCourseSearchProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditCourse() {
+  // GET GLOBAL DATA
+  const { schoolCourseDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // SCHOOL COURSE DATA
   const [schoolCourseData, setSchoolCourseData] = useState({
     schoolCourseId: "",
@@ -46,15 +49,6 @@ export function EditCourse() {
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
-  // SCHOOL COURSE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL COURSES
-  const [schoolCoursesDataArray, setSchoolCoursesDataArray] =
-    useState<SchoolCourseSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL COURSE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolCourseSelectedData = (data: SchoolCourseSearchProps[]) => {
-    setSchoolCoursesDataArray(data);
-  };
-
   // SCHOOL COURSE SELECTED STATE DATA
   const [schoolCourseSelectedData, setSchoolCourseSelectedData] =
     useState<SchoolCourseSearchProps>();
@@ -64,7 +58,7 @@ export function EditCourse() {
     setIsEdit(false);
     if (schoolCourseData.schoolCourseId !== "") {
       setSchoolCourseSelectedData(
-        schoolCoursesDataArray!.find(
+        schoolCourseDatabaseData.find(
           ({ id }) => id === schoolCourseData.schoolCourseId
         )
       );
@@ -191,35 +185,25 @@ export function EditCourse() {
     };
 
     // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
-    const schoolCourseRef = collection(db, "schoolCourses");
-    const q = query(
-      schoolCourseRef,
-      where("id", "==", schoolCourseData.schoolCourseId)
+    const schoolCourse = schoolCourseDatabaseData.find(
+      (schoolCourse) => schoolCourse.id === schoolCourseData.schoolCourseId
     );
-    const querySnapshot = await getDocs(q);
-    const promises: SchoolCourseSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as SchoolCourseSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
+    if (!schoolCourse) {
       // IF NOT EXISTS, RETURN ERROR
-      if (results.length === 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`Modalidade não existe no banco de dados... ❕`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          })
-        );
-      } else {
-        // IF EXISTS, EDIT
-        editSchoolCourse();
-      }
-    });
+      return (
+        setIsSubmitting(false),
+        toast.error(`Modalidade não existe no banco de dados... ❕`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        })
+      );
+    } else {
+      // IF EXISTS, EDIT
+      editSchoolCourse();
+    }
   };
 
   return (
@@ -269,11 +253,7 @@ export function EditCourse() {
               setIsSelected(true);
             }}
           >
-            <SelectOptions
-              returnId
-              handleData={handleSchoolCourseSelectedData}
-              dataType="schoolCourses"
-            />
+            <SelectOptions returnId dataType="schoolCourses" />
           </select>
         </div>
 

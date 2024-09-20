@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
@@ -28,11 +28,23 @@ import {
   SchoolSearchProps,
   StudentSearchProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function DeleteCurriculum() {
+  // GET GLOBAL DATA
+  const {
+    schoolDatabaseData,
+    schoolClassDatabaseData,
+    schoolCourseDatabaseData,
+    studentsDatabaseData,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
+
   // CURRICULUM DATA
   const [curriculumData, setCurriculumData] =
     useState<DeleteCurriculumValidationZProps>({
@@ -47,14 +59,6 @@ export function DeleteCurriculum() {
     });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL
-  const [schoolDataArray, setSchoolDataArray] = useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
@@ -63,7 +67,7 @@ export function DeleteCurriculum() {
   useEffect(() => {
     if (curriculumData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolDataArray!.find(({ id }) => id === curriculumData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === curriculumData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -83,14 +87,6 @@ export function DeleteCurriculum() {
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASS
-  const [schoolClassDataArray, setSchoolClassDataArray] =
-    useState<SchoolClassSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
-    setSchoolClassDataArray(data);
-  };
-
   // SCHOOL CLASS SELECTED STATE DATA
   const [schoolClassSelectedData, setSchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
@@ -99,7 +95,7 @@ export function DeleteCurriculum() {
   useEffect(() => {
     if (curriculumData.schoolClassId !== "") {
       setSchoolClassSelectedData(
-        schoolClassDataArray!.find(
+        schoolClassDatabaseData.find(
           ({ id }) => id === curriculumData.schoolClassId
         )
       );
@@ -120,15 +116,6 @@ export function DeleteCurriculum() {
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL COURSE DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL COURSE
-  const [schoolCourseDataArray, setSchoolCourseDataArray] =
-    useState<SchoolCourseSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL COURSE SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolCourseSelectedData = (data: SchoolCourseSearchProps[]) => {
-    setSchoolCourseDataArray(data);
-  };
-
   // SCHOOL COURSE SELECTED STATE DATA
   const [schoolCourseSelectedData, setSchoolCourseSelectedData] =
     useState<SchoolCourseSearchProps>();
@@ -137,7 +124,7 @@ export function DeleteCurriculum() {
   useEffect(() => {
     if (curriculumData.schoolCourseId !== "") {
       setSchoolCourseSelectedData(
-        schoolCourseDataArray!.find(
+        schoolCourseDatabaseData.find(
           ({ id }) => id === curriculumData.schoolCourseId
         )
       );
@@ -402,42 +389,91 @@ export function DeleteCurriculum() {
     }
 
     // CHECKING IF CURRICULUM CONTAINS STUDENTS
-    const curriculumRef = collection(db, "students");
-    const q = query(
-      curriculumRef,
-      where("curriculum", "array-contains-any", [data.curriculumId])
-    );
-    const querySnapshot = await getDocs(q);
-    const promises: StudentSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as StudentSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(
-            `Currículo incluído em ${results.length} ${
-              results.length === 1 ? "cadastro de aluno" : "cadastros de alunos"
-            }, exclua ou altere primeiramente ${
-              results.length === 1 ? "o aluno" : "os alunos"
-            } e depois exclua o currículo... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
+    // STUDENTS IN THIS CURRICULUM ARRAY
+    const curriculumExistsOnStudent: StudentSearchProps[] = [];
+
+    // SEARCH STUDENTS WITH THIS SCHOOL AND PUTTING ON ARRAY
+    studentsDatabaseData.map((student) => {
+      if (student.curriculumIds) {
+        // ENROLLED STUDENTS
+        student.curriculumIds.map((studentCurriculum) => {
+          if (studentCurriculum.id === data.curriculumId) {
+            curriculumExistsOnStudent.push(student);
+          }
+        });
+        // EXPERIMENTAL STUDENTS
+        student.experimentalCurriculumIds.map(
+          (studentExperimentalCurriculum) => {
+            if (studentExperimentalCurriculum.id === data.curriculumId) {
+              curriculumExistsOnStudent.push(student);
             }
-          )
+          }
         );
-      } else {
-        // IF NO EXISTS, DELETE
-        deleteCurriculum();
       }
     });
+
+    // IF EXISTS, RETURN ERROR
+    if (curriculumExistsOnStudent.length !== 0) {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Currículo incluído em ${curriculumExistsOnStudent.length} ${
+            curriculumExistsOnStudent.length === 1
+              ? "cadastro de aluno"
+              : "cadastros de alunos"
+          }, exclua ou altere primeiramente ${
+            curriculumExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
+          } e depois exclua o currículo... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else {
+      // IF NO EXISTS, DELETE
+      deleteCurriculum();
+    }
+
+    // const curriculumRef = collection(db, "students");
+    // const q = query(
+    //   curriculumRef,
+    //   where("curriculum", "array-contains-any", [data.curriculumId])
+    // );
+    // const querySnapshot = await getDocs(q);
+    // const promises: StudentSearchProps[] = [];
+    // querySnapshot.forEach((doc) => {
+    //   const promise = doc.data() as StudentSearchProps;
+    //   promises.push(promise);
+    // });
+    // Promise.all(promises).then((results) => {
+    //   // IF EXISTS, RETURN ERROR
+    //   if (results.length !== 0) {
+    //     return (
+    //       setIsSubmitting(false),
+    //       toast.error(
+    //         `Currículo incluído em ${results.length} ${
+    //           results.length === 1 ? "cadastro de aluno" : "cadastros de alunos"
+    //         }, exclua ou altere primeiramente ${
+    //           results.length === 1 ? "o aluno" : "os alunos"
+    //         } e depois exclua o currículo... ❕`,
+    //         {
+    //           theme: "colored",
+    //           closeOnClick: true,
+    //           pauseOnHover: true,
+    //           draggable: true,
+    //           autoClose: 3000,
+    //         }
+    //       )
+    //     );
+    //   } else {
+    //     // IF NO EXISTS, DELETE
+    //     deleteCurriculum();
+    //   }
+    // });
   };
 
   return (
@@ -484,11 +520,7 @@ export function DeleteCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schools"
-              handleData={handleSchoolSelectedData}
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 
@@ -527,7 +559,6 @@ export function DeleteCurriculum() {
               returnId
               dataType="schoolClasses"
               schoolId={curriculumData.schoolId}
-              handleData={handleSchoolClassSelectedData}
             />
           </select>
         </div>
@@ -563,11 +594,7 @@ export function DeleteCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schoolCourses"
-              handleData={handleSchoolCourseSelectedData}
-            />
+            <SelectOptions returnId dataType="schoolCourses" />
             <option value={"all"}>Todas as Modalidades</option>
           </select>
         </div>
@@ -606,6 +633,7 @@ export function DeleteCurriculum() {
                         type="radio"
                         id={c.id}
                         name="curriculumSelect"
+                        className="text-klGreen-500 dark:text-klGreen-500 border-none"
                         value={c.id}
                         onChange={(e) => {
                           setCurriculumData({
@@ -618,29 +646,56 @@ export function DeleteCurriculum() {
                         htmlFor="curriculumSelect"
                         className="flex flex-col gap-4"
                       >
-                        {schoolSelectedData?.name === "Colégio Bernoulli" ? (
-                          <p>Turma: {c.schoolClass}</p>
-                        ) : null}
-                        <p>Modalidade: {c.schoolCourse}</p>
+                        <p>
+                          Colégio:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.school}
+                          </span>
+                        </p>
+                        <p>
+                          Turma:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.schoolClass}
+                          </span>
+                        </p>
+                        <p>
+                          Modalidade:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.schoolCourse}
+                          </span>
+                        </p>
                         {schedulesDetailsData.map(
                           (details: ScheduleSearchProps) =>
-                            details.name === c.schedule
-                              ? `Horário: De ${details.classStart.slice(
-                                  0,
-                                  2
-                                )}h${
-                                  details.classStart.slice(3, 5) === "00"
-                                    ? ""
-                                    : details.classStart.slice(3, 5) + "min"
-                                } a ${details.classEnd.slice(0, 2)}h${
-                                  details.classEnd.slice(3, 5) === "00"
-                                    ? ""
-                                    : details.classEnd.slice(3, 5) + "min"
-                                }`
-                              : null
+                            details.name === c.schedule ? (
+                              <p>
+                                Horário:{" "}
+                                <span className="text-red-600 dark:text-yellow-500">
+                                  De{" "}
+                                  {`${details.classStart.slice(0, 2)}h${
+                                    details.classStart.slice(3, 5) === "00"
+                                      ? ""
+                                      : details.classStart.slice(3, 5) + "min"
+                                  } a ${details.classEnd.slice(0, 2)}h${
+                                    details.classEnd.slice(3, 5) === "00"
+                                      ? ""
+                                      : details.classEnd.slice(3, 5) + "min"
+                                  }`}
+                                </span>
+                              </p>
+                            ) : null
                         )}
-                        <p>Dias: {c.classDay}</p>
-                        <p>Professor: {c.teacher}</p>
+                        <p>
+                          Dias:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.classDay}
+                          </span>
+                        </p>
+                        <p>
+                          Professor:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.teacher}
+                          </span>
+                        </p>
                       </label>
                     </div>
                   ))}

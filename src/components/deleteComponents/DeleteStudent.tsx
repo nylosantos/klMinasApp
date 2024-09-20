@@ -1,20 +1,15 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import {
   arrayRemove,
-  collection,
-  collectionGroup,
   deleteDoc,
   doc,
-  getDocs,
   getFirestore,
-  query,
   updateDoc,
-  where,
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -27,16 +22,24 @@ import {
   SchoolClassSearchProps,
   SchoolSearchProps,
   StudentSearchProps,
-  SubCollectionDetailsProps,
-  SubCollectionFamilyDetailsProps,
-  SubCollectionFamilyProps,
-  SubCollectionProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function DeleteStudent() {
+  // GET GLOBAL DATA
+  const {
+    curriculumDatabaseData,
+    schoolClassDatabaseData,
+    schoolDatabaseData,
+    studentsDatabaseData,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
+
   // STUDENT DATA
   const [studentData, setStudentData] = useState<DeleteStudentValidationZProps>(
     {
@@ -54,15 +57,6 @@ export function DeleteStudent() {
   const [isSelected, setIsSelected] = useState(false);
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOLS
-  const [schoolsDataArray, setSchoolsDataArray] =
-    useState<SchoolSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolSelectedData = (data: SchoolSearchProps[]) => {
-    setSchoolsDataArray(data);
-  };
-
   // SCHOOL SELECTED STATE DATA
   const [schoolSelectedData, setSchoolSelectedData] =
     useState<SchoolSearchProps>();
@@ -74,7 +68,7 @@ export function DeleteStudent() {
     setCurriculumSelectedData(undefined);
     if (studentData.schoolId !== "") {
       setSchoolSelectedData(
-        schoolsDataArray!.find(({ id }) => id === studentData.schoolId)
+        schoolDatabaseData.find(({ id }) => id === studentData.schoolId)
       );
     } else {
       setSchoolSelectedData(undefined);
@@ -98,15 +92,6 @@ export function DeleteStudent() {
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS DATA ARRAY WITH ALL OPTIONS OF SELECT SCHOOL CLASSES
-  const [schoolClassesDataArray, setSchoolClassesDataArray] =
-    useState<SchoolClassSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH SCHOOL CLASS SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleSchoolClassSelectedData = (data: SchoolClassSearchProps[]) => {
-    setSchoolClassesDataArray(data);
-  };
-
   // SCHOOL CLASS SELECTED STATE DATA
   const [schoolClassSelectedData, setSchoolClassSelectedData] =
     useState<SchoolClassSearchProps>();
@@ -117,7 +102,7 @@ export function DeleteStudent() {
     setCurriculumSelectedData(undefined);
     if (studentData.schoolClassId !== "") {
       setSchoolSelectedData(
-        schoolClassesDataArray!.find(
+        schoolClassDatabaseData.find(
           ({ id }) => id === studentData.schoolClassId
         )
       );
@@ -140,15 +125,6 @@ export function DeleteStudent() {
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
-  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT STUDENTS
-  const [curriculumDataArray, setCurriculumDataArray] =
-    useState<CurriculumSearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH CURRICULUM SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleCurriculumSelectedData = (data: CurriculumSearchProps[]) => {
-    setCurriculumDataArray(data);
-  };
-
   // CURRICULUM SELECTED STATE DATA
   const [curriculumSelectedData, setCurriculumSelectedData] =
     useState<CurriculumSearchProps>();
@@ -157,12 +133,22 @@ export function DeleteStudent() {
   useEffect(() => {
     if (studentData.curriculumId !== "") {
       setCurriculumSelectedData(
-        curriculumDataArray!.find(({ id }) => id === studentData.curriculumId)
+        curriculumDatabaseData.find(({ id }) => id === studentData.curriculumId)
       );
     } else {
       setCurriculumSelectedData(undefined);
     }
   }, [curriculumSelectedData]);
+
+  // RESET CURRICULUM SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
+  useEffect(() => {
+    (
+      document.getElementById("studentType") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setIsSelected(false);
+    setStudentsArrayData([]);
+    setStudentData({ ...studentData, studentType: "" });
+  }, [studentData.curriculumId]);
 
   // GET AVAILABLE STUDENTS WHEN CURRICULUM CHANGE
   useEffect(() => {
@@ -180,142 +166,197 @@ export function DeleteStudent() {
   >([]);
 
   // GETTING STUDENTS AVAILABLE DATA
-  const handleAvailableStudentsData = async () => {
+  const handleAvailableStudentsData = () => {
+    const studentsToArray: StudentSearchProps[] = [];
     setLoadingData(true);
-    // QUERY FOR EXPERIMENTAL STUDENTS
-    const queryExperimental = query(
-      collectionGroup(db, "studentExperimentalCurriculum"),
-      where("idsArray", "array-contains", studentData.curriculumId)
-    );
-    // QUERY FOR ENROLLED STUDENTS
-    const queryCurriculum = query(
-      collectionGroup(db, "studentCurriculum"),
-      where("idsArray", "array-contains", studentData.curriculumId)
-    );
-    const handleAllStudentsData = async () => {
-      if (studentData.studentType === "experimental") {
-        // GETTING EXPERIMENTAL STUDENTS
-        const getExperimental = await getDocs(queryExperimental);
-        getExperimental.forEach(async (doc) => {
-          const studentId = doc.ref.parent.parent?.id;
-          if (studentId) {
-            const queryStudent = query(
-              collection(db, "students"),
-              where("id", "==", studentId)
-            );
-            const getStudentFullData = await getDocs(queryStudent);
-            getStudentFullData.forEach((doc) => {
-              const dataStudent = doc.data() as StudentSearchProps;
-              setStudentsArrayData((studentsArrayData) => [
-                ...studentsArrayData,
-                dataStudent,
-              ]);
-            });
-          }
-        });
-      }
-      if (studentData.studentType === "enrolled") {
-        // GETTING ENROLLED STUDENTS
-        const getCurriculum = await getDocs(queryCurriculum);
-        getCurriculum.forEach(async (doc) => {
-          const studentId = doc.ref.parent.parent?.id;
-          if (studentId) {
-            const queryStudent = query(
-              collection(db, "students"),
-              where("id", "==", studentId)
-            );
-            const getStudentFullData = await getDocs(queryStudent);
-            getStudentFullData.forEach((doc) => {
-              const dataStudent = doc.data() as StudentSearchProps;
-              setStudentsArrayData((studentsArrayData) => [
-                ...studentsArrayData,
-                dataStudent,
-              ]);
-            });
-          }
-        });
-      }
-    };
-    await handleAllStudentsData();
+    if (studentData.studentType === "enrolled") {
+      studentsDatabaseData.map((student) => {
+        if (student.curriculumIds) {
+          // ENROLLED STUDENTS
+          student.curriculumIds.map((studentCurriculum) => {
+            if (studentData.curriculumId === studentCurriculum.id) {
+              studentsToArray.push(student);
+            }
+          });
+        }
+      });
+      setStudentsArrayData(studentsToArray);
+    }
+    if (studentData.studentType === "experimental") {
+      studentsDatabaseData.map((student) => {
+        if (student.experimentalCurriculumIds) {
+          // EXPERIMENTAL STUDENTS
+          student.experimentalCurriculumIds.map(
+            (studentExperimentalCurriculum) => {
+              if (
+                studentData.curriculumId === studentExperimentalCurriculum.id
+              ) {
+                studentsToArray.push(student);
+              }
+            }
+          );
+        }
+      });
+      setStudentsArrayData(studentsToArray);
+    }
+    if (studentData.studentType === "all") {
+      studentsDatabaseData.map((student) => {
+        if (student.curriculumIds || student.experimentalCurriculumIds) {
+          // ENROLLED STUDENTS
+          student.curriculumIds.map((studentCurriculum) => {
+            if (studentData.curriculumId === studentCurriculum.id) {
+              studentsToArray.push(student);
+            }
+          });
+          // EXPERIMENTAL STUDENTS
+          student.experimentalCurriculumIds.map(
+            (studentExperimentalCurriculum) => {
+              if (
+                studentData.curriculumId === studentExperimentalCurriculum.id
+              ) {
+                studentsToArray.push(student);
+              }
+            }
+          );
+        }
+        setStudentsArrayData(studentsToArray);
+      });
+    }
+
+    // // QUERY FOR EXPERIMENTAL STUDENTS
+    // const queryExperimental = query(
+    //   collectionGroup(db, "studentExperimentalCurriculum"),
+    //   where("idsArray", "array-contains", studentData.curriculumId)
+    // );
+    // // QUERY FOR ENROLLED STUDENTS
+    // const queryCurriculum = query(
+    //   collectionGroup(db, "studentCurriculum"),
+    //   where("idsArray", "array-contains", studentData.curriculumId)
+    // );
+    // const handleAllStudentsData = async () => {
+    //   if (studentData.studentType === "experimental") {
+    //     // GETTING EXPERIMENTAL STUDENTS
+    //     const getExperimental = await getDocs(queryExperimental);
+    //     getExperimental.forEach(async (doc) => {
+    //       const studentId = doc.ref.parent.parent?.id;
+    //       if (studentId) {
+    //         const queryStudent = query(
+    //           collection(db, "students"),
+    //           where("id", "==", studentId)
+    //         );
+    //         const getStudentFullData = await getDocs(queryStudent);
+    //         getStudentFullData.forEach((doc) => {
+    //           const dataStudent = doc.data() as StudentSearchProps;
+    //           setStudentsArrayData((studentsArrayData) => [
+    //             ...studentsArrayData,
+    //             dataStudent,
+    //           ]);
+    //         });
+    //       }
+    //     });
+    //   }
+    //   if (studentData.studentType === "enrolled") {
+    //     // GETTING ENROLLED STUDENTS
+    //     const getCurriculum = await getDocs(queryCurriculum);
+    //     getCurriculum.forEach(async (doc) => {
+    //       const studentId = doc.ref.parent.parent?.id;
+    //       if (studentId) {
+    //         const queryStudent = query(
+    //           collection(db, "students"),
+    //           where("id", "==", studentId)
+    //         );
+    //         const getStudentFullData = await getDocs(queryStudent);
+    //         getStudentFullData.forEach((doc) => {
+    //           const dataStudent = doc.data() as StudentSearchProps;
+    //           setStudentsArrayData((studentsArrayData) => [
+    //             ...studentsArrayData,
+    //             dataStudent,
+    //           ]);
+    //         });
+    //       }
+    //     });
+    //   }
+    // };
+    // await handleAllStudentsData();
     setLoadingData(false);
   };
 
   // LOADING STATE FOR USING WHEN IS LOADING DATA
   const [loadingData, setLoadingData] = useState(false);
 
-  // STUDENT SELECTED DATA EXPERIMENTAL CURRICULUM ARRAY DETAILS
-  const [
-    experimentalCurriculumArrayDetails,
-    setExperimentalCurriculumArrayDetails,
-  ] = useState<SubCollectionDetailsProps[]>([]);
+  // // STUDENT SELECTED DATA EXPERIMENTAL CURRICULUM ARRAY DETAILS
+  // const [
+  //   experimentalCurriculumArrayDetails,
+  //   setExperimentalCurriculumArrayDetails,
+  // ] = useState<SubCollectionDetailsProps[]>([]);
 
-  // STUDENT SELECTED DATA CURRICULUM ARRAY DETAILS
-  const [curriculumArrayDetails, setCurriculumArrayDetails] = useState<
-    SubCollectionDetailsProps[]
-  >([]);
+  // // STUDENT SELECTED DATA CURRICULUM ARRAY DETAILS
+  // const [curriculumArrayDetails, setCurriculumArrayDetails] = useState<
+  //   SubCollectionDetailsProps[]
+  // >([]);
 
-  // GET STUDENT CURRICULUM DATA WHEN SELECT STUDENT
-  useEffect(() => {
-    if (studentData.studentId) {
-      const handleAllCurriculumDetails = async () => {
-        // GET EXPERIMENTAL CURRICULUM
-        const queryExperimentalStudent = query(
-          collection(
-            db,
-            `students/${studentData.studentId}/studentExperimentalCurriculum`
-          )
-        );
-        const queryExperimentalStudentSnapshot = await getDocs(
-          queryExperimentalStudent
-        );
-        const experimentalStudentPromises: SubCollectionProps[] = [];
-        queryExperimentalStudentSnapshot.forEach((doc) => {
-          const promise = doc.data() as SubCollectionProps;
-          experimentalStudentPromises.push(promise);
-        });
-        Promise.all(experimentalStudentPromises).then(
-          (results: SubCollectionProps[]) => {
-            if (results.length > 0) {
-              const detailsExperimentalStudentData = results[0].detailsArray;
-              detailsExperimentalStudentData.map(
-                (detail: SubCollectionDetailsProps) => {
-                  setExperimentalCurriculumArrayDetails(
-                    (experimentalCurriculumArrayDetails) => [
-                      ...experimentalCurriculumArrayDetails,
-                      detail,
-                    ]
-                  );
-                }
-              );
-            }
-          }
-        );
-        // GET ENROLLED CURRICULUM
-        const queryStudent = query(
-          collection(db, `students/${studentData.studentId}/studentCurriculum`)
-        );
-        const queryStudentSnapshot = await getDocs(queryStudent);
-        const studentPromises: SubCollectionProps[] = [];
-        queryStudentSnapshot.forEach((doc) => {
-          const promise = doc.data() as SubCollectionProps;
-          studentPromises.push(promise);
-        });
-        Promise.all(studentPromises).then((results: SubCollectionProps[]) => {
-          if (results.length > 0) {
-            const detailsStudentData: SubCollectionDetailsProps[] =
-              results[0].detailsArray;
-            detailsStudentData.map((detail: SubCollectionDetailsProps) => {
-              setCurriculumArrayDetails((curriculumArrayDetails) => [
-                ...curriculumArrayDetails,
-                detail,
-              ]);
-            });
-          }
-        });
-      };
-      handleAllCurriculumDetails();
-    }
-  }, [studentData.studentId]);
+  // // GET STUDENT CURRICULUM DATA WHEN SELECT STUDENT
+  // useEffect(() => {
+  //   if (studentData.studentId) {
+  //     const handleAllCurriculumDetails = async () => {
+  //       // GET EXPERIMENTAL CURRICULUM
+  //       const queryExperimentalStudent = query(
+  //         collection(
+  //           db,
+  //           `students/${studentData.studentId}/studentExperimentalCurriculum`
+  //         )
+  //       );
+  //       const queryExperimentalStudentSnapshot = await getDocs(
+  //         queryExperimentalStudent
+  //       );
+  //       const experimentalStudentPromises: SubCollectionProps[] = [];
+  //       queryExperimentalStudentSnapshot.forEach((doc) => {
+  //         const promise = doc.data() as SubCollectionProps;
+  //         experimentalStudentPromises.push(promise);
+  //       });
+  //       Promise.all(experimentalStudentPromises).then(
+  //         (results: SubCollectionProps[]) => {
+  //           if (results.length > 0) {
+  //             const detailsExperimentalStudentData = results[0].detailsArray;
+  //             detailsExperimentalStudentData.map(
+  //               (detail: SubCollectionDetailsProps) => {
+  //                 setExperimentalCurriculumArrayDetails(
+  //                   (experimentalCurriculumArrayDetails) => [
+  //                     ...experimentalCurriculumArrayDetails,
+  //                     detail,
+  //                   ]
+  //                 );
+  //               }
+  //             );
+  //           }
+  //         }
+  //       );
+  //       // GET ENROLLED CURRICULUM
+  //       const queryStudent = query(
+  //         collection(db, `students/${studentData.studentId}/studentCurriculum`)
+  //       );
+  //       const queryStudentSnapshot = await getDocs(queryStudent);
+  //       const studentPromises: SubCollectionProps[] = [];
+  //       queryStudentSnapshot.forEach((doc) => {
+  //         const promise = doc.data() as SubCollectionProps;
+  //         studentPromises.push(promise);
+  //       });
+  //       Promise.all(studentPromises).then((results: SubCollectionProps[]) => {
+  //         if (results.length > 0) {
+  //           const detailsStudentData: SubCollectionDetailsProps[] =
+  //             results[0].detailsArray;
+  //           detailsStudentData.map((detail: SubCollectionDetailsProps) => {
+  //             setCurriculumArrayDetails((curriculumArrayDetails) => [
+  //               ...curriculumArrayDetails,
+  //               detail,
+  //             ]);
+  //           });
+  //         }
+  //       });
+  //     };
+  //     handleAllCurriculumDetails();
+  //   }
+  // }, [studentData.studentId]);
 
   // -------------------------- END OF STUDENTS SELECT STATES AND FUNCTIONS -------------------------- //
 
@@ -417,187 +458,365 @@ export function DeleteStudent() {
       );
     }
 
-    // TEST FOR BROTHERS REGISTERED
-    const familyQuery = query(
-      collectionGroup(db, "studentFamilyAtSchool"),
-      where("id", "==", data.studentId)
+    const studentToDelete = studentsDatabaseData.find(
+      (student) => student.id === data.studentId
     );
-    const familySnapshot = await getDocs(familyQuery);
-    const familyPromises: SubCollectionFamilyProps[] = [];
-    familySnapshot.forEach((doc) => {
-      const promise = doc.data() as SubCollectionFamilyProps;
-      familyPromises.push(promise);
-    });
-    Promise.all(familyPromises).then(async (results) => {
-      if (results.length !== 0) {
-        // IF EXISTS, REMOVE STUDENT FAMILY AT SCHOOL REGISTERS
-        await deleteDoc(
-          doc(
-            db,
-            `students/${data.studentId}/studentFamilyAtSchool`,
-            data.studentId
-          )
-        );
+    if (studentToDelete) {
+      // TEST FOR BROTHERS REGISTERED
+      if (studentToDelete.studentFamilyAtSchool.length > 0) {
         // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
-        const myFamilyData = results[0];
-        myFamilyData.detailsArray.map(
-          async (student: SubCollectionFamilyDetailsProps) => {
-            const q = query(
-              collectionGroup(db, "studentFamilyAtSchool"),
-              where("id", "==", student.id)
+        studentToDelete.studentFamilyAtSchool.map(async (studentFamily) => {
+          const editingStudentFamily = studentsDatabaseData.find(
+            (student) => student.id === studentFamily.id
+          );
+          if (editingStudentFamily) {
+            const foundedStudentOnFamilyRecord =
+              editingStudentFamily.studentFamilyAtSchool.find(
+                (student) => student.id === data.studentId
+              );
+            if (foundedStudentOnFamilyRecord) {
+              // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
+              if (
+                editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+                editingStudentFamily.studentFamilyAtSchool.length === 1 &&
+                !editingStudentFamily.secondCourseDiscount
+              ) {
+                await updateDoc(doc(db, "students", editingStudentFamily.id), {
+                  studentFamilyAtSchool: arrayRemove({
+                    applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+                    id: foundedStudentOnFamilyRecord.id,
+                    name: foundedStudentOnFamilyRecord.name,
+                  }),
+                  familyDiscount: false,
+                  appliedPrice: editingStudentFamily.fullPrice,
+                });
+                // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
+              } else if (
+                editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+                editingStudentFamily.studentFamilyAtSchool.length === 1
+              ) {
+                await updateDoc(doc(db, "students", editingStudentFamily.id), {
+                  studentFamilyAtSchool: arrayRemove({
+                    applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+                    id: foundedStudentOnFamilyRecord.id,
+                    name: foundedStudentOnFamilyRecord.name,
+                  }),
+                  familyDiscount: false,
+                });
+                // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
+              } else if (
+                editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+                editingStudentFamily.studentFamilyAtSchool.length > 1
+              ) {
+                await updateDoc(doc(db, "students", editingStudentFamily.id), {
+                  studentFamilyAtSchool: arrayRemove({
+                    applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+                    id: foundedStudentOnFamilyRecord.id,
+                    name: foundedStudentOnFamilyRecord.name,
+                  }),
+                });
+                // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
+              } else if (
+                !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+                editingStudentFamily.studentFamilyAtSchool.length === 1 &&
+                !editingStudentFamily.secondCourseDiscount
+              ) {
+                await updateDoc(doc(db, "students", editingStudentFamily.id), {
+                  studentFamilyAtSchool: arrayRemove({
+                    applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+                    id: foundedStudentOnFamilyRecord.id,
+                    name: foundedStudentOnFamilyRecord.name,
+                  }),
+                  familyDiscount: false,
+                  appliedPrice: editingStudentFamily.fullPrice,
+                });
+                // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
+              } else if (
+                !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+                editingStudentFamily.studentFamilyAtSchool.length === 1
+              ) {
+                await updateDoc(doc(db, "students", editingStudentFamily.id), {
+                  studentFamilyAtSchool: arrayRemove({
+                    applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+                    id: foundedStudentOnFamilyRecord.id,
+                    name: foundedStudentOnFamilyRecord.name,
+                  }),
+                  familyDiscount: false,
+                });
+                // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
+              } else if (
+                !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+                editingStudentFamily.studentFamilyAtSchool.length > 1
+              ) {
+                await updateDoc(doc(db, "students", editingStudentFamily.id), {
+                  studentFamilyAtSchool: arrayRemove({
+                    applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+                    id: foundedStudentOnFamilyRecord.id,
+                    name: foundedStudentOnFamilyRecord.name,
+                  }),
+                });
+              }
+            }
+          }
+        });
+      }
+
+      // DELETE STUDENT FROM EXPERIMENTAL CLASSES
+      if (studentToDelete.experimentalCurriculumIds.length > 0) {
+        studentToDelete.experimentalCurriculumIds.map(
+          async (experimentalStudentCurriculum) => {
+            const editingExperimentalCurriculum = curriculumDatabaseData.find(
+              (experimentalCurriculum) =>
+                experimentalCurriculum.id === experimentalStudentCurriculum.id
             );
-            const querySnapshot = await getDocs(q);
-            const promises: SubCollectionFamilyProps[] = [];
-            querySnapshot.forEach((doc) => {
-              const promise = doc.data() as SubCollectionFamilyProps;
-              promises.push(promise);
-            });
-            Promise.all(promises).then((results) => {
-              if (results.length !== 0) {
-                const familyBrotherData = results[0];
-                familyBrotherData.detailsArray.map(
-                  async (familyStudent: SubCollectionFamilyDetailsProps) => {
-                    if (familyStudent.id === data.studentId) {
-                      await updateDoc(
-                        doc(
-                          db,
-                          `students/${familyBrotherData.id}/studentFamilyAtSchool/${familyBrotherData.id}`
-                        ),
-                        {
-                          idsArray: arrayRemove(myFamilyData.id),
-                          detailsArray: arrayRemove({
-                            id: familyStudent.id,
-                            name: familyStudent.name,
-                            applyDiscount: familyStudent.applyDiscount,
-                          }),
-                        }
-                      );
-                    }
+            if (editingExperimentalCurriculum) {
+              const foundedStudentOnExperimentalCurriculum =
+                editingExperimentalCurriculum.experimentalStudents.find(
+                  (student) => student.id === data.studentId
+                );
+
+              if (foundedStudentOnExperimentalCurriculum) {
+                await updateDoc(
+                  doc(db, "curriculum", editingExperimentalCurriculum.id),
+                  {
+                    experimentalStudents: arrayRemove({
+                      date: foundedStudentOnExperimentalCurriculum.date,
+                      id: foundedStudentOnExperimentalCurriculum.id,
+                      indexDays:
+                        foundedStudentOnExperimentalCurriculum.indexDays,
+                      isExperimental:
+                        foundedStudentOnExperimentalCurriculum.isExperimental,
+                      name: foundedStudentOnExperimentalCurriculum.name,
+                      price: foundedStudentOnExperimentalCurriculum.price,
+                    }),
                   }
                 );
               }
-            });
+            }
           }
         );
       }
-    });
 
-    // DELETE STUDENT FROM EXPERIMENTAL CLASSES
-    if (experimentalCurriculumArrayDetails) {
-      // REMOVE STUDENT EXPERIMENTAL CURRICULUM REGISTERS
-      await deleteDoc(
-        doc(
-          db,
-          `students/${data.studentId}/studentExperimentalCurriculum`,
-          data.studentId
-        )
-      );
-      experimentalCurriculumArrayDetails.map(
-        async (curriculum: SubCollectionDetailsProps) => {
-          const q = query(
-            collectionGroup(db, "curriculumExperimentalStudents"),
-            where("id", "==", curriculum.id)
+      // DELETE STUDENT FROM CURRICULUM
+      if (studentToDelete.curriculumIds.length > 0) {
+        studentToDelete.curriculumIds.map(async (studentCurriculum) => {
+          const editingCurriculum = curriculumDatabaseData.find(
+            (curriculum) => curriculum.id === studentCurriculum.id
           );
-          const querySnapshot = await getDocs(q);
-          const promises: SubCollectionProps[] = [];
-          querySnapshot.forEach((doc) => {
-            const promise = doc.data() as SubCollectionProps;
-            promises.push(promise);
-          });
-          Promise.all(promises).then((results) => {
-            if (results.length > 0) {
-              const curriculumData = results[0];
-              updateDoc(
-                doc(
-                  db,
-                  `curriculum/${curriculumData.id}/curriculumExperimentalStudents/${curriculumData.id}`
-                ),
-                {
-                  idsArray: arrayRemove(data.studentId),
-                  detailsArray: arrayRemove({
-                    id: data.studentId,
-                    name: data.studentName,
-                    date: curriculum.date,
-                    isExperimental: curriculum.isExperimental,
-                    indexDays: [],
-                  }),
-                }
-              );
-            }
-          });
-        }
-      );
-    }
+          if (editingCurriculum) {
+            const foundedStudentOnCurriculum = editingCurriculum.students.find(
+              (student) => student.id === data.studentId
+            );
 
-    // DELETE STUDENT FROM CURRICULUM
-    if (curriculumArrayDetails) {
-      // REMOVE STUDENT EXPERIMENTAL CURRICULUM REGISTERS
-      await deleteDoc(
-        doc(db, `students/${data.studentId}/studentCurriculum`, data.studentId)
-      );
-      curriculumArrayDetails.map(
-        async (curriculum: SubCollectionDetailsProps) => {
-          const q = query(
-            collectionGroup(db, "curriculumStudents"),
-            where("id", "==", curriculum.id)
-          );
-          const querySnapshot = await getDocs(q);
-          const promises: SubCollectionProps[] = [];
-          querySnapshot.forEach((doc) => {
-            const promise = doc.data() as SubCollectionProps;
-            promises.push(promise);
-          });
-          Promise.all(promises).then((results) => {
-            if (results.length > 0) {
-              const curriculumData = results[0];
-              updateDoc(
-                doc(
-                  db,
-                  `curriculum/${curriculumData.id}/curriculumStudents/${curriculumData.id}`
-                ),
-                {
-                  idsArray: arrayRemove(data.studentId),
-                  detailsArray: arrayRemove({
-                    id: data.studentId,
-                    name: data.studentName,
-                    date: curriculum.date,
-                    isExperimental: curriculum.isExperimental,
-                    indexDays: curriculum.indexDays,
-                  }),
-                }
-              );
+            if (foundedStudentOnCurriculum) {
+              await updateDoc(doc(db, "curriculum", editingCurriculum.id), {
+                students: arrayRemove({
+                  date: foundedStudentOnCurriculum.date,
+                  id: foundedStudentOnCurriculum.id,
+                  indexDays: foundedStudentOnCurriculum.indexDays,
+                  isExperimental: foundedStudentOnCurriculum.isExperimental,
+                  name: foundedStudentOnCurriculum.name,
+                  price: foundedStudentOnCurriculum.price,
+                }),
+              });
             }
-          });
-        }
-      );
-    }
-
-    // DELETE STUDENT
-    const deleteStudent = async () => {
-      try {
-        await deleteDoc(doc(db, "students", data.studentId));
-        resetForm();
-        toast.success(`Aluno excluído com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
+          }
         });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
       }
-    };
-    deleteStudent();
+
+      // DELETE STUDENT
+      const deleteStudent = async () => {
+        try {
+          await deleteDoc(doc(db, "students", data.studentId));
+          resetForm();
+          toast.success(`Aluno excluído com sucesso! 👌`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
+      deleteStudent();
+    } else {
+      toast.error(
+        `Ocorreu um erro, aluno não encontrado no banco de dados... 🤯`,
+        {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        }
+      );
+      setIsSubmitting(false);
+    }
+
+    // const familyQuery = query(
+    //   collectionGroup(db, "studentFamilyAtSchool"),
+    //   where("id", "==", data.studentId)
+    // );
+    // const familySnapshot = await getDocs(familyQuery);
+    // const familyPromises: SubCollectionFamilyProps[] = [];
+    // familySnapshot.forEach((doc) => {
+    //   const promise = doc.data() as SubCollectionFamilyProps;
+    //   familyPromises.push(promise);
+    // });
+    // Promise.all(familyPromises).then(async (results) => {
+    //   if (results.length !== 0) {
+    //     // IF EXISTS, REMOVE STUDENT FAMILY AT SCHOOL REGISTERS
+    //     await deleteDoc(
+    //       doc(
+    //         db,
+    //         `students/${data.studentId}/studentFamilyAtSchool`,
+    //         data.studentId
+    //       )
+    //     );
+    //     // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
+    //     const myFamilyData = results[0];
+    //     myFamilyData.detailsArray.map(
+    //       async (student: SubCollectionFamilyDetailsProps) => {
+    //         const q = query(
+    //           collectionGroup(db, "studentFamilyAtSchool"),
+    //           where("id", "==", student.id)
+    //         );
+    //         const querySnapshot = await getDocs(q);
+    //         const promises: SubCollectionFamilyProps[] = [];
+    //         querySnapshot.forEach((doc) => {
+    //           const promise = doc.data() as SubCollectionFamilyProps;
+    //           promises.push(promise);
+    //         });
+    //         Promise.all(promises).then((results) => {
+    //           if (results.length !== 0) {
+    //             const familyBrotherData = results[0];
+    //             familyBrotherData.detailsArray.map(
+    //               async (familyStudent: SubCollectionFamilyDetailsProps) => {
+    //                 if (familyStudent.id === data.studentId) {
+    //                   await updateDoc(
+    //                     doc(
+    //                       db,
+    //                       `students/${familyBrotherData.id}/studentFamilyAtSchool/${familyBrotherData.id}`
+    //                     ),
+    //                     {
+    //                       idsArray: arrayRemove(myFamilyData.id),
+    //                       detailsArray: arrayRemove({
+    //                         id: familyStudent.id,
+    //                         name: familyStudent.name,
+    //                         applyDiscount: familyStudent.applyDiscount,
+    //                       }),
+    //                     }
+    //                   );
+    //                 }
+    //               }
+    //             );
+    //           }
+    //         });
+    //       }
+    //     );
+    //   }
+    // });
+
+    // // DELETE STUDENT FROM EXPERIMENTAL CLASSES
+    // if (experimentalCurriculumArrayDetails) {
+    //   // REMOVE STUDENT EXPERIMENTAL CURRICULUM REGISTERS
+    //   await deleteDoc(
+    //     doc(
+    //       db,
+    //       `students/${data.studentId}/studentExperimentalCurriculum`,
+    //       data.studentId
+    //     )
+    //   );
+    //   experimentalCurriculumArrayDetails.map(
+    //     async (curriculum: SubCollectionDetailsProps) => {
+    //       const q = query(
+    //         collectionGroup(db, "curriculumExperimentalStudents"),
+    //         where("id", "==", curriculum.id)
+    //       );
+    //       const querySnapshot = await getDocs(q);
+    //       const promises: SubCollectionProps[] = [];
+    //       querySnapshot.forEach((doc) => {
+    //         const promise = doc.data() as SubCollectionProps;
+    //         promises.push(promise);
+    //       });
+    //       Promise.all(promises).then((results) => {
+    //         if (results.length > 0) {
+    //           const curriculumData = results[0];
+    //           updateDoc(
+    //             doc(
+    //               db,
+    //               `curriculum/${curriculumData.id}/curriculumExperimentalStudents/${curriculumData.id}`
+    //             ),
+    //             {
+    //               idsArray: arrayRemove(data.studentId),
+    //               detailsArray: arrayRemove({
+    //                 id: data.studentId,
+    //                 name: data.studentName,
+    //                 date: curriculum.date,
+    //                 isExperimental: curriculum.isExperimental,
+    //                 indexDays: [],
+    //               }),
+    //             }
+    //           );
+    //         }
+    //       });
+    //     }
+    //   );
+    // }
+
+    // // DELETE STUDENT FROM CURRICULUM
+    // if (curriculumArrayDetails) {
+    //   // REMOVE STUDENT EXPERIMENTAL CURRICULUM REGISTERS
+    //   await deleteDoc(
+    //     doc(db, `students/${data.studentId}/studentCurriculum`, data.studentId)
+    //   );
+    //   curriculumArrayDetails.map(
+    //     async (curriculum: SubCollectionDetailsProps) => {
+    //       const q = query(
+    //         collectionGroup(db, "curriculumStudents"),
+    //         where("id", "==", curriculum.id)
+    //       );
+    //       const querySnapshot = await getDocs(q);
+    //       const promises: SubCollectionProps[] = [];
+    //       querySnapshot.forEach((doc) => {
+    //         const promise = doc.data() as SubCollectionProps;
+    //         promises.push(promise);
+    //       });
+    //       Promise.all(promises).then((results) => {
+    //         if (results.length > 0) {
+    //           const curriculumData = results[0];
+    //           updateDoc(
+    //             doc(
+    //               db,
+    //               `curriculum/${curriculumData.id}/curriculumStudents/${curriculumData.id}`
+    //             ),
+    //             {
+    //               idsArray: arrayRemove(data.studentId),
+    //               detailsArray: arrayRemove({
+    //                 id: data.studentId,
+    //                 name: data.studentName,
+    //                 date: curriculum.date,
+    //                 isExperimental: curriculum.isExperimental,
+    //                 indexDays: curriculum.indexDays,
+    //               }),
+    //             }
+    //           );
+    //         }
+    //       });
+    //     }
+    //   );
+    // }
   };
 
   return (
@@ -641,11 +860,7 @@ export function DeleteStudent() {
               setStudentData({ ...studentData, schoolId: e.target.value });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schools"
-              handleData={handleSchoolSelectedData}
-            />
+            <SelectOptions returnId dataType="schools" />
           </select>
         </div>
 
@@ -682,7 +897,6 @@ export function DeleteStudent() {
                 returnId
                 dataType="schoolClasses"
                 schoolId={studentData.schoolId}
-                handleData={handleSchoolClassSelectedData}
               />
             ) : (
               <option disabled value={" -- select an option -- "}>
@@ -732,7 +946,6 @@ export function DeleteStudent() {
                 dataType="curriculum"
                 schoolId={studentData.schoolId}
                 schoolClassId={studentData.schoolClassId}
-                handleData={handleCurriculumSelectedData}
               />
             ) : (
               <option disabled value={" -- select an option -- "}>
@@ -770,7 +983,8 @@ export function DeleteStudent() {
             onChange={(e) => {
               if (
                 e.target.value === "enrolled" ||
-                e.target.value === "experimental"
+                e.target.value === "experimental" ||
+                e.target.value === "all"
               ) {
                 setStudentData({
                   ...studentData,
@@ -792,6 +1006,7 @@ export function DeleteStudent() {
                 <option value={"experimental"}>
                   Incluir apenas alunos com aulas experimentais agendadas
                 </option>
+                <option value={"all"}>Mostrar todos os alunos</option>
               </>
             ) : (
               <option disabled value={" -- select an option -- "}>

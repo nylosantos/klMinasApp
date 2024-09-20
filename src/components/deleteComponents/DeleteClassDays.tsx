@@ -1,19 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  DocumentData,
-  getDocs,
-  getFirestore,
-  query,
-  where,
-} from "firebase/firestore";
+import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -23,11 +14,20 @@ import {
   ClassDaySearchProps,
   DeleteClassDaysValidationZProps,
 } from "../../@types";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function DeleteClassDays() {
+  // GET GLOBAL DATA
+  const { classDaysDatabaseData, curriculumDatabaseData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
+
   // CLASS DAY DATA
   const [classDaysData, setClassDaysData] =
     useState<DeleteClassDaysValidationZProps>({
@@ -37,15 +37,6 @@ export function DeleteClassDays() {
     });
 
   // -------------------------- CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
-  // CLASS DAY DATA ARRAY WITH ALL OPTIONS OF SELECT CLASS DAY
-  const [classDayDataArray, setClassDayDataArray] =
-    useState<ClassDaySearchProps[]>();
-
-  // FUNCTION THAT WORKS WITH CLASS DAY SELECTOPTIONS COMPONENT FUNCTION "HANDLE DATA"
-  const handleClassDaySelectedData = (data: ClassDaySearchProps[]) => {
-    setClassDayDataArray(data);
-  };
-
   // CLASS DAY SELECTED STATE DATA
   const [classDaySelectedData, setClassDaySelectedData] =
     useState<ClassDaySearchProps>();
@@ -55,7 +46,7 @@ export function DeleteClassDays() {
     if (classDaysData.classDayId !== "") {
       setIsSelected(true);
       setClassDaySelectedData(
-        classDayDataArray!.find(({ id }) => id === classDaysData.classDayId)
+        classDaysDatabaseData.find(({ id }) => id === classDaysData.classDayId)
       );
     } else {
       setClassDaySelectedData(undefined);
@@ -178,40 +169,74 @@ export function DeleteClassDays() {
       );
     }
 
-    // CHECKING IF CLASS DAY EXISTS ON CURRICULUM DATABASE
-    const classDayRef = collection(db, "curriculum");
-    const q = query(classDayRef, where("classDay", "==", data.classDayName));
-    const querySnapshot = await getDocs(q);
-    const promises: DocumentData[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data();
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(
-            `Dia de Aula incluído em ${results.length} ${
-              results.length === 1 ? "Currículo" : "Currículos"
-            }, exclua ou altere primeiramente ${
-              results.length === 1 ? "o Currículo" : "os Currículos"
-            } e depois exclua o Dia de Aula: ${data.classDayName}... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          )
-        );
-      } else {
-        // IF NO EXISTS, DELETE
-        deleteClassDay();
-      }
-    });
+    // CHECKING IF CLASS DAYS EXISTS ON CURRICULUM DATABASE
+
+    // SEARCH CURRICULUM WITH THIS CLASS DAYS
+    const classDaysExistsOnCurriculum = curriculumDatabaseData.filter(
+      (curriculum) => curriculum.classDayId === classDaysData.classDayId
+    );
+
+    // IF EXISTS, RETURN ERROR
+    if (classDaysExistsOnCurriculum.length !== 0) {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Dia de Aula incluído em ${classDaysExistsOnCurriculum.length} ${
+            classDaysExistsOnCurriculum.length === 1
+              ? "Currículo"
+              : "Currículos"
+          }, exclua ou altere primeiramente ${
+            classDaysExistsOnCurriculum.length === 1
+              ? "o Currículo"
+              : "os Currículos"
+          } e depois exclua o dia de aula: ${data.classDayName}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else {
+      // IF NO EXISTS, DELETE
+      deleteClassDay();
+    }
+
+    // const classDayRef = collection(db, "curriculum");
+    // const q = query(classDayRef, where("classDay", "==", data.classDayName));
+    // const querySnapshot = await getDocs(q);
+    // const promises: DocumentData[] = [];
+    // querySnapshot.forEach((doc) => {
+    //   const promise = doc.data();
+    //   promises.push(promise);
+    // });
+    // Promise.all(promises).then((results) => {
+    //   // IF EXISTS, RETURN ERROR
+    //   if (results.length !== 0) {
+    //     return (
+    //       setIsSubmitting(false),
+    //       toast.error(
+    //         `Dia de Aula incluído em ${results.length} ${
+    //           results.length === 1 ? "Currículo" : "Currículos"
+    //         }, exclua ou altere primeiramente ${
+    //           results.length === 1 ? "o Currículo" : "os Currículos"
+    //         } e depois exclua o Dia de Aula: ${data.classDayName}... ❕`,
+    //         {
+    //           theme: "colored",
+    //           closeOnClick: true,
+    //           pauseOnHover: true,
+    //           draggable: true,
+    //           autoClose: 3000,
+    //         }
+    //       )
+    //     );
+    //   } else {
+    //     // IF NO EXISTS, DELETE
+    //     deleteClassDay();
+    //   }
+    // });
   };
 
   return (
@@ -258,11 +283,7 @@ export function DeleteClassDays() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="classDays"
-              handleData={handleClassDaySelectedData}
-            />
+            <SelectOptions returnId dataType="classDays" />
           </select>
         </div>
 
