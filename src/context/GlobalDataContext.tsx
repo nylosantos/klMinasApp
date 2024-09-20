@@ -244,7 +244,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         );
       }
     );
-
+    schoolClassListener;
     // GET SCHOOL COURSE DATA
     const schoolCoursesQuery = query(collection(db, "schoolCourses"));
     const schoolCoursesListener = onSnapshot(
@@ -260,7 +260,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         );
       }
     );
-
+    schoolCoursesListener;
     // GET SCHEDULE DATA
     const schedulesQuery = query(collection(db, "schedules"));
     const schedulesListener = onSnapshot(schedulesQuery, (querySnapshot) => {
@@ -273,7 +273,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         schedulesDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
       );
     });
-
+    schedulesListener;
     // GET TEACHER DATA
     const teachersQuery = query(collection(db, "teachers"));
     const teachersListener = onSnapshot(teachersQuery, (querySnapshot) => {
@@ -286,7 +286,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         teachersDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
       );
     });
-
+    teachersListener;
     // GET CURRICULUM DATA
     const curriculumsQuery = query(collection(db, "curriculum"));
     const curriculumsListener = onSnapshot(
@@ -302,7 +302,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         );
       }
     );
-
+    curriculumsListener;
     // GET STUDENTS DATA
     const studentsQuery = query(collection(db, "students"));
     const studentsListener = onSnapshot(studentsQuery, (querySnapshot) => {
@@ -315,7 +315,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         studentsDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
       );
     });
-
+    studentsListener;
     // GET CLASS DAY DATA
     const classDaysQuery = query(collection(db, "classDays"));
     const classDaysListener = onSnapshot(classDaysQuery, (querySnapshot) => {
@@ -328,7 +328,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         classDaysDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
       );
     });
-
+    classDaysListener;
     // GET APP USERS DATA
     const appUsersQuery = query(collection(db, "appUsers"));
     const appUsersListener = onSnapshot(appUsersQuery, (querySnapshot) => {
@@ -341,6 +341,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         appUsersDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
       );
     });
+    appUsersListener;
   }
 
   return (
