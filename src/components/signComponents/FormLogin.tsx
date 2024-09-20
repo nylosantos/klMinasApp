@@ -9,7 +9,6 @@ import { LoginWithEmailAndPasswordZProps } from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { ButtonSignSubmit } from "../layoutComponents/ButtonSignSubmit";
-import { ButtonSignInGoogle } from "../layoutComponents/ButtonSignInGoogle";
 import { loginEmailAndPasswordValidationSchema } from "../../@types/zodValidation";
 import {
   GlobalDataContext,
@@ -171,11 +170,12 @@ export function FormLogin() {
         </form>
 
         {/* SIGN IN WITH GOOGLE BUTTON */}
-        <ButtonSignInGoogle
+
+        {/* <ButtonSignInGoogle 
           isSubmitting={isSubmitting}
           signType="signIn"
           isClosed={systemSignInClosed}
-        />
+        />*/}
       </div>
     </>
   );

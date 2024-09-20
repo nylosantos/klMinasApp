@@ -23,7 +23,6 @@ import {
 } from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { ButtonSignSubmit } from "../layoutComponents/ButtonSignSubmit";
-import { ButtonSignInGoogle } from "../layoutComponents/ButtonSignInGoogle";
 import { signUpEmailAndPasswordValidationSchema } from "../../@types/zodValidation";
 import {
   GlobalDataContext,
@@ -275,11 +274,12 @@ export function FormRegister() {
         </form>
 
         {/* SIGN UP WITH GOOGLE BUTTON */}
-        <ButtonSignInGoogle
+
+        {/* <ButtonSignInGoogle 
           isSubmitting={isSubmitting}
           isClosed={systemSignUpClosed}
           signType="signUp"
-        />
+        />*/}
       </div>
     </>
   );
