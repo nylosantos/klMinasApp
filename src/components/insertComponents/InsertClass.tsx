@@ -32,7 +32,6 @@ export function InsertClass() {
       name: "",
       schoolName: "",
       schoolId: "",
-      available: "closed",
       confirmInsert: false,
     });
 
@@ -78,7 +77,6 @@ export function InsertClass() {
       name: "",
       schoolName: "",
       schoolId: "",
-      available: "closed",
       confirmInsert: false,
     },
   });
@@ -89,7 +87,6 @@ export function InsertClass() {
       name: "",
       schoolName: "",
       schoolId: "",
-      available: "closed",
       confirmInsert: false,
     });
     ((
@@ -103,18 +100,12 @@ export function InsertClass() {
     setValue("name", schoolClassData.name);
     setValue("schoolId", schoolClassData.schoolId);
     setValue("schoolName", schoolClassData.schoolName);
-    setValue("available", schoolClassData.available);
     setValue("confirmInsert", schoolClassData.confirmInsert);
   }, [schoolClassData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [
-      errors.name,
-      errors.schoolId,
-      errors.available,
-      errors.confirmInsert,
-    ];
+    const fullErrors = [errors.name, errors.schoolId, errors.confirmInsert];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -136,7 +127,7 @@ export function InsertClass() {
     if (!data.confirmInsert) {
       setIsSubmitting(false);
       return toast.error(
-        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar Turma ${data.name}... ☑️`,
+        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar o Ano Escolar ${data.name}... ☑️`,
         {
           theme: "colored",
           closeOnClick: true,
@@ -153,14 +144,13 @@ export function InsertClass() {
         const commonId = uuidv4();
         await setDoc(doc(db, "schoolClasses", commonId), {
           id: commonId,
-          name: `TURMA ${data.name}`,
+          name: data.name,
           schoolName: data.schoolName,
           schoolId: data.schoolId,
-          available: data.available,
-          timestamp: serverTimestamp(),
+          updatedAt: serverTimestamp(),
         });
         resetForm();
-        toast.success(`TURMA ${data.name} criado com sucesso! 👌`, {
+        toast.success(`Ano Escolar ${data.name} criado com sucesso! 👌`, {
           theme: "colored",
           closeOnClick: true,
           pauseOnHover: true,
@@ -183,14 +173,14 @@ export function InsertClass() {
 
     // CHECKING IF SCHOOL CLASS EXISTS ON DATABASE
     const schoolClassExists = schoolClassDatabaseData.find(
-      (schoolClass) => schoolClass.name === `TURMA ${data.name}`
+      (schoolClass) => schoolClass.name === data.name
     );
     if (schoolClassExists) {
       // IF EXISTS, RETURN ERROR
       return (
         setIsSubmitting(false),
         toast.error(
-          `TURMA ${data.name} já existe no nosso banco de dados mané... ❕`,
+          `Ano Escolar ${data.name} já existe no nosso banco de dados... ❕`,
           {
             theme: "colored",
             closeOnClick: true,
@@ -217,8 +207,8 @@ export function InsertClass() {
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">
         {schoolClassData.name
-          ? `Adicionando Turma ${schoolClassData.name}`
-          : "Adicionar Turma"}
+          ? `Adicionando o Ano Escolar ${schoolClassData.name}`
+          : "Adicionando Ano Escolar"}
       </h1>
 
       {/* FORM */}
@@ -244,8 +234,8 @@ export function InsertClass() {
             disabled={isSubmitting}
             placeholder={
               errors.name
-                ? "É necessário inserir o Nome da Turma"
-                : "Insira o nome da Turma"
+                ? "É necessário inserir o Nome do Ano Escolar"
+                : "Insira o nome do Ano Escolar"
             }
             className={
               errors.name
@@ -293,7 +283,7 @@ export function InsertClass() {
         </div>
 
         {/* SCHOOL CLASS AVAILABILITY */}
-        <div className="flex gap-2 items-center">
+        {/* <div className="flex gap-2 items-center">
           <label
             htmlFor="available"
             className={
@@ -354,7 +344,7 @@ export function InsertClass() {
               Lista de Espera
             </label>
           </div>
-        </div>
+        </div> */}
 
         {/** CHECKBOX CONFIRM INSERT */}
         <div className="flex justify-center items-center gap-2 mt-6">
@@ -372,7 +362,7 @@ export function InsertClass() {
           />
           <label htmlFor="confirmInsert" className="text-sm">
             {schoolClassData.name
-              ? `Confirmar criação de Turma ${schoolClassData.name}`
+              ? `Confirmar criação do Ano Escolar ${schoolClassData.name}`
               : `Confirmar criação`}
           </label>
         </div>

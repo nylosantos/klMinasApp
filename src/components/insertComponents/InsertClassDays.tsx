@@ -44,7 +44,6 @@ export function InsertClassDays() {
       thursday: false,
       friday: false,
       saturday: false,
-      confirmInsert: false,
     });
 
   // CLASS DAY NAME FORMAT
@@ -70,7 +69,6 @@ export function InsertClassDays() {
       thursday: false,
       friday: false,
       saturday: false,
-      confirmInsert: false,
     },
   });
 
@@ -85,7 +83,6 @@ export function InsertClassDays() {
       thursday: false,
       friday: false,
       saturday: false,
-      confirmInsert: false,
     });
     setClassDayName([]);
     reset();
@@ -101,7 +98,6 @@ export function InsertClassDays() {
     setValue("thursday", classDaysData.thursday);
     setValue("friday", classDaysData.friday);
     setValue("saturday", classDaysData.saturday);
-    setValue("confirmInsert", classDaysData.confirmInsert);
   }, [classDaysData, classDayName]);
 
   // SET REACT HOOK FORM ERRORS
@@ -115,7 +111,6 @@ export function InsertClassDays() {
       errors.thursday,
       errors.friday,
       errors.saturday,
-      errors.confirmInsert,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -326,21 +321,6 @@ export function InsertClassDays() {
       );
     }
 
-    // CHECK INSERT CONFIRMATION
-    if (!data.confirmInsert) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar ${data.name}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
     // ADD CLASS DAY FUNCTION
     const addClassDays = async () => {
       const daysIncluded: number[] = [];
@@ -471,27 +451,6 @@ export function InsertClassDays() {
 
         {/* DAYS PICKER */}
         <ClassDays classDay={classDaysData} toggleClassDays={toggleClassDays} />
-
-        {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <input
-            type="checkbox"
-            name="confirmInsert"
-            className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
-            checked={classDaysData.confirmInsert}
-            onChange={() => {
-              setClassDaysData({
-                ...classDaysData,
-                confirmInsert: !classDaysData.confirmInsert,
-              });
-            }}
-          />
-          <label htmlFor="confirmInsert" className="text-sm">
-            {classDaysData.name
-              ? `Confirmar criação de ${classDaysData.name}`
-              : `Confirmar criação`}
-          </label>
-        </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4">

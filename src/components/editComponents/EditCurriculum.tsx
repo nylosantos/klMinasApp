@@ -4,9 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  doc, getFirestore, updateDoc
-} from "firebase/firestore";
+import { doc, getFirestore, setDoc, updateDoc } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -20,11 +18,15 @@ import {
   ScheduleSearchProps,
   ClassDaySearchProps,
   TeacherSearchProps,
+  EditClassDayValidationZProps,
+  ToggleClassDaysFunctionProps,
 } from "../../@types";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { classDayIndexNames } from "../../custom";
+import { ClassDays } from "../formComponents/ClassDays";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -39,7 +41,7 @@ export function EditCurriculum() {
     classDaysDatabaseData,
     teacherDatabaseData,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
-  // STUDENT DATA
+  // CURRICULUM DATA
   const [curriculumEditData, setCurriculumEditData] =
     useState<EditCurriculumValidationZProps>({
       name: "",
@@ -72,19 +74,11 @@ export function EditCurriculum() {
         scheduleSelectedData
           ? scheduleSelectedData.name
           : curriculumEditData.schedule
-      } | ${curriculumEditData.classDay} | ${
+      } | ${classDayName.length > 0 ? `${classDayName.join(" - ")} | ` : ""}${
         curriculumEditData.schoolClass
       } | Professor: ${curriculumEditData.teacher}`,
     });
   }, [curriculumEditData]);
-
-  // SET CURRICULUM EDIT DATA NAME WHEN CHANGE CURRICULUM FORMATTED NAME
-  useEffect(() => {
-    setCurriculumEditData({
-      ...curriculumEditData,
-      name: curriculumName.name,
-    });
-  }, [curriculumName.name]);
 
   // CURRICULUM SELECTED AND EDIT ACTIVE STATES
   const [isSelected, setIsSelected] = useState(false);
@@ -236,6 +230,27 @@ export function EditCurriculum() {
 
   // -------------------------- CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
   // CLASS DAY SELECTED STATE DATA
+  // CLASS DAY DATA
+  const [classDayData, setClassDayData] = useState({
+    classDayId: "",
+  });
+
+  // CLASS DAY EDIT DATA
+  const [classDayEditData, setClassDayEditData] =
+    useState<EditClassDayValidationZProps>({
+      name: "",
+      sunday: false,
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
+    });
+
+  // CLASS DAY NAME FORMAT
+  const [classDayName, setClassDayName] = useState<string[]>([]);
+
   const [classDaySelectedData, setClassDaySelectedData] =
     useState<ClassDaySearchProps>();
 
@@ -254,13 +269,223 @@ export function EditCurriculum() {
 
   // SET CURRICULUM EDIT DATA WHEN CLASS DAY CHANGE
   useEffect(() => {
-    setCurriculumEditData({
-      ...curriculumEditData,
-      classDay: classDaySelectedData ? classDaySelectedData.name : "",
-      classDayId: classDaySelectedData ? classDaySelectedData.id : "",
-    });
+    if (classDaySelectedData !== undefined) {
+      if (classDaySelectedData.indexDays.length > 0) {
+        const days = {
+          name: "",
+          sunday: false,
+          monday: false,
+          tuesday: false,
+          wednesday: false,
+          thursday: false,
+          friday: false,
+          saturday: false,
+        };
+        (days.name = classDaySelectedData.name),
+          classDaySelectedData.indexDays.map((day) => {
+            if (day === 0) {
+              days.sunday = true;
+            }
+            if (day === 1) {
+              days.monday = true;
+            }
+            if (day === 2) {
+              days.tuesday = true;
+            }
+            if (day === 3) {
+              days.wednesday = true;
+            }
+            if (day === 4) {
+              days.thursday = true;
+            }
+            if (day === 5) {
+              days.friday = true;
+            }
+            if (day === 6) {
+              days.saturday = true;
+            }
+          });
+        setClassDayEditData(days);
+        setClassDayName(classDaySelectedData.indexNames);
+      }
+      setCurriculumEditData({
+        ...curriculumEditData,
+        classDay: classDaySelectedData.name,
+        classDayId: classDaySelectedData.id,
+      });
+    }
   }, [classDaySelectedData]);
-  // -------------------------- END OF SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
+
+  // TOGGLE CLASS DAYS VALUE FUNCTION
+  function toggleClassDays({ day, value }: ToggleClassDaysFunctionProps) {
+    setClassDayEditData({ ...classDayEditData, [day]: value });
+    if (value) {
+      classDayIndexNames.map((dayIndex) => {
+        if (dayIndex.id === day) {
+          if (dayIndex.name === "Domingo") {
+            setClassDayName((classDayName) => ["Domingo", ...classDayName]);
+          }
+          if (dayIndex.name === "Segunda") {
+            const foundSunday = classDayName.findIndex(
+              (name) => name === "Domingo"
+            );
+            if (foundSunday !== -1) {
+              const insertAt = foundSunday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Segunda",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else {
+              setClassDayName((classDayName) => ["Segunda", ...classDayName]);
+            }
+          }
+          if (dayIndex.name === "Terça") {
+            const foundSunday = classDayName.findIndex(
+              (name) => name === "Domingo"
+            );
+            const foundMonday = classDayName.findIndex(
+              (name) => name === "Segunda"
+            );
+            if (foundMonday !== -1) {
+              const insertAt = foundMonday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Terça",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else if (foundSunday !== -1) {
+              const insertAt = foundSunday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Terça",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else {
+              setClassDayName((classDayName) => ["Terça", ...classDayName]);
+            }
+          }
+          if (dayIndex.name === "Quarta") {
+            const foundSunday = classDayName.findIndex(
+              (name) => name === "Domingo"
+            );
+            const foundMonday = classDayName.findIndex(
+              (name) => name === "Segunda"
+            );
+            const foundTuesday = classDayName.findIndex(
+              (name) => name === "Terça"
+            );
+            if (foundTuesday !== -1) {
+              const insertAt = foundTuesday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Quarta",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else if (foundMonday !== -1) {
+              const insertAt = foundMonday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Quarta",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else if (foundSunday !== -1) {
+              const insertAt = foundSunday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Quarta",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else {
+              setClassDayName((classDayName) => ["Quarta", ...classDayName]);
+            }
+          }
+          if (dayIndex.name === "Quinta") {
+            const foundSaturday = classDayName.findIndex(
+              (name) => name === "Sábado"
+            );
+            const foundFriday = classDayName.findIndex(
+              (name) => name === "Sexta"
+            );
+            if (foundFriday !== -1) {
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, foundFriday),
+                "Quinta",
+                ...classDayName.slice(foundFriday),
+              ]);
+            } else if (foundSaturday !== -1) {
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, foundSaturday),
+                "Quinta",
+                ...classDayName.slice(foundSaturday),
+              ]);
+            } else {
+              setClassDayName((classDayName) => [...classDayName, "Quinta"]);
+            }
+          }
+          if (dayIndex.name === "Sexta") {
+            const foundSaturday = classDayName.findIndex(
+              (name) => name === "Sábado"
+            );
+            if (foundSaturday !== -1) {
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, foundSaturday),
+                "Sexta",
+                ...classDayName.slice(foundSaturday),
+              ]);
+            } else {
+              setClassDayName((classDayName) => [...classDayName, "Sexta"]);
+            }
+          }
+          if (dayIndex.name === "Sábado") {
+            setClassDayName((classDayName) => [...classDayName, "Sábado"]);
+          }
+        }
+      });
+    } else {
+      classDayIndexNames.map((dayIndex) => {
+        if (dayIndex.id === day) {
+          if (dayIndex.name === "Domingo") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Domingo")
+            );
+          }
+          if (dayIndex.name === "Segunda") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Segunda")
+            );
+          }
+          if (dayIndex.name === "Terça") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Terça")
+            );
+          }
+          if (dayIndex.name === "Quarta") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Quarta")
+            );
+          }
+          if (dayIndex.name === "Quinta") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Quinta")
+            );
+          }
+          if (dayIndex.name === "Sexta") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Sexta")
+            );
+          }
+          if (dayIndex.name === "Sábado") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Sábado")
+            );
+          }
+        }
+      });
+    }
+  }
+
+  // -------------------------- END OF CLASSDAYS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- TEACHER SELECT STATES AND FUNCTIONS -------------------------- //
   // TEACHER SELECTED STATE DATA
@@ -292,6 +517,14 @@ export function EditCurriculum() {
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // SET CURRICULUM EDIT DATA NAME WHEN CHANGE CURRICULUM FORMATTED NAME
+  useEffect(() => {
+    setCurriculumEditData({
+      ...curriculumEditData,
+      name: curriculumName.name,
+    });
+  }, [curriculumName.name, classDayName]);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -340,6 +573,20 @@ export function EditCurriculum() {
       teacher: "",
       teacherId: "",
     });
+    setClassDayData({
+      classDayId: "",
+    });
+    setClassDayEditData({
+      name: "",
+      sunday: false,
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
+    });
+    setClassDayName([]);
     setIsSelected(false);
     setIsEdit(false);
     reset();
@@ -357,7 +604,10 @@ export function EditCurriculum() {
     setValue("schoolCourseId", curriculumEditData.schoolCourseId);
     setValue("schedule", curriculumEditData.schedule);
     setValue("scheduleId", curriculumEditData.scheduleId);
-    setValue("classDay", curriculumEditData.classDay);
+    setValue(
+      "classDay",
+      classDayName.length > 0 ? classDayName.join(" - ") : ""
+    );
     setValue("classDayId", curriculumEditData.classDayId);
     setValue("teacher", curriculumEditData.teacher);
     setValue("teacherId", curriculumEditData.teacherId);
@@ -414,7 +664,7 @@ export function EditCurriculum() {
           }
         );
         resetForm();
-        toast.success(`Currículo alterado com sucesso! 👌`, {
+        toast.success(`Turma alterada com sucesso! 👌`, {
           theme: "colored",
           closeOnClick: true,
           pauseOnHover: true,
@@ -435,18 +685,93 @@ export function EditCurriculum() {
       }
     };
 
+    // EDIT CLASS DAY FUNCTION
+    const editClassDay = async () => {
+      const daysIncluded: number[] = [];
+      if (classDayEditData.sunday) {
+        daysIncluded.push(0);
+      }
+      if (classDayEditData.monday) {
+        daysIncluded.push(1);
+      }
+      if (classDayEditData.tuesday) {
+        daysIncluded.push(2);
+      }
+      if (classDayEditData.wednesday) {
+        daysIncluded.push(3);
+      }
+      if (classDayEditData.thursday) {
+        daysIncluded.push(4);
+      }
+      if (classDayEditData.friday) {
+        daysIncluded.push(5);
+      }
+      if (classDayEditData.saturday) {
+        daysIncluded.push(6);
+      }
+      try {
+        await setDoc(
+          doc(db, "classDays", data.classDayId),
+          {
+            name:
+              classDayName.length > 0 ? classDayName.join(" - ") : data.name,
+            indexDays: daysIncluded,
+            indexNames: classDayName,
+          },
+          { merge: true }
+        );
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
+
     setIsSubmitting(true);
 
-    // CHECKING IF CURRICULUM EXISTS ON DATABASE
+    // CHECK IF ANY DAY WAS PICKED
+    if (
+      !classDayEditData.sunday &&
+      !classDayEditData.monday &&
+      !classDayEditData.tuesday &&
+      !classDayEditData.wednesday &&
+      !classDayEditData.thursday &&
+      !classDayEditData.friday &&
+      !classDayEditData.saturday
+    ) {
+      setIsSubmitting(false);
+      return toast.error(
+        `Por favor, selecione algum dia para editar a Turma ${data.name}... ☑️`,
+        {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        }
+      );
+    }
+
+    // CHECKING IF CURRICULUM AND CLASSDAYS EXISTS ON DATABASE
 
     const curriculumExists = curriculumDatabaseData.find(
       (curriculum) => curriculum.id === curriculumEditData.curriculumId
     );
-    if (!curriculumExists) {
+    const classDaysExists = classDaysDatabaseData.find(
+      (classDays) => classDays.id === classDayData.classDayId
+    );
+
+    if (!curriculumExists && !classDaysExists) {
       // IF NOT EXISTS, RETURN ERROR
       return (
         setIsSubmitting(false),
-        toast.error(`Currículo não existe no banco de dados... ❕`, {
+        toast.error(`Turma não existe no banco de dados... ❕`, {
           theme: "colored",
           closeOnClick: true,
           pauseOnHover: true,
@@ -457,6 +782,7 @@ export function EditCurriculum() {
     } else {
       // IF EXISTS, EDIT
       editCurriculum();
+      editClassDay();
     }
   };
 
@@ -469,7 +795,7 @@ export function EditCurriculum() {
       <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Editar Currículo</h1>
+      <h1 className="font-bold text-2xl my-4">Editar Turma</h1>
 
       {/* FORM */}
       <form
@@ -518,7 +844,7 @@ export function EditCurriculum() {
                 : "w-1/4 text-right"
             }
           >
-            Selecione a Turma:{" "}
+            Selecione o Ano Escolar:{" "}
           </label>
           <select
             id="schoolClassSelect"
@@ -548,7 +874,8 @@ export function EditCurriculum() {
             ) : (
               <option disabled value={" -- select an option -- "}>
                 {" "}
-                -- Selecione uma escola para ver as turmas disponíveis --{" "}
+                -- Selecione uma escola para ver os Anos Escolares disponíveis
+                --{" "}
               </option>
             )}
           </select>
@@ -564,7 +891,7 @@ export function EditCurriculum() {
                 : "w-1/4 text-right"
             }
           >
-            Selecione o Currículo:{" "}
+            Selecione a Turma:{" "}
           </label>
           <select
             id="curriculumSelect"
@@ -596,13 +923,13 @@ export function EditCurriculum() {
             ) : (
               <option disabled value={" -- select an option -- "}>
                 {" "}
-                -- Selecione uma Turma para ver os currículos disponíveis --{" "}
+                -- Selecione um Ano Escolar para ver as Turmas disponíveis --{" "}
               </option>
             )}
           </select>
         </div>
 
-        {isSelected ? (
+        {isSelected && (
           <>
             {/* EDIT BUTTON */}
             <div className="flex gap-2 mt-4 justify-center">
@@ -620,9 +947,9 @@ export function EditCurriculum() {
               </button>
             </div>
           </>
-        ) : null}
+        )}
 
-        {isEdit ? (
+        {isEdit && (
           <>
             {/* CURRICULUM NAME */}
             <div className="flex gap-2 items-center">
@@ -655,7 +982,7 @@ export function EditCurriculum() {
             {/* SCHOOL CLASS NAME */}
             <div className="flex gap-2 items-center">
               <label htmlFor="schoolClass" className="w-1/4 text-right">
-                Turma:{" "}
+                Ano Escolar:{" "}
               </label>
               <input
                 type="text"
@@ -807,58 +1134,6 @@ export function EditCurriculum() {
               />
             </div>
 
-            {/* EDIT CLASS DAY TITLE */}
-            <div className="flex gap-2 items-center">
-              <div className="w-1/4"></div>
-              <div className="w-3/4">
-                <h1 className="text-start font-bold text-lg py-2 text-red-600 dark:text-yellow-500">
-                  Altere os Dias de Aula:
-                </h1>
-              </div>
-            </div>
-
-            {/* CLASS DAY SELECT */}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="classDaySelect"
-                className={
-                  errors.classDayId
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
-                Dias de Aula:{" "}
-              </label>
-              <select
-                id="classDaySelect"
-                disabled={isSubmitting}
-                value={
-                  classDaySelectedData?.id === curriculumEditData.classDayId
-                    ? classDaySelectedData.id
-                    : curriculumEditData.classDayId
-                }
-                className={
-                  errors.classDayId
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                name="classDaySelect"
-                onChange={(e) => {
-                  setCurriculumEditData({
-                    ...curriculumEditData,
-                    classDayId: e.target.value,
-                  });
-                }}
-              >
-                <SelectOptions
-                  returnId
-                  dataType="classDays"
-                  setClassDay
-                  classDayId={classDaySelectedData?.id}
-                />
-              </select>
-            </div>
-
             {/* EDIT TEACHER TITLE */}
             <div className="flex gap-2 items-center">
               <div className="w-1/4"></div>
@@ -911,6 +1186,53 @@ export function EditCurriculum() {
               </select>
             </div>
 
+            {/* EDIT CLASS DAY TITLE */}
+            <div className="flex gap-2 items-center">
+              <div className="w-1/4"></div>
+              <div className="w-3/4">
+                <h1 className="text-start font-bold text-lg py-2 text-red-600 dark:text-yellow-500">
+                  Altere os Dias de Aula:
+                </h1>
+              </div>
+            </div>
+
+            {/* CLASS DAY NAME */}
+            <div className="hidden gap-2 items-center">
+              <label
+                htmlFor="name"
+                className={
+                  errors.name
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Identificador:{" "}
+              </label>
+              <input
+                type="text"
+                name="name"
+                disabled={isSubmitting}
+                readOnly
+                placeholder={
+                  errors.name
+                    ? "É necessário inserir o Identificador dos dias de Aula"
+                    : "Selecione os dias para formar o Identificador dos Dias de Aula"
+                }
+                className={
+                  errors.name
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                value={classDayName.length > 0 ? classDayName.join(" - ") : ""}
+              />
+            </div>
+
+            {/* DAYS PICKER */}
+            <ClassDays
+              classDay={classDayEditData}
+              toggleClassDays={toggleClassDays}
+            />
+
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">
               {/* SUBMIT BUTTON */}
@@ -935,7 +1257,7 @@ export function EditCurriculum() {
               </button>
             </div>
           </>
-        ) : null}
+        )}
       </form>
     </div>
   );

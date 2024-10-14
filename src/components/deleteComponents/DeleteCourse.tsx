@@ -266,12 +266,12 @@ export function DeleteCourse() {
         toast.error(
           `Modalidade incluída em ${schoolCourseExistsOnCurriculum.length} ${
             schoolCourseExistsOnCurriculum.length === 1
-              ? "Currículo"
-              : "Currículos"
+              ? "Turma"
+              : "Turmas"
           }, exclua ou altere primeiramente ${
             schoolCourseExistsOnCurriculum.length === 1
-              ? "o Currículo"
-              : "os Currículos"
+              ? "a Turma"
+              : "as Turmas"
           } e depois exclua a modalidade ${data.schoolCourseName}... ❕`,
           {
             theme: "colored",
@@ -286,44 +286,6 @@ export function DeleteCourse() {
       // IF NO EXISTS, DELETE
       deleteSchoolCourse();
     }
-
-    // // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
-    // const schoolCourseRef = collection(db, "curriculum");
-    // const q = query(
-    //   schoolCourseRef,
-    //   where("schoolCourse", "==", data.schoolCourseName)
-    // );
-    // const querySnapshot = await getDocs(q);
-    // const promises: DocumentData[] = [];
-    // querySnapshot.forEach((doc) => {
-    //   const promise = doc.data();
-    //   promises.push(promise);
-    // });
-    // Promise.all(promises).then((results) => {
-    //   // IF EXISTS, RETURN ERROR
-    //   if (results.length !== 0) {
-    //     return (
-    //       setIsSubmitting(false),
-    //       toast.error(
-    //         `Modalidade incluída em ${results.length} ${
-    //           results.length === 1 ? "Currículo" : "Currículos"
-    //         }, exclua ou altere primeiramente ${
-    //           results.length === 1 ? "o Currículo" : "os Currículos"
-    //         } e depois exclua a Modalidade ${data.schoolCourseName}... ❕`,
-    //         {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         }
-    //       )
-    //     );
-    //   } else {
-    //     // IF NO EXISTS, DELETE
-    //     deleteSchoolCourse();
-    //   }
-    // });
   };
 
   return (

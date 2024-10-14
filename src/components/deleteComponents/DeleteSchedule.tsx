@@ -215,11 +215,11 @@ export function DeleteSchedule() {
         setIsSubmitting(false),
         toast.error(
           `Horário incluído em ${scheduleExistsOnCurriculum.length} ${
-            scheduleExistsOnCurriculum.length === 1 ? "Currículo" : "Currículos"
+            scheduleExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
           }, exclua ou altere primeiramente ${
             scheduleExistsOnCurriculum.length === 1
-              ? "o Currículo"
-              : "os Currículos"
+              ? "a Turma"
+              : "as Turmas"
           } e depois exclua o ${data.scheduleName}... ❕`,
           {
             theme: "colored",
@@ -234,40 +234,6 @@ export function DeleteSchedule() {
       // IF NO EXISTS, DELETE
       deleteSchedule();
     }
-
-    // const schedulesRef = collection(db, "curriculum");
-    // const q = query(schedulesRef, where("schedule", "==", data.scheduleName));
-    // const querySnapshot = await getDocs(q);
-    // const promises: ScheduleSearchProps[] = [];
-    // querySnapshot.forEach((doc) => {
-    //   const promise = doc.data() as ScheduleSearchProps;
-    //   promises.push(promise);
-    // });
-    // Promise.all(promises).then((results) => {
-    //   // IF EXISTS, RETURN ERROR
-    //   if (results.length !== 0) {
-    //     return (
-    //       setIsSubmitting(false),
-    //       toast.error(
-    //         `Horário incluído em ${results.length} ${
-    //           results.length === 1 ? "Currículo" : "Currículos"
-    //         }, exclua ou altere primeiramente ${
-    //           results.length === 1 ? "o Currículo" : "os Currículos"
-    //         } e depois exclua o ${data.scheduleName}... ❕`,
-    //         {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         }
-    //       )
-    //     );
-    //   } else {
-    //     // IF NO EXISTS, DELETE
-    //     deleteSchedule();
-    //   }
-    // });
   };
 
   return (

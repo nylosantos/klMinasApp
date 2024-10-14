@@ -5,35 +5,28 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
-} from "firebase/firestore";
+import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
 
 import { createCurriculumValidationSchema } from "../../@types/zodValidation";
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import {
-  ClassDaySearchProps,
+  CreateClassDaysValidationZProps,
   CreateCurriculumValidationZProps,
-  CurriculumSearchProps,
   ScheduleSearchProps,
   SchoolClassSearchProps,
   SchoolCourseSearchProps,
   SchoolSearchProps,
   TeacherSearchProps,
+  ToggleClassDaysFunctionProps,
 } from "../../@types";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { classDayIndexNames } from "../../custom";
+import { ClassDays } from "../formComponents/ClassDays";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -41,7 +34,7 @@ const db = getFirestore(app);
 export function InsertCurriculum() {
   // GET GLOBAL DATA
   const {
-    classDaysDatabaseData,
+    curriculumDatabaseData,
     schoolDatabaseData,
     schoolClassDatabaseData,
     schoolCourseDatabaseData,
@@ -181,29 +174,216 @@ export function InsertCurriculum() {
 
   // -------------------------- CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
   // CLASS DAY SELECTED STATE DATA
-  const [classDaySelectedData, setClassDaySelectedData] =
-    useState<ClassDaySearchProps>();
+  const classDaysCommonId = uuidv4();
 
-  // SET CLASS DAY SELECTED STATE WHEN SELECT CLASS DAY
-  useEffect(() => {
-    if (curriculumData.classDayId !== "") {
-      setClassDaySelectedData(
-        classDaysDatabaseData.find(({ id }) => id === curriculumData.classDayId)
-      );
+  // CLASS DAY DATA
+  const [classDaysData, setClassDaysData] =
+    useState<CreateClassDaysValidationZProps>({
+      name: "",
+      sunday: false,
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
+    });
+
+  // CLASS DAY NAME FORMAT
+  const [classDayName, setClassDayName] = useState<string[]>([]);
+
+  // TOGGLE CLASS DAYS VALUE FUNCTION
+  function toggleClassDays({ day, value }: ToggleClassDaysFunctionProps) {
+    setClassDaysData({ ...classDaysData, [day]: value });
+    if (value) {
+      classDayIndexNames.map((dayIndex) => {
+        if (dayIndex.id === day) {
+          if (dayIndex.name === "Domingo") {
+            setClassDayName((classDayName) => ["Domingo", ...classDayName]);
+          }
+          if (dayIndex.name === "Segunda") {
+            const foundSunday = classDayName.findIndex(
+              (name) => name === "Domingo"
+            );
+            if (foundSunday !== -1) {
+              const insertAt = foundSunday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Segunda",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else {
+              setClassDayName((classDayName) => ["Segunda", ...classDayName]);
+            }
+          }
+          if (dayIndex.name === "Terça") {
+            const foundSunday = classDayName.findIndex(
+              (name) => name === "Domingo"
+            );
+            const foundMonday = classDayName.findIndex(
+              (name) => name === "Segunda"
+            );
+            if (foundMonday !== -1) {
+              const insertAt = foundMonday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Terça",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else if (foundSunday !== -1) {
+              const insertAt = foundSunday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Terça",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else {
+              setClassDayName((classDayName) => ["Terça", ...classDayName]);
+            }
+          }
+          if (dayIndex.name === "Quarta") {
+            const foundSunday = classDayName.findIndex(
+              (name) => name === "Domingo"
+            );
+            const foundMonday = classDayName.findIndex(
+              (name) => name === "Segunda"
+            );
+            const foundTuesday = classDayName.findIndex(
+              (name) => name === "Terça"
+            );
+            if (foundTuesday !== -1) {
+              const insertAt = foundTuesday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Quarta",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else if (foundMonday !== -1) {
+              const insertAt = foundMonday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Quarta",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else if (foundSunday !== -1) {
+              const insertAt = foundSunday + 1;
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, insertAt),
+                "Quarta",
+                ...classDayName.slice(insertAt),
+              ]);
+            } else {
+              setClassDayName((classDayName) => ["Quarta", ...classDayName]);
+            }
+          }
+          if (dayIndex.name === "Quinta") {
+            const foundSaturday = classDayName.findIndex(
+              (name) => name === "Sábado"
+            );
+            const foundFriday = classDayName.findIndex(
+              (name) => name === "Sexta"
+            );
+            if (foundFriday !== -1) {
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, foundFriday),
+                "Quinta",
+                ...classDayName.slice(foundFriday),
+              ]);
+            } else if (foundSaturday !== -1) {
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, foundSaturday),
+                "Quinta",
+                ...classDayName.slice(foundSaturday),
+              ]);
+            } else {
+              setClassDayName((classDayName) => [...classDayName, "Quinta"]);
+            }
+          }
+          if (dayIndex.name === "Sexta") {
+            const foundSaturday = classDayName.findIndex(
+              (name) => name === "Sábado"
+            );
+            if (foundSaturday !== -1) {
+              setClassDayName((classDayName) => [
+                ...classDayName.slice(0, foundSaturday),
+                "Sexta",
+                ...classDayName.slice(foundSaturday),
+              ]);
+            } else {
+              setClassDayName((classDayName) => [...classDayName, "Sexta"]);
+            }
+          }
+          if (dayIndex.name === "Sábado") {
+            setClassDayName((classDayName) => [...classDayName, "Sábado"]);
+          }
+        }
+      });
     } else {
-      setClassDaySelectedData(undefined);
-    }
-  }, [curriculumData.classDayId]);
-
-  // SET CLASS DAY NAME WITH CLASS DAY SELECTED DATA WHEN SELECT CLASS DAY
-  useEffect(() => {
-    if (classDaySelectedData !== undefined) {
-      setCurriculumData({
-        ...curriculumData,
-        classDayName: classDaySelectedData!.name,
+      classDayIndexNames.map((dayIndex) => {
+        if (dayIndex.id === day) {
+          if (dayIndex.name === "Domingo") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Domingo")
+            );
+          }
+          if (dayIndex.name === "Segunda") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Segunda")
+            );
+          }
+          if (dayIndex.name === "Terça") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Terça")
+            );
+          }
+          if (dayIndex.name === "Quarta") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Quarta")
+            );
+          }
+          if (dayIndex.name === "Quinta") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Quinta")
+            );
+          }
+          if (dayIndex.name === "Sexta") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Sexta")
+            );
+          }
+          if (dayIndex.name === "Sábado") {
+            setClassDayName(
+              classDayName.filter((classDay) => classDay !== "Sábado")
+            );
+          }
+        }
       });
     }
-  }, [classDaySelectedData]);
+  }
+
+  // const [classDaySelectedData, setClassDaySelectedData] =
+  //   useState<ClassDaySearchProps>();
+
+  // // SET CLASS DAY SELECTED STATE WHEN SELECT CLASS DAY
+  // useEffect(() => {
+  //   if (curriculumData.classDayId !== "") {
+  //     setClassDaySelectedData(
+  //       classDaysDatabaseData.find(({ id }) => id === curriculumData.classDayId)
+  //     );
+  //   } else {
+  //     setClassDaySelectedData(undefined);
+  //   }
+  // }, [curriculumData.classDayId]);
+
+  // // SET CLASS DAY NAME WITH CLASS DAY SELECTED DATA WHEN SELECT CLASS DAY
+  // useEffect(() => {
+  //   if (classDaySelectedData !== undefined) {
+  //     setCurriculumData({
+  //       ...curriculumData,
+  //       classDayName: classDaySelectedData!.name,
+  //     });
+  //   }
+  // }, [classDaySelectedData]);
   // -------------------------- END OF CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- TEACHER SELECT STATES AND FUNCTIONS -------------------------- //
@@ -248,9 +428,9 @@ export function InsertCurriculum() {
     (
       document.getElementById("scheduleSelect") as HTMLSelectElement
     ).selectedIndex = 0;
-    (
-      document.getElementById("classDaySelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    // (
+    //   document.getElementById("classDaySelect") as HTMLSelectElement
+    // ).selectedIndex = 0;
     (
       document.getElementById("teacherSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -278,9 +458,9 @@ export function InsertCurriculum() {
     (
       document.getElementById("scheduleSelect") as HTMLSelectElement
     ).selectedIndex = 0;
-    (
-      document.getElementById("classDaySelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    // (
+    //   document.getElementById("classDaySelect") as HTMLSelectElement
+    // ).selectedIndex = 0;
     (
       document.getElementById("teacherSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -303,9 +483,9 @@ export function InsertCurriculum() {
     (
       document.getElementById("scheduleSelect") as HTMLSelectElement
     ).selectedIndex = 0;
-    (
-      document.getElementById("classDaySelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    // (
+    //   document.getElementById("classDaySelect") as HTMLSelectElement
+    // ).selectedIndex = 0;
     (
       document.getElementById("teacherSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -323,9 +503,9 @@ export function InsertCurriculum() {
 
   // RESET ALL UNDER SCHEDULE SELECT WHEN CHANGE SCHEDULE
   useEffect(() => {
-    (
-      document.getElementById("classDaySelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    // (
+    //   document.getElementById("classDaySelect") as HTMLSelectElement
+    // ).selectedIndex = 0;
     (
       document.getElementById("teacherSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -388,6 +568,20 @@ export function InsertCurriculum() {
 
   // RESET FORM FUNCTION
   const resetForm = () => {
+    (
+      document.getElementById("schoolSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setClassDaysData({
+      name: "",
+      sunday: false,
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
+    });
+    setClassDayName([]);
     setCurriculumData({
       schoolId: "",
       schoolName: "",
@@ -416,12 +610,12 @@ export function InsertCurriculum() {
     setValue("schoolCourseName", curriculumData.schoolCourseName);
     setValue("scheduleId", curriculumData.scheduleId);
     setValue("scheduleName", curriculumData.scheduleName);
-    setValue("classDayId", curriculumData.classDayId);
-    setValue("classDayName", curriculumData.classDayName);
+    setValue("classDayId", classDaysCommonId);
+    setValue("classDayName", classDayName.join(" - "));
     setValue("teacherId", curriculumData.teacherId);
     setValue("teacherName", curriculumData.teacherName);
     setValue("confirmInsert", curriculumData.confirmInsert);
-  }, [curriculumData]);
+  }, [curriculumData, classDaysData, classDayName]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
@@ -461,7 +655,32 @@ export function InsertCurriculum() {
     if (!data.confirmInsert) {
       setIsSubmitting(false);
       return toast.error(
-        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar o Currículo... ☑️`,
+        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar a Turma... ☑️`,
+        {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        }
+      );
+    }
+    
+    const curriculumFormattedName = `${data.schoolName} | ${data.schoolCourseName} | ${data.scheduleName} | ${data.classDayName} | Professor: ${data.teacherName}`;
+    
+    // CHECK IF ANY DAY WAS PICKED
+    if (
+      !classDaysData.sunday &&
+      !classDaysData.monday &&
+      !classDaysData.tuesday &&
+      !classDaysData.wednesday &&
+      !classDaysData.thursday &&
+      !classDaysData.friday &&
+      !classDaysData.saturday
+    ) {
+      setIsSubmitting(false);
+      return toast.error(
+        `Por favor, selecione algum dia para adicionar a Turma ${curriculumFormattedName}... ☑️`,
         {
           theme: "colored",
           closeOnClick: true,
@@ -472,9 +691,62 @@ export function InsertCurriculum() {
       );
     }
 
+    // ADD CLASS DAY FUNCTION
+    const addClassDays = async () => {
+      const daysIncluded: number[] = [];
+      if (classDaysData.sunday) {
+        daysIncluded.push(0);
+      }
+      if (classDaysData.monday) {
+        daysIncluded.push(1);
+      }
+      if (classDaysData.tuesday) {
+        daysIncluded.push(2);
+      }
+      if (classDaysData.wednesday) {
+        daysIncluded.push(3);
+      }
+      if (classDaysData.thursday) {
+        daysIncluded.push(4);
+      }
+      if (classDaysData.friday) {
+        daysIncluded.push(5);
+      }
+      if (classDaysData.saturday) {
+        daysIncluded.push(6);
+      }
+      try {
+        await setDoc(doc(db, "classDays", classDaysCommonId), {
+          id: classDaysCommonId,
+          name: classDayName.join(" - "),
+          indexDays: daysIncluded,
+          indexNames: classDayName,
+          timestamp: serverTimestamp(),
+        });
+        resetForm();
+        // toast.success(`${classDayName.join(" - ")} criado com sucesso! 👌`, {
+        //   theme: "colored",
+        //   closeOnClick: true,
+        //   pauseOnHover: true,
+        //   draggable: true,
+        //   autoClose: 3000,
+        // });
+        // setIsSubmitting(false);
+      } catch (error) {
+        console.log("ESSE É O ERROR", error);
+        toast.error(`Ocorreu um erro... 🤯`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+      }
+    };
+
     // ADD CURRICULUM FUNCTION
     const addCurriculum = async () => {
-      const curriculumFormattedName = `${data.schoolName} | ${data.schoolCourseName} | ${data.scheduleName} | ${data.classDayName} | Professor: ${data.teacherName}`;
       try {
         const commonId = uuidv4();
         await setDoc(doc(db, "curriculum", commonId), {
@@ -497,7 +769,7 @@ export function InsertCurriculum() {
           timestamp: serverTimestamp(),
         });
         resetForm();
-        toast.success(`Currículo criado com sucesso! 👌`, {
+        toast.success(`Turma criada com sucesso! 👌`, {
           theme: "colored",
           closeOnClick: true,
           pauseOnHover: true,
@@ -519,40 +791,32 @@ export function InsertCurriculum() {
     };
 
     // CHECKING IF CURRICULUM EXISTS ON DATABASE
-    const curriculumRef = collection(db, "curriculum");
-    const q = query(
-      curriculumRef,
-      where("school", "==", data.schoolName),
-      where("schoolClass", "==", data.schoolClassName),
-      where("schoolCourse", "==", data.schoolCourseName),
-      where("schedule", "==", data.scheduleName),
-      where("classDay", "==", data.classDayName),
-      where("teacher", "==", data.teacherName)
+    const curriculumExists = curriculumDatabaseData.find(
+      (curriculum) =>
+        curriculum.school === data.schoolName &&
+        curriculum.schoolClass === data.schoolClassName &&
+        curriculum.schoolCourse === data.schoolCourseName &&
+        curriculum.schedule === data.scheduleName &&
+        curriculum.classDay === data.classDayName &&
+        curriculum.teacher === data.teacherName
     );
-    const querySnapshot = await getDocs(q);
-    const promises: CurriculumSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as CurriculumSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`Currículo já existe no nosso banco de dados... ❕`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          })
-        );
-      } else {
-        // IF NOT EXISTS, CREATE
-        addCurriculum();
-      }
-    });
+    // IF EXISTS, RETURN ERROR
+    if (curriculumExists) {
+      return (
+        setIsSubmitting(false),
+        toast.error(`Turma já existe no nosso banco de dados... ❕`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        })
+      );
+    } else {
+      // IF NOT EXISTS, CREATE CLASSDAYS AND CURRICULUM
+      addClassDays();
+      addCurriculum();
+    }
   };
 
   return (
@@ -564,7 +828,7 @@ export function InsertCurriculum() {
       <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Adicionar Currículo</h1>
+      <h1 className="font-bold text-2xl my-4">Adicionar Turma TESTANDO</h1>
 
       {/* FORM */}
       <form
@@ -613,7 +877,7 @@ export function InsertCurriculum() {
                 : "w-1/4 text-right"
             }
           >
-            Selecione a Turma:{" "}
+            Selecione o Ano Escolar:{" "}
           </label>
           <select
             id="schoolClassSelect"
@@ -708,7 +972,7 @@ export function InsertCurriculum() {
         </div>
 
         {/* CLASS DAYS SELECT */}
-        <div className="flex gap-2 items-center">
+        {/* <div className="flex gap-2 items-center">
           <label
             htmlFor="classDaySelect"
             className={
@@ -737,7 +1001,7 @@ export function InsertCurriculum() {
           >
             <SelectOptions returnId dataType="classDays" />
           </select>
-        </div>
+        </div> */}
 
         {/* TEACHER SELECT */}
         <div className="flex gap-2 items-center">
@@ -771,6 +1035,25 @@ export function InsertCurriculum() {
           </select>
         </div>
 
+        {/* CLASSDAY IDENTIFIER */}
+        <div className="hidden gap-2 items-center">
+          <label htmlFor="classDaysName" className="w-1/4 text-right">
+            Identificador:{" "}
+          </label>
+          <input
+            type="text"
+            name="classDaysName"
+            disabled={isSubmitting}
+            readOnly
+            placeholder="Selecione os dias para formar o Identificador dos Dias de Aula"
+            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            value={classDayName.length > 0 ? classDayName.join(" - ") : ""}
+          />
+        </div>
+
+        {/* DAYS PICKER */}
+        <ClassDays classDay={classDaysData} toggleClassDays={toggleClassDays} />
+
         {/* CURRICULUM NAME */}
         <div className="flex gap-2 items-center">
           <label htmlFor="curriculumName" className="w-1/4 text-right">
@@ -781,16 +1064,22 @@ export function InsertCurriculum() {
             type="text"
             name="curriculumName"
             disabled
-            placeholder="Escolha as opções acima para visualizar o nome do Currículo"
+            placeholder="Escolha as opções acima para visualizar o nome da Turma"
             className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             value={
               curriculumData.schoolName &&
               curriculumData.schoolCourseName &&
               curriculumData.scheduleName &&
-              curriculumData.classDayName &&
+              classDayName.length > 0 &&
               curriculumData.schoolClassName &&
               curriculumData.teacherName
-                ? `${curriculumData.schoolName} | ${curriculumData.schoolCourseName} | ${curriculumData.scheduleName} | ${curriculumData.classDayName} | ${curriculumData.schoolClassName} | Professor: ${curriculumData.teacherName}`
+                ? `${curriculumData.schoolName} | ${
+                    curriculumData.schoolCourseName
+                  } | ${curriculumData.scheduleName} | ${classDayName.join(
+                    " - "
+                  )} | ${curriculumData.schoolClassName} | Professor: ${
+                    curriculumData.teacherName
+                  }`
                 : ""
             }
           />
@@ -798,66 +1087,67 @@ export function InsertCurriculum() {
 
         {/* CURRICULUM DESCRIPTON CARD */}
         {curriculumData.schoolName &&
-        curriculumData.schoolCourseName &&
-        curriculumData.scheduleName &&
-        curriculumData.classDayName &&
-        curriculumData.teacherName ? (
-          <>
-            <div className="flex gap-2 items-center justify-center mt-2">
-              <div className="flex flex-col w-2/6 items-left p-4 my-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left">
-                <p>
-                  Colégio:{" "}
-                  <span className="text-red-600 dark:text-yellow-500">
-                    {curriculumData.schoolName}
-                  </span>
-                </p>
-
-                <p>
-                  Turma:{" "}
-                  <span className="text-red-600 dark:text-yellow-500">
-                    {curriculumData.schoolClassName}
-                  </span>
-                </p>
-
-                <p>
-                  Modalidade:{" "}
-                  <span className="text-red-600 dark:text-yellow-500">
-                    {curriculumData.schoolCourseName}
-                  </span>
-                </p>
-                <p>
-                  Dias:{" "}
-                  <span className="text-red-600 dark:text-yellow-500">
-                    {curriculumData.classDayName}
-                  </span>
-                </p>
-                {scheduleSelectedData ? (
+          curriculumData.schoolCourseName &&
+          curriculumData.scheduleName &&
+          classDayName.length > 0 &&
+          curriculumData.teacherName && (
+            <>
+              <div className="flex gap-2 items-center justify-center mt-2">
+                <div className="flex flex-col w-2/6 items-left p-4 my-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left">
                   <p>
-                    Horário:{" "}
+                    Colégio:{" "}
                     <span className="text-red-600 dark:text-yellow-500">
-                      De{" "}
-                      {`${scheduleSelectedData!.classStart.slice(0, 2)}h${
-                        scheduleSelectedData!.classStart.slice(3, 5) === "00"
-                          ? ""
-                          : scheduleSelectedData!.classStart.slice(3, 5) + "min"
-                      } a ${scheduleSelectedData!.classEnd.slice(0, 2)}h${
-                        scheduleSelectedData!.classEnd.slice(3, 5) === "00"
-                          ? ""
-                          : scheduleSelectedData!.classEnd.slice(3, 5) + "min"
-                      }`}
+                      {curriculumData.schoolName}
                     </span>
                   </p>
-                ) : null}
-                <p>
-                  Professor:{" "}
-                  <span className="text-red-600 dark:text-yellow-500">
-                    {curriculumData.teacherName}
-                  </span>
-                </p>
+
+                  <p>
+                    Ano Escolar:{" "}
+                    <span className="text-red-600 dark:text-yellow-500">
+                      {curriculumData.schoolClassName}
+                    </span>
+                  </p>
+
+                  <p>
+                    Modalidade:{" "}
+                    <span className="text-red-600 dark:text-yellow-500">
+                      {curriculumData.schoolCourseName}
+                    </span>
+                  </p>
+                  <p>
+                    Dias:{" "}
+                    <span className="text-red-600 dark:text-yellow-500">
+                      {classDayName.join(" - ")}
+                    </span>
+                  </p>
+                  {scheduleSelectedData && (
+                    <p>
+                      Horário:{" "}
+                      <span className="text-red-600 dark:text-yellow-500">
+                        De{" "}
+                        {`${scheduleSelectedData!.classStart.slice(0, 2)}h${
+                          scheduleSelectedData!.classStart.slice(3, 5) === "00"
+                            ? ""
+                            : scheduleSelectedData!.classStart.slice(3, 5) +
+                              "min"
+                        } a ${scheduleSelectedData!.classEnd.slice(0, 2)}h${
+                          scheduleSelectedData!.classEnd.slice(3, 5) === "00"
+                            ? ""
+                            : scheduleSelectedData!.classEnd.slice(3, 5) + "min"
+                        } (${scheduleSelectedData!.name})`}
+                      </span>
+                    </p>
+                  )}
+                  <p>
+                    Professor:{" "}
+                    <span className="text-red-600 dark:text-yellow-500">
+                      {curriculumData.teacherName}
+                    </span>
+                  </p>
+                </div>
               </div>
-            </div>
-          </>
-        ) : null}
+            </>
+          )}
 
         {/** CHECKBOX CONFIRM INSERT */}
         <div className="flex justify-center items-center gap-2 mt-6">
@@ -874,7 +1164,7 @@ export function InsertCurriculum() {
             }}
           />
           <label htmlFor="confirmInsert" className="text-sm">
-            Confirmar criação do Currículo
+            Confirmar criação da Turma
           </label>
         </div>
 

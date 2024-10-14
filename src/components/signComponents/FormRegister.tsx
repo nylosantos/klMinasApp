@@ -16,7 +16,6 @@ import {
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
-import { systemSignUpClosed } from "../../custom";
 import {
   SignUpWithEmailAndPasswordZProps,
   UserFullDataProps,
@@ -28,15 +27,15 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { systemSignUpClosed } from "../../custom";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function FormRegister() {
   // GET GLOBAL DATA
-  const { auth, isSubmitting, setIsSubmitting } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const { auth, checkUser, isSubmitting, setCheckUser, setIsSubmitting } =
+    useContext(GlobalDataContext) as GlobalDataContextType;
 
   // USER SIGNUP STATE
   const [userSignUp, setUserSignUp] =
@@ -95,11 +94,7 @@ export function FormRegister() {
   > = async (data) => {
     setIsSubmitting(true);
     // SIGN UP FUNCTION
-    const result = await createUserWithEmailAndPassword(
-      auth,
-      data.email,
-      data.password
-    )
+    await createUserWithEmailAndPassword(auth, data.email, data.password)
       .then(async (userCredential) => {
         const user = userCredential.user;
         await updateProfile(user, { displayName: data.name });
@@ -125,7 +120,7 @@ export function FormRegister() {
                   phone: null,
                   photo: null,
                   role: "user",
-                  timestamp: serverTimestamp(),
+                  updatedAt: serverTimestamp(),
                 });
               } catch (error) {
                 console.log("ESSE É O ERROR", error);
@@ -141,7 +136,9 @@ export function FormRegister() {
             addUser();
           }
         });
+        // Account Created
         setIsSubmitting(false);
+        setCheckUser(!checkUser);
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -167,7 +164,6 @@ export function FormRegister() {
           setIsSubmitting(false);
         }
       });
-    console.log(result);
   };
 
   return (
@@ -192,6 +188,7 @@ export function FormRegister() {
             <input
               type="text"
               name="name"
+              autoComplete="username"
               disabled={systemSignUpClosed ? true : isSubmitting}
               placeholder={errors.name ? "É necessário inserir o Nome" : "Nome"}
               className={
@@ -210,6 +207,7 @@ export function FormRegister() {
           <input
             type="text"
             name="email"
+            autoComplete="email"
             disabled={systemSignUpClosed ? true : isSubmitting}
             placeholder={
               errors.email ? "É necessário inserir o E-mail" : "E-mail"
@@ -229,6 +227,7 @@ export function FormRegister() {
           <input
             type="password"
             name="password"
+            autoComplete="new-password"
             disabled={systemSignUpClosed ? true : isSubmitting}
             placeholder={
               errors.password ? "É necessário inserir a Senha" : "Senha"
@@ -248,6 +247,7 @@ export function FormRegister() {
           <input
             type="password"
             name="confirmPassword"
+            autoComplete="new-password"
             disabled={systemSignUpClosed ? true : isSubmitting}
             placeholder={
               errors.confirmPassword

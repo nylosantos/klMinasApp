@@ -248,11 +248,9 @@ export function DeleteSchool() {
         setIsSubmitting(false),
         toast.error(
           `Colégio incluído em ${schoolExistsOnCurriculum.length} ${
-            schoolExistsOnCurriculum.length === 1 ? "Currículo" : "Currículos"
+            schoolExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
           }, exclua ou altere primeiramente ${
-            schoolExistsOnCurriculum.length === 1
-              ? "o Currículo"
-              : "os Currículos"
+            schoolExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
           } e depois exclua o ${data.schoolName}... ❕`,
           {
             theme: "colored",
@@ -286,9 +284,11 @@ export function DeleteSchool() {
         setIsSubmitting(false),
         toast.error(
           `Colégio incluído em ${schoolExistsOnClass.length} ${
-            schoolExistsOnClass.length === 1 ? "Turma" : "Turmas"
+            schoolExistsOnClass.length === 1 ? "Ano Escolar" : "Anos Escolares"
           }, exclua ou altere primeiramente ${
-            schoolExistsOnClass.length === 1 ? "o Turma" : "os Turmas"
+            schoolExistsOnClass.length === 1
+              ? "o Ano Escolar"
+              : "os Anos Escolares"
           } e depois exclua o ${data.schoolName}... ❕`,
           {
             theme: "colored",
@@ -303,40 +303,6 @@ export function DeleteSchool() {
       // IF NO EXISTS, DELETE
       deleteSchool();
     }
-
-    // const schoolRef = collection(db, "curriculum");
-    // const q = query(schoolRef, where("school", "==", data.schoolName));
-    // const querySnapshot = await getDocs(q);
-    // const promises: SchoolSearchProps[] = [];
-    // querySnapshot.forEach((doc) => {
-    //   const promise = doc.data() as SchoolSearchProps;
-    //   promises.push(promise);
-    // });
-    // Promise.all(promises).then((results) => {
-    //   // IF EXISTS, RETURN ERROR
-    //   if (results.length !== 0) {
-    //     return (
-    //       setIsSubmitting(false),
-    //       toast.error(
-    //         `Colégio incluído em ${results.length} ${
-    //           results.length === 1 ? "Currículo" : "Currículos"
-    //         }, exclua ou altere primeiramente ${
-    //           results.length === 1 ? "o Currículo" : "os Currículos"
-    //         } e depois exclua o ${data.schoolName}... ❕`,
-    //         {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         }
-    //       )
-    //     );
-    //   } else {
-    //     // IF NO EXISTS, DELETE
-    //     deleteSchool();
-    //   }
-    // });
   };
 
   return (

@@ -255,7 +255,11 @@ export function EditMyUser() {
       <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Editando {userEditData?.name}</h1>
+      <h1 className="font-bold text-2xl my-4">
+        {userFullData?.role === "user"
+          ? "Minha Conta"
+          : `Editando ${userEditData?.name}`}
+      </h1>
 
       {/* LOADING DATA */}
       {!userFullData ? (

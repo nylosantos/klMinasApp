@@ -33,7 +33,6 @@ export function DeleteClassDays() {
     useState<DeleteClassDaysValidationZProps>({
       classDayId: "",
       classDayName: "",
-      confirmDelete: false,
     });
 
   // -------------------------- CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
@@ -79,7 +78,6 @@ export function DeleteClassDays() {
     defaultValues: {
       classDayId: "",
       classDayName: "",
-      confirmDelete: false,
     },
   });
 
@@ -92,7 +90,6 @@ export function DeleteClassDays() {
     setClassDaysData({
       classDayId: "",
       classDayName: "",
-      confirmDelete: false,
     });
     reset();
   };
@@ -101,16 +98,11 @@ export function DeleteClassDays() {
   useEffect(() => {
     setValue("classDayId", classDaysData.classDayId);
     setValue("classDayName", classDaysData.classDayName);
-    setValue("confirmDelete", classDaysData.confirmDelete);
   }, [classDaysData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [
-      errors.classDayId,
-      errors.classDayName,
-      errors.confirmDelete,
-    ];
+    const fullErrors = [errors.classDayId, errors.classDayName];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -154,21 +146,6 @@ export function DeleteClassDays() {
       }
     };
 
-    // CHECK DELETE CONFIRMATION
-    if (!data.confirmDelete) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir o dia de Aula: ${data.classDayName}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
     // CHECKING IF CLASS DAYS EXISTS ON CURRICULUM DATABASE
 
     // SEARCH CURRICULUM WITH THIS CLASS DAYS
@@ -182,13 +159,9 @@ export function DeleteClassDays() {
         setIsSubmitting(false),
         toast.error(
           `Dia de Aula incluído em ${classDaysExistsOnCurriculum.length} ${
-            classDaysExistsOnCurriculum.length === 1
-              ? "Currículo"
-              : "Currículos"
+            classDaysExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
           }, exclua ou altere primeiramente ${
-            classDaysExistsOnCurriculum.length === 1
-              ? "o Currículo"
-              : "os Currículos"
+            classDaysExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
           } e depois exclua o dia de aula: ${data.classDayName}... ❕`,
           {
             theme: "colored",
@@ -203,40 +176,6 @@ export function DeleteClassDays() {
       // IF NO EXISTS, DELETE
       deleteClassDay();
     }
-
-    // const classDayRef = collection(db, "curriculum");
-    // const q = query(classDayRef, where("classDay", "==", data.classDayName));
-    // const querySnapshot = await getDocs(q);
-    // const promises: DocumentData[] = [];
-    // querySnapshot.forEach((doc) => {
-    //   const promise = doc.data();
-    //   promises.push(promise);
-    // });
-    // Promise.all(promises).then((results) => {
-    //   // IF EXISTS, RETURN ERROR
-    //   if (results.length !== 0) {
-    //     return (
-    //       setIsSubmitting(false),
-    //       toast.error(
-    //         `Dia de Aula incluído em ${results.length} ${
-    //           results.length === 1 ? "Currículo" : "Currículos"
-    //         }, exclua ou altere primeiramente ${
-    //           results.length === 1 ? "o Currículo" : "os Currículos"
-    //         } e depois exclua o Dia de Aula: ${data.classDayName}... ❕`,
-    //         {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         }
-    //       )
-    //     );
-    //   } else {
-    //     // IF NO EXISTS, DELETE
-    //     deleteClassDay();
-    //   }
-    // });
   };
 
   return (
@@ -289,27 +228,6 @@ export function DeleteClassDays() {
 
         {isSelected ? (
           <>
-            {/** CHECKBOX CONFIRM DELETE */}
-            <div className="flex justify-center items-center gap-2 mt-6">
-              <input
-                type="checkbox"
-                name="confirmDelete"
-                className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none "
-                checked={classDaysData.confirmDelete}
-                onChange={() => {
-                  setClassDaysData({
-                    ...classDaysData,
-                    confirmDelete: !classDaysData.confirmDelete,
-                  });
-                }}
-              />
-              <label htmlFor="confirmDelete" className="text-sm">
-                {classDaysData.classDayName
-                  ? `Confirmar exclusão de ${classDaysData.classDayName}`
-                  : `Confirmar exclusão`}
-              </label>
-            </div>
-
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">
               {/* SUBMIT BUTTON */}

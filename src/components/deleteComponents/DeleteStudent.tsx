@@ -222,141 +222,11 @@ export function DeleteStudent() {
         setStudentsArrayData(studentsToArray);
       });
     }
-
-    // // QUERY FOR EXPERIMENTAL STUDENTS
-    // const queryExperimental = query(
-    //   collectionGroup(db, "studentExperimentalCurriculum"),
-    //   where("idsArray", "array-contains", studentData.curriculumId)
-    // );
-    // // QUERY FOR ENROLLED STUDENTS
-    // const queryCurriculum = query(
-    //   collectionGroup(db, "studentCurriculum"),
-    //   where("idsArray", "array-contains", studentData.curriculumId)
-    // );
-    // const handleAllStudentsData = async () => {
-    //   if (studentData.studentType === "experimental") {
-    //     // GETTING EXPERIMENTAL STUDENTS
-    //     const getExperimental = await getDocs(queryExperimental);
-    //     getExperimental.forEach(async (doc) => {
-    //       const studentId = doc.ref.parent.parent?.id;
-    //       if (studentId) {
-    //         const queryStudent = query(
-    //           collection(db, "students"),
-    //           where("id", "==", studentId)
-    //         );
-    //         const getStudentFullData = await getDocs(queryStudent);
-    //         getStudentFullData.forEach((doc) => {
-    //           const dataStudent = doc.data() as StudentSearchProps;
-    //           setStudentsArrayData((studentsArrayData) => [
-    //             ...studentsArrayData,
-    //             dataStudent,
-    //           ]);
-    //         });
-    //       }
-    //     });
-    //   }
-    //   if (studentData.studentType === "enrolled") {
-    //     // GETTING ENROLLED STUDENTS
-    //     const getCurriculum = await getDocs(queryCurriculum);
-    //     getCurriculum.forEach(async (doc) => {
-    //       const studentId = doc.ref.parent.parent?.id;
-    //       if (studentId) {
-    //         const queryStudent = query(
-    //           collection(db, "students"),
-    //           where("id", "==", studentId)
-    //         );
-    //         const getStudentFullData = await getDocs(queryStudent);
-    //         getStudentFullData.forEach((doc) => {
-    //           const dataStudent = doc.data() as StudentSearchProps;
-    //           setStudentsArrayData((studentsArrayData) => [
-    //             ...studentsArrayData,
-    //             dataStudent,
-    //           ]);
-    //         });
-    //       }
-    //     });
-    //   }
-    // };
-    // await handleAllStudentsData();
     setLoadingData(false);
   };
 
   // LOADING STATE FOR USING WHEN IS LOADING DATA
   const [loadingData, setLoadingData] = useState(false);
-
-  // // STUDENT SELECTED DATA EXPERIMENTAL CURRICULUM ARRAY DETAILS
-  // const [
-  //   experimentalCurriculumArrayDetails,
-  //   setExperimentalCurriculumArrayDetails,
-  // ] = useState<SubCollectionDetailsProps[]>([]);
-
-  // // STUDENT SELECTED DATA CURRICULUM ARRAY DETAILS
-  // const [curriculumArrayDetails, setCurriculumArrayDetails] = useState<
-  //   SubCollectionDetailsProps[]
-  // >([]);
-
-  // // GET STUDENT CURRICULUM DATA WHEN SELECT STUDENT
-  // useEffect(() => {
-  //   if (studentData.studentId) {
-  //     const handleAllCurriculumDetails = async () => {
-  //       // GET EXPERIMENTAL CURRICULUM
-  //       const queryExperimentalStudent = query(
-  //         collection(
-  //           db,
-  //           `students/${studentData.studentId}/studentExperimentalCurriculum`
-  //         )
-  //       );
-  //       const queryExperimentalStudentSnapshot = await getDocs(
-  //         queryExperimentalStudent
-  //       );
-  //       const experimentalStudentPromises: SubCollectionProps[] = [];
-  //       queryExperimentalStudentSnapshot.forEach((doc) => {
-  //         const promise = doc.data() as SubCollectionProps;
-  //         experimentalStudentPromises.push(promise);
-  //       });
-  //       Promise.all(experimentalStudentPromises).then(
-  //         (results: SubCollectionProps[]) => {
-  //           if (results.length > 0) {
-  //             const detailsExperimentalStudentData = results[0].detailsArray;
-  //             detailsExperimentalStudentData.map(
-  //               (detail: SubCollectionDetailsProps) => {
-  //                 setExperimentalCurriculumArrayDetails(
-  //                   (experimentalCurriculumArrayDetails) => [
-  //                     ...experimentalCurriculumArrayDetails,
-  //                     detail,
-  //                   ]
-  //                 );
-  //               }
-  //             );
-  //           }
-  //         }
-  //       );
-  //       // GET ENROLLED CURRICULUM
-  //       const queryStudent = query(
-  //         collection(db, `students/${studentData.studentId}/studentCurriculum`)
-  //       );
-  //       const queryStudentSnapshot = await getDocs(queryStudent);
-  //       const studentPromises: SubCollectionProps[] = [];
-  //       queryStudentSnapshot.forEach((doc) => {
-  //         const promise = doc.data() as SubCollectionProps;
-  //         studentPromises.push(promise);
-  //       });
-  //       Promise.all(studentPromises).then((results: SubCollectionProps[]) => {
-  //         if (results.length > 0) {
-  //           const detailsStudentData: SubCollectionDetailsProps[] =
-  //             results[0].detailsArray;
-  //           detailsStudentData.map((detail: SubCollectionDetailsProps) => {
-  //             setCurriculumArrayDetails((curriculumArrayDetails) => [
-  //               ...curriculumArrayDetails,
-  //               detail,
-  //             ]);
-  //           });
-  //         }
-  //       });
-  //     };
-  //     handleAllCurriculumDetails();
-  //   }
-  // }, [studentData.studentId]);
 
   // -------------------------- END OF STUDENTS SELECT STATES AND FUNCTIONS -------------------------- //
 
@@ -663,161 +533,13 @@ export function DeleteStudent() {
       );
       setIsSubmitting(false);
     }
-
-    // const familyQuery = query(
-    //   collectionGroup(db, "studentFamilyAtSchool"),
-    //   where("id", "==", data.studentId)
-    // );
-    // const familySnapshot = await getDocs(familyQuery);
-    // const familyPromises: SubCollectionFamilyProps[] = [];
-    // familySnapshot.forEach((doc) => {
-    //   const promise = doc.data() as SubCollectionFamilyProps;
-    //   familyPromises.push(promise);
-    // });
-    // Promise.all(familyPromises).then(async (results) => {
-    //   if (results.length !== 0) {
-    //     // IF EXISTS, REMOVE STUDENT FAMILY AT SCHOOL REGISTERS
-    //     await deleteDoc(
-    //       doc(
-    //         db,
-    //         `students/${data.studentId}/studentFamilyAtSchool`,
-    //         data.studentId
-    //       )
-    //     );
-    //     // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
-    //     const myFamilyData = results[0];
-    //     myFamilyData.detailsArray.map(
-    //       async (student: SubCollectionFamilyDetailsProps) => {
-    //         const q = query(
-    //           collectionGroup(db, "studentFamilyAtSchool"),
-    //           where("id", "==", student.id)
-    //         );
-    //         const querySnapshot = await getDocs(q);
-    //         const promises: SubCollectionFamilyProps[] = [];
-    //         querySnapshot.forEach((doc) => {
-    //           const promise = doc.data() as SubCollectionFamilyProps;
-    //           promises.push(promise);
-    //         });
-    //         Promise.all(promises).then((results) => {
-    //           if (results.length !== 0) {
-    //             const familyBrotherData = results[0];
-    //             familyBrotherData.detailsArray.map(
-    //               async (familyStudent: SubCollectionFamilyDetailsProps) => {
-    //                 if (familyStudent.id === data.studentId) {
-    //                   await updateDoc(
-    //                     doc(
-    //                       db,
-    //                       `students/${familyBrotherData.id}/studentFamilyAtSchool/${familyBrotherData.id}`
-    //                     ),
-    //                     {
-    //                       idsArray: arrayRemove(myFamilyData.id),
-    //                       detailsArray: arrayRemove({
-    //                         id: familyStudent.id,
-    //                         name: familyStudent.name,
-    //                         applyDiscount: familyStudent.applyDiscount,
-    //                       }),
-    //                     }
-    //                   );
-    //                 }
-    //               }
-    //             );
-    //           }
-    //         });
-    //       }
-    //     );
-    //   }
-    // });
-
-    // // DELETE STUDENT FROM EXPERIMENTAL CLASSES
-    // if (experimentalCurriculumArrayDetails) {
-    //   // REMOVE STUDENT EXPERIMENTAL CURRICULUM REGISTERS
-    //   await deleteDoc(
-    //     doc(
-    //       db,
-    //       `students/${data.studentId}/studentExperimentalCurriculum`,
-    //       data.studentId
-    //     )
-    //   );
-    //   experimentalCurriculumArrayDetails.map(
-    //     async (curriculum: SubCollectionDetailsProps) => {
-    //       const q = query(
-    //         collectionGroup(db, "curriculumExperimentalStudents"),
-    //         where("id", "==", curriculum.id)
-    //       );
-    //       const querySnapshot = await getDocs(q);
-    //       const promises: SubCollectionProps[] = [];
-    //       querySnapshot.forEach((doc) => {
-    //         const promise = doc.data() as SubCollectionProps;
-    //         promises.push(promise);
-    //       });
-    //       Promise.all(promises).then((results) => {
-    //         if (results.length > 0) {
-    //           const curriculumData = results[0];
-    //           updateDoc(
-    //             doc(
-    //               db,
-    //               `curriculum/${curriculumData.id}/curriculumExperimentalStudents/${curriculumData.id}`
-    //             ),
-    //             {
-    //               idsArray: arrayRemove(data.studentId),
-    //               detailsArray: arrayRemove({
-    //                 id: data.studentId,
-    //                 name: data.studentName,
-    //                 date: curriculum.date,
-    //                 isExperimental: curriculum.isExperimental,
-    //                 indexDays: [],
-    //               }),
-    //             }
-    //           );
-    //         }
-    //       });
-    //     }
-    //   );
-    // }
-
-    // // DELETE STUDENT FROM CURRICULUM
-    // if (curriculumArrayDetails) {
-    //   // REMOVE STUDENT EXPERIMENTAL CURRICULUM REGISTERS
-    //   await deleteDoc(
-    //     doc(db, `students/${data.studentId}/studentCurriculum`, data.studentId)
-    //   );
-    //   curriculumArrayDetails.map(
-    //     async (curriculum: SubCollectionDetailsProps) => {
-    //       const q = query(
-    //         collectionGroup(db, "curriculumStudents"),
-    //         where("id", "==", curriculum.id)
-    //       );
-    //       const querySnapshot = await getDocs(q);
-    //       const promises: SubCollectionProps[] = [];
-    //       querySnapshot.forEach((doc) => {
-    //         const promise = doc.data() as SubCollectionProps;
-    //         promises.push(promise);
-    //       });
-    //       Promise.all(promises).then((results) => {
-    //         if (results.length > 0) {
-    //           const curriculumData = results[0];
-    //           updateDoc(
-    //             doc(
-    //               db,
-    //               `curriculum/${curriculumData.id}/curriculumStudents/${curriculumData.id}`
-    //             ),
-    //             {
-    //               idsArray: arrayRemove(data.studentId),
-    //               detailsArray: arrayRemove({
-    //                 id: data.studentId,
-    //                 name: data.studentName,
-    //                 date: curriculum.date,
-    //                 isExperimental: curriculum.isExperimental,
-    //                 indexDays: curriculum.indexDays,
-    //               }),
-    //             }
-    //           );
-    //         }
-    //       });
-    //     }
-    //   );
-    // }
   };
+
+  function handleFormatStudentBirthdate(data: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const printData: any = data;
+    return printData.toDate().toLocaleDateString();
+  }
 
   return (
     <div className="flex flex-col container text-center">
@@ -874,7 +596,7 @@ export function DeleteStudent() {
                 : "w-1/4 text-right"
             }
           >
-            Selecione a Turma:{" "}
+            Selecione o Ano Escolar:{" "}
           </label>
           <select
             id="schoolClassSelect"
@@ -901,7 +623,8 @@ export function DeleteStudent() {
             ) : (
               <option disabled value={" -- select an option -- "}>
                 {" "}
-                -- Selecione uma escola para ver as turmas disponíveis --{" "}
+                -- Selecione uma escola para ver os Anos Escolares disponíveis
+                --{" "}
               </option>
             )}
           </select>
@@ -950,7 +673,8 @@ export function DeleteStudent() {
             ) : (
               <option disabled value={" -- select an option -- "}>
                 {" "}
-                -- Selecione uma Turma para ver as modalidades disponíveis --{" "}
+                -- Selecione um Ano Escolar para ver as modalidades disponíveis
+                --{" "}
               </option>
             )}
           </select>
@@ -1019,7 +743,7 @@ export function DeleteStudent() {
         </div>
 
         {/* STUDENT SELECT CARD SECTION */}
-        {isSelected ? (
+        {isSelected && (
           loadingData ? (
             <>
               {/* DATA LOADING */}
@@ -1068,6 +792,7 @@ export function DeleteStudent() {
                             htmlFor={student.id}
                             className="flex flex-col gap-4"
                           >
+                            <p className="text-center">Dados do Aluno</p>
                             <p>
                               Nome:{" "}
                               <span className="text-red-600 dark:text-yellow-500">
@@ -1075,45 +800,91 @@ export function DeleteStudent() {
                               </span>
                             </p>
                             <p>
+                              Data de Nascimento:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {handleFormatStudentBirthdate(
+                                  student.birthDate
+                                )}
+                              </span>
+                            </p>
+
+                            <p className="text-center">Filiação 1</p>
+                            <p>
+                              Nome:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {student.parentOne.name}
+                              </span>
+                            </p>
+                            <p>
                               E-mail:{" "}
                               <span className="text-red-600 dark:text-yellow-500">
-                                {student.email}
-                              </span>
-                            </p>
-                            <p>
-                              Responsável:{" "}
-                              <span className="text-red-600 dark:text-yellow-500">
-                                {student.responsible}
-                              </span>
-                            </p>
-                            <p>
-                              Responsável Financeiro:{" "}
-                              <span className="text-red-600 dark:text-yellow-500">
-                                {student.financialResponsible}
+                                {student.parentOne.email}
                               </span>
                             </p>
                             <p>
                               Telefone:{" "}
                               <span className="text-red-600 dark:text-yellow-500">
-                                {student.phone}
+                                {student.parentOne.phone}
                               </span>
                             </p>
-                            {student.phoneSecondary !== " -" ? (
+                            <p className="text-center">Filiação 2</p>
+                            <p>
+                              Nome:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {student.parentTwo.name}
+                              </span>
+                            </p>
+                            <p>
+                              E-mail:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {student.parentTwo.email}
+                              </span>
+                            </p>
+                            <p>
+                              Telefone:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {student.parentTwo.phone}
+                              </span>
+                            </p>
+                            <p className="text-center">
+                              Responsável Financeiro
+                            </p>
+                            <p>
+                              Nome:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {student.financialResponsible.name}
+                              </span>
+                            </p>
+                            <p>
+                              E-mail:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {student.financialResponsible.email}
+                              </span>
+                            </p>
+                            <p>
+                              Telefone:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {student.financialResponsible.phone}
+                              </span>
+                            </p>
+                            {student.financialResponsible.phoneSecondary !==
+                              "" && (
                               <p>
                                 Telefone 2:{" "}
                                 <span className="text-red-600 dark:text-yellow-500">
-                                  {student.phoneSecondary}
+                                  {student.financialResponsible.phoneSecondary}
                                 </span>
                               </p>
-                            ) : null}
-                            {student.phoneTertiary !== " -" ? (
+                            )}
+                            {student.financialResponsible.phoneTertiary !==
+                              "" && (
                               <p>
                                 Telefone 3:{" "}
                                 <span className="text-red-600 dark:text-yellow-500">
-                                  {student.phoneTertiary}
+                                  {student.financialResponsible.phoneTertiary}
                                 </span>
                               </p>
-                            ) : null}
+                            )}
                           </label>
                         </div>
                       </>
@@ -1178,7 +949,7 @@ export function DeleteStudent() {
               </div>
             </>
           )
-        ) : null}
+        )}
       </form>
     </div>
   );

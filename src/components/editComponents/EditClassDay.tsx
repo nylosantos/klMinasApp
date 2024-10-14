@@ -477,32 +477,6 @@ export function EditClassDay() {
       // IF EXISTS, EDIT
       editClassDay();
     }
-    // const classDayRef = collection(db, "classDays");
-    // const q = query(classDayRef, where("id", "==", classDayData.classDayId));
-    // const querySnapshot = await getDocs(q);
-    // const promises: ClassDaySearchProps[] = [];
-    // querySnapshot.forEach((doc) => {
-    //   const promise = doc.data() as ClassDaySearchProps;
-    //   promises.push(promise);
-    // });
-    // Promise.all(promises).then((results) => {
-    //   // IF NOT EXISTS, RETURN ERROR
-    //   if (results.length === 0) {
-    //     return (
-    //       setIsSubmitting(false),
-    //       toast.error(`Modalidade não existe no banco de dados... ❕`, {
-    //         theme: "colored",
-    //         closeOnClick: true,
-    //         pauseOnHover: true,
-    //         draggable: true,
-    //         autoClose: 3000,
-    //       })
-    //     );
-    //   } else {
-    //     // IF EXISTS, EDIT
-    //     editClassDay();
-    //   }
-    // });
   };
 
   return (

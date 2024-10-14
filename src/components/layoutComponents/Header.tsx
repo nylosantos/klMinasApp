@@ -9,11 +9,6 @@ import {
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 
-type NavigationsProps = {
-  label: string;
-  path: "Dashboard" | "Settings" | "ManageSchools" | "ManageUsers";
-};
-
 export function Header() {
   // GET GLOBAL DATA
   const {
@@ -34,19 +29,6 @@ export function Header() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // HEADER NAVIGATION
-  const navigations: NavigationsProps[] = [
-    { label: "Dashboard", path: "Dashboard" },
-    { label: "Gerenciar Escolas", path: "ManageSchools" },
-    {
-      label:
-        userFullData?.role === "root" || userFullData?.role === "admin"
-          ? "Gerenciar Contas"
-          : "Gerenciar Conta",
-      path: "ManageUsers",
-    },
-  ];
 
   // THEME CHANGER FUNCTION
   const renderThemeChanger = () => {
@@ -100,47 +82,65 @@ export function Header() {
 
         {/* NAVIGATION DISPLAY CENTER */}
         <div className="flex w-4/6 justify-center gap-10">
-          {logged && userFullData ? (
+          {logged && userFullData && (
             <>
-              {navigations.map((nav) => (
-                <div
-                  key={nav.path}
-                  className="flex border-b-2 border-klGreen-500/0 hover:border-klGreen-500 dark:border-klGreen-500/10 dark:hover:border-klOrange-500"
+              {/* DASHBOARD NAV ITEM */}
+              <div
+                key={"Dashboard"}
+                className="flex border-b-2 border-klGreen-500/0 hover:border-klGreen-500 dark:border-klGreen-500/10 dark:hover:border-klOrange-500"
+              >
+                <button
+                  onClick={() =>
+                    setPage({ prev: page.show, show: "Dashboard" })
+                  }
+                  className={
+                    page.show === "Dashboard"
+                      ? `text-klOrange-500 dark:text-gray-100`
+                      : "text-klGreen-500 dark:text-klOrange-500"
+                  }
                 >
-                  <button
-                    onClick={() => setPage({ prev: page.show, show: nav.path })}
-                    className={
-                      page.show === nav.path
-                        ? `text-klOrange-500 dark:text-gray-100`
-                        : "text-klGreen-500 dark:text-klOrange-500"
-                    }
-                  >
-                    {nav.label}
-                  </button>
-                </div>
-              ))}
-              {userFullData.role === "root" || userFullData.role === "admin" ? (
+                  Dashboard
+                </button>
+              </div>
+              {(userFullData.role === "root" ||
+                userFullData.role === "admin") && (
                 <>
-                  {/* NAVIGATION SETTINGS ITEM */}
+                  {/* MANAGE SCHOOLS NAV ITEM */}
                   <div
-                    key={"settings"}
+                    key={"ManageSchools"}
                     className="flex border-b-2 border-klGreen-500/0 hover:border-klGreen-500 dark:border-klGreen-500/10 dark:hover:border-klOrange-500"
                   >
                     <button
                       onClick={() =>
-                        setPage({ prev: page.show, show: "Settings" })
+                        setPage({ prev: page.show, show: "ManageSchools" })
                       }
                       className={
-                        page.show === "Settings"
+                        page.show === "ManageSchools"
                           ? `text-klOrange-500 dark:text-gray-100`
                           : "text-klGreen-500 dark:text-klOrange-500"
                       }
                     >
-                      Configurações do Sistema
+                      Gerenciar Escolas
                     </button>
                   </div>
                 </>
-              ) : null}
+              )}
+              {/* NAVIGATION SETTINGS NAV ITEM */}
+              <div
+                key={"Settings"}
+                className="flex border-b-2 border-klGreen-500/0 hover:border-klGreen-500 dark:border-klGreen-500/10 dark:hover:border-klOrange-500"
+              >
+                <button
+                  onClick={() => setPage({ prev: page.show, show: "Settings" })}
+                  className={
+                    page.show === "Settings"
+                      ? `text-klOrange-500 dark:text-gray-100`
+                      : "text-klGreen-500 dark:text-klOrange-500"
+                  }
+                >
+                  Configurações
+                </button>
+              </div>
               {/* NAVIGATION LOGOUT ITEM */}
               <div
                 key={"logout"}
@@ -157,16 +157,19 @@ export function Header() {
                 </p>
               </div>
             </>
-          ) : null}
+          )}
         </div>
 
         {/* BUTTON THEME CHANGE RIGHT */}
         <div className="flex w-1/6 justify-end items-center gap-4">
-          {logged && userFullData ? (
-            <p className="text-klGreen-500 dark:text-klOrange-500 font-bold">
+          {logged && userFullData && (
+            <p
+              className="text-klGreen-500 dark:text-klOrange-500 font-bold cursor-pointer"
+              onClick={() => setPage({ prev: page.show, show: "Settings" })}
+            >
               Olá, {userFullData.name}
             </p>
-          ) : null}
+          )}
           {renderThemeChanger()}
         </div>
       </div>

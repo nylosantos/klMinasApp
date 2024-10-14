@@ -6,7 +6,6 @@ import { EditSchool } from "../editComponents/EditSchool";
 import { EditCourse } from "../editComponents/EditCourse";
 import { EditStudent } from "../editComponents/EditStudent";
 import { EditTeacher } from "../editComponents/EditTeacher";
-import { EditClassDay } from "../editComponents/EditClassDay";
 import { EditSchedule } from "../editComponents/EditSchedule";
 import { EditCurriculum } from "../editComponents/EditCurriculum";
 
@@ -42,7 +41,7 @@ export default function EditPage() {
               )
             }
           >
-            Turma
+            Ano Escolar
           </Tab>
           <Tab
             className={({ selected }) =>
@@ -55,18 +54,6 @@ export default function EditPage() {
             }
           >
             Modalidade
-          </Tab>
-          <Tab
-            className={({ selected }) =>
-              classNames(
-                "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
-                selected
-                  ? "bg-white text-klGreen-500 shadow dark:text-gray-800 cursor-default"
-                  : "text-klGreen-500 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
-              )
-            }
-          >
-            Dias de Aula
           </Tab>
           <Tab
             className={({ selected }) =>
@@ -102,7 +89,7 @@ export default function EditPage() {
               )
             }
           >
-            Currículo
+            Turma
           </Tab>
           <Tab
             className={({ selected }) =>
@@ -126,9 +113,6 @@ export default function EditPage() {
           </TabPanel>
           <TabPanel as={Fragment}>
             <EditCourse />
-          </TabPanel>
-          <TabPanel as={Fragment}>
-            <EditClassDay />
           </TabPanel>
           <TabPanel as={Fragment}>
             <EditSchedule />

@@ -12,6 +12,7 @@ import {
   SchoolCourseSearchProps,
   SchoolSearchProps,
   StudentSearchProps,
+  SystemConstantsSearchProps,
   TeacherSearchProps,
   UserFullDataProps,
 } from "../@types";
@@ -32,6 +33,8 @@ export type SetPageProps = {
 
 export type GlobalDataContextType = {
   auth: Auth;
+  checkUser: boolean;
+  isExperimentalClass: boolean;
   isSubmitting: boolean;
   login: boolean;
   logged: boolean;
@@ -46,11 +49,14 @@ export type GlobalDataContextType = {
   curriculumDatabaseData: CurriculumSearchProps[];
   studentsDatabaseData: StudentSearchProps[];
   classDaysDatabaseData: ClassDaySearchProps[];
+  systemConstantsDatabaseData: SystemConstantsSearchProps[];
   // END OF DATABASE DATA
   theme: "dark" | "light" | null;
   user: User | null | undefined;
   userFullData: UserFullDataProps | undefined;
   userLoading: boolean;
+  setCheckUser: (option: boolean) => void;
+  setIsExperimentalClass: (option: boolean) => void;
   setIsSubmitting: (option: boolean) => void;
   setLogged: (option: boolean) => void;
   setLogin: (option: boolean) => void;
@@ -112,6 +118,9 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   // USER DATA STATE
   const [userFullData, setUserFullData] = useState<UserFullDataProps>();
 
+  // CHECK USER TRIGGER STATE
+  const [checkUser, setCheckUser] = useState(false);
+
   // HANDLE USER DATA FUNCTION
   const handleUserFullData = async (user: User | null | undefined) => {
     if (user !== null && user !== undefined) {
@@ -125,11 +134,12 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         promises.push(promise);
       });
       Promise.all(promises).then((results) => {
-        handleData();
-        setUserFullData(results[0]);
-        setLogged(true);
-        setIsSubmitting(false);
-        setLogin(false);
+        console.log("usuário: ", results[0]);
+        if (results) {
+          handleData();
+          setUserFullData(results[0]);
+          setLogin(false);
+        }
       });
     } else
       return (
@@ -147,9 +157,11 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   // MONITORING USER LOGIN
   useEffect(() => {
     setIsSubmitting(true);
+    console.log("do monitoramento do user: ", user);
     if (!user) {
       setLogged(false);
       setIsSubmitting(false);
+      setUserFullData(undefined);
     }
 
     if (user && !userFullData) {
@@ -160,7 +172,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       setLogged(true);
       setIsSubmitting(false);
     }
-  }, [user]);
+  }, [user, checkUser, userFullData]);
 
   // PAGE STATE
   const [page, setPage] = useState<SetPageProps>({
@@ -168,7 +180,14 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     show: "Dashboard",
   });
 
+  // EXPERIMENTAL CLASS STATE FOR NOT LOGGED USERS
+  const [isExperimentalClass, setIsExperimentalClass] = useState(false);
+
   // -------------------------------------------------- DATABASE CONTEXT LISTENERS -----------------------------------------------//
+  // SYSTEM CONSTANTS STATE
+  const [systemConstantsDatabaseData, setSystemConstantsDatabaseData] =
+    useState<SystemConstantsSearchProps[]>([]);
+
   // SCHOOL DATA STATE
   const [schoolDatabaseData, setSchoolDatabaseData] = useState<
     SchoolSearchProps[]
@@ -213,6 +232,27 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   const [appUsersDatabaseData, setAppUsersDatabaseData] = useState<
     UserFullDataProps[]
   >([]);
+
+  function handleSystemConstants(){
+    const systemConstantsQuery = query(collection(db, "systemConstants"));
+    const systemConstantsListener = onSnapshot(
+      systemConstantsQuery,
+      (querySnapshot) => {
+        const systemConstants: SystemConstantsSearchProps[] = [];
+        querySnapshot.forEach((doc) => {
+          const systemConstant = doc.data() as SystemConstantsSearchProps;
+          systemConstantsDatabaseData.push(systemConstant);
+        });
+        setSystemConstantsDatabaseData(systemConstants);
+      }
+    );
+    systemConstantsListener;
+  }
+
+  // GET SYSTEM CONSTANTS
+  useEffect(() => {
+    handleSystemConstants()
+  }, []);
 
   // GET DATA
   async function handleData() {
@@ -348,6 +388,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     <GlobalDataContext.Provider
       value={{
         auth,
+        checkUser,
+        isExperimentalClass,
         isSubmitting,
         logged,
         login,
@@ -362,11 +404,14 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         curriculumDatabaseData,
         studentsDatabaseData,
         classDaysDatabaseData,
+        systemConstantsDatabaseData,
         // END OF DATABASE DATA
         theme,
         user,
         userFullData,
         userLoading,
+        setCheckUser,
+        setIsExperimentalClass,
         setIsSubmitting,
         setLogged,
         setLogin,

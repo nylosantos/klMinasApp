@@ -3,6 +3,8 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../context/GlobalDataContext";
+import { InsertStudent } from "../components/insertComponents/InsertStudent";
+import { SubmitLoading } from "../components/layoutComponents/SubmitLoading";
 
 // INITIALIZING FIRESTORE DB
 // const db = getFirestore(app);
@@ -10,6 +12,7 @@ import {
 export default function Dashboard() {
   // GET GLOBAL DATA
   const {
+    isSubmitting,
     schoolDatabaseData,
     schoolClassDatabaseData,
     schoolCourseDatabaseData,
@@ -17,102 +20,8 @@ export default function Dashboard() {
     teacherDatabaseData,
     curriculumDatabaseData,
     studentsDatabaseData,
+    userFullData,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
-  // // SCHOOL DATA STATE
-  // const [schoolData, setSchoolData] = useState<SchoolSearchProps[]>([]);
-
-  // // SCHOOL CLASS DATA STATE
-  // const [schoolClassData, setSchoolClassData] = useState<
-  //   SchoolClassSearchProps[]
-  // >([]);
-
-  // // SCHOOL COURSE DATA STATE
-  // const [schoolCourseData, setSchoolCourseData] = useState<
-  //   SchoolCourseSearchProps[]
-  // >([]);
-
-  // // SCHEDULE DATA STATE
-  // const [scheduleData, setScheduleData] = useState<ScheduleSearchProps[]>([]);
-
-  // // TEACHER DATA STATE
-  // const [teacherData, setTeacherData] = useState<TeacherSearchProps[]>([]);
-
-  // // CURRICULUM DATA STATE
-  // const [curriculumData, setCurriculumData] = useState<CurriculumSearchProps[]>(
-  //   []
-  // );
-
-  // // STUDENTS DATA STATE
-  // const [studentsData, setStudentsData] = useState<StudentSearchProps[]>([]);
-
-  // // GET DATA
-  // const handleData = async () => {
-  //   // GET SCHOOL DATA
-  //   const querySnapshotSchool = await getDocs(collection(db, "schools"));
-  //   const schoolDatabaseData: SchoolSearchProps[] = [];
-  //   querySnapshotSchool.forEach((doc) => {
-  //     const school = doc.data() as SchoolSearchProps;
-  //     schoolDatabaseData.push(school);
-  //   });
-  //   setSchoolData(schoolDatabaseData);
-
-  //   // GET SCHOOL CLASS DATA
-  //   const querySnapshotSchoolClass = await getDocs(
-  //     collection(db, "schoolClasses")
-  //   );
-  //   const schoolClassPromises: SchoolClassSearchProps[] = [];
-  //   querySnapshotSchoolClass.forEach((doc) => {
-  //     const promise = doc.data() as SchoolClassSearchProps;
-  //     schoolClassPromises.push(promise);
-  //   });
-  //   setSchoolClassData(schoolClassPromises);
-
-  //   // GET SCHOOL COURSE DATA
-  //   const querySnapshotSchoolCourse = await getDocs(
-  //     collection(db, "schoolCourses")
-  //   );
-  //   const schoolCoursePromises: SchoolCourseSearchProps[] = [];
-  //   querySnapshotSchoolCourse.forEach((doc) => {
-  //     const promise = doc.data() as SchoolCourseSearchProps;
-  //     schoolCoursePromises.push(promise);
-  //   });
-  //   setSchoolCourseData(schoolCoursePromises);
-
-  //   // GET SCHEDULE DATA
-  //   const querySnapshotSchedule = await getDocs(collection(db, "schedules"));
-  //   const schedulePromises: ScheduleSearchProps[] = [];
-  //   querySnapshotSchedule.forEach((doc) => {
-  //     const promise = doc.data() as ScheduleSearchProps;
-  //     schedulePromises.push(promise);
-  //   });
-  //   setScheduleData(schedulePromises);
-
-  //   // GET TEACHER DATA
-  //   const querySnapshotTeacher = await getDocs(collection(db, "teachers"));
-  //   const teacherPromises: TeacherSearchProps[] = [];
-  //   querySnapshotTeacher.forEach((doc) => {
-  //     const promise = doc.data() as TeacherSearchProps;
-  //     teacherPromises.push(promise);
-  //   });
-  //   setTeacherData(teacherPromises);
-
-  //   // GET CURRICULUM DATA
-  //   const querySnapshotCurriculum = await getDocs(collection(db, "curriculum"));
-  //   const curriculumPromises: CurriculumSearchProps[] = [];
-  //   querySnapshotCurriculum.forEach((doc) => {
-  //     const promise = doc.data() as CurriculumSearchProps;
-  //     curriculumPromises.push(promise);
-  //   });
-  //   setCurriculumData(curriculumPromises);
-  //   // GET STUDENTS DATA
-  //   const querySnapshotStudents = await getDocs(collection(db, "students"));
-  //   const studentsPromises: StudentSearchProps[] = [];
-  //   querySnapshotStudents.forEach(async (doc) => {
-  //     const promise = doc.data() as StudentSearchProps;
-  //     studentsPromises.push(promise);
-  //   });
-  //   setStudentsData(studentsPromises);
-  // };
 
   function handleScheduleDetails(id: string) {
     const scheduleDetail = scheduleDatabaseData.find(
@@ -125,10 +34,6 @@ export default function Dashboard() {
     }
   }
 
-  // useEffect(() => {
-  //   handleData();
-  // }, []);
-
   const [showPage, setShowPage] = useState<
     | "school"
     | "schoolClass"
@@ -139,9 +44,76 @@ export default function Dashboard() {
     | "student"
   >("school");
 
-  return (
-    <div className="w-screen flex flex-col justify-center items-center">
-      <>
+  const [userShowPage, setUserShowPage] = useState<"student" | "addStudent">(
+    "student"
+  );
+
+  // LOADING
+  if (!userFullData) {
+    return <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="logando" />;
+  } else if (userFullData.role === "user") {
+    return (
+      <div className="w-screen flex flex-col justify-center items-center">
+        <div className="flex container items-center justify-center gap-4">
+          <div
+            className="flex flex-col w-56 h-32 items-center gap-2 text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 py-2 pt-4 rounded-xl cursor-pointer"
+            onClick={() => setUserShowPage("student")}
+          >
+            <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
+              Alunos Cadastrados:
+            </p>
+            <p className="font-bold text-klOrange-500 text-2xl">
+              {schoolDatabaseData.length}
+            </p>
+          </div>
+          <div
+            className="flex flex-col w-56 h-32 items-center justify-center gap-2 text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 py-2 rounded-xl cursor-pointer"
+            onClick={() => setUserShowPage("addStudent")}
+          >
+            <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
+              Adicionar Aluno
+            </p>
+          </div>
+        </div>
+        {userShowPage === "student" && (
+          <div
+            className={
+              showPage === "curriculum"
+                ? `flex flex-wrap justify-center container mt-8 [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl gap-2`
+                : `pb-8 flex flex-col container mt-2 [&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-3xl`
+            }
+          >
+            {studentsDatabaseData.length !== 0 ? (
+              studentsDatabaseData
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((student) => {
+                  return (
+                    <div className="flex justify-center p-4 " key={student.id}>
+                      <p className="text-klGreen-500 dark:text-white">
+                        {student.name}
+                      </p>
+                    </div>
+                  );
+                })
+            ) : (
+              <div className="flex justify-center p-4 ">
+                <p className="text-klGreen-500 dark:text-white">
+                  Nenhum aluno cadastrado.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        {userShowPage === "addStudent" && (
+          <div className="flex flex-col w-screen px-8 pb-8 gap-6 items-center">
+            <InsertStudent />
+          </div>
+        )}
+      </div>
+    );
+  } else {
+    return (
+      <div className="w-screen flex flex-col justify-center items-center">
         <div className="flex container items-center justify-center gap-4">
           <div
             className="flex flex-col w-56 items-center gap-2 text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 py-2 pt-4 rounded-xl cursor-pointer"
@@ -159,7 +131,7 @@ export default function Dashboard() {
             onClick={() => setShowPage("schoolClass")}
           >
             <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
-              Turmas Cadastradas:
+              Anos Escolares Cadastrados:
             </p>
             <p className="font-bold text-klOrange-500 text-2xl">
               {schoolClassDatabaseData.length}
@@ -203,7 +175,7 @@ export default function Dashboard() {
             onClick={() => setShowPage("curriculum")}
           >
             <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
-              Currículos cadastrados:
+              Turmas cadastradas:
             </p>
             <p className="font-bold text-klOrange-500 text-2xl">
               {curriculumDatabaseData.length}
@@ -225,11 +197,11 @@ export default function Dashboard() {
           className={
             showPage === "curriculum"
               ? `flex flex-wrap justify-center container mt-8 [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl gap-2`
-              : `flex flex-col container mt-8 [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl`
+              : `flex flex-col container mt-8 [&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl`
           }
         >
-          {showPage === "school" ? (
-            schoolDatabaseData.length !== 0 ? (
+          {showPage === "school" &&
+            (schoolDatabaseData.length !== 0 ? (
               schoolDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((school) => {
@@ -247,10 +219,9 @@ export default function Dashboard() {
                   Nenhuma escola cadastrada.
                 </p>
               </div>
-            )
-          ) : null}
-          {showPage === "schoolClass" ? (
-            schoolClassDatabaseData.length !== 0 ? (
+            ))}
+          {showPage === "schoolClass" &&
+            (schoolClassDatabaseData.length !== 0 ? (
               schoolClassDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((schoolClass) => {
@@ -268,13 +239,12 @@ export default function Dashboard() {
             ) : (
               <div className="flex justify-center p-4 ">
                 <p className="text-klGreen-500 dark:text-white">
-                  Nenhuma turma cadastrada.
+                  Nenhum Ano Escolar cadastrado.
                 </p>
               </div>
-            )
-          ) : null}
-          {showPage === "schoolCourse" ? (
-            schoolCourseDatabaseData.length !== 0 ? (
+            ))}
+          {showPage === "schoolCourse" &&
+            (schoolCourseDatabaseData.length !== 0 ? (
               schoolCourseDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((schoolCourse) => {
@@ -295,10 +265,9 @@ export default function Dashboard() {
                   Nenhuma modalidade cadastrada.
                 </p>
               </div>
-            )
-          ) : null}
-          {showPage === "schedule" ? (
-            scheduleDatabaseData.length !== 0 ? (
+            ))}
+          {showPage === "schedule" &&
+            (scheduleDatabaseData.length !== 0 ? (
               scheduleDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((schedule) => {
@@ -316,10 +285,9 @@ export default function Dashboard() {
                   Nenhum horário cadastrado.
                 </p>
               </div>
-            )
-          ) : null}
-          {showPage === "teacher" ? (
-            teacherDatabaseData.length !== 0 ? (
+            ))}
+          {showPage === "teacher" &&
+            (teacherDatabaseData.length !== 0 ? (
               teacherDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((teacher) => {
@@ -337,10 +305,9 @@ export default function Dashboard() {
                   Nenhum professor cadastrado.
                 </p>
               </div>
-            )
-          ) : null}
-          {showPage === "curriculum" ? (
-            curriculumDatabaseData.length !== 0 ? (
+            ))}
+          {showPage === "curriculum" &&
+            (curriculumDatabaseData.length !== 0 ? (
               curriculumDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((curriculum) => {
@@ -357,7 +324,7 @@ export default function Dashboard() {
                       </p>
 
                       <p>
-                        Turma:{" "}
+                        Ano Escolar:{" "}
                         <span className="text-red-600 dark:text-yellow-500">
                           {curriculum.schoolClass}
                         </span>
@@ -376,7 +343,7 @@ export default function Dashboard() {
                         </span>
                       </p>
                       {handleScheduleDetails(curriculum.scheduleId) !==
-                      undefined ? (
+                        undefined && (
                         <p>
                           Horário:{" "}
                           <span className="text-red-600 dark:text-yellow-500">
@@ -404,7 +371,7 @@ export default function Dashboard() {
                             } (${curriculum.schedule})`}
                           </span>
                         </p>
-                      ) : null}
+                      )}
                       <p>
                         Professor:{" "}
                         <span className="text-red-600 dark:text-yellow-500">
@@ -412,42 +379,17 @@ export default function Dashboard() {
                         </span>
                       </p>
                     </div>
-
-                    // <div
-                    //   className="flex flex-col w-3/12 justify-center p-4 gap-2 rounded-xl"
-                    //   key={curriculum.id}
-                    // >
-                    //   <p className="text-klGreen-500 dark:text-white">
-                    //     Escola: {curriculum.school}
-                    //   </p>
-                    //   <p className="text-klGreen-500 dark:text-white">
-                    //     Modalidade: {curriculum.schoolCourse}
-                    //   </p>
-                    //   <p className="text-klGreen-500 dark:text-white">
-                    //     Horário: {curriculum.schedule}
-                    //   </p>
-                    //   <p className="text-klGreen-500 dark:text-white">
-                    //     Dias de Aula: {curriculum.classDay}
-                    //   </p>
-                    //   <p className="text-klGreen-500 dark:text-white">
-                    //     Turma: {curriculum.schoolClass}
-                    //   </p>
-                    //   <p className="text-klGreen-500 dark:text-white">
-                    //     Professor: {curriculum.teacher}
-                    //   </p>
-                    // </div>
                   );
                 })
             ) : (
               <div className="flex justify-center p-4 ">
                 <p className="text-klGreen-500 dark:text-white">
-                  Nenhum currículo cadastrado.
+                  Nenhuma turma cadastrada.
                 </p>
               </div>
-            )
-          ) : null}
-          {showPage === "student" ? (
-            studentsDatabaseData.length !== 0 ? (
+            ))}
+          {showPage === "student" &&
+            (studentsDatabaseData.length !== 0 ? (
               studentsDatabaseData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((student) => {
@@ -465,10 +407,9 @@ export default function Dashboard() {
                   Nenhum aluno cadastrado.
                 </p>
               </div>
-            )
-          ) : null}
+            ))}
         </div>
-      </>
-    </div>
-  );
+      </div>
+    );
+  }
 }

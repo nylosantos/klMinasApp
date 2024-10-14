@@ -33,8 +33,9 @@ export default function LoginPage() {
       ) : (
         <>
           <h1 className="font-bold text-2xl">
-            Sistema de Cadastro - {customerFullName}
+            Bem-vindo(a) à {customerFullName}!
           </h1>
+
           {login ? <FormLogin /> : <FormRegister />}
           <p className="flex gap-1 text-sm text-gray-400">
             {login ? "Para criar uma conta" : "Já tem uma conta?"}

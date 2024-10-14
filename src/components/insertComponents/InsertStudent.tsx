@@ -14,12 +14,10 @@ import {
   doc,
   getDocs,
   getFirestore,
-  onSnapshot,
   query,
   serverTimestamp,
   setDoc,
   Timestamp,
-  where,
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -27,6 +25,8 @@ import {
   classDayIndex,
   customerFullName,
   employeeDiscountValue,
+  enrolmentFee,
+  enrolmentFeeDiscount,
   familyDiscountValue,
   formataCPF,
   months,
@@ -63,49 +63,45 @@ const db = getFirestore(app);
 export function InsertStudent() {
   // GET GLOBAL DATA
   const {
+    classDaysDatabaseData,
     curriculumDatabaseData,
+    isExperimentalClass,
+    login,
     schoolDatabaseData,
     schoolClassDatabaseData,
     schoolCourseDatabaseData,
     studentsDatabaseData,
+    setIsExperimentalClass,
+    userFullData,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // STUDENT DATA
   const [studentData, setStudentData] = useState<CreateStudentValidationZProps>(
     {
+      // Section 1: Student Data
       name: "",
-      email: "",
       birthDate: "",
-      address: {
-        street: "",
-        number: "",
-        complement: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-        cep: "",
+      classComplement: "",
+      parentOne: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      phone: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
+      parentTwo: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      activePhoneSecondary: false,
-      phoneSecondary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      activePhoneTertiary: false,
-      phoneTertiary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      responsible: "",
-      responsibleDocument: "",
-      financialResponsible: "",
-      financialResponsibleDocument: "",
+
+      // Section 2: Student Course and Family Data | Prices
       familyAtSchoolId: "",
       curriculum: "",
       enrolmentExemption: false,
@@ -115,6 +111,45 @@ export function InsertStudent() {
       familyDiscount: false,
       secondCourseDiscount: false,
       paymentDay: "",
+
+      // Section 3: Student Financial Responsible Data
+      financialResponsible: {
+        name: "",
+        document: "",
+        email: "",
+        address: {
+          street: "",
+          number: "",
+          complement: "",
+          neighborhood: "",
+          city: "",
+          state: "",
+          cep: "",
+        },
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneSecondary: false,
+        phoneSecondary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneTertiary: false,
+        phoneTertiary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+      },
+
+      // Section 4: Student Contract Data
+      // Accept Contract: boolean
+      // Contract attached (pdf)
+
+      // Section 5: Confirm Insert
       confirmInsert: false,
     }
   );
@@ -401,7 +436,11 @@ export function InsertStudent() {
     name: "",
     enrolledDays: [] as number[],
     enrolmentFee:
-      new Date().getMonth() < 6 ? 135 : new Date().getMonth() < 10 ? 67.5 : 0,
+      new Date().getMonth() < 6
+        ? enrolmentFee
+        : new Date().getMonth() < 10
+        ? enrolmentFeeDiscount
+        : 0,
     fullPrice: 0,
     appliedPrice: 0,
   });
@@ -415,9 +454,9 @@ export function InsertStudent() {
         ...newClass,
         enrolmentFee:
           new Date().getMonth() < 6
-            ? 135
+            ? enrolmentFee
             : new Date().getMonth() < 10
-            ? 67.5
+            ? enrolmentFeeDiscount
             : 0,
       });
     }
@@ -618,93 +657,37 @@ export function InsertStudent() {
 
   const [experimentalClassError, setExperimentalClassError] = useState(false);
 
-  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT CURRICULUM
-  const [curriculumDataArray, setCurriculumDataArray] =
-    useState<CurriculumSearchProps[]>();
-
   // CURRICULUM SELECTED STATE DATA
   const [curriculumSelectedData, setCurriculumSelectedData] =
     useState<CurriculumSearchProps>();
 
-  // GET CURRICULUM FULL DATA WHEN STUDENT CURRICULUM IS SELECTED
-  useEffect(() => {
-    const handleCurriculumFullData = async () => {
-      if (studentData.curriculum !== "") {
-        const q = query(
-          collection(db, "curriculum"),
-          where("id", "==", studentData.curriculum)
-        );
-        const unsubscribe = onSnapshot(q, (querySnapShot) => {
-          const promises: CurriculumSearchProps[] = [];
-          querySnapShot.forEach((doc) => {
-            const promise = doc.data() as CurriculumSearchProps;
-            promises.push(promise);
-          });
-          setCurriculumDataArray(promises);
-        });
-        console.log(unsubscribe);
-      } else {
-        setCurriculumDataArray(undefined);
-      }
-    };
-    handleCurriculumFullData();
-  }, [studentData.curriculum]);
-
   // SET CURRICULUM SELECTED STATE WHEN SELECT CURRICULUM
   useEffect(() => {
-    if (curriculumDataArray !== undefined) {
+    if (curriculumDatabaseData !== undefined) {
       setCurriculumSelectedData(
-        curriculumDataArray!.find(({ id }) => id === studentData.curriculum)
+        curriculumDatabaseData.find(({ id }) => id === studentData.curriculum)
       );
     } else {
       setCurriculumSelectedData(undefined);
     }
-  }, [curriculumDataArray]);
+  }, [studentData.curriculum]);
 
-  // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF SELECT CURRICULUM
-  const [classDayDataArray, setClassDayDataArray] =
-    useState<ClassDaySearchProps[]>();
-
-  // CURRICULUM SELECTED STATE DATA
+  // CLASSDAYS SELECTED STATE DATA
   const [classDaySelectedData, setClassDaySelectedData] =
     useState<ClassDaySearchProps>();
 
-  // GET CLASS DAY FULL DATA WHEN HAVE CURRICULUM SELECTED DATA
+  // SET CLASS DAY SELECTED STATE WHEN HAVE CURRICULUM SELECTED DATA
   useEffect(() => {
-    const handleClassDayFullData = async () => {
-      if (curriculumSelectedData !== undefined) {
-        const q = query(
-          collection(db, "classDays"),
-          where("id", "==", curriculumSelectedData.classDayId)
-        );
-        const unsubscribe = onSnapshot(q, (querySnapShot) => {
-          const promises: ClassDaySearchProps[] = [];
-          querySnapShot.forEach((doc) => {
-            const promise = doc.data() as ClassDaySearchProps;
-            promises.push(promise);
-          });
-          setClassDayDataArray(promises);
-        });
-        console.log(unsubscribe);
-      } else {
-        setClassDayDataArray(undefined);
-      }
-    };
-    handleClassDayFullData();
-  }, [curriculumSelectedData]);
-
-  // SET CLASS DAY SELECTED STATE WHEN SELECT CLASS DAY
-  useEffect(() => {
-    if (classDayDataArray !== undefined) {
+    if (classDaysDatabaseData !== undefined && curriculumSelectedData) {
       setClassDaySelectedData(
-        classDayDataArray!.find(
-          ({ id }) => id === curriculumSelectedData?.classDayId
+        classDaysDatabaseData.find(
+          ({ id }) => id === curriculumSelectedData.classDayId
         )
       );
     } else {
       setClassDaySelectedData(undefined);
     }
-  }, [classDayDataArray]);
+  }, [curriculumSelectedData]);
 
   // SET ENROLLED DAYS WHEN SELECT CLASS DAY
   useEffect(() => {
@@ -926,36 +909,72 @@ export function InsertStudent() {
 
   // GETTING CURRICULUM DATA
   const handleAvailableCoursesData = async () => {
-    if (curriculumData.schoolCourseId === "all") {
-      const filterCurriculum = curriculumDatabaseData.filter(
-        (curriculum) =>
-          curriculum.schoolId === curriculumData.schoolId &&
-          curriculum.schoolClassId === curriculumData.schoolClassId
-      );
-      setCurriculumCoursesData(filterCurriculum);
+    if (userFullData && userFullData.role === "user") {
+      if (curriculumData.schoolCourseId === "all") {
+        const filterCurriculum = curriculumDatabaseData.filter(
+          (curriculum) => curriculum.schoolId === curriculumData.schoolId
+        );
+        setCurriculumCoursesData(filterCurriculum);
+      } else {
+        const filterCurriculum = curriculumDatabaseData.filter(
+          (curriculum) =>
+            curriculum.schoolId === curriculumData.schoolId &&
+            curriculum.schoolCourseId === curriculumData.schoolCourseId
+        );
+        setCurriculumCoursesData(filterCurriculum);
+      }
     } else {
-      const filterCurriculum = curriculumDatabaseData.filter(
-        (curriculum) =>
-          curriculum.schoolId === curriculumData.schoolId &&
-          curriculum.schoolClassId === curriculumData.schoolClassId &&
-          curriculum.schoolCourseId === curriculumData.schoolCourseId
-      );
-      setCurriculumCoursesData(filterCurriculum);
+      if (curriculumData.schoolCourseId === "all") {
+        const filterCurriculum = curriculumDatabaseData.filter(
+          (curriculum) =>
+            curriculum.schoolId === curriculumData.schoolId &&
+            curriculum.schoolClassId === curriculumData.schoolClassId
+        );
+        setCurriculumCoursesData(filterCurriculum);
+      } else {
+        const filterCurriculum = curriculumDatabaseData.filter(
+          (curriculum) =>
+            curriculum.schoolId === curriculumData.schoolId &&
+            curriculum.schoolClassId === curriculumData.schoolClassId &&
+            curriculum.schoolCourseId === curriculumData.schoolCourseId
+        );
+        setCurriculumCoursesData(filterCurriculum);
+      }
     }
   };
 
   // GET AVAILABLE COURSES DATA WHEN SCHOOL COURSE CHANGE
   useEffect(() => {
     handleAvailableCoursesData();
+
+    const itemsSelect = (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).options;
+
+    const itemsSelectArray = [];
+
+    for (let index = 0; index < itemsSelect.length; index++) {
+      itemsSelectArray.push(itemsSelect[index]);
+    }
+
+    itemsSelectArray.map((item, index) => {
+      if (item.value === curriculumData.schoolCourseId) {
+        (
+          document.getElementById("schoolCourseSelect") as HTMLSelectElement
+        ).selectedIndex = index;
+      }
+    });
   }, [curriculumData.schoolCourseId]);
   // -------------------------- END OF CURRICULUM STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- RESET SELECTS -------------------------- //
   // RESET ALL UNDER SCHOOL SELECT WHEN CHANGE SCHOOL
   useEffect(() => {
-    (
-      document.getElementById("schoolClassSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    if (userFullData && userFullData.role !== "user") {
+      (
+        document.getElementById("schoolClassSelect") as HTMLSelectElement
+      ).selectedIndex = 0;
+    }
     (
       document.getElementById("schoolCourseSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -979,7 +998,11 @@ export function InsertStudent() {
       date: "",
       name: "",
       enrolmentFee:
-        new Date().getMonth() < 6 ? 135 : new Date().getMonth() < 10 ? 67.5 : 0,
+        new Date().getMonth() < 6
+          ? enrolmentFee
+          : new Date().getMonth() < 10
+          ? enrolmentFeeDiscount
+          : 0,
       fullPrice: 0,
       appliedPrice: 0,
       enrolledDays: [],
@@ -988,14 +1011,16 @@ export function InsertStudent() {
 
   // RESET ALL UNDER SCHOOL CLASS SELECT WHEN CHANGE SCHOOL CLASS
   useEffect(() => {
-    (
-      document.getElementById("schoolCourseSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    setCurriculumData({
-      ...curriculumData,
-      schoolCourseId: "",
-      schoolCourseName: "",
-    });
+    if (userFullData && userFullData.role !== "user") {
+      (
+        document.getElementById("schoolCourseSelect") as HTMLSelectElement
+      ).selectedIndex = 0;
+      setCurriculumData({
+        ...curriculumData,
+        schoolCourseId: "",
+        schoolCourseName: "",
+      });
+    }
     setStudentData({
       ...studentData,
       customDiscount: false,
@@ -1009,7 +1034,11 @@ export function InsertStudent() {
       date: "",
       name: "",
       enrolmentFee:
-        new Date().getMonth() < 6 ? 135 : new Date().getMonth() < 10 ? 67.5 : 0,
+        new Date().getMonth() < 6
+          ? enrolmentFee
+          : new Date().getMonth() < 10
+          ? enrolmentFeeDiscount
+          : 0,
       fullPrice: 0,
       appliedPrice: 0,
       enrolledDays: [],
@@ -1031,7 +1060,11 @@ export function InsertStudent() {
       date: "",
       name: "",
       enrolmentFee:
-        new Date().getMonth() < 6 ? 135 : new Date().getMonth() < 10 ? 67.5 : 0,
+        new Date().getMonth() < 6
+          ? enrolmentFee
+          : new Date().getMonth() < 10
+          ? enrolmentFeeDiscount
+          : 0,
       fullPrice: 0,
       appliedPrice: 0,
       enrolledDays: [],
@@ -1094,7 +1127,7 @@ export function InsertStudent() {
   const [editAddress, setEditAddress] = useState(false);
 
   // TEST RESPONSIBLE CPF (BRAZILIAN DOCUMENT) STATE
-  const [testCPF, setTestCPF] = useState(true);
+  // const [testCPF, setTestCPF] = useState(true);
 
   // TEST FINANCIAL RESPONSIBLE CPF (BRAZILIAN DOCUMENT) STATE
   const [testFinancialCPF, setTestFinancialCPF] = useState(true);
@@ -1109,13 +1142,16 @@ export function InsertStudent() {
           setCepSubmitting(false);
           setStudentData({
             ...studentData,
-            address: {
-              ...studentData.address,
-              cep: data,
-              street: response.street,
-              neighborhood: response.neighborhood,
-              city: response.city,
-              state: response.state,
+            financialResponsible: {
+              ...studentData.financialResponsible,
+              address: {
+                ...studentData.financialResponsible.address,
+                cep: data,
+                street: response.street,
+                neighborhood: response.neighborhood,
+                city: response.city,
+                state: response.state,
+              },
             },
           });
         })
@@ -1165,39 +1201,30 @@ export function InsertStudent() {
   } = useForm<CreateStudentValidationZProps>({
     resolver: zodResolver(createStudentValidationSchema),
     defaultValues: {
+      // Section 1: Student Data
       name: "",
-      email: "",
       birthDate: "",
-      address: {
-        street: "",
-        number: "",
-        complement: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-        cep: "",
+      classComplement: "",
+      parentOne: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      phone: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
+      parentTwo: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      activePhoneSecondary: false,
-      phoneSecondary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      activePhoneTertiary: false,
-      phoneTertiary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      responsible: "",
-      responsibleDocument: "",
-      financialResponsible: "",
-      financialResponsibleDocument: "",
+
+      // Section 2: Student Course and Family Data | Prices
       familyAtSchoolId: "",
       curriculum: "",
       enrolmentExemption: false,
@@ -1207,6 +1234,45 @@ export function InsertStudent() {
       familyDiscount: false,
       secondCourseDiscount: false,
       paymentDay: "",
+
+      // Section 3: Student Financial Responsible Data
+      financialResponsible: {
+        name: "",
+        document: "",
+        email: "",
+        address: {
+          street: "",
+          number: "",
+          complement: "",
+          neighborhood: "",
+          city: "",
+          state: "",
+          cep: "",
+        },
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneSecondary: false,
+        phoneSecondary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneTertiary: false,
+        phoneTertiary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+      },
+
+      // Section 4: Student Contract Data
+      // Accept Contract: boolean
+      // Contract attached (pdf)
+
+      // Section 5: Confirm Insert
       confirmInsert: false,
     },
   });
@@ -1214,39 +1280,30 @@ export function InsertStudent() {
   // RESET FORM FUNCTION
   const resetForm = () => {
     setStudentData({
+      // Section 1: Student Data
       name: "",
-      email: "",
       birthDate: "",
-      address: {
-        street: "",
-        number: "",
-        complement: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-        cep: "",
+      classComplement: "",
+      parentOne: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      phone: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
+      parentTwo: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      activePhoneSecondary: false,
-      phoneSecondary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      activePhoneTertiary: false,
-      phoneTertiary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      responsible: "",
-      responsibleDocument: "",
-      financialResponsible: "",
-      financialResponsibleDocument: "",
+
+      // Section 2: Student Course and Family Data | Prices
       familyAtSchoolId: "",
       curriculum: "",
       enrolmentExemption: false,
@@ -1256,6 +1313,45 @@ export function InsertStudent() {
       familyDiscount: false,
       secondCourseDiscount: false,
       paymentDay: "",
+
+      // Section 3: Student Financial Responsible Data
+      financialResponsible: {
+        name: "",
+        document: "",
+        email: "",
+        address: {
+          street: "",
+          number: "",
+          complement: "",
+          neighborhood: "",
+          city: "",
+          state: "",
+          cep: "",
+        },
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneSecondary: false,
+        phoneSecondary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneTertiary: false,
+        phoneTertiary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+      },
+
+      // Section 4: Student Contract Data
+      // Accept Contract: boolean
+      // Contract attached (pdf)
+
+      // Section 5: Confirm Insert
       confirmInsert: false,
     });
     setCurriculumData({
@@ -1271,7 +1367,11 @@ export function InsertStudent() {
       date: "",
       name: "",
       enrolmentFee:
-        new Date().getMonth() < 6 ? 135 : new Date().getMonth() < 10 ? 67.5 : 0,
+        new Date().getMonth() < 6
+          ? enrolmentFee
+          : new Date().getMonth() < 10
+          ? enrolmentFeeDiscount
+          : 0,
       fullPrice: 0,
       appliedPrice: 0,
       enrolledDays: [],
@@ -1281,20 +1381,34 @@ export function InsertStudent() {
     setExperimentalClassError(false);
     setEditAddress(false);
     (
-      document.getElementById("phoneDDD") as HTMLSelectElement
+      document.getElementById("parentOnePhoneDDD") as HTMLSelectElement
     ).selectedIndex = 0;
     (
-      document.getElementById("phoneSecondaryDDD") as HTMLSelectElement
+      document.getElementById("parentTwoPhoneDDD") as HTMLSelectElement
     ).selectedIndex = 0;
     (
-      document.getElementById("phoneTertiaryDDD") as HTMLSelectElement
+      document.getElementById(
+        "financialResponsiblePhoneDDD"
+      ) as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById(
+        "financialResponsiblePhoneSecondaryDDD"
+      ) as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById(
+        "financialResponsiblePhoneTertiaryDDD"
+      ) as HTMLSelectElement
     ).selectedIndex = 0;
     (
       document.getElementById("schoolSelect") as HTMLSelectElement
     ).selectedIndex = 0;
-    (
-      document.getElementById("schoolClassSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    userFullData &&
+      userFullData.role !== "user" &&
+      ((
+        document.getElementById("schoolClassSelect") as HTMLSelectElement
+      ).selectedIndex = 0);
     (
       document.getElementById("schoolCourseSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -1307,34 +1421,22 @@ export function InsertStudent() {
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
+    // Section 1: Student Data
     setValue("name", studentData.name);
-    setValue("email", studentData.email);
     setValue("birthDate", studentData.birthDate);
-    setValue("address.street", studentData.address.street);
-    setValue("address.number", studentData.address.number);
-    setValue("address.complement", studentData.address.complement);
-    setValue("address.neighborhood", studentData.address.neighborhood);
-    setValue("address.city", studentData.address.city);
-    setValue("address.state", studentData.address.state);
-    setValue("address.cep", studentData.address.cep);
-    setValue("phone.ddd", studentData.phone.ddd);
-    setValue("phone.prefix", studentData.phone.prefix);
-    setValue("phone.suffix", studentData.phone.suffix);
-    setValue("activePhoneSecondary", studentData.activePhoneSecondary);
-    setValue("phoneSecondary.ddd", studentData.phoneSecondary.ddd);
-    setValue("phoneSecondary.prefix", studentData.phoneSecondary.prefix);
-    setValue("phoneSecondary.suffix", studentData.phoneSecondary.suffix);
-    setValue("activePhoneTertiary", studentData.activePhoneTertiary);
-    setValue("phoneTertiary.ddd", studentData.phoneTertiary.ddd);
-    setValue("phoneTertiary.prefix", studentData.phoneTertiary.prefix);
-    setValue("phoneTertiary.suffix", studentData.phoneTertiary.suffix);
-    setValue("responsible", studentData.responsible);
-    setValue("responsibleDocument", studentData.responsibleDocument);
-    setValue("financialResponsible", studentData.financialResponsible);
-    setValue(
-      "financialResponsibleDocument",
-      studentData.financialResponsibleDocument
-    );
+    setValue("classComplement", studentData.classComplement);
+    setValue("parentOne.name", studentData.parentOne.name);
+    setValue("parentOne.phone.ddd", studentData.parentOne.phone.ddd);
+    setValue("parentOne.phone.prefix", studentData.parentOne.phone.prefix);
+    setValue("parentOne.phone.suffix", studentData.parentOne.phone.suffix);
+    setValue("parentOne.email", studentData.parentOne.email);
+    setValue("parentTwo.name", studentData.parentTwo.name);
+    setValue("parentTwo.phone.ddd", studentData.parentTwo.phone.ddd);
+    setValue("parentTwo.phone.prefix", studentData.parentTwo.phone.prefix);
+    setValue("parentTwo.phone.suffix", studentData.parentTwo.phone.suffix);
+    setValue("parentTwo.email", studentData.parentTwo.email);
+
+    // Section 2: Student Course and Family Data | Prices
     setValue("familyAtSchoolId", studentData.familyAtSchoolId);
     setValue("curriculum", studentData.curriculum);
     setValue("enrolmentExemption", studentData.enrolmentExemption);
@@ -1347,37 +1449,110 @@ export function InsertStudent() {
     setValue("familyDiscount", studentData.familyDiscount);
     setValue("secondCourseDiscount", studentData.secondCourseDiscount);
     setValue("paymentDay", studentData.paymentDay);
+
+    // Section 3: Student Financial Responsible Data
+    setValue(
+      "financialResponsible.name",
+      studentData.financialResponsible.name
+    );
+    setValue(
+      "financialResponsible.document",
+      studentData.financialResponsible.document
+    );
+    setValue(
+      "financialResponsible.email",
+      studentData.financialResponsible.email
+    );
+    setValue(
+      "financialResponsible.address.street",
+      studentData.financialResponsible.address.street
+    );
+    setValue(
+      "financialResponsible.address.number",
+      studentData.financialResponsible.address.number
+    );
+    setValue(
+      "financialResponsible.address.complement",
+      studentData.financialResponsible.address.complement
+    );
+    setValue(
+      "financialResponsible.address.neighborhood",
+      studentData.financialResponsible.address.neighborhood
+    );
+    setValue(
+      "financialResponsible.address.city",
+      studentData.financialResponsible.address.city
+    );
+    setValue(
+      "financialResponsible.address.state",
+      studentData.financialResponsible.address.state
+    );
+    setValue(
+      "financialResponsible.address.cep",
+      studentData.financialResponsible.address.cep
+    );
+    setValue(
+      "financialResponsible.phone.ddd",
+      studentData.financialResponsible.phone.ddd
+    );
+    setValue(
+      "financialResponsible.phone.prefix",
+      studentData.financialResponsible.phone.prefix
+    );
+    setValue(
+      "financialResponsible.phone.suffix",
+      studentData.financialResponsible.phone.suffix
+    );
+    setValue(
+      "financialResponsible.activePhoneSecondary",
+      studentData.financialResponsible.activePhoneSecondary
+    );
+    setValue(
+      "financialResponsible.phoneSecondary.ddd",
+      studentData.financialResponsible.phoneSecondary.ddd
+    );
+    setValue(
+      "financialResponsible.phoneSecondary.prefix",
+      studentData.financialResponsible.phoneSecondary.prefix
+    );
+    setValue(
+      "financialResponsible.phoneSecondary.suffix",
+      studentData.financialResponsible.phoneSecondary.suffix
+    );
+    setValue(
+      "financialResponsible.activePhoneTertiary",
+      studentData.financialResponsible.activePhoneTertiary
+    );
+    setValue(
+      "financialResponsible.phoneTertiary.ddd",
+      studentData.financialResponsible.phoneTertiary.ddd
+    );
+    setValue(
+      "financialResponsible.phoneTertiary.prefix",
+      studentData.financialResponsible.phoneTertiary.prefix
+    );
+    setValue(
+      "financialResponsible.phoneTertiary.suffix",
+      studentData.financialResponsible.phoneTertiary.suffix
+    );
+
+    // Section 4: Student Contract Data
+    // Accept Contract: boolean
+    // Contract attached (pdf)
+
+    // Section 5: Confirm Insert
     setValue("confirmInsert", studentData.confirmInsert);
   }, [studentData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
     const fullErrors = [
+      // Section 1: Student Data
       errors.name,
-      errors.email,
       errors.birthDate,
-      errors.address?.street,
-      errors.address?.number,
-      errors.address?.complement,
-      errors.address?.neighborhood,
-      errors.address?.city,
-      errors.address?.state,
-      errors.address?.cep,
-      errors.phone?.ddd,
-      errors.phone?.prefix,
-      errors.phone?.suffix,
-      errors.activePhoneSecondary,
-      errors.phoneSecondary?.ddd,
-      errors.phoneSecondary?.prefix,
-      errors.phoneSecondary?.suffix,
-      errors.activePhoneTertiary,
-      errors.phoneTertiary?.ddd,
-      errors.phoneTertiary?.prefix,
-      errors.phoneTertiary?.suffix,
-      errors.responsible,
-      errors.responsibleDocument,
-      errors.financialResponsible,
-      errors.financialResponsibleDocument,
+      errors.classComplement,
+
+      // Section 2: Student Course and Family Data | Prices
       errors.familyAtSchoolId,
       errors.curriculum,
       errors.enrolmentExemption,
@@ -1387,6 +1562,35 @@ export function InsertStudent() {
       errors.familyDiscount,
       errors.secondCourseDiscount,
       errors.paymentDay,
+
+      // Section 3: Student Financial Responsible Data
+      errors.financialResponsible?.name,
+      errors.financialResponsible?.document,
+      errors.financialResponsible?.email,
+      errors.financialResponsible?.address?.street,
+      errors.financialResponsible?.address?.number,
+      errors.financialResponsible?.address?.complement,
+      errors.financialResponsible?.address?.neighborhood,
+      errors.financialResponsible?.address?.city,
+      errors.financialResponsible?.address?.state,
+      errors.financialResponsible?.address?.cep,
+      errors.financialResponsible?.phone?.ddd,
+      errors.financialResponsible?.phone?.prefix,
+      errors.financialResponsible?.phone?.suffix,
+      errors.financialResponsible?.activePhoneSecondary,
+      errors.financialResponsible?.phoneSecondary?.ddd,
+      errors.financialResponsible?.phoneSecondary?.prefix,
+      errors.financialResponsible?.phoneSecondary?.suffix,
+      errors.financialResponsible?.activePhoneTertiary,
+      errors.financialResponsible?.phoneTertiary?.ddd,
+      errors.financialResponsible?.phoneTertiary?.prefix,
+      errors.financialResponsible?.phoneTertiary?.suffix,
+
+      // Section 4: Student Contract Data
+      // Accept Contract: boolean
+      // Contract attached (pdf)
+
+      // Section 5: Confirm Insert
       errors.confirmInsert,
     ];
     fullErrors.map((fieldError) => {
@@ -1413,32 +1617,26 @@ export function InsertStudent() {
       try {
         // CREATE STUDENT
         await setDoc(newStudentRef, {
+          // Section 1: Student Data
           id: newStudentId,
           name: data.name,
-          email: data.email,
           birthDate: Timestamp.fromDate(new Date(data.birthDate)),
-          address: {
-            street: data.address.street,
-            number: data.address.number,
-            complement: data.address.complement,
-            neighborhood: data.address.neighborhood,
-            city: data.address.city,
-            state: data.address.state,
-            cep: data.address.cep,
+          classComplement: data.classComplement,
+          parentOne: {
+            name: data.parentOne.name,
+            email: data.parentOne.email,
+            phone: `+55${data.parentOne.phone.ddd}${data.parentOne.phone.prefix}${data.parentOne.phone.suffix}`,
           },
-          phone: `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`,
-          phoneSecondary: activePhoneSecondary
-            ? `+55${data.phoneSecondary.ddd}${data.phoneSecondary.prefix}${data.phoneSecondary.suffix}`
-            : "",
-          phoneTertiary: activePhoneTertiary
-            ? `+55${data.phoneTertiary.ddd}${data.phoneTertiary.prefix}${data.phoneTertiary.suffix}`
-            : "",
-          responsible: data.responsible,
-          financialResponsible: data.financialResponsible,
-          responsibleDocument: data.responsibleDocument,
-          financialResponsibleDocument: data.financialResponsibleDocument,
+          parentTwo: {
+            name: data.parentTwo.name,
+            email: data.parentTwo.email,
+            phone: `+55${data.parentTwo.phone.ddd}${data.parentTwo.phone.prefix}${data.parentTwo.phone.suffix}`,
+          },
+
+          // Section 2: Student Course and Family Data | Prices
           enrolmentExemption: data.enrolmentExemption,
           enrolmentFee: newClass.enrolmentFee,
+          enrolmentFeePaid: false,
           fullPrice: newClass.fullPrice,
           appliedPrice: newClass.appliedPrice,
           customDiscount: data.customDiscount,
@@ -1448,7 +1646,6 @@ export function InsertStudent() {
           secondCourseDiscount: data.secondCourseDiscount,
           paymentDay:
             data.paymentDay === "" ? standardPaymentDay : data.paymentDay,
-          timestamp: serverTimestamp(),
           experimentalCurriculumIds: newClass.isExperimental
             ? arrayUnion({
                 id: data.curriculum,
@@ -1477,6 +1674,36 @@ export function InsertStudent() {
               })
             : arrayUnion(),
           paymentRegister: paymentArray,
+
+          // Section 3: Student Financial Responsible Data
+          financialResponsible: {
+            name: data.financialResponsible.name,
+            document: data.financialResponsible.document,
+            email: data.financialResponsible.email,
+            address: {
+              street: data.financialResponsible.address.street,
+              number: data.financialResponsible.address.number,
+              complement: data.financialResponsible.address.complement,
+              neighborhood: data.financialResponsible.address.neighborhood,
+              city: data.financialResponsible.address.city,
+              state: data.financialResponsible.address.state,
+              cep: data.financialResponsible.address.cep,
+            },
+            phone: `+55${data.financialResponsible.phone.ddd}${data.financialResponsible.phone.prefix}${data.financialResponsible.phone.suffix}`,
+            phoneSecondary: activePhoneSecondary
+              ? `+55${data.financialResponsible.phoneSecondary.ddd}${data.financialResponsible.phoneSecondary.prefix}${data.financialResponsible.phoneSecondary.suffix}`
+              : "",
+            phoneTertiary: activePhoneTertiary
+              ? `+55${data.financialResponsible.phoneTertiary.ddd}${data.financialResponsible.phoneTertiary.prefix}${data.financialResponsible.phoneTertiary.suffix}`
+              : "",
+          },
+
+          // Section 4: Student Contract Data
+          // Accept Contract: boolean
+          // Contract attached (pdf)
+
+          // Section 5: Last Updated Time
+          updatedAt: serverTimestamp(),
         });
         if (newClass.isExperimental) {
           // CREATING AN EXPERIMENTAL CURRICULUM
@@ -1495,39 +1722,6 @@ export function InsertStudent() {
             },
             { merge: true }
           );
-          // ADD EXPERIMENTAL CURRICULUM TO STUDENT TABLE ON EXPERIMENTAL CURRICULUM COLLECTION
-          // await setDoc(
-          //   doc(
-          //     db,
-          //     `students/${newStudentId}/studentExperimentalCurriculum/${newStudentId}`
-          //   ),
-          //   {
-          //     idsArray: arrayUnion(data.curriculum),
-          //     detailsArray: arrayUnion({
-          //       id: data.curriculum,
-          //       name: newClass.name,
-          //       date: Timestamp.fromDate(new Date(newClass.date)),
-          //       isExperimental: true,
-          //       indexDays: [],
-          //     }),
-          //     id: newStudentId,
-          //     name: data.name,
-          //   }
-          // );
-          // CREATE EMPTY STUDENT CURRICULUM COLLECTION
-          // await setDoc(
-          //   doc(
-          //     db,
-          //     `students/${newStudentId}/studentCurriculum/${newStudentId}`
-          //   ),
-          //   {
-          //     idsArray: [],
-          //     detailsArray: [],
-          //     id: newStudentId,
-          //     name: data.name,
-          //     paymentRegister: paymentArray,
-          //   }
-          // );
         } else {
           // CREATING AN ENROLLED CURRICULUM
           // ADD STUDENT TO CURRICULUM TABLE ON STUDENT COLLECTION
@@ -1545,60 +1739,8 @@ export function InsertStudent() {
             },
             { merge: true }
           );
-          // ADD CURRICULUM TO STUDENT TABLE ON CURRICULUM COLLECTION
-          // await setDoc(
-          //   doc(
-          //     db,
-          //     `students/${newStudentId}/studentCurriculum/${newStudentId}`
-          //   ),
-          //   {
-          //     idsArray: arrayUnion(data.curriculum),
-          //     detailsArray: arrayUnion({
-          //       id: data.curriculum,
-          //       name: newClass.name,
-          //       date: Timestamp.fromDate(new Date(newClass.date)),
-          //       isExperimental: false,
-          //       indexDays: newClass.enrolledDays,
-          //       price: newClass.fullPrice,
-          //     }),
-          //     id: newStudentId,
-          //     name: data.name,
-          //     paymentRegister: paymentArray,
-          //   }
-          // );
-          // CREATE EMPTY STUDENT EXPERIMENTAL CURRICULUM COLLECTION
-          // await setDoc(
-          //   doc(
-          //     db,
-          //     `students/${newStudentId}/studentExperimentalCurriculum/${newStudentId}`
-          //   ),
-          //   {
-          //     idsArray: [],
-          //     detailsArray: [],
-          //     id: newStudentId,
-          //     name: data.name,
-          //   }
-          // );
         }
         if (data.familyDiscount) {
-          // CREATE STUDENT FAMILY'S INSIDE STUDENT TABLE
-          // await setDoc(
-          //   doc(
-          //     db,
-          //     `students/${newStudentId}/studentFamilyAtSchool/${newStudentId}`
-          //   ),
-          //   {
-          //     idsArray: arrayUnion(data.familyAtSchoolId!),
-          //     detailsArray: arrayUnion({
-          //       id: data.familyAtSchoolId!,
-          //       name: familyStudentSelectedData?.name,
-          //       applyDiscount: true,
-          //     }),
-          //     id: newStudentId,
-          //     name: data.name,
-          //   },
-          //   { merge: true }
-          // );
           // IF YOU WANT TO CREATE STUDENT INSIDE FAMILY TABLE COLLECTION, UNCOMMENT THIS SECTION
           await setDoc(
             doc(db, "students", data.familyAtSchoolId!),
@@ -1612,22 +1754,6 @@ export function InsertStudent() {
             { merge: true }
           );
         }
-        // else {
-        // CREATE EMPTY FAMILYATSCHOOL DOC
-        // await setDoc(
-        //   doc(
-        //     db,
-        //     `students/${newStudentId}/studentFamilyAtSchool/${newStudentId}`
-        //   ),
-        //   {
-        //     idsArray: [],
-        //     detailsArray: [],
-        //     id: newStudentId,
-        //     name: data.name,
-        //   },
-        //   { merge: true }
-        // );
-        // }
         toast.success(`Aluno ${data.name} criado com sucesso! 👌`, {
           theme: "colored",
           closeOnClick: true,
@@ -1688,22 +1814,22 @@ export function InsertStudent() {
     }
 
     // CHEKING VALID RESPONSIBLE DOCUMENT
-    if (!testCPF) {
-      return (
-        setIsSubmitting(false),
-        setExperimentalClassError(true),
-        toast.error(
-          "CPF do responsável é inválido, por favor verifique... ❕",
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
-      );
-    }
+    // if (!testCPF) {
+    //   return (
+    //     setIsSubmitting(false),
+    //     setExperimentalClassError(true),
+    //     toast.error(
+    //       "CPF do responsável é inválido, por favor verifique... ❕",
+    //       {
+    //         theme: "colored",
+    //         closeOnClick: true,
+    //         pauseOnHover: true,
+    //         draggable: true,
+    //         autoClose: 3000,
+    //       }
+    //     )
+    //   );
+    // }
 
     // CHEKING VALID FINANCIAL RESPONSIBLE DOCUMENT
     if (!testFinancialCPF) {
@@ -1724,8 +1850,8 @@ export function InsertStudent() {
     }
 
     // CHEKING VALID SECONDARY PHONE
-    if (studentData.activePhoneSecondary) {
-      if (studentData.phoneSecondary.ddd === "DDD") {
+    if (studentData.financialResponsible.activePhoneSecondary) {
+      if (studentData.financialResponsible.phoneSecondary.ddd === "DDD") {
         return (
           setIsSubmitting(false),
           toast.error(
@@ -1743,8 +1869,8 @@ export function InsertStudent() {
     }
 
     // CHEKING VALID TERTIARY PHONE
-    if (studentData.activePhoneTertiary) {
-      if (studentData.phoneTertiary.ddd === "DDD") {
+    if (studentData.financialResponsible.activePhoneTertiary) {
+      if (studentData.financialResponsible.phoneTertiary.ddd === "DDD") {
         return (
           setIsSubmitting(false),
           toast.error(
@@ -1787,7 +1913,7 @@ export function InsertStudent() {
     if (curriculumData.schoolClassId === "") {
       setIsSubmitting(false);
       return toast.error(
-        `Por favor, verifique as opções de Colégio e Turma... ☑️`,
+        `Por favor, verifique as opções de Colégio e Ano Escolar... ☑️`,
         {
           theme: "colored",
           closeOnClick: true,
@@ -1814,41 +1940,31 @@ export function InsertStudent() {
     }
 
     // CHECKING IF STUDENT EXISTS ON DATABASE
-    const studentRef = collection(db, "students");
-    const q = query(
-      studentRef,
-      where("name", "==", data.name),
-      where("email", "==", data.email),
-      where("responsible", "==", data.responsible),
-      where("financialResponsible", "==", data.financialResponsible)
+    const studentExists = studentsDatabaseData.find(
+      (student) =>
+        student.name === data.name &&
+        student.parentOne.name === data.parentOne.name
     );
-    const querySnapshot = await getDocs(q);
-    const promises: StudentSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as StudentSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
+
+    if (studentExists) {
       // IF EXISTS, RETURN ERROR
-      if (results.length !== 0) {
-        return (
-          setIsSubmitting(false),
-          toast.error(
-            `Aluno ${data.name} já existe no nosso banco de dados... ❕`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          )
-        );
-      } else {
-        // IF NOT EXISTS, CREATE
-        addStudent();
-      }
-    });
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Aluno ${data.name} já existe no nosso banco de dados... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else {
+      // IF NOT EXISTS, CREATE
+      addStudent();
+    }
   };
 
   return (
@@ -1860,15 +1976,19 @@ export function InsertStudent() {
       <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Adicionar Aluno</h1>
+      {(userFullData && userFullData.role === "user") ?? (
+        <h1 className="font-bold text-2xl my-4">Adicionar Aluno</h1>
+      )}
 
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddStudent)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
+        {/* // -------------------------------------------------------- SECTION 1: STUDENT DATA -------------------------------------------------------- // */}
+
         {/** PERSONAL DATA SECTION TITLE */}
-        <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+        <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
           Dados Pessoais:
         </h1>
 
@@ -1882,7 +2002,7 @@ export function InsertStudent() {
                 : "w-1/4 text-right"
             }
           >
-            Nome:{" "}
+            Nome do aluno:{" "}
           </label>
           <input
             type="text"
@@ -1901,37 +2021,6 @@ export function InsertStudent() {
             value={studentData.name}
             onChange={(e) => {
               setStudentData({ ...studentData, name: e.target.value });
-            }}
-          />
-        </div>
-
-        {/* E-MAIL */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="email"
-            className={
-              errors.email
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            E-mail:{" "}
-          </label>
-          <input
-            type="text"
-            name="email"
-            disabled={isSubmitting}
-            placeholder={
-              errors.email ? "É necessário inserir o e-mail" : "Insira o e-mail"
-            }
-            className={
-              errors.email
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
-            value={studentData.email}
-            onChange={(e) => {
-              setStudentData({ ...studentData, email: e.target.value });
             }}
           />
         </div>
@@ -1982,291 +2071,89 @@ export function InsertStudent() {
           </div>
         </div>
 
-        {/* ADDRESS */}
-        {/* CEP */}
+        {/** PARENT ONE SECTION TITLE */}
+        <h3 className="text-lg py-2 text-klGreen-600 dark:text-gray-100">
+          Filiação 1:
+        </h3>
+
+        {/* PARENT ONE NAME */}
         <div className="flex gap-2 items-center">
           <label
-            htmlFor="addressCep"
+            htmlFor="parentOneName"
             className={
-              errors.address?.cep
+              errors.parentOne?.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right"
             }
           >
-            CEP:{" "}
+            Nome:{" "}
           </label>
-          <div className="flex w-3/4 gap-2">
-            <div className="w-10/12">
-              <input
-                type="text"
-                name="addressCep"
-                maxLength={8}
-                placeholder={
-                  errors.address?.cep || cepError
-                    ? "É necessário inserir um CEP"
-                    : "Insira o CEP"
-                }
-                className={
-                  errors.address?.cep || cepError
-                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                value={studentData.address.cep}
-                onChange={(e) => {
-                  setCepError(false);
-                  setStudentData({
-                    ...studentData,
-                    address: {
-                      ...studentData.address,
-                      cep: formatCEP(e.target.value),
-                    },
-                  });
-                }}
-              />
-            </div>
-            <button
-              type="button"
-              disabled={cepSubmitting}
-              className="border rounded-2xl border-blue-900 bg-blue-500 disabled:bg-blue-400 text-white w-2/12"
-              onClick={() => {
-                getCep(studentData.address.cep);
-              }}
-            >
-              {cepSubmitting ? "Buscando..." : "Buscar"}
-            </button>
-          </div>
+          <input
+            type="text"
+            name="parentOneName"
+            disabled={isSubmitting}
+            placeholder={
+              errors.parentOne?.name
+                ? "É necessário inserir o nome completo"
+                : "Insira o nome completo"
+            }
+            className={
+              errors.parentOne?.name
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            value={studentData.parentOne?.name}
+            onChange={(e) => {
+              setStudentData({
+                ...studentData,
+                parentOne: { ...studentData.parentOne, name: e.target.value },
+              });
+            }}
+          />
         </div>
 
-        {/* STREET AND NUMBER */}
+        {/* PARENT ONE E-MAIL */}
         <div className="flex gap-2 items-center">
           <label
-            htmlFor="addressStreet"
+            htmlFor="parentOneEmail"
             className={
-              errors.address?.street
+              errors.parentOne?.email
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right"
             }
           >
-            Rua:{" "}
+            E-mail:{" "}
           </label>
-          <div className="flex w-3/4 gap-2">
-            <div className={`flex w-10/12`}>
-              <input
-                type="text"
-                name="addressStreet"
-                disabled={!editAddress}
-                placeholder={
-                  errors.address?.street
-                    ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
-                    : "Rua / Av. / Pça"
-                }
-                className={
-                  editAddress
-                    ? errors.address?.street
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                }
-                value={studentData.address?.street}
-                onChange={(e) =>
-                  setStudentData({
-                    ...studentData,
-                    address: { ...studentData.address, street: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="flex w-2/12 items-center gap-2">
-              <label htmlFor="addressNumber" className="text-right">
-                Nº:
-              </label>
-              <input
-                type="text"
-                name="addressNumber"
-                placeholder={errors.address?.number ? "Número" : "Número"}
-                className={
-                  errors.address?.number
-                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                value={studentData.address?.number}
-                onChange={(e) =>
-                  setStudentData({
-                    ...studentData,
-                    address: { ...studentData.address, number: e.target.value },
-                  })
-                }
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* NEIGHBORHOOD AND COMPLEMENT */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="addressNeighborhood"
-            className={
-              errors.address?.neighborhood
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
+          <input
+            type="text"
+            name="parentOneEmail"
+            disabled={isSubmitting}
+            placeholder={
+              errors.parentOne?.email
+                ? "É necessário inserir o e-mail"
+                : "Insira o e-mail"
             }
-          >
-            Bairro:{" "}
-          </label>
-          <div className={`flex w-3/4 gap-2 items-center`}>
-            <div className="w-10/12">
-              <input
-                type="text"
-                name="addressNeighborhood"
-                disabled={!editAddress}
-                placeholder={
-                  errors.address?.neighborhood
-                    ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
-                    : "Bairro"
-                }
-                className={
-                  editAddress
-                    ? errors.address?.neighborhood
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                }
-                value={studentData.address.neighborhood}
-                onChange={(e) =>
-                  setStudentData({
-                    ...studentData,
-                    address: {
-                      ...studentData.address,
-                      neighborhood: e.target.value,
-                    },
-                  })
-                }
-              />
-            </div>
-            <div className="flex w-4/12 items-center gap-2">
-              <label htmlFor="addressComplement" className="text-right">
-                Complemento:
-              </label>
-              <input
-                type="text"
-                name="addressComplement"
-                placeholder={"Apto | Bloco"}
-                className={
-                  errors.address
-                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                value={studentData.address.complement}
-                onChange={(e) =>
-                  setStudentData({
-                    ...studentData,
-                    address: {
-                      ...studentData.address,
-                      complement: e.target.value,
-                    },
-                  })
-                }
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* CITY AND STATE */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="addressCity"
             className={
-              errors.address?.city
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
+              errors.parentOne?.email
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
-          >
-            Cidade:{" "}
-          </label>
-          <div className={`flex w-3/4 gap-2 items-center`}>
-            <div className={`flex w-10/12`}>
-              <input
-                type="text"
-                name="addressCity"
-                disabled={!editAddress}
-                placeholder={
-                  errors.address?.city
-                    ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
-                    : "Cidade"
-                }
-                className={
-                  editAddress
-                    ? errors.address?.city
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                }
-                value={studentData.address.city}
-                onChange={(e) =>
-                  setStudentData({
-                    ...studentData,
-                    address: { ...studentData.address, city: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="flex w-2/12 items-center gap-2">
-              <label htmlFor="addressState" className="text-right">
-                Estado:
-              </label>
-              <input
-                type="text"
-                name="addressState"
-                disabled={!editAddress}
-                placeholder={
-                  errors.address?.state
-                    ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
-                    : "UF"
-                }
-                className={
-                  editAddress
-                    ? errors.address?.state
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                }
-                value={studentData.address.state}
-                onChange={(e) =>
-                  setStudentData({
-                    ...studentData,
-                    address: { ...studentData.address, state: e.target.value },
-                  })
-                }
-              />
-            </div>
-          </div>
+            value={studentData.parentOne?.email}
+            onChange={(e) => {
+              setStudentData({
+                ...studentData,
+                parentOne: { ...studentData.parentOne, email: e.target.value },
+              });
+            }}
+          />
         </div>
 
-        {/* EDIT ADDRESS BUTTON */}
+        {/* PARENT ONE PHONE */}
         <div className="flex gap-2 items-center">
           <label
-            htmlFor="editAddressButton"
-            className="w-1/4 text-right"
-          ></label>
-          <button
-            type="button"
-            name="editAddressButton"
-            disabled={editAddress}
-            className="border rounded-2xl mt-2 mb-4 border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-3/4"
-            onClick={() => setEditAddress(true)}
-          >
-            {editAddress
-              ? "Insira o Endereço manualmente, ou busque o CEP novamente"
-              : "Editar Endereço"}
-          </button>
-        </div>
-
-        {/* PHONE */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="phone"
+            htmlFor="parentOnePhone"
             className={
-              errors.phone
+              errors.parentOne?.phone
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right"
             }
@@ -2276,10 +2163,10 @@ export function InsertStudent() {
           <div className="flex w-2/4 gap-2">
             <div className="flex w-10/12 items-center gap-1">
               <select
-                id="phoneDDD"
+                id="parentOnePhoneDDD"
                 defaultValue={"DDD"}
                 className={
-                  errors.phone?.ddd
+                  errors.parentOne?.phone?.ddd
                     ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
@@ -2287,7 +2174,13 @@ export function InsertStudent() {
                 onChange={(e) => {
                   setStudentData({
                     ...studentData,
-                    phone: { ...studentData.phone, ddd: e.target.value },
+                    parentOne: {
+                      ...studentData.parentOne,
+                      phone: {
+                        ...studentData.parentOne.phone,
+                        ddd: e.target.value,
+                      },
+                    },
                   });
                 }}
               >
@@ -2295,24 +2188,29 @@ export function InsertStudent() {
               </select>
               <input
                 type="text"
-                name="phoneInitial"
+                name="parentOnePhoneInitial"
                 pattern="^[+ 0-9]{5}$"
                 maxLength={5}
-                value={studentData.phone.prefix}
-                placeholder={errors.phone?.prefix ? "É necessário um" : "99999"}
+                value={studentData.parentOne?.phone.prefix}
+                placeholder={
+                  errors.parentOne?.phone?.prefix ? "É necessário um" : "99999"
+                }
                 className={
-                  errors.phone?.prefix
+                  errors.parentOne?.phone?.prefix
                     ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 onChange={(e) => {
                   setStudentData({
                     ...studentData,
-                    phone: {
-                      ...studentData.phone,
-                      prefix: e.target.value
-                        .replace(/[^0-9.]/g, "")
-                        .replace(/(\..*?)\..*/g, "$1"),
+                    parentOne: {
+                      ...studentData.parentOne,
+                      phone: {
+                        ...studentData.parentOne.phone,
+                        prefix: e.target.value
+                          .replace(/[^0-9.]/g, "")
+                          .replace(/(\..*?)\..*/g, "$1"),
+                      },
                     },
                   });
                 }}
@@ -2320,24 +2218,29 @@ export function InsertStudent() {
               -
               <input
                 type="text"
-                name="phoneFinal"
+                name="parentOnePhoneFinal"
                 pattern="^[+ 0-9]{4}$"
                 maxLength={4}
-                value={studentData.phone.suffix}
-                placeholder={errors.phone?.suffix ? "telefone válido" : "9990"}
+                value={studentData.parentOne?.phone.suffix}
+                placeholder={
+                  errors.parentOne?.phone?.suffix ? "telefone válido" : "9990"
+                }
                 className={
-                  errors.phone?.suffix
+                  errors.parentOne?.phone?.suffix
                     ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 onChange={(e) => {
                   setStudentData({
                     ...studentData,
-                    phone: {
-                      ...studentData.phone,
-                      suffix: e.target.value
-                        .replace(/[^0-9.]/g, "")
-                        .replace(/(\..*?)\..*/g, "$1"),
+                    parentOne: {
+                      ...studentData.parentOne,
+                      phone: {
+                        ...studentData.parentOne.phone,
+                        suffix: e.target.value
+                          .replace(/[^0-9.]/g, "")
+                          .replace(/(\..*?)\..*/g, "$1"),
+                      },
                     },
                   });
                 }}
@@ -2347,27 +2250,102 @@ export function InsertStudent() {
           </div>
         </div>
 
-        {/* PHONE SECONDARY */}
+        {/** PARENT TWO SECTION TITLE */}
+        <h3 className="text-lg py-2 text-klGreen-600 dark:text-gray-100">
+          Filiação 2:
+        </h3>
+
+        {/* PARENT TWO NAME */}
         <div className="flex gap-2 items-center">
           <label
-            htmlFor="phoneSecondary"
+            htmlFor="parentTwoName"
             className={
-              errors.phoneSecondary
+              errors.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right"
             }
           >
-            Telefone 2:{" "}
+            Nome:{" "}
+          </label>
+          <input
+            type="text"
+            name="parentTwoName"
+            disabled={isSubmitting}
+            placeholder={
+              errors.parentTwo?.name
+                ? "É necessário inserir o nome completo do aluno"
+                : "Insira o nome completo do aluno"
+            }
+            className={
+              errors.parentTwo?.name
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            value={studentData.parentTwo?.name}
+            onChange={(e) => {
+              setStudentData({
+                ...studentData,
+                parentTwo: { ...studentData.parentTwo, name: e.target.value },
+              });
+            }}
+          />
+        </div>
+
+        {/* PARENT TWO E-MAIL */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="parentTwoEmail"
+            className={
+              errors.parentTwo?.email
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right"
+            }
+          >
+            E-mail:{" "}
+          </label>
+          <input
+            type="text"
+            name="parentTwoEmail"
+            disabled={isSubmitting}
+            placeholder={
+              errors.parentTwo?.email
+                ? "É necessário inserir o e-mail"
+                : "Insira o e-mail"
+            }
+            className={
+              errors.parentTwo?.email
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            value={studentData.parentTwo?.email}
+            onChange={(e) => {
+              setStudentData({
+                ...studentData,
+                parentTwo: { ...studentData.parentTwo, email: e.target.value },
+              });
+            }}
+          />
+        </div>
+
+        {/* PARENT TWO PHONE */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="parentTwoPhone"
+            className={
+              errors.parentTwo?.phone
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right"
+            }
+          >
+            Telefone:{" "}
           </label>
           <div className="flex w-2/4 gap-2">
             <div className="flex w-10/12 items-center gap-1">
-              {/** NUMBER SECONDARY DDD */}
               <select
-                id="phoneSecondaryDDD"
-                disabled={!studentData.activePhoneSecondary}
+                id="parentTwoPhoneDDD"
                 defaultValue={"DDD"}
                 className={
-                  errors.phoneSecondary?.ddd
+                  errors.parentTwo?.phone?.ddd
                     ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
@@ -2375,403 +2353,86 @@ export function InsertStudent() {
                 onChange={(e) => {
                   setStudentData({
                     ...studentData,
-                    phoneSecondary: {
-                      ...studentData.phoneSecondary,
-                      ddd: e.target.value,
+                    parentTwo: {
+                      ...studentData.parentTwo,
+                      phone: {
+                        ...studentData.parentTwo.phone,
+                        ddd: e.target.value,
+                      },
                     },
                   });
                 }}
               >
                 <BrazilianStateSelectOptions />
               </select>
-              {/** NUMBER SECONDARY PREFIX */}
               <input
                 type="text"
-                name="phoneSecondaryInitial"
-                disabled={!studentData.activePhoneSecondary}
+                name="parentTwoPhoneInitial"
                 pattern="^[+ 0-9]{5}$"
                 maxLength={5}
-                value={studentData.phoneSecondary.prefix}
+                value={studentData.parentTwo?.phone.prefix}
                 placeholder={
-                  errors.phoneSecondary?.prefix ? "É necessário um" : "99999"
+                  errors.parentTwo?.phone?.prefix ? "É necessário um" : "99999"
                 }
                 className={
-                  studentData.activePhoneSecondary
-                    ? errors.phoneSecondary?.prefix
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  errors.parentTwo?.phone?.prefix
+                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 onChange={(e) => {
                   setStudentData({
                     ...studentData,
-                    phoneSecondary: {
-                      ...studentData.phoneSecondary,
-                      prefix: e.target.value
-                        .replace(/[^0-9.]/g, "")
-                        .replace(/(\..*?)\..*/g, "$1"),
+                    parentTwo: {
+                      ...studentData.parentTwo,
+                      phone: {
+                        ...studentData.parentTwo.phone,
+                        prefix: e.target.value
+                          .replace(/[^0-9.]/g, "")
+                          .replace(/(\..*?)\..*/g, "$1"),
+                      },
                     },
                   });
                 }}
               />
-              -{/** NUMBER SECONDARY SUFFIX */}
+              -
               <input
                 type="text"
-                name="phoneSecondaryFinal"
-                disabled={!studentData.activePhoneSecondary}
+                name="parentTwoPhoneFinal"
                 pattern="^[+ 0-9]{4}$"
                 maxLength={4}
-                value={studentData.phoneSecondary.suffix}
+                value={studentData.parentTwo?.phone.suffix}
                 placeholder={
-                  errors.phoneSecondary?.prefix ? "telefone válido" : "9999"
+                  errors.parentTwo?.phone?.suffix ? "telefone válido" : "9990"
                 }
                 className={
-                  studentData.activePhoneSecondary
-                    ? errors.phoneSecondary?.suffix
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  errors.parentTwo?.phone?.suffix
+                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 onChange={(e) => {
                   setStudentData({
                     ...studentData,
-                    phoneSecondary: {
-                      ...studentData.phoneSecondary,
-                      suffix: e.target.value
-                        .replace(/[^0-9.]/g, "")
-                        .replace(/(\..*?)\..*/g, "$1"),
+                    parentTwo: {
+                      ...studentData.parentTwo,
+                      phone: {
+                        ...studentData.parentTwo.phone,
+                        suffix: e.target.value
+                          .replace(/[^0-9.]/g, "")
+                          .replace(/(\..*?)\..*/g, "$1"),
+                      },
                     },
                   });
                 }}
               />
             </div>
-            {/** CHECKBOX INCLUDE NUMBER SECONDARY */}
-            <div className="flex w-2/12 items-center gap-2">
-              <input
-                type="checkbox"
-                name="activePhoneSecondary"
-                className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
-                checked={activePhoneSecondary}
-                onChange={() => {
-                  setActivePhoneSecondary(!activePhoneSecondary);
-                  setStudentData({
-                    ...studentData,
-                    activePhoneSecondary: !activePhoneSecondary,
-                  });
-                }}
-              />
-              <label htmlFor="activePhoneSecondary" className="text-sm">
-                Incluir
-              </label>
-            </div>
+            <div className="flex w-2/12 items-center gap-2"></div>
           </div>
         </div>
 
-        {/* PHONE TERTIARY */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="phoneTertiary"
-            className={
-              errors.phoneTertiary
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            Telefone 3:{" "}
-          </label>
-          <div className="flex w-2/4 gap-2">
-            <div className="flex w-10/12 items-center gap-1">
-              {/** NUMBER TERTIARY DDD */}
-              <select
-                id="phoneTertiaryDDD"
-                disabled={!studentData.activePhoneTertiary}
-                defaultValue={"DDD"}
-                className={
-                  errors.phoneTertiary?.ddd
-                    ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                name="DDD"
-                onChange={(e) => {
-                  setStudentData({
-                    ...studentData,
-                    phoneTertiary: {
-                      ...studentData.phoneTertiary,
-                      ddd: e.target.value,
-                    },
-                  });
-                }}
-              >
-                <BrazilianStateSelectOptions />
-              </select>
-              {/** NUMBER TERTIARY PREFIX */}
-              <input
-                type="text"
-                name="phoneTertiaryInitial"
-                disabled={!studentData.activePhoneTertiary}
-                pattern="^[+ 0-9]{5}$"
-                maxLength={5}
-                value={studentData.phoneTertiary.prefix}
-                placeholder={
-                  errors.phoneTertiary?.prefix ? "É necessário um" : "99999"
-                }
-                className={
-                  studentData.activePhoneTertiary
-                    ? errors.phoneTertiary?.prefix
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                }
-                onChange={(e) => {
-                  setStudentData({
-                    ...studentData,
-                    phoneTertiary: {
-                      ...studentData.phoneTertiary,
-                      prefix: e.target.value
-                        .replace(/[^0-9.]/g, "")
-                        .replace(/(\..*?)\..*/g, "$1"),
-                    },
-                  });
-                }}
-              />
-              -{/** NUMBER TERTIARY SUFFIX */}
-              <input
-                type="text"
-                name="phoneTertiaryFinal"
-                disabled={!studentData.activePhoneTertiary}
-                pattern="^[+ 0-9]{4}$"
-                maxLength={4}
-                value={studentData.phoneTertiary.suffix}
-                placeholder={
-                  errors.phoneTertiary?.prefix ? "telefone válido" : "9999"
-                }
-                className={
-                  studentData.activePhoneTertiary
-                    ? errors.phoneTertiary?.suffix
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                }
-                onChange={(e) => {
-                  setStudentData({
-                    ...studentData,
-                    phoneTertiary: {
-                      ...studentData.phoneTertiary,
-                      suffix: e.target.value
-                        .replace(/[^0-9.]/g, "")
-                        .replace(/(\..*?)\..*/g, "$1"),
-                    },
-                  });
-                }}
-              />
-            </div>
-            {/** CHECKBOX INCLUDE NUMBER TERTIARY */}
-            <div className="flex w-2/12 items-center gap-2">
-              <input
-                type="checkbox"
-                name="activePhoneTertiary"
-                className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
-                checked={activePhoneTertiary}
-                onChange={() => {
-                  setActivePhoneTertiary(!activePhoneTertiary);
-                  setStudentData({
-                    ...studentData,
-                    activePhoneTertiary: !activePhoneTertiary,
-                  });
-                }}
-              />
-              <label htmlFor="activePhoneTertiary" className="text-sm">
-                Incluir
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* RESPONSIBLE */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="responsible"
-            className={
-              errors.responsible
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            Responsável{" "}
-            <span className="text-sm">
-              (diferente do responsável pela cobrança)
-            </span>
-            :{" "}
-          </label>
-          <input
-            type="text"
-            name="responsible"
-            placeholder={
-              errors.responsible
-                ? "É necessário inserir o Nome completo do Responsável"
-                : "Insira o nome completo do Responsável"
-            }
-            className={
-              errors.responsible
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
-            value={studentData.responsible}
-            onChange={(e) =>
-              setStudentData({
-                ...studentData,
-                responsible: e.target.value,
-              })
-            }
-          />
-        </div>
-
-        {/* RESPONSIBLE DOCUMENT*/}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="responsibleDocument"
-            className={
-              testCPF
-                ? errors.responsibleDocument
-                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                  : "w-1/4 text-right"
-                : "w-1/4 text-right text-red-500 dark:text-red-400"
-            }
-          >
-            CPF do Responsável
-            {testCPF ? (
-              ": "
-            ) : (
-              <span className="text-red-500 dark:text-red-400">
-                {" "}
-                Inválido, verifique:
-              </span>
-            )}
-          </label>
-          <input
-            type="text"
-            name="responsibleDocument"
-            pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-            maxLength={11}
-            placeholder={
-              testCPF
-                ? errors.responsibleDocument
-                  ? "É necessário inserir o CPF do Responsável"
-                  : "Insira o CPF do Responsável"
-                : "CPF Inválido"
-            }
-            className={
-              testCPF
-                ? errors.responsible
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-            }
-            value={studentData.responsibleDocument}
-            onChange={(e) => {
-              if (e.target.value.length === 11) {
-                setTestCPF(testaCPF(e.target.value));
-              }
-              setStudentData({
-                ...studentData,
-                responsibleDocument: formataCPF(e.target.value),
-              });
-            }}
-          />
-        </div>
-
-        {/* FINANCIAL RESPONSIBLE */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="financialResponsible"
-            className={
-              errors.financialResponsible
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            Responsável Financeiro{" "}
-            <span className="text-sm">(responsável pela cobrança)</span>:{" "}
-          </label>
-          <input
-            type="text"
-            name="financialResponsible"
-            placeholder={
-              errors.financialResponsible
-                ? "É necessário inserir o Nome completo do Responsável Financeiro"
-                : "Insira o nome completo do Responsável Financeiro"
-            }
-            className={
-              errors.financialResponsible
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
-            value={studentData.financialResponsible}
-            onChange={(e) =>
-              setStudentData({
-                ...studentData,
-                financialResponsible: e.target.value,
-              })
-            }
-          />
-        </div>
-
-        {/* FINANCIAL RESPONSIBLE DOCUMENT*/}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="financialResponsibleDocument"
-            className={
-              testFinancialCPF
-                ? errors.financialResponsibleDocument
-                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                  : "w-1/4 text-right"
-                : "w-1/4 text-right text-red-500 dark:text-red-400"
-            }
-          >
-            CPF do Responsável Financeiro
-            {testFinancialCPF ? (
-              ": "
-            ) : (
-              <span className="text-red-500 dark:text-red-400">
-                {" "}
-                Inválido, verifique:
-              </span>
-            )}
-          </label>
-          <input
-            type="text"
-            name="financialResponsibleDocument"
-            pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-            maxLength={11}
-            placeholder={
-              testFinancialCPF
-                ? errors.financialResponsibleDocument
-                  ? "É necessário inserir o CPF do Responsável Financeiro"
-                  : "Insira o CPF do Responsável Financeiro"
-                : "CPF Inválido"
-            }
-            className={
-              testFinancialCPF
-                ? errors.responsible
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-            }
-            value={studentData.financialResponsibleDocument}
-            onChange={(e) => {
-              if (e.target.value.length === 11) {
-                setTestFinancialCPF(testaCPF(e.target.value));
-              }
-              setStudentData({
-                ...studentData,
-                financialResponsibleDocument: formataCPF(e.target.value),
-              });
-            }}
-          />
-        </div>
+        {/* // ------------------------------------------- SECTION 2: STUDENT COURSE AND FAMILY DATA | PRICES ------------------------------------------- // */}
 
         {/** CURRICULUM SECTION TITLE */}
-        <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+        <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
           Selecionar Modalidade:
         </h1>
 
@@ -2818,7 +2479,7 @@ export function InsertStudent() {
                 : "w-1/4 text-right"
             }
           >
-            Selecione a Turma:{" "}
+            Selecione o Ano Escolar:{" "}
           </label>
           <select
             id="schoolClassSelect"
@@ -2863,10 +2524,24 @@ export function InsertStudent() {
           </label>
           <select
             id="schoolCourseSelect"
-            disabled={curriculumData.schoolClassId ? false : true}
+            disabled={
+              userFullData && userFullData.role !== "user"
+                ? curriculumData.schoolClassId
+                  ? false
+                  : true
+                : curriculumData.schoolId
+                ? false
+                : true
+            }
             defaultValue={" -- select an option -- "}
             className={
-              curriculumData.schoolClassId
+              userFullData && userFullData.role !== "user"
+                ? curriculumData.schoolClassId
+                  ? errors.curriculum
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                : curriculumData.schoolId
                 ? errors.curriculum
                   ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                   : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
@@ -2888,7 +2563,7 @@ export function InsertStudent() {
 
         {/* CURRICULUM SELECT */}
         {curriculumData.schoolId &&
-        curriculumData.schoolClassId &&
+        // curriculumData.schoolClassId &&
         curriculumData.schoolCourseId ? (
           curriculumCoursesData.length !== 0 ? (
             <>
@@ -2902,72 +2577,122 @@ export function InsertStudent() {
               </h1>
 
               {/** SEPARATOR */}
-              <hr className="pb-4" />
+              {/* <hr className="pb-4" /> */}
 
               {/* CURRICULUM SELECT CARD */}
               <div className="flex flex-wrap gap-4 justify-center">
-                {curriculumCoursesData.map((c: CurriculumSearchProps) => (
-                  <>
-                    <div
-                      className={
-                        errors.curriculum
-                          ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                          : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                      }
-                      key={c.id}
-                    >
-                      <input
-                        type="radio"
-                        id={c.id}
-                        name="curriculumRadio"
-                        className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                        value={c.id}
-                        onChange={(e) => {
-                          setStudentData({
-                            ...studentData,
-                            curriculum: e.target.value,
-                          });
-                          setNewClass({
-                            ...newClass,
-                            name: c.name,
-                          });
-                        }}
-                      />
-                      <label
-                        htmlFor="curriculumRadio"
-                        className="flex flex-col gap-4"
+                {curriculumCoursesData
+                  .sort((a, b) => a.schoolClass.localeCompare(b.schoolClass))
+                  .map((c: CurriculumSearchProps) => (
+                    <>
+                      <div
+                        className={
+                          errors.curriculum
+                            ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                            : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                        }
+                        key={c.id}
                       >
-                        {schoolSelectedData?.name === "Colégio Bernoulli" ? (
-                          <p>Turma: {c.schoolClass}</p>
-                        ) : null}
-                        <p>Modalidade: {c.schoolCourse}</p>
-                        {schedulesDetailsData.map(
-                          (details: ScheduleSearchProps) =>
-                            details.name === c.schedule
-                              ? `Horário: De ${details.classStart.slice(
-                                  0,
-                                  2
-                                )}h${
-                                  details.classStart.slice(3, 5) === "00"
-                                    ? ""
-                                    : details.classStart.slice(3, 5) + "min"
-                                } a ${details.classEnd.slice(0, 2)}h${
-                                  details.classEnd.slice(3, 5) === "00"
-                                    ? ""
-                                    : details.classEnd.slice(3, 5) + "min"
-                                }`
-                              : null
-                        )}
-                        <p>Dias: {c.classDay}</p>
-                        <p>Professor: {c.teacher}</p>
-                      </label>
-                    </div>
-                  </>
-                ))}
+                        <input
+                          type="radio"
+                          checked={
+                            studentData.curriculum === c.id ? true : false
+                          }
+                          id={c.id}
+                          name="curriculumRadio"
+                          className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                          value={c.id}
+                          onChange={(e) => {
+                            if (userFullData && userFullData.role === "user") {
+                              setCurriculumData({
+                                ...curriculumData,
+                                schoolClassId: c.schoolClassId,
+                                schoolClassName: c.schoolClass,
+                                schoolCourseId: c.schoolCourseId,
+                                schoolCourseName: c.schoolCourse,
+                              });
+                            } else {
+                              setCurriculumData({
+                                ...curriculumData,
+                                schoolCourseId: c.schoolCourseId,
+                                schoolCourseName: c.schoolCourse,
+                              });
+                            }
+                            setStudentData({
+                              ...studentData,
+                              curriculum: e.target.value,
+                            });
+                            setNewClass({
+                              ...newClass,
+                              name: c.name,
+                            });
+                          }}
+                        />
+                        <label
+                          htmlFor="curriculumRadio"
+                          className="flex flex-col gap-4"
+                        >
+                          <p>
+                            Escola:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.school}
+                            </span>
+                          </p>
+
+                          <p>
+                            Ano Escolar:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.schoolClass}
+                            </span>
+                          </p>
+
+                          <p>
+                            Modalidade:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.schoolCourse}
+                            </span>
+                          </p>
+                          <p>
+                            Dias:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.classDay}
+                            </span>
+                          </p>
+                          {schedulesDetailsData.map(
+                            (details: ScheduleSearchProps) =>
+                              details.id === c.scheduleId ? (
+                                <p>
+                                  Horário:{" "}
+                                  <span className="text-red-600 dark:text-yellow-500">
+                                    De {details.classStart.slice(0, 2)}h
+                                    {details.classStart.slice(3, 5) === "00"
+                                      ? ""
+                                      : details.classStart.slice(3, 5) +
+                                        "min"}{" "}
+                                    a {details.classEnd.slice(0, 2)}h
+                                    {details.classEnd.slice(3, 5) === "00"
+                                      ? ""
+                                      : details.classEnd.slice(3, 5) +
+                                        "min"}{" "}
+                                    ({details.name})
+                                  </span>
+                                </p>
+                              ) : null
+                          )}
+                          <p>
+                            Professor:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.teacher}
+                            </span>
+                          </p>
+                        </label>
+                      </div>
+                    </>
+                  ))}
               </div>
 
               {/* IS EXPERIMENTAL CLASS ? */}
-              {studentData.curriculum ? (
+              {studentData.curriculum && (
                 <>
                   {/* EXPERIMENTAL CLASS QUESTION */}
                   <div className="flex gap-2 items-center">
@@ -3093,9 +2818,9 @@ export function InsertStudent() {
                     ) : null
                   ) : null}
 
-                  {classDaySelectedData ? (
+                  {classDaySelectedData &&
                     !newClass.isExperimental &&
-                    classDaySelectedData.indexNames.length > 0 ? (
+                    classDaySelectedData.indexNames.length > 0 && (
                       <>
                         {/* STUDENT CLASS DAYS */}
                         <div className="flex gap-2 items-center py-2">
@@ -3148,124 +2873,146 @@ export function InsertStudent() {
                         </div>
 
                         {/** DISCOUNTS SECTION TITLE */}
-                        <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+                        <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
                           Aplicar Descontos:
                         </h1>
 
-                        {/** CHECKBOX ADD ENROLLMENT EXEMPTION */}
+                        {/** DISCOUNTS SECTION SUBTITLE */}
                         <div className="flex gap-2 items-center py-2">
-                          <label
-                            htmlFor="enrolmentExemption"
-                            className="w-1/4 text-right"
-                          >
-                            Ativar Isenção de Matrícula ?{" "}
-                          </label>
-                          <div className="w-3/4 flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              name="enrolmentExemption"
-                              className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                              checked={studentData.enrolmentExemption}
-                              onChange={() => {
-                                setStudentData({
-                                  ...studentData,
-                                  enrolmentExemption:
-                                    !studentData.enrolmentExemption,
-                                });
-                              }}
-                            />
+                          <div className="w-1/4" />
+                          <div className="flex gap-2 w-3/4 items-start text-left py-2">
+                            <p className="text-sm text-red-600 dark:text-yellow-500">
+                              Desconto Familiar: Informando um parente que já é
+                              matriculado na {customerFullName}, você obterá 10%
+                              de desconto no curso com mensalidade de menor
+                              valor. <br /> Desconto de Segundo Curso: Ao se
+                              matricular em um segundo curso na{" "}
+                              {customerFullName}, você obterá 10% de desconto no
+                              curso com mensalidade de menor valor. <br />{" "}
+                              ATENÇÃO: Os descontos não são cumulativos.
+                            </p>
                           </div>
                         </div>
 
-                        {/** CHECKBOX ADD EMPLOYEE DISCOUNT */}
-                        <div className="flex gap-2 items-center py-2">
-                          <label
-                            htmlFor="employeeDiscount"
-                            className="w-1/4 text-right"
-                          >
-                            Ativar Desconto de Funcionário ? (20%){" "}
-                          </label>
-                          <div className="w-3/4 flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              name="employeeDiscount"
-                              className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                              disabled={studentData.customDiscount}
-                              checked={studentData.employeeDiscount}
-                              onChange={() => {
-                                setStudentData({
-                                  ...studentData,
-                                  employeeDiscount:
-                                    !studentData.employeeDiscount,
-                                });
-                              }}
-                            />
-                          </div>
-                        </div>
+                        {userFullData && userFullData.role !== "user" && (
+                          <>
+                            {/** CHECKBOX ADD ENROLLMENT EXEMPTION */}
+                            <div className="flex gap-2 items-center py-2">
+                              <label
+                                htmlFor="enrolmentExemption"
+                                className="w-1/4 text-right"
+                              >
+                                Ativar Isenção de Matrícula ?{" "}
+                              </label>
+                              <div className="w-3/4 flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  name="enrolmentExemption"
+                                  className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                                  checked={studentData.enrolmentExemption}
+                                  onChange={() => {
+                                    setStudentData({
+                                      ...studentData,
+                                      enrolmentExemption:
+                                        !studentData.enrolmentExemption,
+                                    });
+                                  }}
+                                />
+                              </div>
+                            </div>
 
-                        {/** CHECKBOX ADD CUSTOM DISCOUNT */}
-                        <div className="flex gap-2 items-center py-2">
-                          <label
-                            htmlFor="customDiscount"
-                            className="w-1/4 text-right"
-                          >
-                            Ativar Desconto Personalizado ?{" "}
-                          </label>
-                          <div className="w-3/4 flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              name="customDiscount"
-                              className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                              checked={studentData.customDiscount}
-                              onChange={() => {
-                                setStudentData({
-                                  ...studentData,
-                                  employeeDiscount: false,
-                                  customDiscount: !studentData.customDiscount,
-                                });
-                              }}
-                            />
-                            <label
-                              htmlFor="customDiscountValue"
-                              className="w-1/4 text-right"
-                            >
-                              Porcentagem de desconto:{" "}
-                            </label>
-                            <input
-                              type="text"
-                              name="customDiscountValue"
-                              disabled={!studentData.customDiscount}
-                              className={
-                                studentData.customDiscount
-                                  ? errors.customDiscountValue
-                                    ? "w-1/12 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                                    : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                                  : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                              }
-                              pattern="^[+ 0-9]{5}$"
-                              maxLength={2}
-                              value={
-                                studentData.customDiscount
-                                  ? studentData.customDiscountValue
-                                  : "0"
-                              }
-                              onChange={(e) =>
-                                setStudentData({
-                                  ...studentData,
-                                  customDiscountValue: e.target.value
-                                    .replace(/[^0-9.]/g, "")
-                                    .replace(/(\..*?)\..*/g, "$1"),
-                                })
-                              }
-                            />
-                            <label
-                              htmlFor="customDiscountValue"
-                              className="w-1/4 text-left"
-                            >
-                              %
-                            </label>
-                          </div>
-                        </div>
+                            {/** CHECKBOX ADD EMPLOYEE DISCOUNT */}
+                            <div className="flex gap-2 items-center py-2">
+                              <label
+                                htmlFor="employeeDiscount"
+                                className="w-1/4 text-right"
+                              >
+                                Ativar Desconto de Funcionário ? (20%){" "}
+                              </label>
+                              <div className="w-3/4 flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  name="employeeDiscount"
+                                  className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                                  disabled={studentData.customDiscount}
+                                  checked={studentData.employeeDiscount}
+                                  onChange={() => {
+                                    setStudentData({
+                                      ...studentData,
+                                      employeeDiscount:
+                                        !studentData.employeeDiscount,
+                                    });
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            {/** CHECKBOX ADD CUSTOM DISCOUNT */}
+                            <div className="flex gap-2 items-center py-2">
+                              <label
+                                htmlFor="customDiscount"
+                                className="w-1/4 text-right"
+                              >
+                                Ativar Desconto Personalizado ?{" "}
+                              </label>
+                              <div className="w-3/4 flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  name="customDiscount"
+                                  className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                                  checked={studentData.customDiscount}
+                                  onChange={() => {
+                                    setStudentData({
+                                      ...studentData,
+                                      employeeDiscount: false,
+                                      customDiscount:
+                                        !studentData.customDiscount,
+                                    });
+                                  }}
+                                />
+                                <label
+                                  htmlFor="customDiscountValue"
+                                  className="w-1/4 text-right"
+                                >
+                                  Porcentagem de desconto:{" "}
+                                </label>
+                                <input
+                                  type="text"
+                                  name="customDiscountValue"
+                                  disabled={!studentData.customDiscount}
+                                  className={
+                                    studentData.customDiscount
+                                      ? errors.customDiscountValue
+                                        ? "w-1/12 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                        : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                                      : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                                  }
+                                  pattern="^[+ 0-9]{5}$"
+                                  maxLength={2}
+                                  value={
+                                    studentData.customDiscount
+                                      ? studentData.customDiscountValue
+                                      : "0"
+                                  }
+                                  onChange={(e) =>
+                                    setStudentData({
+                                      ...studentData,
+                                      customDiscountValue: e.target.value
+                                        .replace(/[^0-9.]/g, "")
+                                        .replace(/(\..*?)\..*/g, "$1"),
+                                    })
+                                  }
+                                />
+                                <label
+                                  htmlFor="customDiscountValue"
+                                  className="w-1/4 text-left"
+                                >
+                                  %
+                                </label>
+                              </div>
+                            </div>
+                          </>
+                        )}
 
                         {/* HAVE FAMILY AT SCHOOL QUESTION */}
                         <div className="flex gap-2 items-center">
@@ -3365,7 +3112,7 @@ export function InsertStudent() {
                                     : "w-1/4 text-right"
                                 }
                               >
-                                Selecione a Turma do Parente:{" "}
+                                Selecione o Ano Escolar do Parente:{" "}
                               </label>
                               <select
                                 id="familySchoolClassSelect"
@@ -3406,8 +3153,8 @@ export function InsertStudent() {
                                     value={" -- select an option -- "}
                                   >
                                     {" "}
-                                    -- Selecione uma escola para ver as turmas
-                                    disponíveis --{" "}
+                                    -- Selecione uma escola para ver os Anos
+                                    Escolares disponíveis --{" "}
                                   </option>
                                 )}
                               </select>
@@ -3465,7 +3212,7 @@ export function InsertStudent() {
                                 ) : (
                                   <option value={" -- select an option -- "}>
                                     {" "}
-                                    -- Selecione uma Turma para ver as
+                                    -- Selecione umo Ano Escolar para ver as
                                     modalidades disponíveis --{" "}
                                   </option>
                                 )}
@@ -3509,17 +3256,6 @@ export function InsertStudent() {
                                 }}
                               >
                                 {familyStudentData.curriculumId ? (
-                                  // <SelectOptions
-                                  //   returnId
-                                  //   dataType="enrolledStudents"
-                                  //   schoolId={familyStudentData.schoolId}
-                                  //   schoolClassId={
-                                  //     familyStudentData.schoolClassId
-                                  //   }
-                                  //   curriculumId={
-                                  //     familyStudentData.curriculumId
-                                  //   }
-                                  // />
                                   <SelectOptions
                                     returnId
                                     dataType="searchEnrolledStudent"
@@ -3533,8 +3269,8 @@ export function InsertStudent() {
                                     value={" -- select an option -- "}
                                   >
                                     {" "}
-                                    -- Selecione Colégio, Turma e Modalidade
-                                    para ver os alunos disponíveis --{" "}
+                                    -- Selecione Colégio, Ano Escolar e
+                                    Modalidade para ver os alunos disponíveis --{" "}
                                   </option>
                                 )}
                               </select>
@@ -3543,7 +3279,7 @@ export function InsertStudent() {
                         ) : null}
 
                         {/** PAYMENT DETAILS SECTION TITLE */}
-                        <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+                        <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
                           Detalhes de Pagamento:
                         </h1>
 
@@ -3559,7 +3295,7 @@ export function InsertStudent() {
                             type="text"
                             name="enrolmentFee"
                             className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                            readOnly
+                            disabled
                             value={newClass.enrolmentFee.toLocaleString(
                               "pt-BR",
                               {
@@ -3582,7 +3318,7 @@ export function InsertStudent() {
                             type="text"
                             name="monthlyPayment"
                             className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                            readOnly
+                            disabled
                             value={newClass.appliedPrice.toLocaleString(
                               "pt-BR",
                               {
@@ -3650,10 +3386,943 @@ export function InsertStudent() {
                           </div>
                         </div>
                       </>
-                    ) : null
-                  ) : null}
+                    )}
+
+                  {/* // --------------------------------------------- SECTION 3: STUDENT FINANCIAL RESPONSIBLE DATA --------------------------------------------- // */}
+
+                  {/** STUDENT FINANCIAL RESPONSIBLE SECTION TITLE */}
+                  <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
+                    Dados do Responsável Financeiro:
+                  </h1>
+
+                  {/** STUDENT FINANCIAL RESPONSIBLE SECTION SUBTITLE */}
+                  <div className="flex gap-2 items-center py-2">
+                    <div className="w-1/4" />
+                    <div className="flex flex-col gap-2 w-3/4 items-start text-left pb-2">
+                      {newClass.isExperimental && (
+                        <p className="text-sm text-red-600 dark:text-yellow-500">
+                          Após 5 dias da data escolhida para a aula
+                          experimental, os dados abaixo serão utilizados para
+                          efetuar a matrícula do aluno. <br /> Em caso de
+                          cancelamento dentro do prazo de 5 dias, os dados serão
+                          descartados.
+                        </p>
+                      )}
+                      <p className="text-sm font-bold text-red-600 dark:text-yellow-500">
+                        ATENÇÃO: A VERACIDADE DOS DADOS É DE SUA
+                        RESPONSABILIDADE AO PREENCHER O CADASTRO
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* FINANCIAL RESPONSIBLE NAME */}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="financialResponsible"
+                      className={
+                        errors.financialResponsible
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                      }
+                    >
+                      Nome:{" "}
+                    </label>
+                    <input
+                      type="text"
+                      name="financialResponsible"
+                      placeholder={
+                        errors.financialResponsible
+                          ? "É necessário inserir o Nome completo do Responsável Financeiro"
+                          : "Insira o nome completo do Responsável Financeiro"
+                      }
+                      className={
+                        errors.financialResponsible
+                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      }
+                      value={studentData.financialResponsible.name}
+                      onChange={(e) =>
+                        setStudentData({
+                          ...studentData,
+                          financialResponsible: {
+                            ...studentData.financialResponsible,
+                            name: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+
+                  {/* FINANCIAL RESPONSIBLE E-MAIL */}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="financialResponsibleEmail"
+                      className={
+                        errors.financialResponsible?.email
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                      }
+                    >
+                      E-mail:{" "}
+                    </label>
+                    <input
+                      type="text"
+                      name="financialResponsibleEmail"
+                      disabled={isSubmitting}
+                      placeholder={
+                        errors.financialResponsible?.email
+                          ? "É necessário inserir o e-mail do Responsável Financeiro"
+                          : "Insira o e-mail do Responsável Financeiro"
+                      }
+                      className={
+                        errors.financialResponsible?.email
+                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      }
+                      value={studentData.financialResponsible?.email}
+                      onChange={(e) => {
+                        setStudentData({
+                          ...studentData,
+                          financialResponsible: {
+                            ...studentData.financialResponsible,
+                            email: e.target.value,
+                          },
+                        });
+                      }}
+                    />
+                  </div>
+
+                  {/* FINANCIAL RESPONSIBLE DOCUMENT*/}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="financialResponsibleDocument"
+                      className={
+                        testFinancialCPF
+                          ? errors.financialResponsible?.document
+                            ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                            : "w-1/4 text-right"
+                          : "w-1/4 text-right text-red-500 dark:text-red-400"
+                      }
+                    >
+                      CPF
+                      {testFinancialCPF ? (
+                        ": "
+                      ) : (
+                        <span className="text-red-500 dark:text-red-400">
+                          {" "}
+                          Inválido, verifique:
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="text"
+                      name="financialResponsibleDocument"
+                      pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                      maxLength={11}
+                      placeholder={
+                        testFinancialCPF
+                          ? errors.financialResponsible?.document
+                            ? "É necessário inserir o CPF do Responsável Financeiro"
+                            : "Insira o CPF do Responsável Financeiro"
+                          : "CPF Inválido"
+                      }
+                      className={
+                        testFinancialCPF
+                          ? errors.financialResponsible?.document
+                            ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                            : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                      }
+                      value={studentData.financialResponsible?.document}
+                      onChange={(e) => {
+                        if (e.target.value.length === 11) {
+                          setTestFinancialCPF(testaCPF(e.target.value));
+                        }
+                        setStudentData({
+                          ...studentData,
+                          financialResponsible: {
+                            ...studentData.financialResponsible,
+                            document: formataCPF(e.target.value),
+                          },
+                        });
+                      }}
+                    />
+                  </div>
+
+                  {/* FINANCIAL RESPONSIBLE PHONE */}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="financialResponsiblePhone"
+                      className={
+                        errors.financialResponsible?.phone
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                      }
+                    >
+                      Telefone:{" "}
+                    </label>
+                    <div className="flex w-2/4 gap-2">
+                      <div className="flex w-10/12 items-center gap-1">
+                        <select
+                          id="financialResponsiblePhoneDDD"
+                          defaultValue={"DDD"}
+                          className={
+                            errors.financialResponsible?.phone?.ddd
+                              ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                              : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          }
+                          name="DDD"
+                          onChange={(e) => {
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                phone: {
+                                  ...studentData.financialResponsible.phone,
+                                  ddd: e.target.value,
+                                },
+                              },
+                            });
+                          }}
+                        >
+                          <BrazilianStateSelectOptions />
+                        </select>
+                        <input
+                          type="text"
+                          name="financialResponsiblePhoneInitial"
+                          pattern="^[+ 0-9]{5}$"
+                          maxLength={5}
+                          value={studentData.financialResponsible?.phone.prefix}
+                          placeholder={
+                            errors.financialResponsible?.phone?.prefix
+                              ? "É necessário um"
+                              : "99999"
+                          }
+                          className={
+                            errors.financialResponsible?.phone?.prefix
+                              ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          }
+                          onChange={(e) => {
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                phone: {
+                                  ...studentData.financialResponsible.phone,
+                                  prefix: e.target.value
+                                    .replace(/[^0-9.]/g, "")
+                                    .replace(/(\..*?)\..*/g, "$1"),
+                                },
+                              },
+                            });
+                          }}
+                        />
+                        -
+                        <input
+                          type="text"
+                          name="financialResponsiblePhoneFinal"
+                          pattern="^[+ 0-9]{4}$"
+                          maxLength={4}
+                          value={studentData.financialResponsible?.phone.suffix}
+                          placeholder={
+                            errors.financialResponsible?.phone?.suffix
+                              ? "telefone válido"
+                              : "9990"
+                          }
+                          className={
+                            errors.financialResponsible?.phone?.suffix
+                              ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          }
+                          onChange={(e) => {
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                phone: {
+                                  ...studentData.financialResponsible.phone,
+                                  suffix: e.target.value
+                                    .replace(/[^0-9.]/g, "")
+                                    .replace(/(\..*?)\..*/g, "$1"),
+                                },
+                              },
+                            });
+                          }}
+                        />
+                      </div>
+                      <div className="flex w-2/12 items-center gap-2"></div>
+                    </div>
+                  </div>
+
+                  {/* FINANCIAL RESPONSIBLE PHONE SECONDARY */}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="phoneSecondary"
+                      className={
+                        errors.financialResponsible?.phoneSecondary
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                      }
+                    >
+                      Telefone 2:{" "}
+                    </label>
+                    <div className="flex w-2/4 gap-2">
+                      <div className="flex w-10/12 items-center gap-1">
+                        {/** NUMBER SECONDARY DDD */}
+                        <select
+                          id="financialResponsiblePhoneSecondaryDDD"
+                          disabled={
+                            !studentData.financialResponsible
+                              .activePhoneSecondary
+                          }
+                          defaultValue={"DDD"}
+                          className={
+                            errors.financialResponsible?.phoneSecondary?.ddd
+                              ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                              : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          }
+                          name="DDD"
+                          onChange={(e) => {
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                phoneSecondary: {
+                                  ...studentData.financialResponsible
+                                    .phoneSecondary,
+                                  ddd: e.target.value,
+                                },
+                              },
+                            });
+                          }}
+                        >
+                          <BrazilianStateSelectOptions />
+                        </select>
+                        {/** NUMBER SECONDARY PREFIX */}
+                        <input
+                          type="text"
+                          name="phoneSecondaryInitial"
+                          disabled={
+                            !studentData.financialResponsible
+                              .activePhoneSecondary
+                          }
+                          pattern="^[+ 0-9]{5}$"
+                          maxLength={5}
+                          value={
+                            studentData.financialResponsible?.phoneSecondary
+                              .prefix
+                          }
+                          placeholder={
+                            errors.financialResponsible?.phoneSecondary?.prefix
+                              ? "É necessário um"
+                              : "99999"
+                          }
+                          className={
+                            studentData.financialResponsible
+                              ?.activePhoneSecondary
+                              ? errors.financialResponsible?.phoneSecondary
+                                  ?.prefix
+                                ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          }
+                          onChange={(e) => {
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                phoneSecondary: {
+                                  ...studentData.financialResponsible
+                                    .phoneSecondary,
+                                  prefix: e.target.value
+                                    .replace(/[^0-9.]/g, "")
+                                    .replace(/(\..*?)\..*/g, "$1"),
+                                },
+                              },
+                            });
+                          }}
+                        />
+                        -{/** NUMBER SECONDARY SUFFIX */}
+                        <input
+                          type="text"
+                          name="phoneSecondaryFinal"
+                          disabled={
+                            !studentData.financialResponsible
+                              ?.activePhoneSecondary
+                          }
+                          pattern="^[+ 0-9]{4}$"
+                          maxLength={4}
+                          value={
+                            studentData.financialResponsible?.phoneSecondary
+                              .suffix
+                          }
+                          placeholder={
+                            errors.financialResponsible?.phoneSecondary?.prefix
+                              ? "telefone válido"
+                              : "9999"
+                          }
+                          className={
+                            studentData.financialResponsible
+                              ?.activePhoneSecondary
+                              ? errors.financialResponsible?.phoneSecondary
+                                  ?.suffix
+                                ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          }
+                          onChange={(e) => {
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                phoneSecondary: {
+                                  ...studentData.financialResponsible
+                                    .phoneSecondary,
+                                  suffix: e.target.value
+                                    .replace(/[^0-9.]/g, "")
+                                    .replace(/(\..*?)\..*/g, "$1"),
+                                },
+                              },
+                            });
+                          }}
+                        />
+                      </div>
+                      {/** CHECKBOX INCLUDE NUMBER SECONDARY */}
+                      <div className="flex w-2/12 items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name="activePhoneSecondary"
+                          className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
+                          checked={activePhoneSecondary}
+                          onChange={() => {
+                            setActivePhoneSecondary(!activePhoneSecondary);
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                activePhoneSecondary: !activePhoneSecondary,
+                                phoneSecondary: {
+                                  ...studentData.financialResponsible.phoneSecondary,
+                                  ddd: "DDD"
+                                }
+                              },
+                            });
+                          }}
+                        />
+                        <label
+                          htmlFor="activePhoneSecondary"
+                          className="text-sm"
+                        >
+                          Incluir
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* FINANCIAL RESPONSIBLE PHONE TERTIARY */}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="phoneTertiary"
+                      className={
+                        errors.financialResponsible?.phoneTertiary
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                      }
+                    >
+                      Telefone 3:{" "}
+                    </label>
+                    <div className="flex w-2/4 gap-2">
+                      <div className="flex w-10/12 items-center gap-1">
+                        {/** NUMBER TERTIARY DDD */}
+                        <select
+                          id="financialResponsiblePhoneTertiaryDDD"
+                          disabled={
+                            !studentData.financialResponsible
+                              ?.activePhoneTertiary
+                          }
+                          defaultValue={"DDD"}
+                          className={
+                            errors.financialResponsible?.phoneTertiary?.ddd
+                              ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                              : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          }
+                          name="DDD"
+                          onChange={(e) => {
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                phoneTertiary: {
+                                  ...studentData.financialResponsible
+                                    .phoneTertiary,
+                                  ddd: e.target.value,
+                                },
+                              },
+                            });
+                          }}
+                        >
+                          <BrazilianStateSelectOptions />
+                        </select>
+                        {/** NUMBER TERTIARY PREFIX */}
+                        <input
+                          type="text"
+                          name="phoneTertiaryInitial"
+                          disabled={
+                            !studentData.financialResponsible
+                              ?.activePhoneTertiary
+                          }
+                          pattern="^[+ 0-9]{5}$"
+                          maxLength={5}
+                          value={
+                            studentData.financialResponsible?.phoneTertiary
+                              .prefix
+                          }
+                          placeholder={
+                            errors.financialResponsible?.phoneTertiary?.prefix
+                              ? "É necessário um"
+                              : "99999"
+                          }
+                          className={
+                            studentData.financialResponsible
+                              ?.activePhoneTertiary
+                              ? errors.financialResponsible?.phoneTertiary
+                                  ?.prefix
+                                ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          }
+                          onChange={(e) => {
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                phoneTertiary: {
+                                  ...studentData.financialResponsible
+                                    .phoneTertiary,
+                                  prefix: e.target.value
+                                    .replace(/[^0-9.]/g, "")
+                                    .replace(/(\..*?)\..*/g, "$1"),
+                                },
+                              },
+                            });
+                          }}
+                        />
+                        -{/** NUMBER TERTIARY SUFFIX */}
+                        <input
+                          type="text"
+                          name="phoneTertiaryFinal"
+                          disabled={
+                            !studentData.financialResponsible
+                              ?.activePhoneTertiary
+                          }
+                          pattern="^[+ 0-9]{4}$"
+                          maxLength={4}
+                          value={
+                            studentData.financialResponsible?.phoneTertiary
+                              .suffix
+                          }
+                          placeholder={
+                            errors.financialResponsible?.phoneTertiary?.prefix
+                              ? "telefone válido"
+                              : "9999"
+                          }
+                          className={
+                            studentData.financialResponsible
+                              ?.activePhoneTertiary
+                              ? errors.financialResponsible?.phoneTertiary
+                                  ?.suffix
+                                ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          }
+                          onChange={(e) => {
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                phoneTertiary: {
+                                  ...studentData.financialResponsible
+                                    .phoneTertiary,
+                                  suffix: e.target.value
+                                    .replace(/[^0-9.]/g, "")
+                                    .replace(/(\..*?)\..*/g, "$1"),
+                                },
+                              },
+                            });
+                          }}
+                        />
+                      </div>
+                      {/** CHECKBOX INCLUDE NUMBER TERTIARY */}
+                      <div className="flex w-2/12 items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name="activePhoneTertiary"
+                          className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
+                          checked={activePhoneTertiary}
+                          onChange={() => {
+                            setActivePhoneTertiary(!activePhoneTertiary);
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                activePhoneTertiary: !activePhoneTertiary,
+                                phoneTertiary: {
+                                  ...studentData.financialResponsible.phoneTertiary,
+                                  ddd: "DDD"
+                                }
+                              },
+                            });
+                          }}
+                        />
+                        <label
+                          htmlFor="activePhoneTertiary"
+                          className="text-sm"
+                        >
+                          Incluir
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* FINANCIAL RESPONSIBLE ADDRESS */}
+                  {/* CEP */}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="financialResponsibleAddressCep"
+                      className={
+                        errors.financialResponsible?.address?.cep
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                      }
+                    >
+                      CEP:{" "}
+                    </label>
+                    <div className="flex w-3/4 gap-2">
+                      <div className="w-10/12">
+                        <input
+                          type="text"
+                          name="financialResponsibleAddressCep"
+                          maxLength={8}
+                          placeholder={
+                            errors.financialResponsible?.address?.cep ||
+                            cepError
+                              ? "É necessário inserir um CEP"
+                              : "Insira o CEP"
+                          }
+                          className={
+                            errors.financialResponsible?.address?.cep ||
+                            cepError
+                              ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          }
+                          value={studentData.financialResponsible.address.cep}
+                          onChange={(e) => {
+                            setCepError(false);
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                address: {
+                                  ...studentData.financialResponsible.address,
+                                  cep: formatCEP(e.target.value),
+                                },
+                              },
+                            });
+                          }}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        disabled={cepSubmitting}
+                        className="border rounded-2xl border-blue-900 bg-blue-500 disabled:bg-blue-400 text-white w-2/12"
+                        onClick={() => {
+                          getCep(studentData.financialResponsible.address.cep);
+                        }}
+                      >
+                        {cepSubmitting ? "Buscando..." : "Buscar"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* STREET AND NUMBER */}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="financialResponsibleAddressStreet"
+                      className={
+                        errors.financialResponsible?.address?.street
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                      }
+                    >
+                      Rua:{" "}
+                    </label>
+                    <div className="flex w-3/4 gap-2">
+                      <div className={`flex w-10/12`}>
+                        <input
+                          type="text"
+                          name="financialResponsibleAddressStreet"
+                          disabled={!editAddress}
+                          placeholder={
+                            errors.financialResponsible?.address?.street
+                              ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
+                              : "Rua / Av. / Pça"
+                          }
+                          className={
+                            editAddress
+                              ? errors.financialResponsible?.address?.street
+                                ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          }
+                          value={
+                            studentData.financialResponsible?.address?.street
+                          }
+                          onChange={(e) =>
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                address: {
+                                  ...studentData.financialResponsible.address,
+                                  street: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="flex w-2/12 items-center gap-2">
+                        <label
+                          htmlFor="financialResponsibleAddressNumber"
+                          className="text-right"
+                        >
+                          Nº:
+                        </label>
+                        <input
+                          type="text"
+                          name="financialResponsibleAddressNumber"
+                          placeholder={
+                            errors.financialResponsible?.address?.number
+                              ? "Número"
+                              : "Número"
+                          }
+                          className={
+                            errors.financialResponsible?.address?.number
+                              ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          }
+                          value={
+                            studentData.financialResponsible?.address?.number
+                          }
+                          onChange={(e) =>
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                address: {
+                                  ...studentData.financialResponsible.address,
+                                  number: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* NEIGHBORHOOD AND COMPLEMENT */}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="financialResponsibleAddressNeighborhood"
+                      className={
+                        errors.financialResponsible?.address?.neighborhood
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                      }
+                    >
+                      Bairro:{" "}
+                    </label>
+                    <div className={`flex w-3/4 gap-2 items-center`}>
+                      <div className="w-10/12">
+                        <input
+                          type="text"
+                          name="financialResponsibleAddressNeighborhood"
+                          disabled={!editAddress}
+                          placeholder={
+                            errors.financialResponsible?.address?.neighborhood
+                              ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
+                              : "Bairro"
+                          }
+                          className={
+                            editAddress
+                              ? errors.financialResponsible?.address
+                                  ?.neighborhood
+                                ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          }
+                          value={
+                            studentData.financialResponsible.address
+                              .neighborhood
+                          }
+                          onChange={(e) =>
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                address: {
+                                  ...studentData.financialResponsible.address,
+                                  neighborhood: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="flex w-4/12 items-center gap-2">
+                        <label
+                          htmlFor="financialResponsibleAddressComplement"
+                          className="text-right"
+                        >
+                          Complemento:
+                        </label>
+                        <input
+                          type="text"
+                          name="financialResponsibleAddressComplement"
+                          placeholder={"Apto | Bloco"}
+                          className={
+                            errors.financialResponsible?.address
+                              ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          }
+                          value={
+                            studentData.financialResponsible.address.complement
+                          }
+                          onChange={(e) =>
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                address: {
+                                  ...studentData.financialResponsible.address,
+                                  complement: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CITY AND STATE */}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="financialResponsibleAddressCity"
+                      className={
+                        errors.financialResponsible?.address?.city
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                      }
+                    >
+                      Cidade:{" "}
+                    </label>
+                    <div className={`flex w-3/4 gap-2 items-center`}>
+                      <div className={`flex w-10/12`}>
+                        <input
+                          type="text"
+                          name="financialResponsibleAddressCity"
+                          disabled={!editAddress}
+                          placeholder={
+                            errors.financialResponsible?.address?.city
+                              ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
+                              : "Cidade"
+                          }
+                          className={
+                            editAddress
+                              ? errors.financialResponsible?.address?.city
+                                ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          }
+                          value={studentData.financialResponsible.address.city}
+                          onChange={(e) =>
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                address: {
+                                  ...studentData.financialResponsible.address,
+                                  city: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="flex w-2/12 items-center gap-2">
+                        <label
+                          htmlFor="financialResponsibleAddressState"
+                          className="text-right"
+                        >
+                          Estado:
+                        </label>
+                        <input
+                          type="text"
+                          name="financialResponsibleAddressState"
+                          disabled={!editAddress}
+                          placeholder={
+                            errors.financialResponsible?.address?.state
+                              ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
+                              : "UF"
+                          }
+                          className={
+                            editAddress
+                              ? errors.financialResponsible?.address?.state
+                                ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                              : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          }
+                          value={studentData.financialResponsible.address.state}
+                          onChange={(e) =>
+                            setStudentData({
+                              ...studentData,
+                              financialResponsible: {
+                                ...studentData.financialResponsible,
+                                address: {
+                                  ...studentData.financialResponsible.address,
+                                  state: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* EDIT ADDRESS BUTTON */}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="editAddressButton"
+                      className="w-1/4 text-right"
+                    ></label>
+                    <button
+                      type="button"
+                      name="editAddressButton"
+                      disabled={editAddress}
+                      className="border rounded-2xl mt-2 mb-4 border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-3/4"
+                      onClick={() => setEditAddress(true)}
+                    >
+                      {editAddress
+                        ? "Insira o Endereço manualmente, ou busque o CEP novamente"
+                        : "Editar Endereço"}
+                    </button>
+                  </div>
                 </>
-              ) : null}
+              )}
             </>
           ) : (
             <>
@@ -3677,10 +4346,15 @@ export function InsertStudent() {
             </>
           )
         ) : (
-          <p className="text-red-600 dark:text-yellow-500">
-            Selecione um colégio e uma turma para ver as modalidades
-            disponíveis.
-          </p>
+          <div className="flex gap-2 items-center py-2">
+            <div className="w-1/4" />
+            <div className="flex gap-2 w-3/4 items-start text-left py-2">
+              <p className="text-red-600 dark:text-yellow-500">
+                Selecione um colégio e um Ano Escolar para ver as modalidades
+                disponíveis.
+              </p>
+            </div>
+          </div>
         )}
 
         {/** CHECKBOX CONFIRM INSERT */}
@@ -3722,9 +4396,14 @@ export function InsertStudent() {
             disabled={isSubmitting}
             onClick={() => {
               resetForm();
+              login && setIsExperimentalClass(false);
             }}
           >
-            {isSubmitting ? "Aguarde" : "Limpar"}
+            {isSubmitting
+              ? "Aguarde"
+              : isExperimentalClass
+              ? "Voltar"
+              : "Limpar"}
           </button>
         </div>
       </form>

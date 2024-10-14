@@ -5,9 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import CurrencyInput from "react-currency-input-field";
 import { ToastContainer, toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  doc, getFirestore, updateDoc
-} from "firebase/firestore";
+import { doc, getFirestore, updateDoc } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -27,9 +25,8 @@ const db = getFirestore(app);
 
 export function EditCourse() {
   // GET GLOBAL DATA
-  const { schoolCourseDatabaseData } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const { isSubmitting, schoolCourseDatabaseData, setIsSubmitting } =
+    useContext(GlobalDataContext) as GlobalDataContextType;
 
   // SCHOOL COURSE DATA
   const [schoolCourseData, setSchoolCourseData] = useState({
@@ -79,9 +76,6 @@ export function EditCourse() {
       });
     }
   }, [schoolCourseSelectedData]);
-
-  // SUBMITTING STATE
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -395,7 +389,7 @@ export function EditCourse() {
               />
             </div>
 
-            {/* SCHOOL COURSE NAME */}
+            {/* SCHOOL COURSE BUNDLE DAYS */}
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="bundleDays"

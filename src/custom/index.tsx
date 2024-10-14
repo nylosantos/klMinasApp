@@ -7,7 +7,7 @@ export const customerShortName = "KL";
 // OPEN/CLOSE APP SIGN IN
 export const systemSignInClosed = false;
 // OPEN/CLOSE APP SIGN UP
-export const systemSignUpClosed = true;
+export const systemSignUpClosed = false;
 // ENROLMENT FEE FULL VALUES
 export const enrolmentFee = 157
 export const enrolmentFeeDiscount = 67.5
@@ -224,10 +224,5 @@ export const formataCPF = (cpfNumber: string) => {
 
 export const convertTimestamp = (timestamp: Timestamp) => {
   const date = timestamp.toDate();
-  // let mm = date.getMonth();
-  // let dd = date.getDate();
-  // let yyyy = date.getFullYear();
-
-  // date = mm + "/" + dd + "/" + yyyy;
   return date;
 };

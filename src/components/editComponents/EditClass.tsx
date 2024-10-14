@@ -39,7 +39,6 @@ export function EditClass() {
   const [schoolClassEditData, setSchoolClassEditData] =
     useState<EditSchoolClassValidationZProps>({
       name: "",
-      available: "closed",
     });
 
   // SCHOOL CLASS SELECTED AND EDIT ACTIVE STATES
@@ -79,7 +78,6 @@ export function EditClass() {
       setSchoolClassEditData({
         ...schoolClassEditData,
         name: schoolClassSelectedData.name,
-        available: schoolClassSelectedData.available,
       });
     }
   }, [schoolClassSelectedData]);
@@ -120,7 +118,6 @@ export function EditClass() {
     resolver: zodResolver(editSchoolClassValidationSchema),
     defaultValues: {
       name: "",
-      available: "closed",
     },
   });
 
@@ -134,7 +131,6 @@ export function EditClass() {
     ).selectedIndex = 0;
     setSchoolClassEditData({
       name: "",
-      available: "closed",
     });
     setSchoolClassData({
       schoolClassId: "",
@@ -146,12 +142,11 @@ export function EditClass() {
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("name", schoolClassEditData.name);
-    setValue("available", schoolClassEditData.available);
   }, [schoolClassEditData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [errors.name, errors.available];
+    const fullErrors = [errors.name];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -176,7 +171,6 @@ export function EditClass() {
           doc(db, "schoolClasses", schoolClassData.schoolClassId),
           {
             name: data.name,
-            available: data.available,
           }
         );
         resetForm();
@@ -209,7 +203,7 @@ export function EditClass() {
       // IF NOT EXISTS, RETURN ERROR
       return (
         setIsSubmitting(false),
-        toast.error(`Turma não existe no banco de dados...... ❕`, {
+        toast.error(`Ano escolar não existe no banco de dados...... ❕`, {
           theme: "colored",
           closeOnClick: true,
           pauseOnHover: true,
@@ -223,10 +217,6 @@ export function EditClass() {
     }
   };
 
-  useEffect(() => {
-    console.log(schoolClassEditData);
-  }, [schoolClassEditData]);
-
   return (
     <div className="flex flex-col container text-center">
       {/* SUBMIT LOADING */}
@@ -237,7 +227,7 @@ export function EditClass() {
 
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">
-        {isEdit ? `Editando ${schoolClassEditData.name}` : "Editar Turma"}
+        {isEdit ? `Editando ${schoolClassEditData.name}` : "Editar Ano Escolar"}
       </h1>
 
       {/* FORM */}
@@ -287,7 +277,7 @@ export function EditClass() {
                 : "w-1/4 text-right"
             }
           >
-            Selecione a Turma:{" "}
+            Selecione o Ano Escolar:{" "}
           </label>
           <select
             id="schoolClassSelect"
@@ -357,8 +347,8 @@ export function EditClass() {
                 disabled={isSubmitting}
                 placeholder={
                   errors.name
-                    ? "É necessário inserir o nome da Turma"
-                    : "Insira o nome da Turma"
+                    ? "É necessário inserir o nome do Ano Escolar"
+                    : "Insira o nome do Ano Escolar"
                 }
                 className={
                   errors.name
@@ -376,7 +366,7 @@ export function EditClass() {
             </div>
 
             {/* SCHOOL CLASS AVAILABILITY */}
-            <div className="flex gap-2 items-center">
+            {/* <div className="flex gap-2 items-center">
               <label
                 htmlFor="available"
                 className={
@@ -445,7 +435,7 @@ export function EditClass() {
                   Lista de Espera
                 </label>
               </div>
-            </div>
+            </div> */}
 
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">

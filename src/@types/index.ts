@@ -8,7 +8,6 @@ import {
   createCurriculumValidationSchema,
   createScheduleValidationSchema,
   createSchoolValidationSchema,
-  createSeedValidationSchema,
   createStudentValidationSchema,
   createTeacherValidationSchema,
   createUserValidationSchema,
@@ -28,12 +27,12 @@ import {
   editSchoolCourseValidationSchema,
   editSchoolValidationSchema,
   editStudentValidationSchema,
+  editSystemConstantsValidationSchema,
   editTeacherValidationSchema,
   editUserValidationSchema,
   loginEmailAndPasswordValidationSchema,
   searchCurriculumValidationSchema,
   signUpEmailAndPasswordValidationSchema,
-  testeBancoValidationSchema,
 } from "./zodValidation";
 
 // LOGIN VALIDATIONS
@@ -89,14 +88,9 @@ export type CreateScheduleValidationZProps = z.infer<
 export type CreateTeacherValidationZProps = z.infer<
   typeof createTeacherValidationSchema
 >;
+
 export type CreateCurriculumValidationZProps = z.infer<
   typeof createCurriculumValidationSchema
->;
-export type CreateSeedValidationZProps = z.infer<
-  typeof createSeedValidationSchema
->;
-export type TesteBancoValidationZProps = z.infer<
-  typeof testeBancoValidationSchema
 >;
 
 // DELETE VALIDATIONS SCHOOLS
@@ -149,6 +143,9 @@ export type EditCurriculumValidationZProps = z.infer<
 >;
 export type EditStudentValidationZProps = z.infer<
   typeof editStudentValidationSchema
+>;
+export type EditSystemConstantsValidationZProps = z.infer<
+  typeof editSystemConstantsValidationSchema
 >;
 
 // SEARCH VALIDATIONS SCHOOLS
@@ -232,6 +229,15 @@ export interface ClassDaysCompProps {
   };
   toggleClassDays: ({ day, value }: ToggleClassDaysFunctionProps) => void;
 }
+
+export interface SystemConstantsSearchProps {
+  id: string;
+  enrolmentFee: number;
+  enrolmentFeeDiscount: number;
+  systemSignInClosed: boolean;
+  systemSignUpClosed: boolean;
+}
+
 export interface SchoolSearchProps {
   id: string;
   name: string;
@@ -261,13 +267,6 @@ export interface ClassDaySearchProps {
   name: string;
   indexDays: Array<number>;
   indexNames: Array<string>;
-  // sunday: boolean;
-  // monday: boolean;
-  // tuesday: boolean;
-  // wednesday: boolean;
-  // thursday: boolean;
-  // friday: boolean;
-  // saturday: boolean;
   updatedAt: Date;
 }
 
@@ -331,43 +330,64 @@ export interface ScheduleSearchProps {
 
 export interface StudentSearchProps {
   [x: string]: any;
+  // Section 1: Student Data
   id: string;
   name: string;
-  email: string;
   birthDate: string;
-  address: {
-    street: string;
-    number: string;
-    complement: string;
-    neighborhood: string;
-    city: string;
-    state: string;
-    cep: string;
+  classComplement: string;
+  parentOne: {
+    name: string;
+    email: string;
+    phone: string;
   };
-  phone: string;
-  activePhoneSecondary: boolean;
-  phoneSecondary: string;
-  activePhoneTertiary: boolean;
-  phoneTertiary: string;
-  responsible: string;
-  responsibleDocument: string;
-  financialResponsible: string;
-  financialResponsibleDocument: string;
+  parentTwo: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+
+  // Section 2: Student Course and Family Data | Prices
+  enrolmentExemption: boolean;
   enrolmentFee: number;
+  enrolmentFeePaid: boolean;
   fullPrice: number;
   appliedPrice: number;
   customDiscount: boolean;
   customDiscountValue: string;
   employeeDiscount: boolean;
-  enrolmentExemption: boolean;
   familyDiscount: boolean;
   secondCourseDiscount: boolean;
-  updatedAt: Date;
-  curriculumIds: Array<CurriculumArrayProps>;
-  experimentalCurriculumIds: Array<CurriculumArrayProps>;
-  paymentRegister: PaymentRegisterProps;
   paymentDay?: string;
+  experimentalCurriculumIds: Array<CurriculumArrayProps>;
+  curriculumIds: Array<CurriculumArrayProps>;
   studentFamilyAtSchool: Array<StudentFamilyAtSchoolProps>;
+  paymentRegister: PaymentRegisterProps;
+
+  // Section 3: Student Financial Responsible Data
+  financialResponsible: {
+    name: string;
+    document: string;
+    email: string;
+    address: {
+      street: string;
+      number: string;
+      complement: string;
+      neighborhood: string;
+      city: string;
+      state: string;
+      cep: string;
+    };
+    phone: string;
+    phoneSecondary: string;
+    phoneTertiary: string;
+  };
+
+  // Section 4: Student Contract Data
+  // Accept Contract: boolean
+  // Contract attached (pdf)
+
+  // Section 5: Last Updated Time
+  updatedAt: Date;
 }
 
 export interface StudentFamilyAtSchoolProps {

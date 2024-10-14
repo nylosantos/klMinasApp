@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast, ToastContainer } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 
-import { systemSignInClosed } from "../../custom";
 import { LoginWithEmailAndPasswordZProps } from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -14,6 +13,7 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { systemSignInClosed } from "../../custom";
 
 export function FormLogin() {
   // GET GLOBAL DATA
@@ -111,7 +111,7 @@ export function FormLogin() {
       {/* TOAST CONTAINER */}
       <ToastContainer limit={2} />
 
-      <div className="flex flex-col w-96 p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-klOrange-500/80 dark:bg-transparent">
+      <div className="flex flex-col w-96 p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-gray-700/20 dark:bg-transparent">
         {/* SUBMIT LOADING */}
         <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="logando" />
 
@@ -127,6 +127,7 @@ export function FormLogin() {
           <input
             type="text"
             name="email"
+            autoComplete="email"
             disabled={systemSignInClosed ? true : isSubmitting}
             placeholder={
               errors.email ? "É necessário inserir o E-mail" : "E-mail"
@@ -146,6 +147,7 @@ export function FormLogin() {
           <input
             type="password"
             name="password"
+            autoComplete="current-password"
             disabled={systemSignInClosed ? true : isSubmitting}
             placeholder={
               errors.password ? "É necessário inserir a Senha" : "Senha"

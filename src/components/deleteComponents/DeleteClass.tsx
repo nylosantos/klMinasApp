@@ -176,7 +176,7 @@ export function DeleteClass() {
       try {
         await deleteDoc(doc(db, "schoolClasses", data.schoolClassId));
         resetForm();
-        toast.success(`Turma excluída com sucesso! 👌`, {
+        toast.success(`Ano Escolar excluída com sucesso! 👌`, {
           theme: "colored",
           closeOnClick: true,
           pauseOnHover: true,
@@ -259,7 +259,7 @@ export function DeleteClass() {
         }),
         setIsSubmitting(false),
         toast.error(
-          `Turma tem ${schoolClassExistsOnStudent.length} ${
+          `Ano Escolar tem ${schoolClassExistsOnStudent.length} ${
             schoolClassExistsOnStudent.length === 1
               ? "aluno matriculado"
               : "alunos matriculados"
@@ -283,14 +283,14 @@ export function DeleteClass() {
         }),
         setIsSubmitting(false),
         toast.error(
-          `Turma incluída em ${schoolClassExistsOnCurriculum.length} ${
+          `Ano Escolar incluído em ${schoolClassExistsOnCurriculum.length} ${
             schoolClassExistsOnCurriculum.length === 1
-              ? "Currículo"
-              : "Currículos"
+              ? "Turma"
+              : "Turmas"
           }, exclua ou altere primeiramente ${
             schoolClassExistsOnCurriculum.length === 1
-              ? "o Currículo"
-              : "os Currículos"
+              ? "a Turma"
+              : "as Turmas"
           } e depois exclua o ${data.schoolClassName}... ❕`,
           {
             theme: "colored",
@@ -305,44 +305,6 @@ export function DeleteClass() {
       // IF NO EXISTS, DELETE
       deleteSchoolClass();
     }
-
-    // // CHECKING IF SCHOOL EXISTS ON CURRRICULUM DATABASE
-    // const schoolClassRef = collection(db, "curriculum");
-    // const q = query(
-    //   schoolClassRef,
-    //   where("schoolClass", "==", data.schoolClassName)
-    // );
-    // const querySnapshot = await getDocs(q);
-    // const promises: DocumentData[] = [];
-    // querySnapshot.forEach((doc) => {
-    //   const promise = doc.data();
-    //   promises.push(promise);
-    // });
-    // Promise.all(promises).then((results) => {
-    //   // IF EXISTS, RETURN ERROR
-    //   if (results.length !== 0) {
-    //     return (
-    //       setIsSubmitting(false),
-    //       toast.error(
-    //         `Turma incluída em ${results.length} ${
-    //           results.length === 1 ? "Currículo" : "Currículos"
-    //         }, exclua ou altere primeiramente ${
-    //           results.length === 1 ? "o Currículo" : "os Currículos"
-    //         } e depois exclua a ${data.schoolClassName}... ❕`,
-    //         {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         }
-    //       )
-    //     );
-    //   } else {
-    //     // IF NO EXISTS, DELETE
-    //     deleteSchoolClass();
-    //   }
-    // });
   };
 
   return (
@@ -354,7 +316,7 @@ export function DeleteClass() {
       <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Excluir Turma</h1>
+      <h1 className="font-bold text-2xl my-4">Excluir Ano Escolar</h1>
 
       {/* FORM */}
       <form
@@ -403,7 +365,7 @@ export function DeleteClass() {
                 : "w-1/4 text-right"
             }
           >
-            Selecione a Turma:{" "}
+            Selecione o Ano Escolar:{" "}
           </label>
           <select
             id="schoolClassSelect"
@@ -433,7 +395,7 @@ export function DeleteClass() {
             ) : (
               <option disabled value={" -- select an option -- "}>
                 {" "}
-                -- Selecione uma escola para ver as turmas disponíveis --{" "}
+                -- Selecione uma escola para ver os anos escolares disponíveis --{" "}
               </option>
             )}
           </select>

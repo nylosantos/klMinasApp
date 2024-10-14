@@ -182,17 +182,17 @@ export function SelectOptions({
                 <option
                   key={option.id}
                   value={returnId ? option.id : option.name}
-                  className={
-                    dataType === "schoolClasses"
-                      ? option.available === "open"
-                        ? "bg-green-600"
-                        : option.available === "closed"
-                        ? "bg-red-600"
-                        : "bg-teal-600"
-                      : ""
-                  }
+                  // className={
+                  //   dataType === "schoolClasses"
+                  //     ? option.available === "open"
+                  //       ? "bg-green-600"
+                  //       : option.available === "closed"
+                  //       ? "bg-red-600"
+                  //       : "bg-teal-600"
+                  //     : ""
+                  // }
                 >
-                  {displaySchoolCourseAndSchedule
+                  {/* {displaySchoolCourseAndSchedule
                     ? `${option.schoolCourse} | ${option.schedule}`
                     : dataType === "schoolClasses"
                     ? option.available === "open"
@@ -200,6 +200,9 @@ export function SelectOptions({
                       : option.available === "closed"
                       ? option.name + " (Turma Fechada)"
                       : option.name + " (Lista de Espera)"
+                    : option.name} */}
+                  {displaySchoolCourseAndSchedule
+                    ? `${option.schoolCourse} | ${option.schedule}`
                     : option.name}
                 </option>
               ) : null}
@@ -218,25 +221,28 @@ export function SelectOptions({
                 }
                 key={option.id}
                 value={returnId ? option.id : option.name}
-                className={
-                  dataType === "schoolClasses"
-                    ? option.available === "open"
-                      ? "bg-green-600"
-                      : option.available === "closed"
-                      ? "bg-red-600"
-                      : "bg-teal-600"
-                    : ""
-                }
+                // className={
+                //   dataType === "schoolClasses"
+                //     ? option.available === "open"
+                //       ? "bg-green-600"
+                //       : option.available === "closed"
+                //       ? "bg-red-600"
+                //       : "bg-teal-600"
+                //     : ""
+                // }
               >
-                {displaySchoolCourseAndSchedule
-                  ? `${option.schoolCourse} | ${option.schedule}`
-                  : dataType === "schoolClasses"
-                  ? option.available === "open"
-                    ? option.name + " (Turma Aberta)"
-                    : option.available === "closed"
-                    ? option.name + " (Turma Fechada)"
-                    : option.name + " (Lista de Espera)"
-                  : option.name}
+                {/* {displaySchoolCourseAndSchedule
+                    ? `${option.schoolCourse} | ${option.schedule}`
+                    : dataType === "schoolClasses"
+                    ? option.available === "open"
+                      ? option.name + " (Turma Aberta)"
+                      : option.available === "closed"
+                      ? option.name + " (Turma Fechada)"
+                      : option.name + " (Lista de Espera)"
+                    : option.name} */}
+                  {displaySchoolCourseAndSchedule
+                    ? `${option.schoolCourse} | ${option.schedule}`
+                    : option.name}
               </option>
             </>
           ))
@@ -245,25 +251,28 @@ export function SelectOptions({
               <option
                 key={option.id}
                 value={returnId ? option.id : option.name}
-                className={
-                  dataType === "schoolClasses"
-                    ? option.available === "open"
-                      ? "bg-green-600"
-                      : option.available === "closed"
-                      ? "bg-red-600"
-                      : "bg-teal-600"
-                    : ""
-                }
+                // className={
+                //   dataType === "schoolClasses"
+                //     ? option.available === "open"
+                //       ? "bg-green-600"
+                //       : option.available === "closed"
+                //       ? "bg-red-600"
+                //       : "bg-teal-600"
+                //     : ""
+                // }
               >
-                {displaySchoolCourseAndSchedule
-                  ? `${option.schoolCourse} | ${option.schedule}`
-                  : dataType === "schoolClasses"
-                  ? option.available === "open"
-                    ? option.name + " (Turma Aberta)"
-                    : option.available === "closed"
-                    ? option.name + " (Turma Fechada)"
-                    : option.name + " (Lista de Espera)"
-                  : option.name}
+                {/* {displaySchoolCourseAndSchedule
+                    ? `${option.schoolCourse} | ${option.schedule}`
+                    : dataType === "schoolClasses"
+                    ? option.available === "open"
+                      ? option.name + " (Turma Aberta)"
+                      : option.available === "closed"
+                      ? option.name + " (Turma Fechada)"
+                      : option.name + " (Lista de Espera)"
+                    : option.name} */}
+                  {displaySchoolCourseAndSchedule
+                    ? `${option.schoolCourse} | ${option.schedule}`
+                    : option.name}
               </option>
             </>
           ))}

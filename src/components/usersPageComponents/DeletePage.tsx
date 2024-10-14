@@ -7,7 +7,6 @@ import { DeleteCourse } from "../deleteComponents/DeleteCourse";
 import { DeleteStudent } from "../deleteComponents/DeleteStudent";
 import { DeleteTeacher } from "../deleteComponents/DeleteTeacher";
 import { DeleteSchedule } from "../deleteComponents/DeleteSchedule";
-import { DeleteClassDays } from "../deleteComponents/DeleteClassDays";
 import { DeleteCurriculum } from "../deleteComponents/DeleteCurriculum";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,7 +41,7 @@ export default function DeletePage() {
               )
             }
           >
-            Turma
+            Ano Escolar
           </Tab>
           <Tab
             className={({ selected }) =>
@@ -55,18 +54,6 @@ export default function DeletePage() {
             }
           >
             Modalidade
-          </Tab>
-          <Tab
-            className={({ selected }) =>
-              classNames(
-                "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
-                selected
-                  ? "bg-white text-klGreen-500 shadow dark:text-gray-800 cursor-default"
-                  : "text-klGreen-500 dark:text-gray-100 hover:bg-white/40 dark:hover:bg-white/[0.12]"
-              )
-            }
-          >
-            Dias de Aula
           </Tab>
           <Tab
             className={({ selected }) =>
@@ -102,7 +89,7 @@ export default function DeletePage() {
               )
             }
           >
-            Currículo
+            Turma
           </Tab>
           <Tab
             className={({ selected }) =>
@@ -126,9 +113,6 @@ export default function DeletePage() {
           </TabPanel>
           <TabPanel as={Fragment}>
             <DeleteCourse />
-          </TabPanel>
-          <TabPanel as={Fragment}>
-            <DeleteClassDays />
           </TabPanel>
           <TabPanel as={Fragment}>
             <DeleteSchedule />

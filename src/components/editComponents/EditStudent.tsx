@@ -12,6 +12,7 @@ import {
   arrayUnion,
   doc,
   getFirestore,
+  serverTimestamp,
   Timestamp,
   updateDoc,
 } from "firebase/firestore";
@@ -32,8 +33,8 @@ import {
   SchoolCourseSearchProps,
   SchoolSearchProps,
   SearchCurriculumValidationZProps,
+  StudentFamilyAtSchoolProps,
   StudentSearchProps,
-  SubCollectionFamilyDetailsProps,
   ToggleClassDaysFunctionProps,
 } from "../../@types";
 import {
@@ -80,56 +81,79 @@ export function EditStudent() {
   // STUDENT EDIT DATA
   const [studentEditData, setStudentEditData] =
     useState<EditStudentValidationZProps>({
+      // Section 1: Student Data
       id: "",
       name: "",
-      email: "",
       birthDate: "",
-      address: {
-        street: "",
-        number: "",
-        complement: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-        cep: "",
+      classComplement: "",
+      parentOne: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      phone: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
+      parentTwo: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      activePhoneSecondary: false,
-      phoneSecondary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      activePhoneTertiary: false,
-      phoneTertiary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      responsible: "",
-      responsibleDocument: "",
-      financialResponsible: "",
-      financialResponsibleDocument: "",
+
+      // Section 2: Student Course and Family Data | Prices
       addCurriculum: false,
       addExperimentalCurriculum: false,
       addFamily: false,
+      enrolmentExemption: false,
       enrolmentFee: 0,
-      fullPrice: 0,
-      appliedPrice: 0,
+      enrolmentFeePaid: false,
       customDiscount: false,
       customDiscountValue: "",
       employeeDiscount: false,
-      enrolmentExemption: false,
       familyDiscount: false,
       secondCourseDiscount: false,
-    });
+      fullPrice: 0,
+      appliedPrice: 0,
+      paymentDay: "",
 
-  // TEST RESPONSIBLE CPF (BRAZILIAN DOCUMENT) STATE
-  const [testCPF, setTestCPF] = useState(true);
+      // Section 3: Student Financial Responsible Data
+      financialResponsible: {
+        name: "",
+        document: "",
+        email: "",
+        address: {
+          street: "",
+          number: "",
+          complement: "",
+          neighborhood: "",
+          city: "",
+          state: "",
+          cep: "",
+        },
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneSecondary: false,
+        phoneSecondary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneTertiary: false,
+        phoneTertiary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+      },
+    });
 
   // TEST FINANCIAL RESPONSIBLE CPF (BRAZILIAN DOCUMENT) STATE
   const [testFinancialCPF, setTestFinancialCPF] = useState(true);
@@ -280,24 +304,6 @@ export function EditStudent() {
   // SET CURRICULUM SELECTED STATE WHEN SELECT CURRICULUM
   useEffect(() => {
     if (curriculumSelectedData) {
-      // const handleSchoolCoursePrizes = async () => {
-      //   const schoolCoursePrizes = schoolCourseDatabaseData.filter(
-      //     (schoolCourse) =>
-      //       schoolCourse.id === curriculumSelectedData.schoolCourseId
-      //   );
-      //   console.log(schoolCoursePrizes);
-      //   // const q = query(
-      //   //   collection(db, "schoolCourses"),
-      //   //   where("id", "==", curriculumSelectedData.schoolCourseId)
-      //   // );
-      //   // const querySnapshot = await getDocs(q);
-      //   // const promises: SchoolCourseSearchProps[] = [];
-      //   // querySnapshot.forEach((doc) => {
-      //   //   const promise = doc.data() as SchoolCourseSearchProps;
-      //   //   promises.push(promise);
-      //   // });
-      // };
-      // handleSchoolCoursePrizes();
       setIsEdit(false);
       setIsSelected(false);
       setStudentSelectedData(undefined);
@@ -636,39 +642,56 @@ export function EditStudent() {
     if (studentSelectedData) {
       setStudentEditData({
         ...studentEditData,
-        phoneSecondary: {
-          ...studentEditData.phoneSecondary,
-          ddd: studentEditData.activePhoneSecondary
-            ? studentSelectedData.phoneSecondary !== ""
-              ? studentSelectedData.phoneSecondary.slice(3, 5)
-              : "DDD"
-            : "DDD",
-          prefix: studentEditData.activePhoneSecondary
-            ? studentSelectedData.phoneSecondary.slice(5, 10)
-            : "",
-          suffix: studentEditData.activePhoneSecondary
-            ? studentSelectedData.phoneSecondary.slice(-4)
-            : "",
-        },
-        phoneTertiary: {
-          ...studentEditData.phoneTertiary,
-          ddd: studentEditData.activePhoneTertiary
-            ? studentSelectedData.phoneTertiary !== ""
-              ? studentSelectedData.phoneTertiary.slice(3, 5)
-              : "DDD"
-            : "DDD",
-          prefix: studentEditData.activePhoneTertiary
-            ? studentSelectedData.phoneTertiary.slice(5, 10)
-            : "",
-          suffix: studentEditData.activePhoneTertiary
-            ? studentSelectedData.phoneTertiary.slice(-4)
-            : "",
+        financialResponsible: {
+          ...studentEditData.financialResponsible,
+          phoneSecondary: {
+            ...studentEditData.financialResponsible.phoneSecondary,
+            ddd: studentEditData.financialResponsible.activePhoneSecondary
+              ? studentSelectedData.financialResponsible.phoneSecondary !== ""
+                ? studentSelectedData.financialResponsible.phoneSecondary.slice(
+                    3,
+                    5
+                  )
+                : "DDD"
+              : "DDD",
+            prefix: studentEditData.financialResponsible.activePhoneSecondary
+              ? studentSelectedData.financialResponsible.phoneSecondary.slice(
+                  5,
+                  10
+                )
+              : "",
+            suffix: studentEditData.financialResponsible.activePhoneSecondary
+              ? studentSelectedData.financialResponsible.phoneSecondary.slice(
+                  -4
+                )
+              : "",
+          },
+          phoneTertiary: {
+            ...studentEditData.financialResponsible.phoneTertiary,
+            ddd: studentEditData.financialResponsible.activePhoneTertiary
+              ? studentSelectedData.financialResponsible.phoneTertiary !== ""
+                ? studentSelectedData.financialResponsible.phoneTertiary.slice(
+                    3,
+                    5
+                  )
+                : "DDD"
+              : "DDD",
+            prefix: studentEditData.financialResponsible.activePhoneTertiary
+              ? studentSelectedData.financialResponsible.phoneTertiary.slice(
+                  5,
+                  10
+                )
+              : "",
+            suffix: studentEditData.financialResponsible.activePhoneTertiary
+              ? studentSelectedData.financialResponsible.phoneTertiary.slice(-4)
+              : "",
+          },
         },
       });
     }
   }, [
-    studentEditData.activePhoneSecondary,
-    studentEditData.activePhoneTertiary,
+    studentEditData.financialResponsible.activePhoneSecondary,
+    studentEditData.financialResponsible.activePhoneTertiary,
   ]);
 
   // SET STUDENT SELECTED STATE WHEN SELECT STUDENT ON FORM
@@ -681,27 +704,12 @@ export function EditStudent() {
           setStudentSelectedData(student);
         }
       });
-      // studentsDatabaseData.map(async (data: SubCollectionProps) => {
-      //   if (data.id === studentData.studentId) {
-      //     const queryStudent = query(
-      //       collection(db, "students"),
-      //       where("id", "==", data.id)
-      //     );
-      //     const getStudentFullData = await getDocs(queryStudent);
-      //     getStudentFullData.forEach(async (doc) => {
-      //       const dataStudent = doc.data() as StudentSearchProps;
-      //       if (dataStudent.id === studentData.studentId) {
-      //         setStudentSelectedData(dataStudent);
-      //       }
-      //     });
-      //   }
-      // });
     }
   }, [studentData.studentId]);
 
   // STUDENT FAMILY DETAILS STATE
   const [studentFamilyDetails, setStudentFamilyDetails] = useState<
-    SubCollectionFamilyDetailsProps[]
+    StudentFamilyAtSchoolProps[]
   >([]);
 
   // STUDENT CURRICULUM DETAILS STATE
@@ -719,16 +727,6 @@ export function EditStudent() {
     if (foundedStudent) {
       setStudentFamilyDetails(foundedStudent.studentFamilyAtSchool);
     }
-
-    // const familyQuery = query(
-    //   collection(db, `/students/${studentData.studentId}/studentFamilyAtSchool`)
-    // );
-    // const getFamily = await getDocs(familyQuery);
-    // getFamily.forEach((doc) => {
-    //   const detailsData = doc.data() as SubCollectionFamilyProps;
-
-    //   setStudentFamilyDetails(detailsData.detailsArray);
-    // });
   };
 
   // ARRAY TO STORE ORIGINAL STUDENT CLASS DAYS
@@ -755,27 +753,6 @@ export function EditStudent() {
         setOriginalStudentClassDays(curriculumDetail.indexDays);
       });
     }
-
-    // const curriculumQuery = query(
-    //   collection(db, `/students/${studentData.studentId}/studentCurriculum`)
-    // );
-    // const getCurriculum = await getDocs(curriculumQuery);
-
-    // getCurriculum.forEach((doc) => {
-    //   const detailsData = doc.data() as SubCollectionProps;
-
-    //   detailsData.detailsArray.map((curriculumDetail) => {
-    //     setStudentCurriculumDetails((studentCurriculumDetails) => [
-    //       ...studentCurriculumDetails,
-    //       curriculumDetail,
-    //     ]);
-    //     setNewStudentData({
-    //       ...newStudentData,
-    //       indexDays: curriculumDetail.indexDays,
-    //     });
-    //     setOriginalStudentClassDays(curriculumDetail.indexDays);
-    //   });
-    // });
   };
 
   // SET STUDENT EXPERIMENTAL CURRICULUM DETAILS
@@ -792,30 +769,10 @@ export function EditStudent() {
         ]);
       });
     }
-
-    // const experimentalCurriculumQuery = query(
-    //   collection(
-    //     db,
-    //     `/students/${studentData.studentId}/studentExperimentalCurriculum`
-    //   )
-    // );
-    // const getExperimentalCurriculum = await getDocs(
-    //   experimentalCurriculumQuery
-    // );
-    // getExperimentalCurriculum.forEach((doc) => {
-    //   const detailsData = doc.data() as SubCollectionProps;
-    //   detailsData.detailsArray.map((curriculumDetail) => {
-    //     setStudentCurriculumDetails((studentCurriculumDetails) => [
-    //       ...studentCurriculumDetails,
-    //       curriculumDetail,
-    //     ]);
-    //   });
-    // });
   };
 
   // SET STUDENT FAMILY ARRAY DETAILS WHEN STUDENT IS SELECTED
   useEffect(() => {
-    // setExcludeCurriculum([]);
     setExcludeExperimentalCurriculum([]);
     setExcludeFamily([]);
     setStudentCurriculumDetails([]);
@@ -838,64 +795,109 @@ export function EditStudent() {
       // SET STUDENT EDIT ALL DATA
       setStudentEditData({
         ...studentEditData,
+        // Section 1: Student Data
         id: studentData.studentId,
         name: studentSelectedData.name,
-        email: studentSelectedData.email,
         birthDate: studentSelectedData.birthDate,
-        address: {
-          street: studentSelectedData.address.street,
-          number: studentSelectedData.address.number,
-          complement: studentSelectedData.address.complement,
-          neighborhood: studentSelectedData.address.neighborhood,
-          city: studentSelectedData.address.city,
-          state: studentSelectedData.address.state,
-          cep: studentSelectedData.address.cep,
+        classComplement: studentSelectedData.classComplement,
+        parentOne: {
+          name: studentSelectedData.parentOne.name,
+          email: studentSelectedData.parentOne.email,
+          phone: {
+            ddd: studentSelectedData.parentOne.phone.slice(3, 5),
+            prefix: studentSelectedData.parentOne.phone.slice(5, 10),
+            suffix: studentSelectedData.parentOne.phone.slice(-4),
+          },
         },
-        phone: {
-          ddd: studentSelectedData.phone.slice(3, 5),
-          prefix: studentSelectedData.phone.slice(5, 10),
-          suffix: studentSelectedData.phone.slice(-4),
+        parentTwo: {
+          name: studentSelectedData.parentTwo.name,
+          email: studentSelectedData.parentTwo.email,
+          phone: {
+            ddd: studentSelectedData.parentTwo.phone.slice(3, 5),
+            prefix: studentSelectedData.parentTwo.phone.slice(5, 10),
+            suffix: studentSelectedData.parentTwo.phone.slice(-4),
+          },
         },
-        activePhoneSecondary:
-          studentSelectedData.phoneSecondary !== "" ? true : false,
-        phoneSecondary: {
-          ddd: studentSelectedData.phoneSecondary
-            ? studentSelectedData.phoneSecondary.slice(3, 5)
-            : "DDD",
-          prefix: studentSelectedData.phoneSecondary
-            ? studentSelectedData.phoneSecondary.slice(5, 10)
-            : "",
-          suffix: studentSelectedData.phoneSecondary
-            ? studentSelectedData.phoneSecondary.slice(-4)
-            : "",
-        },
-        activePhoneTertiary:
-          studentSelectedData.phoneTertiary !== "" ? true : false,
-        phoneTertiary: {
-          ddd: studentSelectedData.phoneTertiary
-            ? studentSelectedData.phoneTertiary.slice(3, 5)
-            : "DDD",
-          prefix: studentSelectedData.phoneTertiary
-            ? studentSelectedData.phoneTertiary.slice(5, 10)
-            : "",
-          suffix: studentSelectedData.phoneTertiary
-            ? studentSelectedData.phoneTertiary.slice(-4)
-            : "",
-        },
-        responsible: studentSelectedData.responsible,
-        responsibleDocument: studentSelectedData.responsibleDocument,
-        financialResponsible: studentSelectedData.financialResponsible,
-        financialResponsibleDocument:
-          studentSelectedData.financialResponsibleDocument,
+
+        // Section 2: Student Course and Family Data | Prices
+        enrolmentExemption: studentSelectedData.enrolmentExemption,
         enrolmentFee: studentSelectedData.enrolmentFee,
+        enrolmentFeePaid: studentSelectedData.enrolmentFeePaid,
         fullPrice: studentSelectedData.fullPrice,
         appliedPrice: studentSelectedData.appliedPrice,
         customDiscount: studentSelectedData.customDiscount,
         customDiscountValue: studentSelectedData.customDiscountValue,
         employeeDiscount: studentSelectedData.employeeDiscount,
-        enrolmentExemption: studentSelectedData.enrolmentExemption,
         familyDiscount: studentSelectedData.familyDiscount,
         secondCourseDiscount: studentSelectedData.secondCourseDiscount,
+        paymentDay: studentSelectedData.paymentDay!,
+
+        // Section 3: Student Financial Responsible Data
+        financialResponsible: {
+          name: studentSelectedData.financialResponsible.name,
+          document: studentSelectedData.financialResponsible.document,
+          email: studentSelectedData.financialResponsible.email,
+          address: {
+            street: studentSelectedData.financialResponsible.address.street,
+            number: studentSelectedData.financialResponsible.address.number,
+            complement:
+              studentSelectedData.financialResponsible.address.complement,
+            neighborhood:
+              studentSelectedData.financialResponsible.address.neighborhood,
+            city: studentSelectedData.financialResponsible.address.city,
+            state: studentSelectedData.financialResponsible.address.state,
+            cep: studentSelectedData.financialResponsible.address.cep,
+          },
+          phone: {
+            ddd: studentSelectedData.financialResponsible.phone.slice(3, 5),
+            prefix: studentSelectedData.financialResponsible.phone.slice(5, 10),
+            suffix: studentSelectedData.financialResponsible.phone.slice(-4),
+          },
+          activePhoneSecondary:
+            studentSelectedData.financialResponsible.phoneSecondary !== ""
+              ? true
+              : false,
+          phoneSecondary: {
+            ddd: studentSelectedData.financialResponsible.phoneSecondary
+              ? studentSelectedData.financialResponsible.phoneSecondary.slice(
+                  3,
+                  5
+                )
+              : "DDD",
+            prefix: studentSelectedData.financialResponsible.phoneSecondary
+              ? studentSelectedData.financialResponsible.phoneSecondary.slice(
+                  5,
+                  10
+                )
+              : "",
+            suffix: studentSelectedData.financialResponsible.phoneSecondary
+              ? studentSelectedData.financialResponsible.phoneSecondary.slice(
+                  -4
+                )
+              : "",
+          },
+          activePhoneTertiary:
+            studentSelectedData.financialResponsible.phoneTertiary !== ""
+              ? true
+              : false,
+          phoneTertiary: {
+            ddd: studentSelectedData.financialResponsible.phoneTertiary
+              ? studentSelectedData.financialResponsible.phoneTertiary.slice(
+                  3,
+                  5
+                )
+              : "DDD",
+            prefix: studentSelectedData.financialResponsible.phoneTertiary
+              ? studentSelectedData.financialResponsible.phoneTertiary.slice(
+                  5,
+                  10
+                )
+              : "",
+            suffix: studentSelectedData.financialResponsible.phoneTertiary
+              ? studentSelectedData.financialResponsible.phoneTertiary.slice(-4)
+              : "",
+          },
+        },
       });
     }
   }, [studentSelectedData]);
@@ -995,16 +997,19 @@ export function EditStudent() {
           setCepSubmitting(false);
           setStudentEditData({
             ...studentEditData,
-            address: {
-              ...studentEditData.address,
-              cep: data,
-              street: response.street,
-              neighborhood: response.neighborhood,
-              city: response.city,
-              state: response.state,
-              // RESETING NUMBER AND COMPLEMENT WHEN GET CEP
-              number: "",
-              complement: "",
+            financialResponsible: {
+              ...studentEditData.financialResponsible,
+              address: {
+                ...studentEditData.financialResponsible.address,
+                cep: data,
+                street: response.street,
+                neighborhood: response.neighborhood,
+                city: response.city,
+                state: response.state,
+                // RESETING NUMBER AND COMPLEMENT WHEN GET CEP
+                number: "",
+                complement: "",
+              },
             },
           });
         })
@@ -1279,36 +1284,6 @@ export function EditStudent() {
 
   // -------------------------- END OF SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
 
-  // -------------------------- SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHEDULES DETAILS ARRAY STATE
-  // const [newSchedulesDetailsData, setNewSchedulesDetailsData] = useState<
-  //   ScheduleSearchProps[]
-  // >([]);
-
-  // GETTING SCHEDULES DATA
-  // const handleNewSchedulesDetails = async () => {
-
-  //   const filterSchedules = scheduleDatabaseData.find(
-  //     (schedule) =>
-  //       schedule.id === newStudentData.experimentalCurriculumClassDayId
-  //   );
-
-  //   const q = query(collection(db, "schedules"));
-  //   const querySnapshot = await getDocs(q);
-  //   const promises: ScheduleSearchProps[] = [];
-  //   querySnapshot.forEach((doc) => {
-  //     const promise = doc.data() as ScheduleSearchProps;
-  //     promises.push(promise);
-  //   });
-  //   setNewSchedulesDetailsData(promises);
-  // };
-
-  // GETTING SCHEDULES DETAILS
-  // useEffect(() => {
-  //   handleNewSchedulesDetails();
-  // }, []);
-  // -------------------------- END OF SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
-
   // -------------------------- CURRICULUM STATES AND FUNCTIONS -------------------------- //
   // CURRICULUM DETAILS ARRAY STATE
   const [newCurriculumCoursesData, setNewCurriculumCoursesData] = useState<
@@ -1333,37 +1308,6 @@ export function EditStudent() {
       );
       setNewCurriculumCoursesData(filterCurriculum);
     }
-
-    // if (curriculumData.schoolCourseId === "all") {
-    //   const q = query(
-    //     collection(db, "curriculum"),
-    //     where("schoolId", "==", curriculumData.schoolId),
-    //     where("schoolClassId", "==", curriculumData.schoolClassId),
-    //     orderBy("name")
-    //   );
-    //   const querySnapshot = await getDocs(q);
-    //   const promises: CurriculumSearchProps[] = [];
-    //   querySnapshot.forEach((doc) => {
-    //     const promise = doc.data() as CurriculumSearchProps;
-    //     promises.push(promise);
-    //   });
-    //   setNewCurriculumCoursesData(promises);
-    // } else {
-    //   const q = query(
-    //     collection(db, "curriculum"),
-    //     where("schoolId", "==", curriculumData.schoolId),
-    //     where("schoolClassId", "==", curriculumData.schoolClassId),
-    //     where("schoolCourseId", "==", curriculumData.schoolCourseId),
-    //     orderBy("name")
-    //   );
-    //   const querySnapshot = await getDocs(q);
-    //   const promises: CurriculumSearchProps[] = [];
-    //   querySnapshot.forEach((doc) => {
-    //     const promise = doc.data() as CurriculumSearchProps;
-    //     promises.push(promise);
-    //   });
-    //   setNewCurriculumCoursesData(promises);
-    // }
   };
 
   // GET AVAILABLE COURSES DATA WHEN SCHOOL COURSE CHANGE
@@ -1392,24 +1336,6 @@ export function EditStudent() {
       } else {
         setClassDayCurriculumSelectedData(undefined);
       }
-
-      // if (newStudentData.curriculumClassDayId !== "") {
-      //   const q = query(
-      //     collection(db, "classDays"),
-      //     where("id", "==", newStudentData.curriculumClassDayId)
-      //   );
-      //   const unsubscribe = onSnapshot(q, (querySnapShot) => {
-      //     const promises: ClassDaySearchProps[] = [];
-      //     querySnapShot.forEach((doc) => {
-      //       const promise = doc.data() as ClassDaySearchProps;
-      //       promises.push(promise);
-      //     });
-      //     setClassDayCurriculumSelectedData(promises[0]);
-      //   });
-      //   console.log(unsubscribe);
-      // } else {
-      //   setClassDayCurriculumSelectedData(undefined);
-      // }
     };
     handleNewCurriculumClassDayFullData();
   }, [newStudentData.curriculumClassDayId]);
@@ -1437,23 +1363,6 @@ export function EditStudent() {
     });
     setNewClassDayArray([]);
     setDaysFoundCount(0);
-    // let originalFirstChangedAfterDays = originalStudentClassDays;
-    // excludeCurriculum.map((curriculum) => {
-    //   if (curriculum.exclude) {
-    //     for (const index of curriculum.indexDays) {
-    //       let dayExistsOnOriginal =
-    //         originalFirstChangedAfterDays.includes(index);
-    //       if (dayExistsOnOriginal) {
-    //         originalFirstChangedAfterDays =
-    //           originalFirstChangedAfterDays.filter((day) => day !== index);
-    //       }
-    //     }
-    //   }
-    // });
-    // setNewStudentData({
-    //   ...newStudentData,
-    //   indexDays: originalFirstChangedAfterDays,
-    // });
     if (classDayCurriculumSelectedData) {
       const daysToNewClassDayArray = [] as number[];
       classDayCurriculumSelectedData.indexDays.map((curriculumClassDay) => {
@@ -1465,10 +1374,6 @@ export function EditStudent() {
           // const existInArray = newClassDayArray.includes(curriculumClassDay);
           if (!existInArray) {
             daysToNewClassDayArray.push(curriculumClassDay);
-            // setNewClassDayArray((newClassDayArray) => [
-            //   ...newClassDayArray,
-            //   curriculumClassDay,
-            // ]);
           }
         }
         const showMessage =
@@ -1515,24 +1420,6 @@ export function EditStudent() {
       } else {
         setClassDayExperimentalCurriculumSelectedData(undefined);
       }
-
-      // if (newStudentData.experimentalCurriculumClassDayId !== "") {
-      //   const q = query(
-      //     collection(db, "classDays"),
-      //     where("id", "==", newStudentData.experimentalCurriculumClassDayId)
-      //   );
-      //   const unsubscribe = onSnapshot(q, (querySnapShot) => {
-      //     const promises: ClassDaySearchProps[] = [];
-      //     querySnapShot.forEach((doc) => {
-      //       const promise = doc.data() as ClassDaySearchProps;
-      //       promises.push(promise);
-      //     });
-      //     setClassDayExperimentalCurriculumSelectedData(promises[0]);
-      //   });
-      //   console.log(unsubscribe);
-      // } else {
-      //   setClassDayExperimentalCurriculumSelectedData(undefined);
-      // }
     };
     handleNewExperimentalCurriculumClassDayFullData();
   }, [newStudentData.experimentalCurriculumClassDayId]);
@@ -1661,40 +1548,6 @@ export function EditStudent() {
       );
       setNewExperimentalCurriculumCoursesData(filterCurriculum);
     }
-    // if (experimentalCurriculumData.schoolCourseId === "all") {
-    //   const q = query(
-    //     collection(db, "curriculum"),
-    //     where("schoolId", "==", experimentalCurriculumData.schoolId),
-    //     where("schoolClassId", "==", experimentalCurriculumData.schoolClassId),
-    //     orderBy("name")
-    //   );
-    //   const querySnapshot = await getDocs(q);
-    //   const promises: CurriculumSearchProps[] = [];
-    //   querySnapshot.forEach((doc) => {
-    //     const promise = doc.data() as CurriculumSearchProps;
-    //     promises.push(promise);
-    //   });
-    //   setNewExperimentalCurriculumCoursesData(promises);
-    // } else {
-    //   const q = query(
-    //     collection(db, "curriculum"),
-    //     where("schoolId", "==", experimentalCurriculumData.schoolId),
-    //     where("schoolClassId", "==", experimentalCurriculumData.schoolClassId),
-    //     where(
-    //       "schoolCourseId",
-    //       "==",
-    //       experimentalCurriculumData.schoolCourseId
-    //     ),
-    //     orderBy("name")
-    //   );
-    //   const querySnapshot = await getDocs(q);
-    //   const promises: CurriculumSearchProps[] = [];
-    //   querySnapshot.forEach((doc) => {
-    //     const promise = doc.data() as CurriculumSearchProps;
-    //     promises.push(promise);
-    //   });
-    //   setNewExperimentalCurriculumCoursesData(promises);
-    // }
   };
 
   // GET AVAILABLE COURSES DATA WHEN SCHOOL COURSE CHANGE
@@ -1905,51 +1758,6 @@ export function EditStudent() {
         }
       });
     }
-    // if (
-    //   curriculumDatePriceCalc.mostExpensiveCourse === 0 &&
-    //   curriculumDatePriceCalc.othersPriceSum === 0
-    // ) {
-    //   excludeCurriculum.forEach((curriculumDetail) => {
-    //     if (!curriculumDetail.exclude) {
-    //       if (
-    //         curriculumDetail.price > curriculumDatePriceCalc.mostExpensiveCourse
-    //       ) {
-    //         setCurriculumDatePriceCalc({
-    //           ...curriculumDatePriceCalc,
-    //           mostExpensiveCourse: curriculumDetail.price,
-    //         });
-    //       } else {
-    //         setCurriculumDatePriceCalc({
-    //           ...curriculumDatePriceCalc,
-    //           othersPriceSum:
-    //             curriculumDatePriceCalc.othersPriceSum + curriculumDetail.price,
-    //         });
-    //       }
-    //     }
-    //   });
-    //   // excludeCurriculum.map((curriculumDetail: ExcludeCurriculumProps) => {
-    //   //   console.log(curriculumDatePriceCalc.mostExpensiveCourse);
-    //   //   console.log(curriculumDatePriceCalc.othersPriceSum);
-
-    //   //   if (!curriculumDetail.exclude) {
-    //   //     if (
-    //   //       curriculumDetail.price > curriculumDatePriceCalc.mostExpensiveCourse
-    //   //     ) {
-    //   //       setCurriculumDatePriceCalc({
-    //   //         ...curriculumDatePriceCalc,
-    //   //         mostExpensiveCourse: curriculumDetail.price,
-    //   //       });
-    //   //     } else {
-    //   //       setCurriculumDatePriceCalc({
-    //   //         ...curriculumDatePriceCalc,
-    //   //         othersPriceSum:
-    //   //           curriculumDatePriceCalc.othersPriceSum + curriculumDetail.price,
-    //   //       });
-    //   //     }
-    //   //   }
-    //   //   console.log("passei aqui");
-    //   // });
-    // }
   }, [curriculumDatePriceCalc]);
 
   function handleValueWithoutDiscount() {
@@ -2063,47 +1871,6 @@ export function EditStudent() {
       });
     }
   }
-
-  // function handleValueWithEmployeeDiscount() {
-  //   const priceUnitDiscount = +(
-  //     newStudentData.curriculumCoursePriceUnit * employeeDiscountValue
-  //   ).toFixed(2);
-  //   const priceBundleDiscount = +(
-  //     newStudentData.curriculumCoursePriceBundle * employeeDiscountValue
-  //   ).toFixed(2);
-  //   if (newClass.enrolledDays.length === 0) {
-  //     setNewPrices({
-  //       appliedPrice: studentEditData.fullPrice * employeeDiscountValue,
-  //       fullPrice: studentEditData.fullPrice,
-  //     });
-  //   }
-  //   if (newClass.enrolledDays.length === 1) {
-  //     setNewPrices({
-  //       appliedPrice:
-  //         studentEditData.fullPrice * employeeDiscountValue + priceUnitDiscount,
-  //       fullPrice:
-  //         studentEditData.fullPrice + newStudentData.curriculumCoursePriceUnit,
-  //     });
-  //   }
-  //   if (newClass.enrolledDays.length > 1) {
-  //     const result = Math.floor(
-  //       newClass.enrolledDays.length / newStudentData.curriculumCourseBundleDays
-  //     );
-  //     const rest =
-  //       newClass.enrolledDays.length %
-  //       newStudentData.curriculumCourseBundleDays;
-  //     setNewPrices({
-  //       appliedPrice:
-  //         studentEditData.fullPrice * employeeDiscountValue +
-  //         result * priceBundleDiscount +
-  //         rest * priceUnitDiscount,
-  //       fullPrice:
-  //         studentEditData.fullPrice +
-  //         result * newStudentData.curriculumCoursePriceBundle +
-  //         rest * newStudentData.curriculumCoursePriceUnit,
-  //     });
-  //   }
-  // }
 
   function handleValueWithCustomDiscount() {
     let haveCurriculumWill = false;
@@ -2309,15 +2076,6 @@ export function EditStudent() {
           fullPrice: 0,
         });
       }
-
-      // setNewPrices({
-      //   appliedPrice:
-      //     curriculumDatePriceCalc.mostExpensiveCourse +
-      //     curriculumDatePriceCalc.othersPriceSum * secondCourseDiscountValue,
-      //   fullPrice:
-      //     curriculumDatePriceCalc.mostExpensiveCourse +
-      //     curriculumDatePriceCalc.othersPriceSum,
-      // });
     }
   }
 
@@ -2600,103 +2358,6 @@ export function EditStudent() {
         fullPrice: 0,
       });
     }
-
-    // if (haveCurriculumWill) {
-    //   if (newClass.enrolledDays.length === 0) {
-    //     setNewPrices({
-    //       appliedPrice:
-    //         curriculumDatePriceCalc.mostExpensiveCourse +
-    //         curriculumDatePriceCalc.othersPriceSum,
-    //       fullPrice:
-    //         curriculumDatePriceCalc.mostExpensiveCourse +
-    //         curriculumDatePriceCalc.othersPriceSum,
-    //     });
-    //   }
-    //   if (newClass.enrolledDays.length === 1) {
-    //     setNewPrices({
-    //       appliedPrice:
-    //         curriculumDatePriceCalc.mostExpensiveCourse +
-    //         curriculumDatePriceCalc.othersPriceSum * secondCourseDiscountValue +
-    //         priceUnitDiscount,
-    //       fullPrice:
-    //         curriculumDatePriceCalc.mostExpensiveCourse +
-    //         curriculumDatePriceCalc.othersPriceSum +
-    //         newStudentData.curriculumCoursePriceUnit,
-    //     });
-    //   }
-    //   if (newClass.enrolledDays.length > 1) {
-    //     const result = Math.floor(
-    //       newClass.enrolledDays.length /
-    //         newStudentData.curriculumCourseBundleDays
-    //     );
-    //     const rest =
-    //       newClass.enrolledDays.length %
-    //       newStudentData.curriculumCourseBundleDays;
-    //     const newCourseTotalValue =
-    //       result * newStudentData.curriculumCoursePriceBundle +
-    //       rest * newStudentData.curriculumCoursePriceUnit;
-    //     if (curriculumDatePriceCalc.mostExpensiveCourse > newCourseTotalValue) {
-    //       setNewPrices({
-    //         appliedPrice:
-    //           curriculumDatePriceCalc.mostExpensiveCourse +
-    //           curriculumDatePriceCalc.othersPriceSum *
-    //             secondCourseDiscountValue +
-    //           result * priceBundleDiscount +
-    //           rest * priceUnitDiscount,
-    //         fullPrice:
-    //           curriculumDatePriceCalc.mostExpensiveCourse +
-    //           curriculumDatePriceCalc.othersPriceSum +
-    //           result * newStudentData.curriculumCoursePriceBundle +
-    //           rest * newStudentData.curriculumCoursePriceUnit,
-    //       });
-    //     } else {
-    //       setNewPrices({
-    //         appliedPrice:
-    //           result * newStudentData.curriculumCoursePriceBundle +
-    //           rest * newStudentData.curriculumCoursePriceUnit +
-    //           curriculumDatePriceCalc.mostExpensiveCourse *
-    //             secondCourseDiscountValue +
-    //           curriculumDatePriceCalc.othersPriceSum *
-    //             secondCourseDiscountValue,
-    //         fullPrice:
-    //           result * newStudentData.curriculumCoursePriceBundle +
-    //           rest * newStudentData.curriculumCoursePriceUnit +
-    //           curriculumDatePriceCalc.mostExpensiveCourse +
-    //           curriculumDatePriceCalc.othersPriceSum,
-    //       });
-    //     }
-    //   }
-    // } else {
-    //   if (newClass.enrolledDays.length === 0) {
-    //     setNewPrices({
-    //       appliedPrice: 0,
-    //       fullPrice: 0,
-    //     });
-    //   }
-    //   if (newClass.enrolledDays.length === 1) {
-    //     setNewPrices({
-    //       appliedPrice: newStudentData.curriculumCoursePriceUnit,
-    //       fullPrice: newStudentData.curriculumCoursePriceUnit,
-    //     });
-    //   }
-    //   if (newClass.enrolledDays.length > 1) {
-    //     const result = Math.floor(
-    //       newClass.enrolledDays.length /
-    //         newStudentData.curriculumCourseBundleDays
-    //     );
-    //     const rest =
-    //       newClass.enrolledDays.length %
-    //       newStudentData.curriculumCourseBundleDays;
-    //     setNewPrices({
-    //       appliedPrice:
-    //         result * newStudentData.curriculumCoursePriceBundle +
-    //         rest * priceUnitDiscount,
-    //       fullPrice:
-    //         result * newStudentData.curriculumCoursePriceBundle +
-    //         rest * newStudentData.curriculumCoursePriceUnit,
-    //     });
-    //   }
-    // }
   }
 
   // STATE TO TOGGLE SHOW ADD FAMILY ON FORM
@@ -2713,9 +2374,6 @@ export function EditStudent() {
       }
     });
     setWillHaveFamily(haveFamilyWill);
-    // if (!willHaveFamily) {
-    //   setStudentEditData({ ...studentEditData, addFamily: false });
-    // }
   }, [excludeFamily]);
 
   useEffect(() => {
@@ -2726,14 +2384,6 @@ export function EditStudent() {
 
   // SET MONTHLY PAYMENT WHEN SCHOOL COURSE PRICE, OR ADD FAMILY, OR EMPLOYEE DISCOUNT CHANGE
   useEffect(() => {
-    // let haveCurriculumWill = false;
-    // excludeCurriculum.map((curriculumExclude) => {
-    //   if (!curriculumExclude.exclude) {
-    //     haveCurriculumWill = true;
-    //   } else {
-    //     haveCurriculumWill = false;
-    //   }
-    // });
     let haveFamilyWill = false;
     excludeFamily.map((familyExclude) => {
       if (!familyExclude.exclude) {
@@ -2764,25 +2414,7 @@ export function EditStudent() {
       else if (haveFamilyWill && studentEditData.familyDiscount) {
         handleValueWithFamilyDiscount();
       }
-      // else {
-      //   // PRICE CALC IF HAVE FAMILY, DELETE OLDER FAMILY AND ADD NEW FAMILY
-      //   if (studentEditData.addFamily) {
-      //     handleValueAddFamilyDiscount();
-      //   }
-      //   // PRICE CALC IF HAVE FAMILY BUT DONT AFTER CHANGES (APPLIYNG SECOND COURSE DISCOUNT LOGIC)
-      //   else {
-      //     // PRICE CALC WITH SECOND COURSE DISCOUNT
-      //     // if (willHaveCurriculum) {
-      //     if (haveCurriculumWill) {
-      //       handleValueSecondCourseDiscount();
-      //     }
-      //     // PRICE CALC WITHOUT ANY DISCOUNTS
-      //     else {
-      //       handleValueWithoutDiscount();
-      //     }
-      //   }
-      // }
-      // }
+
       // PRICE CALC IF HAVEN'T FAMILY AND ADD NEW FAMILY
       else if (studentEditData.addFamily) {
         handleValueAddFamilyDiscount();
@@ -2843,50 +2475,78 @@ export function EditStudent() {
   } = useForm<EditStudentValidationZProps>({
     resolver: zodResolver(editStudentValidationSchema),
     defaultValues: {
+      // Section 1: Student Data
       id: "",
       name: "",
-      email: "",
       birthDate: "",
-      address: {
-        street: "",
-        number: "",
-        complement: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-        cep: "",
+      classComplement: "",
+      parentOne: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      phone: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
+      parentTwo: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      activePhoneSecondary: false,
-      phoneSecondary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      activePhoneTertiary: false,
-      phoneTertiary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      responsible: "",
-      financialResponsible: "",
+
+      // Section 2: Student Course and Family Data | Prices
       addCurriculum: false,
       addExperimentalCurriculum: false,
       addFamily: false,
       enrolmentFee: 0,
+      enrolmentFeePaid: false,
       fullPrice: 0,
       appliedPrice: 0,
+      enrolmentExemption: false,
       customDiscount: false,
       customDiscountValue: "",
       employeeDiscount: false,
-      enrolmentExemption: false,
       familyDiscount: false,
       secondCourseDiscount: false,
+      paymentDay: "",
+
+      // Section 3: Student Financial Responsible Data
+      financialResponsible: {
+        name: "",
+        document: "",
+        email: "",
+        address: {
+          street: "",
+          number: "",
+          complement: "",
+          neighborhood: "",
+          city: "",
+          state: "",
+          cep: "",
+        },
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneSecondary: false,
+        phoneSecondary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneTertiary: false,
+        phoneTertiary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+      },
     },
   });
 
@@ -2909,52 +2569,78 @@ export function EditStudent() {
       fullPrice: 0,
     });
     setStudentEditData({
+      // Section 1: Student Data
       id: "",
       name: "",
-      email: "",
       birthDate: "",
-      address: {
-        street: "",
-        number: "",
-        complement: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-        cep: "",
+      classComplement: "",
+      parentOne: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      phone: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
+      parentTwo: {
+        name: "",
+        email: "",
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
       },
-      activePhoneSecondary: false,
-      phoneSecondary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      activePhoneTertiary: false,
-      phoneTertiary: {
-        ddd: "",
-        prefix: "",
-        suffix: "",
-      },
-      responsible: "",
-      responsibleDocument: "",
-      financialResponsible: "",
-      financialResponsibleDocument: "",
+
+      // Section 2: Student Course and Family Data | Prices
       addCurriculum: false,
       addExperimentalCurriculum: false,
       addFamily: false,
+      enrolmentExemption: false,
       enrolmentFee: 0,
-      fullPrice: 0,
-      appliedPrice: 0,
+      enrolmentFeePaid: false,
       customDiscount: false,
       customDiscountValue: "",
       employeeDiscount: false,
-      enrolmentExemption: false,
       familyDiscount: false,
       secondCourseDiscount: false,
+      fullPrice: 0,
+      appliedPrice: 0,
+      paymentDay: "",
+
+      // Section 3: Student Financial Responsible Data
+      financialResponsible: {
+        name: "",
+        document: "",
+        email: "",
+        address: {
+          street: "",
+          number: "",
+          complement: "",
+          neighborhood: "",
+          city: "",
+          state: "",
+          cep: "",
+        },
+        phone: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneSecondary: false,
+        phoneSecondary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+        activePhoneTertiary: false,
+        phoneTertiary: {
+          ddd: "",
+          prefix: "",
+          suffix: "",
+        },
+      },
     });
     setStudentData({
       schoolId: "",
@@ -3019,35 +2705,35 @@ export function EditStudent() {
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
+    // Section 1: Student Data
     setValue("id", studentEditData.id);
     setValue("name", studentEditData.name);
-    setValue("email", studentEditData.email);
-    setValue("birthDate", dateToString);
-    setValue("address.street", studentEditData.address.street);
-    setValue("address.number", studentEditData.address.number);
-    setValue("address.complement", studentEditData.address.complement);
-    setValue("address.neighborhood", studentEditData.address.neighborhood);
-    setValue("address.city", studentEditData.address.city);
-    setValue("address.state", studentEditData.address.state);
-    setValue("address.cep", studentEditData.address.cep);
-    setValue("phone.ddd", studentEditData.phone.ddd);
-    setValue("phone.prefix", studentEditData.phone.prefix);
-    setValue("phone.suffix", studentEditData.phone.suffix);
-    setValue("activePhoneSecondary", studentEditData.activePhoneSecondary);
-    setValue("phoneSecondary.ddd", studentEditData.phoneSecondary.ddd);
-    setValue("phoneSecondary.prefix", studentEditData.phoneSecondary.prefix);
-    setValue("phoneSecondary.suffix", studentEditData.phoneSecondary.suffix);
-    setValue("activePhoneTertiary", studentEditData.activePhoneTertiary);
-    setValue("phoneTertiary.ddd", studentEditData.phoneTertiary.ddd);
-    setValue("phoneTertiary.prefix", studentEditData.phoneTertiary.prefix);
-    setValue("phoneTertiary.suffix", studentEditData.phoneTertiary.suffix);
-    setValue("responsible", studentEditData.responsible);
-    setValue("responsibleDocument", studentEditData.responsibleDocument);
-    setValue("financialResponsible", studentEditData.financialResponsible);
+    setValue("birthDate", studentEditData.birthDate);
+    setValue("classComplement", studentEditData.classComplement);
+    setValue("parentOne.name", studentEditData.parentOne.name);
+    setValue("parentOne.phone.ddd", studentEditData.parentOne.phone.ddd);
+    setValue("parentOne.phone.prefix", studentEditData.parentOne.phone.prefix);
+    setValue("parentOne.phone.suffix", studentEditData.parentOne.phone.suffix);
+    setValue("parentOne.email", studentEditData.parentOne.email);
+    setValue("parentTwo.name", studentEditData.parentTwo.name);
+    setValue("parentTwo.phone.ddd", studentEditData.parentTwo.phone.ddd);
+    setValue("parentTwo.phone.prefix", studentEditData.parentTwo.phone.prefix);
+    setValue("parentTwo.phone.suffix", studentEditData.parentTwo.phone.suffix);
+    setValue("parentTwo.email", studentEditData.parentTwo.email);
+
+    // Section 2: Student Course and Family Data | Prices
+    setValue("enrolmentExemption", studentEditData.enrolmentExemption);
+    setValue("customDiscount", studentEditData.customDiscount);
     setValue(
-      "financialResponsibleDocument",
-      studentEditData.financialResponsibleDocument
+      "customDiscountValue",
+      studentEditData.customDiscountValue
+        ? studentEditData.customDiscountValue
+        : "0"
     );
+    setValue("employeeDiscount", studentEditData.employeeDiscount);
+    setValue("familyDiscount", studentEditData.familyDiscount);
+    setValue("secondCourseDiscount", studentEditData.secondCourseDiscount);
+    setValue("paymentDay", studentEditData.paymentDay);
     setValue("addCurriculum", studentEditData.addCurriculum);
     setValue(
       "addExperimentalCurriculum",
@@ -3063,41 +2749,109 @@ export function EditStudent() {
     setValue("enrolmentExemption", studentEditData.enrolmentExemption);
     setValue("familyDiscount", studentEditData.familyDiscount);
     setValue("secondCourseDiscount", studentEditData.secondCourseDiscount);
+
+    // Section 3: Student Financial Responsible Data
+    setValue(
+      "financialResponsible.name",
+      studentEditData.financialResponsible.name
+    );
+    setValue(
+      "financialResponsible.document",
+      studentEditData.financialResponsible.document
+    );
+    setValue(
+      "financialResponsible.email",
+      studentEditData.financialResponsible.email
+    );
+    setValue(
+      "financialResponsible.address.street",
+      studentEditData.financialResponsible.address.street
+    );
+    setValue(
+      "financialResponsible.address.number",
+      studentEditData.financialResponsible.address.number
+    );
+    setValue(
+      "financialResponsible.address.complement",
+      studentEditData.financialResponsible.address.complement
+    );
+    setValue(
+      "financialResponsible.address.neighborhood",
+      studentEditData.financialResponsible.address.neighborhood
+    );
+    setValue(
+      "financialResponsible.address.city",
+      studentEditData.financialResponsible.address.city
+    );
+    setValue(
+      "financialResponsible.address.state",
+      studentEditData.financialResponsible.address.state
+    );
+    setValue(
+      "financialResponsible.address.cep",
+      studentEditData.financialResponsible.address.cep
+    );
+    setValue(
+      "financialResponsible.phone.ddd",
+      studentEditData.financialResponsible.phone.ddd
+    );
+    setValue(
+      "financialResponsible.phone.prefix",
+      studentEditData.financialResponsible.phone.prefix
+    );
+    setValue(
+      "financialResponsible.phone.suffix",
+      studentEditData.financialResponsible.phone.suffix
+    );
+    setValue(
+      "financialResponsible.activePhoneSecondary",
+      studentEditData.financialResponsible.activePhoneSecondary
+    );
+    setValue(
+      "financialResponsible.phoneSecondary.ddd",
+      studentEditData.financialResponsible.phoneSecondary.ddd
+    );
+    setValue(
+      "financialResponsible.phoneSecondary.prefix",
+      studentEditData.financialResponsible.phoneSecondary.prefix
+    );
+    setValue(
+      "financialResponsible.phoneSecondary.suffix",
+      studentEditData.financialResponsible.phoneSecondary.suffix
+    );
+    setValue(
+      "financialResponsible.activePhoneTertiary",
+      studentEditData.financialResponsible.activePhoneTertiary
+    );
+    setValue(
+      "financialResponsible.phoneTertiary.ddd",
+      studentEditData.financialResponsible.phoneTertiary.ddd
+    );
+    setValue(
+      "financialResponsible.phoneTertiary.prefix",
+      studentEditData.financialResponsible.phoneTertiary.prefix
+    );
+    setValue(
+      "financialResponsible.phoneTertiary.suffix",
+      studentEditData.financialResponsible.phoneTertiary.suffix
+    );
   }, [studentEditData, newPrices, dateToString]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
     const fullErrors = [
+      // Section 1: Student Data
       errors.id,
       errors.name,
-      errors.email,
       errors.birthDate,
-      errors.address?.street,
-      errors.address?.number,
-      errors.address?.complement,
-      errors.address?.neighborhood,
-      errors.address?.city,
-      errors.address?.state,
-      errors.address?.cep,
-      errors.phone?.ddd,
-      errors.phone?.prefix,
-      errors.phone?.suffix,
-      errors.activePhoneSecondary,
-      errors.phoneSecondary?.ddd,
-      errors.phoneSecondary?.prefix,
-      errors.phoneSecondary?.suffix,
-      errors.activePhoneTertiary,
-      errors.phoneTertiary?.ddd,
-      errors.phoneTertiary?.prefix,
-      errors.phoneTertiary?.suffix,
-      errors.responsible,
-      errors.responsibleDocument,
-      errors.financialResponsible,
-      errors.financialResponsibleDocument,
+      errors.classComplement,
+
+      // Section 2: Student Course and Family Data | Prices
       errors.addCurriculum,
       errors.addExperimentalCurriculum,
       errors.addFamily,
       errors.enrolmentFee,
+      errors.enrolmentFeePaid,
       errors.fullPrice,
       errors.appliedPrice,
       errors.enrolmentExemption,
@@ -3106,6 +2860,30 @@ export function EditStudent() {
       errors.employeeDiscount,
       errors.familyDiscount,
       errors.secondCourseDiscount,
+      errors.paymentDay,
+
+      // Section 3: Student Financial Responsible Data
+      errors.financialResponsible?.name,
+      errors.financialResponsible?.document,
+      errors.financialResponsible?.email,
+      errors.financialResponsible?.address?.street,
+      errors.financialResponsible?.address?.number,
+      errors.financialResponsible?.address?.complement,
+      errors.financialResponsible?.address?.neighborhood,
+      errors.financialResponsible?.address?.city,
+      errors.financialResponsible?.address?.state,
+      errors.financialResponsible?.address?.cep,
+      errors.financialResponsible?.phone?.ddd,
+      errors.financialResponsible?.phone?.prefix,
+      errors.financialResponsible?.phone?.suffix,
+      errors.financialResponsible?.activePhoneSecondary,
+      errors.financialResponsible?.phoneSecondary?.ddd,
+      errors.financialResponsible?.phoneSecondary?.prefix,
+      errors.financialResponsible?.phoneSecondary?.suffix,
+      errors.financialResponsible?.activePhoneTertiary,
+      errors.financialResponsible?.phoneTertiary?.ddd,
+      errors.financialResponsible?.phoneTertiary?.prefix,
+      errors.financialResponsible?.phoneTertiary?.suffix,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -3123,24 +2901,6 @@ export function EditStudent() {
     data
   ) => {
     setIsSubmitting(true);
-
-    // CHEKING VALID RESPONSIBLE DOCUMENT
-    if (!testCPF) {
-      return (
-        setIsSubmitting(false),
-        setExperimentalClassError(true),
-        toast.error(
-          "CPF do responsável é inválido, por favor verifique... ❕",
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
-      );
-    }
 
     // CHEKING VALID FINANCIAL RESPONSIBLE DOCUMENT
     if (!testFinancialCPF) {
@@ -3309,24 +3069,6 @@ export function EditStudent() {
               price: curriculumToExclude.price,
             }),
           });
-
-          // await updateDoc(
-          //   doc(
-          //     db,
-          //     `students/${data.id}/studentExperimentalCurriculum`,
-          //     data.id
-          //   ),
-          //   {
-          //     idsArray: arrayRemove(curriculumToExclude.id),
-          //     detailsArray: arrayRemove({
-          //       date: curriculumToExclude.date,
-          //       id: curriculumToExclude.id,
-          //       indexDays: [],
-          //       isExperimental: curriculumToExclude.isExperimental,
-          //       name: curriculumToExclude.name,
-          //     }),
-          //   }
-          // );
         }
       });
     }
@@ -3363,26 +3105,6 @@ export function EditStudent() {
           }),
         }
       );
-
-      // const addNewExperimentalCurriculum = async () => {
-      //   // UPDATE STUDENT (INSERT EXPERIMENTAL CURRICULUM)
-      //   await updateDoc(
-      //     doc(db, `students/${data.id}/studentExperimentalCurriculum`, data.id),
-      //     {
-      //       idsArray: arrayUnion(newStudentData.experimentalCurriculum),
-      //       detailsArray: arrayUnion({
-      //         date: Timestamp.fromDate(
-      //           new Date(newStudentData.experimentalCurriculumInitialDate)
-      //         ),
-      //         id: newStudentData.experimentalCurriculum,
-      //         indexDays: [],
-      //         isExperimental: true,
-      //         name: newStudentData.experimentalCurriculumName,
-      //       }),
-      //     }
-      //   );
-      // };
-      // addNewExperimentalCurriculum();
     }
 
     // CHECK IF ADD CURRICULUM AND CONFIRM ADD
@@ -3464,20 +3186,6 @@ export function EditStudent() {
               price: curriculumToExclude.price,
             }),
           });
-
-          // await updateDoc(
-          //   doc(db, `students/${data.id}/studentCurriculum`, data.id),
-          //   {
-          //     idsArray: arrayRemove(curriculumToExclude.id),
-          //     detailsArray: arrayRemove({
-          //       date: curriculumToExclude.date,
-          //       id: curriculumToExclude.id,
-          //       isExperimental: curriculumToExclude.isExperimental,
-          //       name: curriculumToExclude.name,
-          //       indexDays: curriculumToExclude.indexDays,
-          //     }),
-          //   }
-          // );
         }
       });
     }
@@ -3511,26 +3219,6 @@ export function EditStudent() {
           price: newStudentData.curriculumCoursePriceBundle,
         }),
       });
-
-      // const addNewCurriculum = async () => {
-      //   // UPDATE STUDENT (INSERT CURRICULUM)
-      //   await updateDoc(
-      //     doc(db, `students/${data.id}/studentCurriculum`, data.id),
-      //     {
-      //       idsArray: arrayUnion(newStudentData.curriculum),
-      //       detailsArray: arrayUnion({
-      //         date: Timestamp.fromDate(
-      //           new Date(newStudentData.curriculumInitialDate)
-      //         ),
-      //         id: newStudentData.curriculum,
-      //         isExperimental: false,
-      //         name: newStudentData.curriculumName,
-      //         indexDays: newClass.enrolledDays,
-      //       }),
-      //     }
-      //   );
-      // };
-      // addNewCurriculum();
     }
 
     // CHECK IF ADD FAMILY
@@ -3614,17 +3302,6 @@ export function EditStudent() {
             }),
           });
 
-          // await updateDoc(
-          //   doc(db, `students/${data.id}/studentFamilyAtSchool`, data.id),
-          //   {
-          //     idsArray: arrayRemove(familyToExclude.id),
-          //     detailsArray: arrayRemove({
-          //       applyDiscount: familyToExclude.applyDiscount,
-          //       id: familyToExclude.id,
-          //       name: familyToExclude.name,
-          //     }),
-          //   }
-          // );
           // IF YOU ADDED FAMILY IN BOTH DIRECTIONS UNCOMMENT THIS SECTION FOR DELETE STUDENT FROM FAMILY DATABASE
           // UPDATE FAMILY (DELETE STUDENT FROM FAMILY DATABASE)
 
@@ -3694,22 +3371,6 @@ export function EditStudent() {
               }),
             });
           }
-
-          // await updateDoc(
-          //   doc(
-          //     db,
-          //     `students/${familyToExclude.id}/studentFamilyAtSchool`,
-          //     familyToExclude.id
-          //   ),
-          //   {
-          //     idsArray: arrayRemove(data.id),
-          //     detailsArray: arrayRemove({
-          //       applyDiscount: !familyToExclude.applyDiscount,
-          //       id: data.id,
-          //       name: data.name,
-          //     }),
-          //   }
-          // );
         }
       });
     }
@@ -3727,17 +3388,6 @@ export function EditStudent() {
           }),
         });
 
-        // await updateDoc(
-        //   doc(db, `students/${data.id}/studentFamilyAtSchool`, data.id),
-        //   {
-        //     idsArray: arrayUnion(newStudentData.familyId),
-        //     detailsArray: arrayUnion({
-        //       applyDiscount: true,
-        //       id: newStudentData.familyId,
-        //       name: newStudentData.familyName,
-        //     }),
-        //   }
-        // );
         // IF YOU WANT CREATE FAMILY IN BOTH DIRECTIONS UNCOMMENT THIS SECTION FOR INSERT STUDENT TO FAMILY DATABASE
         // UPDATE FAMILY (INSERT STUDENT TO FAMILY DATABASE)
         await updateDoc(doc(db, "students", newStudentData.familyId), {
@@ -3747,29 +3397,13 @@ export function EditStudent() {
             name: data.name,
           }),
         });
-
-        // await updateDoc(
-        //   doc(
-        //     db,
-        //     `students/${newStudentData.familyId}/studentFamilyAtSchool`,
-        //     newStudentData.familyId
-        //   ),
-        //   {
-        //     idsArray: arrayUnion(data.id),
-        //     detailsArray: arrayUnion({
-        //       applyDiscount: false,
-        //       id: data.id,
-        //       name: data.name,
-        //     }),
-        //   }
-        // );
       };
       addNewFamily();
     }
 
     // CHEKING VALID SECONDARY PHONE
-    if (studentEditData.activePhoneSecondary) {
-      if (studentEditData.phoneSecondary.ddd === "DDD") {
+    if (studentEditData.financialResponsible.activePhoneSecondary) {
+      if (studentEditData.financialResponsible.phoneSecondary.ddd === "DDD") {
         return (
           setIsSubmitting(false),
           toast.error(
@@ -3787,8 +3421,8 @@ export function EditStudent() {
     }
 
     // CHEKING VALID TERTIARY PHONE
-    if (studentEditData.activePhoneTertiary) {
-      if (studentEditData.phoneTertiary.ddd === "DDD") {
+    if (studentEditData.financialResponsible.activePhoneTertiary) {
+      if (studentEditData.financialResponsible.phoneTertiary.ddd === "DDD") {
         return (
           setIsSubmitting(false),
           toast.error(
@@ -3826,38 +3460,170 @@ export function EditStudent() {
       // IF EXISTS, EDIT
       // STUDENT DATA OBJECT
       const updateData = {
+        // Section 1: Student Data
         name: data.name,
-        email: data.email,
         birthDate: Timestamp.fromDate(new Date(dateSubmitToString)),
-        "address.street": data.address.street,
-        "address.number": data.address.number,
-        "address.complement": data.address.complement,
-        "address.neighborhood": data.address.neighborhood,
-        "address.city": data.address.city,
-        "address.state": data.address.state,
-        "address.cep": data.address.cep,
-        phone: `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`,
-        phoneSecondary:
-          data.phoneSecondary.ddd === "DDD"
-            ? ""
-            : `+55${data.phoneSecondary.ddd}${data.phoneSecondary.prefix}${data.phoneSecondary.suffix}`,
-        phoneTertiary:
-          data.phoneTertiary.ddd === "DDD"
-            ? ""
-            : `+55${data.phoneTertiary.ddd}${data.phoneTertiary.prefix}${data.phoneTertiary.suffix}`,
-        responsible: data.responsible,
-        responsibleDocument: data.responsibleDocument,
-        financialResponsible: data.financialResponsible,
-        financialResponsibleDocument: data.financialResponsibleDocument,
+        classComplement: data.classComplement,
+        "parentOne.name": data.parentOne.name,
+        "parentOne.email": data.parentOne.email,
+        "parentOne.phone": `+55${data.parentOne.phone.ddd}${data.parentOne.phone.prefix}${data.parentOne.phone.suffix}`,
+        "parentTwo.name": data.parentTwo.name,
+        "parentTwo.email": data.parentTwo.email,
+        "parentTwo.phone": `+55${data.parentTwo.phone.ddd}${data.parentTwo.phone.prefix}${data.parentTwo.phone.suffix}`,
+
+        // Section 2: Student Course and Family Data | Prices
+        enrolmentExemption: data.enrolmentExemption,
         enrolmentFee: data.enrolmentFee,
+        enrolmentFeePaid: data.enrolmentFeePaid,
         fullPrice: data.fullPrice,
         appliedPrice: data.appliedPrice,
-        enrolmentExemption: data.enrolmentExemption,
         customDiscount: data.customDiscount,
         customDiscountValue: data.customDiscountValue,
         employeeDiscount: data.employeeDiscount,
         secondCourseDiscount: data.secondCourseDiscount,
+        paymentDay: data.paymentDay,
+
+        // Section 3: Student Financial Responsible Data
+        "financialResponsible.name": data.financialResponsible.name,
+        "financialResponsible.document": data.financialResponsible.document,
+        "financialResponsible.email": data.financialResponsible.email,
+        "financialResponsible.address.street":
+          data.financialResponsible.address.street,
+        "financialResponsible.address.number":
+          data.financialResponsible.address.number,
+        "financialResponsible.address.complement":
+          data.financialResponsible.address.complement,
+        "financialResponsible.address.neighborhood":
+          data.financialResponsible.address.neighborhood,
+        "financialResponsible.address.city":
+          data.financialResponsible.address.city,
+        "financialResponsible.address.state":
+          data.financialResponsible.address.state,
+        "financialResponsible.address.cep":
+          data.financialResponsible.address.cep,
+        "financialResponsible.phone": `+55${data.financialResponsible.phone.ddd}${data.financialResponsible.phone.prefix}${data.financialResponsible.phone.suffix}`,
+        "financialResponsible.phoneSecondary":
+          data.financialResponsible.phoneSecondary.ddd === "DDD"
+            ? ""
+            : `+55${data.financialResponsible.phoneSecondary.ddd}${data.financialResponsible.phoneSecondary.prefix}${data.financialResponsible.phoneSecondary.suffix}`,
+        "financialResponsible.phoneTertiary":
+          data.financialResponsible.phoneTertiary.ddd === "DDD"
+            ? ""
+            : `+55${data.financialResponsible.phoneTertiary.ddd}${data.financialResponsible.phoneTertiary.prefix}${data.financialResponsible.phoneTertiary.suffix}`,
+
+        // Section 4: Student Contract Data
+        // Accept Contract: boolean
+        // Contract attached (pdf)
+
+        // Section 5: Last Updated Time
+        updatedAt: serverTimestamp(),
       };
+      // CHECK IF STUDENT NAME IS CHANGED FOR UPDATE CURRICULUM AND FAMILY REGISTER
+      // CURRICULUM
+      studentCurriculumDetails!.map((studentCurriculum) => {
+        curriculumDatabaseData.map((databaseCurriculum) => {
+          if (databaseCurriculum.id === studentCurriculum.id) {
+            databaseCurriculum.students.map(
+              async (databaseCurriculumStudent) => {
+                if (
+                  databaseCurriculumStudent.id === data.id &&
+                  databaseCurriculumStudent.name !== data.name
+                ) {
+                  if (!databaseCurriculumStudent.isExperimental) {
+                    await updateDoc(
+                      doc(db, "curriculum", databaseCurriculum.id),
+                      {
+                        students: arrayRemove({
+                          date: databaseCurriculumStudent.date,
+                          id: databaseCurriculumStudent.id,
+                          indexDays: databaseCurriculumStudent.indexDays,
+                          isExperimental:
+                            databaseCurriculumStudent.isExperimental,
+                          name: databaseCurriculumStudent.name,
+                          price: databaseCurriculumStudent.price,
+                        }),
+                      }
+                    );
+                    await updateDoc(
+                      doc(db, "curriculum", databaseCurriculum.id),
+                      {
+                        students: arrayUnion({
+                          date: databaseCurriculumStudent.date,
+                          id: databaseCurriculumStudent.id,
+                          indexDays: databaseCurriculumStudent.indexDays,
+                          isExperimental:
+                            databaseCurriculumStudent.isExperimental,
+                          name: data.name,
+                          price: databaseCurriculumStudent.price,
+                        }),
+                      }
+                    );
+                  } else {
+                    await updateDoc(
+                      doc(db, "curriculum", databaseCurriculum.id),
+                      {
+                        experimentalStudents: arrayRemove({
+                          date: databaseCurriculumStudent.date,
+                          id: databaseCurriculumStudent.id,
+                          indexDays: [],
+                          isExperimental:
+                            databaseCurriculumStudent.isExperimental,
+                          name: databaseCurriculumStudent.name,
+                          price: databaseCurriculumStudent.price,
+                        }),
+                      }
+                    );
+                    await updateDoc(
+                      doc(db, "curriculum", databaseCurriculum.id),
+                      {
+                        experimentalStudents: arrayUnion({
+                          date: databaseCurriculumStudent.date,
+                          id: databaseCurriculumStudent.id,
+                          indexDays: [],
+                          isExperimental:
+                            databaseCurriculumStudent.isExperimental,
+                          name: data.name,
+                          price: databaseCurriculumStudent.price,
+                        }),
+                      }
+                    );
+                  }
+                }
+              }
+            );
+          }
+        });
+      });
+      // FAMILY
+      studentFamilyDetails!.map((studentFamily) => {
+        studentsDatabaseData.map((databaseStudent) => {
+          if (databaseStudent.id === studentFamily.id) {
+            databaseStudent.studentFamilyAtSchool.map(
+              async (databaseFamilyStudent) => {
+                if (
+                  databaseFamilyStudent.id === data.id &&
+                  databaseFamilyStudent.name !== data.name
+                ) {
+                  await updateDoc(doc(db, "students", databaseStudent.id), {
+                    studentFamilyAtSchool: arrayRemove({
+                      applyDiscount: databaseFamilyStudent.applyDiscount,
+                      id: databaseFamilyStudent.id,
+                      name: databaseFamilyStudent.name,
+                    }),
+                  });
+                  await updateDoc(doc(db, "students", databaseStudent.id), {
+                    studentFamilyAtSchool: arrayUnion({
+                      applyDiscount: databaseFamilyStudent.applyDiscount,
+                      id: databaseFamilyStudent.id,
+                      name: data.name,
+                    }),
+                  });
+                }
+              }
+            );
+          }
+        });
+      });
       // EDIT STUDENT FUNCTION
       const editStudent = async () => {
         try {
@@ -3885,93 +3651,6 @@ export function EditStudent() {
       };
       editStudent();
     }
-
-    // const studentRef = collection(db, "students");
-    // const q = query(studentRef, where("id", "==", data.id));
-    // const querySnapshot = await getDocs(q);
-    // const promises: StudentSearchProps[] = [];
-    // querySnapshot.forEach((doc) => {
-    //   const promise = doc.data() as StudentSearchProps;
-    //   promises.push(promise);
-    // });
-    // Promise.all(promises).then((results) => {
-    //   // IF NO EXISTS, RETURN ERROR
-    //   if (results.length === 0) {
-    //     return (
-    //       setIsSubmitting(false),
-    //       toast.error(`Aluno não existe no banco de dados...... ❕`, {
-    //         theme: "colored",
-    //         closeOnClick: true,
-    //         pauseOnHover: true,
-    //         draggable: true,
-    //         autoClose: 3000,
-    //       })
-    //     );
-    //   } else {
-    //     // IF EXISTS, EDIT
-    //     // STUDENT DATA OBJECT
-    //     const updateData = {
-    //       name: data.name,
-    //       email: data.email,
-    //       birthDate: Timestamp.fromDate(new Date(dateSubmitToString)),
-    //       "address.street": data.address.street,
-    //       "address.number": data.address.number,
-    //       "address.complement": data.address.complement,
-    //       "address.neighborhood": data.address.neighborhood,
-    //       "address.city": data.address.city,
-    //       "address.state": data.address.state,
-    //       "address.cep": data.address.cep,
-    //       phone: `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`,
-    //       phoneSecondary:
-    //         data.phoneSecondary.ddd === "DDD"
-    //           ? ""
-    //           : `+55${data.phoneSecondary.ddd}${data.phoneSecondary.prefix}${data.phoneSecondary.suffix}`,
-    //       phoneTertiary:
-    //         data.phoneTertiary.ddd === "DDD"
-    //           ? ""
-    //           : `+55${data.phoneTertiary.ddd}${data.phoneTertiary.prefix}${data.phoneTertiary.suffix}`,
-    //       responsible: data.responsible,
-    //       responsibleDocument: data.responsibleDocument,
-    //       financialResponsible: data.financialResponsible,
-    //       financialResponsibleDocument: data.financialResponsibleDocument,
-    //       enrolmentFee: data.enrolmentFee,
-    //       fullPrice: data.fullPrice,
-    //       appliedPrice: data.appliedPrice,
-    //       enrolmentExemption: data.enrolmentExemption,
-    //       customDiscount: data.customDiscount,
-    //       customDiscountValue: data.customDiscountValue,
-    //       employeeDiscount: data.employeeDiscount,
-    //       familyDiscount: data.familyDiscount,
-    //       secondCourseDiscount: data.secondCourseDiscount,
-    //     };
-    //     // EDIT STUDENT FUNCTION
-    //     const editStudent = async () => {
-    //       try {
-    //         await updateDoc(doc(db, "students", data.id), updateData);
-    //         resetForm();
-    //         toast.success(`${data.name} alterado com sucesso! 👌`, {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         });
-    //         setIsSubmitting(false);
-    //       } catch (error) {
-    //         console.log("ESSE É O ERROR", error);
-    //         toast.error(`Ocorreu um erro... 🤯`, {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         });
-    //         setIsSubmitting(false);
-    //       }
-    //     };
-    //     editStudent();
-    //   }
-    // });
   };
 
   return (
@@ -4035,7 +3714,7 @@ export function EditStudent() {
                 : "w-1/4 text-right"
             }
           >
-            Selecione a Turma:{" "}
+            Selecione o Ano Escolar:{" "}
           </label>
           <select
             id="schoolClassSelect"
@@ -4146,7 +3825,7 @@ export function EditStudent() {
           </select>
         </div>
 
-        {isSelected ? (
+        {isSelected && (
           <>
             {/* EDIT BUTTON */}
             <div className="flex gap-2 mt-4 justify-center">
@@ -4173,9 +3852,9 @@ export function EditStudent() {
               </button>
             </div>
           </>
-        ) : null}
+        )}
 
-        {isEdit ? (
+        {isEdit && (
           <>
             {/** PERSONAL DATA SECTION TITLE */}
             <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
@@ -4213,42 +3892,6 @@ export function EditStudent() {
                   setStudentEditData({
                     ...studentEditData,
                     name: e.target.value,
-                  });
-                }}
-              />
-            </div>
-
-            {/* E-MAIL */}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="email"
-                className={
-                  errors.email
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
-                E-mail:{" "}
-              </label>
-              <input
-                type="text"
-                name="email"
-                disabled={isSubmitting}
-                placeholder={
-                  errors.email
-                    ? "É necessário inserir o e-mail"
-                    : "Insira o e-mail"
-                }
-                className={
-                  errors.email
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                value={studentEditData.email}
-                onChange={(e) => {
-                  setStudentEditData({
-                    ...studentEditData,
-                    email: e.target.value,
                   });
                 }}
               />
@@ -4304,13 +3947,961 @@ export function EditStudent() {
               </div>
             </div>
 
-            {/* ADDRESS */}
+            {/** PARENT ONE SECTION TITLE */}
+            <h3 className="text-lg py-2 text-klGreen-600 dark:text-gray-100">
+              Filiação 1:
+            </h3>
+
+            {/* PARENT ONE NAME */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="parentOneName"
+                className={
+                  errors.parentOne?.name
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Nome:{" "}
+              </label>
+              <input
+                type="text"
+                name="parentOneName"
+                placeholder={
+                  errors.parentOne?.name
+                    ? "É necessário inserir o Nome completo do Responsável"
+                    : "Insira o nome completo do Responsável"
+                }
+                className={
+                  errors.parentOne?.name
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                value={studentEditData.parentOne.name}
+                onChange={(e) =>
+                  setStudentEditData({
+                    ...studentEditData,
+                    parentOne: {
+                      ...studentEditData.parentOne,
+                      name: e.target.value,
+                    },
+                  })
+                }
+              />
+            </div>
+
+            {/* PARENT ONE E-MAIL */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="parentOneEmail"
+                className={
+                  errors.parentOne?.email
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                E-mail:{" "}
+              </label>
+              <input
+                type="text"
+                name="parentOneEmail"
+                disabled={isSubmitting}
+                placeholder={
+                  errors.parentOne?.email
+                    ? "É necessário inserir o e-mail"
+                    : "Insira o e-mail"
+                }
+                className={
+                  errors.parentOne?.email
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                value={studentEditData.parentOne.email}
+                onChange={(e) => {
+                  setStudentEditData({
+                    ...studentEditData,
+                    parentOne: {
+                      ...studentEditData.parentOne,
+                      email: e.target.value,
+                    },
+                  });
+                }}
+              />
+            </div>
+
+            {/* PARENT ONE PHONE */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="parentOnePhone"
+                className={
+                  errors.parentOne?.phone
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Telefone:{" "}
+              </label>
+              <div className="flex w-2/4 gap-2">
+                <div className="flex w-10/12 items-center gap-1">
+                  <select
+                    id="parentOnePhoneDDD"
+                    value={studentEditData.parentOne?.phone.prefix}
+                    className={
+                      errors.parentOne?.phone?.ddd
+                        ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    name="DDD"
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        parentOne: {
+                          ...studentEditData.parentOne,
+                          phone: {
+                            ...studentEditData.parentOne.phone,
+                            ddd: e.target.value,
+                          },
+                        },
+                      });
+                    }}
+                  >
+                    <BrazilianStateSelectOptions />
+                  </select>
+                  <input
+                    type="text"
+                    name="parentOnePhoneInitial"
+                    pattern="^[+ 0-9]{5}$"
+                    maxLength={5}
+                    value={studentEditData.parentOne?.phone.prefix}
+                    placeholder={
+                      errors.parentOne?.phone?.prefix
+                        ? "É necessário um"
+                        : "99999"
+                    }
+                    className={
+                      errors.parentOne?.phone?.prefix
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        parentOne: {
+                          ...studentEditData.parentOne,
+                          phone: {
+                            ...studentEditData.parentOne.phone,
+                            prefix: e.target.value
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*?)\..*/g, "$1"),
+                          },
+                        },
+                      });
+                    }}
+                  />
+                  -
+                  <input
+                    type="text"
+                    name="parentOnePhoneFinal"
+                    pattern="^[+ 0-9]{4}$"
+                    maxLength={4}
+                    value={studentEditData.parentOne?.phone.suffix}
+                    placeholder={
+                      errors.parentOne?.phone?.suffix
+                        ? "telefone válido"
+                        : "9990"
+                    }
+                    className={
+                      errors.parentOne?.phone?.suffix
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        parentOne: {
+                          ...studentEditData.parentOne,
+                          phone: {
+                            ...studentEditData.parentOne.phone,
+                            suffix: e.target.value
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*?)\..*/g, "$1"),
+                          },
+                        },
+                      });
+                    }}
+                  />
+                </div>
+                <div className="flex w-2/12 items-center gap-2"></div>
+              </div>
+            </div>
+
+            {/** PARENT TWO SECTION TITLE */}
+            <h3 className="text-lg py-2 text-klGreen-600 dark:text-gray-100">
+              Filiação 2:
+            </h3>
+
+            {/* PARENT TWO NAME */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="parentTwoName"
+                className={
+                  errors.name
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Nome:{" "}
+              </label>
+              <input
+                type="text"
+                name="parentTwoName"
+                disabled={isSubmitting}
+                placeholder={
+                  errors.parentTwo?.name
+                    ? "É necessário inserir o nome completo do aluno"
+                    : "Insira o nome completo do aluno"
+                }
+                className={
+                  errors.parentTwo?.name
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                value={studentEditData.parentTwo?.name}
+                onChange={(e) => {
+                  setStudentEditData({
+                    ...studentEditData,
+                    parentTwo: {
+                      ...studentEditData.parentTwo,
+                      name: e.target.value,
+                    },
+                  });
+                }}
+              />
+            </div>
+
+            {/* PARENT TWO E-MAIL */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="parentTwoEmail"
+                className={
+                  errors.parentTwo?.email
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                E-mail:{" "}
+              </label>
+              <input
+                type="text"
+                name="parentTwoEmail"
+                disabled={isSubmitting}
+                placeholder={
+                  errors.parentTwo?.email
+                    ? "É necessário inserir o e-mail"
+                    : "Insira o e-mail"
+                }
+                className={
+                  errors.parentTwo?.email
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                value={studentEditData.parentTwo?.email}
+                onChange={(e) => {
+                  setStudentEditData({
+                    ...studentEditData,
+                    parentTwo: {
+                      ...studentEditData.parentTwo,
+                      email: e.target.value,
+                    },
+                  });
+                }}
+              />
+            </div>
+
+            {/* PARENT TWO PHONE */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="parentTwoPhone"
+                className={
+                  errors.parentTwo?.phone
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Telefone:{" "}
+              </label>
+              <div className="flex w-2/4 gap-2">
+                <div className="flex w-10/12 items-center gap-1">
+                  <select
+                    id="parentTwoPhoneDDD"
+                    value={studentEditData.parentTwo?.phone.prefix}
+                    className={
+                      errors.parentTwo?.phone?.ddd
+                        ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    name="DDD"
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        parentTwo: {
+                          ...studentEditData.parentTwo,
+                          phone: {
+                            ...studentEditData.parentTwo.phone,
+                            ddd: e.target.value,
+                          },
+                        },
+                      });
+                    }}
+                  >
+                    <BrazilianStateSelectOptions />
+                  </select>
+                  <input
+                    type="text"
+                    name="parentTwoPhoneInitial"
+                    pattern="^[+ 0-9]{5}$"
+                    maxLength={5}
+                    value={studentEditData.parentTwo?.phone.prefix}
+                    placeholder={
+                      errors.parentTwo?.phone?.prefix
+                        ? "É necessário um"
+                        : "99999"
+                    }
+                    className={
+                      errors.parentTwo?.phone?.prefix
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        parentTwo: {
+                          ...studentEditData.parentTwo,
+                          phone: {
+                            ...studentEditData.parentTwo.phone,
+                            prefix: e.target.value
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*?)\..*/g, "$1"),
+                          },
+                        },
+                      });
+                    }}
+                  />
+                  -
+                  <input
+                    type="text"
+                    name="parentTwoPhoneFinal"
+                    pattern="^[+ 0-9]{4}$"
+                    maxLength={4}
+                    value={studentEditData.parentTwo?.phone.suffix}
+                    placeholder={
+                      errors.parentTwo?.phone?.suffix
+                        ? "telefone válido"
+                        : "9990"
+                    }
+                    className={
+                      errors.parentTwo?.phone?.suffix
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        parentTwo: {
+                          ...studentEditData.parentTwo,
+                          phone: {
+                            ...studentEditData.parentTwo.phone,
+                            suffix: e.target.value
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*?)\..*/g, "$1"),
+                          },
+                        },
+                      });
+                    }}
+                  />
+                </div>
+                <div className="flex w-2/12 items-center gap-2"></div>
+              </div>
+            </div>
+
+            {/* // --------------------------------------------- SECTION 2: STUDENT FINANCIAL RESPONSIBLE DATA --------------------------------------------- // */}
+
+            {/** STUDENT FINANCIAL RESPONSIBLE SECTION TITLE */}
+            <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
+              Dados do Responsável Financeiro:
+            </h1>
+
+            {/** STUDENT FINANCIAL RESPONSIBLE SECTION SUBTITLE */}
+            <div className="flex gap-2 items-center py-2">
+              <div className="w-1/4" />
+              <div className="flex flex-col gap-2 w-3/4 items-start text-left pb-2">
+                {studentEditData.addExperimentalCurriculum && (
+                  <p className="text-sm text-red-600 dark:text-yellow-500">
+                    Após 5 dias da data escolhida para a aula experimental, os
+                    dados abaixo serão utilizados para efetuar a matrícula do
+                    aluno. <br /> Em caso de cancelamento dentro do prazo de 5
+                    dias, os dados serão descartados.
+                  </p>
+                )}
+                <p className="text-sm font-bold text-red-600 dark:text-yellow-500">
+                  ATENÇÃO: A VERACIDADE DOS DADOS É DE SUA RESPONSABILIDADE AO
+                  PREENCHER O CADASTRO
+                </p>
+              </div>
+            </div>
+
+            {/* FINANCIAL RESPONSIBLE NAME */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="financialResponsible"
+                className={
+                  errors.financialResponsible
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Nome:{" "}
+              </label>
+              <input
+                type="text"
+                name="financialResponsible"
+                placeholder={
+                  errors.financialResponsible
+                    ? "É necessário inserir o Nome completo do Responsável Financeiro"
+                    : "Insira o nome completo do Responsável Financeiro"
+                }
+                className={
+                  errors.financialResponsible
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                value={studentEditData.financialResponsible.name}
+                onChange={(e) =>
+                  setStudentEditData({
+                    ...studentEditData,
+                    financialResponsible: {
+                      ...studentEditData.financialResponsible,
+                      name: e.target.value,
+                    },
+                  })
+                }
+              />
+            </div>
+
+            {/* FINANCIAL RESPONSIBLE E-MAIL */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="financialResponsibleEmail"
+                className={
+                  errors.financialResponsible?.email
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                E-mail:{" "}
+              </label>
+              <input
+                type="text"
+                name="financialResponsibleEmail"
+                disabled={isSubmitting}
+                placeholder={
+                  errors.financialResponsible?.email
+                    ? "É necessário inserir o e-mail"
+                    : "Insira o e-mail"
+                }
+                className={
+                  errors.financialResponsible?.email
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                value={studentEditData.financialResponsible?.email}
+                onChange={(e) => {
+                  setStudentEditData({
+                    ...studentEditData,
+                    financialResponsible: {
+                      ...studentEditData.financialResponsible,
+                      email: e.target.value,
+                    },
+                  });
+                }}
+              />
+            </div>
+
+            {/* FINANCIAL RESPONSIBLE DOCUMENT*/}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="financialResponsibleDocument"
+                className={
+                  errors.financialResponsible?.document
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                CPF:{" "}
+              </label>
+              <input
+                type="text"
+                name="financialResponsibleDocument"
+                pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                placeholder={
+                  errors.financialResponsible?.document
+                    ? "É necessário inserir o CPF do Responsável Financeiro"
+                    : "Insira o CPF do Responsável Financeiro"
+                }
+                className={
+                  errors.financialResponsible?.document
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                value={studentEditData.financialResponsible?.document}
+                onChange={(e) => {
+                  if (e.target.value.length === 11) {
+                    setTestFinancialCPF(testaCPF(e.target.value));
+                  }
+                  setStudentEditData({
+                    ...studentEditData,
+                    financialResponsible: {
+                      ...studentEditData.financialResponsible,
+                      document: formataCPF(e.target.value),
+                    },
+                  });
+                }}
+              />
+            </div>
+
+            {/* FINANCIAL RESPONSIBLE PHONE */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="phone"
+                className={
+                  errors.financialResponsible?.phone
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Telefone:{" "}
+              </label>
+              <div className="flex w-2/4 gap-2">
+                <div className="flex w-10/12 items-center gap-1">
+                  <select
+                    id="phoneDDD"
+                    defaultValue={"DDD"}
+                    className={
+                      errors.financialResponsible?.phone?.ddd
+                        ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    name="DDD"
+                    value={studentEditData.financialResponsible?.phone.ddd}
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          phone: {
+                            ...studentEditData.financialResponsible.phone,
+                            ddd: e.target.value,
+                          },
+                        },
+                      });
+                    }}
+                  >
+                    <BrazilianStateSelectOptions />
+                  </select>
+                  <input
+                    type="text"
+                    name="phoneInitial"
+                    pattern="^[+ 0-9]{5}$"
+                    maxLength={5}
+                    value={studentEditData.financialResponsible?.phone.prefix}
+                    placeholder={
+                      errors.financialResponsible?.phone?.prefix
+                        ? "É necessário um"
+                        : "99999"
+                    }
+                    className={
+                      errors.financialResponsible?.phone?.prefix
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          phone: {
+                            ...studentEditData.financialResponsible.phone,
+                            prefix: e.target.value
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*?)\..*/g, "$1"),
+                          },
+                        },
+                      });
+                    }}
+                  />
+                  -
+                  <input
+                    type="text"
+                    name="phoneFinal"
+                    pattern="^[+ 0-9]{4}$"
+                    maxLength={4}
+                    value={studentEditData.financialResponsible?.phone.suffix}
+                    placeholder={
+                      errors.financialResponsible?.phone?.suffix
+                        ? "telefone válido"
+                        : "9990"
+                    }
+                    className={
+                      errors.financialResponsible?.phone?.suffix
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          phone: {
+                            ...studentEditData.financialResponsible.phone,
+                            suffix: e.target.value
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*?)\..*/g, "$1"),
+                          },
+                        },
+                      });
+                    }}
+                  />
+                </div>
+                <div className="w-2/12"></div>
+              </div>
+            </div>
+
+            {/* FINANCIAL RESPONSIBLE PHONE SECONDARY */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="phoneSecondary"
+                className={
+                  errors.financialResponsible?.phoneSecondary
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Telefone 2:{" "}
+              </label>
+              <div className="flex w-2/4 gap-2">
+                <div className="flex w-10/12 items-center gap-1">
+                  {/** NUMBER SECONDARY DDD */}
+                  <select
+                    id="phoneSecondaryDDD"
+                    disabled={
+                      !studentEditData.financialResponsible
+                        ?.activePhoneSecondary
+                    }
+                    defaultValue={"DDD"}
+                    value={
+                      studentEditData.financialResponsible?.phoneSecondary.ddd
+                    }
+                    className={
+                      studentEditData.financialResponsible.activePhoneSecondary
+                        ? errors.financialResponsible?.phoneSecondary?.ddd
+                          ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    name="DDD"
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          phoneSecondary: {
+                            ...studentEditData.financialResponsible
+                              .phoneSecondary,
+                            ddd: e.target.value,
+                          },
+                        },
+                      });
+                    }}
+                  >
+                    <BrazilianStateSelectOptions />
+                  </select>
+                  {/** NUMBER SECONDARY PREFIX */}
+                  <input
+                    type="text"
+                    name="phoneSecondaryInitial"
+                    disabled={
+                      !studentEditData.financialResponsible
+                        ?.activePhoneSecondary
+                    }
+                    pattern="^[+ 0-9]{5}$"
+                    maxLength={5}
+                    value={
+                      studentEditData.financialResponsible?.phoneSecondary
+                        .prefix
+                    }
+                    placeholder={
+                      errors.financialResponsible?.phoneSecondary?.prefix
+                        ? "É necessário um"
+                        : "99999"
+                    }
+                    className={
+                      studentEditData.financialResponsible?.activePhoneSecondary
+                        ? errors.financialResponsible?.phoneSecondary?.prefix
+                          ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                    }
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          phoneSecondary: {
+                            ...studentEditData.financialResponsible
+                              .phoneSecondary,
+                            prefix: e.target.value
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*?)\..*/g, "$1"),
+                          },
+                        },
+                      });
+                    }}
+                  />
+                  -{/** NUMBER SECONDARY SUFFIX */}
+                  <input
+                    type="text"
+                    name="phoneSecondaryFinal"
+                    disabled={
+                      !studentEditData.financialResponsible
+                        ?.activePhoneSecondary
+                    }
+                    pattern="^[+ 0-9]{4}$"
+                    maxLength={4}
+                    value={
+                      studentEditData.financialResponsible?.phoneSecondary
+                        .suffix
+                    }
+                    placeholder={
+                      errors.financialResponsible?.phoneSecondary?.prefix
+                        ? "telefone válido"
+                        : "9999"
+                    }
+                    className={
+                      studentEditData.financialResponsible?.activePhoneSecondary
+                        ? errors.financialResponsible?.phoneSecondary?.suffix
+                          ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                    }
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          phoneSecondary: {
+                            ...studentEditData.financialResponsible
+                              .phoneSecondary,
+                            suffix: e.target.value
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*?)\..*/g, "$1"),
+                          },
+                        },
+                      });
+                    }}
+                  />
+                </div>
+                {/** CHECKBOX INCLUDE NUMBER SECONDARY */}
+                <div className="flex w-2/12 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="activePhoneSecondary"
+                    className="ml-1"
+                    checked={
+                      studentEditData.financialResponsible?.activePhoneSecondary
+                    }
+                    onChange={() => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          activePhoneSecondary:
+                            !studentEditData.financialResponsible
+                              .activePhoneSecondary,
+                        },
+                      });
+                    }}
+                  />
+                  <label htmlFor="activePhoneSecondary" className="text-sm">
+                    Incluir
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* FINANCIAL RESPONSIBLE PHONE TERTIARY */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="phoneTertiary"
+                className={
+                  errors.financialResponsible?.phoneTertiary
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Telefone 3:{" "}
+              </label>
+              <div className="flex w-2/4 gap-2">
+                <div className="flex w-10/12 items-center gap-1">
+                  {/** NUMBER TERTIARY DDD */}
+                  <select
+                    id="phoneTertiaryDDD"
+                    disabled={
+                      !studentEditData.financialResponsible?.activePhoneTertiary
+                    }
+                    defaultValue={"DDD"}
+                    value={
+                      studentEditData.financialResponsible?.phoneTertiary.ddd
+                    }
+                    className={
+                      studentEditData.financialResponsible?.activePhoneTertiary
+                        ? errors.financialResponsible?.phoneTertiary?.ddd
+                          ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    }
+                    name="DDD"
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          phoneTertiary: {
+                            ...studentEditData.financialResponsible
+                              .phoneTertiary,
+                            ddd: e.target.value,
+                          },
+                        },
+                      });
+                    }}
+                  >
+                    <BrazilianStateSelectOptions />
+                  </select>
+                  {/** NUMBER TERTIARY PREFIX */}
+                  <input
+                    type="text"
+                    name="phoneTertiaryInitial"
+                    disabled={
+                      !studentEditData.financialResponsible?.activePhoneTertiary
+                    }
+                    pattern="^[+ 0-9]{5}$"
+                    maxLength={5}
+                    value={
+                      studentEditData.financialResponsible?.phoneTertiary.prefix
+                    }
+                    placeholder={
+                      errors.financialResponsible?.phoneTertiary?.prefix
+                        ? "É necessário um"
+                        : "99999"
+                    }
+                    className={
+                      studentEditData.financialResponsible?.activePhoneTertiary
+                        ? errors.financialResponsible?.phoneTertiary?.prefix
+                          ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                    }
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          phoneTertiary: {
+                            ...studentEditData.financialResponsible
+                              .phoneTertiary,
+                            prefix: e.target.value
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*?)\..*/g, "$1"),
+                          },
+                        },
+                      });
+                    }}
+                  />
+                  -{/** NUMBER TERTIARY SUFFIX */}
+                  <input
+                    type="text"
+                    name="phoneTertiaryFinal"
+                    disabled={
+                      !studentEditData.financialResponsible?.activePhoneTertiary
+                    }
+                    pattern="^[+ 0-9]{4}$"
+                    maxLength={4}
+                    value={
+                      studentEditData.financialResponsible?.phoneTertiary.suffix
+                    }
+                    placeholder={
+                      errors.financialResponsible?.phoneTertiary?.prefix
+                        ? "telefone válido"
+                        : "9999"
+                    }
+                    className={
+                      studentEditData.financialResponsible?.activePhoneTertiary
+                        ? errors.financialResponsible?.phoneTertiary?.suffix
+                          ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                    }
+                    onChange={(e) => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          phoneTertiary: {
+                            ...studentEditData.financialResponsible
+                              .phoneTertiary,
+                            suffix: e.target.value
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*?)\..*/g, "$1"),
+                          },
+                        },
+                      });
+                    }}
+                  />
+                </div>
+                {/** CHECKBOX INCLUDE NUMBER TERTIARY */}
+                <div className="flex w-2/12 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="activePhoneTertiary"
+                    className="ml-1"
+                    checked={
+                      studentEditData.financialResponsible?.activePhoneTertiary
+                    }
+                    onChange={() => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          activePhoneTertiary:
+                            !studentEditData.financialResponsible
+                              .activePhoneTertiary,
+                        },
+                      });
+                    }}
+                  />
+                  <label htmlFor="activePhoneTertiary" className="text-sm">
+                    Incluir
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* FINANCIAL RESPONSIBLE ADDRESS */}
             {/* CEP */}
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="addressCep"
                 className={
-                  errors.address?.cep
+                  errors.financialResponsible?.address?.cep
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
                     : "w-1/4 text-right"
                 }
@@ -4324,23 +4915,26 @@ export function EditStudent() {
                     name="addressCep"
                     maxLength={8}
                     placeholder={
-                      errors.address?.cep || cepError
+                      errors.financialResponsible?.address?.cep || cepError
                         ? "É necessário inserir um CEP"
                         : "Insira o CEP"
                     }
                     className={
-                      errors.address?.cep || cepError
+                      errors.financialResponsible?.address?.cep || cepError
                         ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                         : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                     }
-                    value={studentEditData.address.cep}
+                    value={studentEditData.financialResponsible.address.cep}
                     onChange={(e) => {
                       setCepError(false);
                       setStudentEditData({
                         ...studentEditData,
-                        address: {
-                          ...studentEditData.address,
-                          cep: formatCEP(e.target.value),
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          address: {
+                            ...studentEditData.financialResponsible.address,
+                            cep: formatCEP(e.target.value),
+                          },
                         },
                       });
                     }}
@@ -4351,7 +4945,7 @@ export function EditStudent() {
                   disabled={cepSubmitting}
                   className="border rounded-2xl border-blue-900 bg-blue-500 disabled:bg-blue-400 text-white w-2/12"
                   onClick={() => {
-                    getCep(studentEditData.address.cep);
+                    getCep(studentEditData.financialResponsible.address.cep);
                   }}
                 >
                   {cepSubmitting ? "Buscando..." : "Buscar"}
@@ -4364,7 +4958,7 @@ export function EditStudent() {
               <label
                 htmlFor="addressStreet"
                 className={
-                  errors.address?.street
+                  errors.financialResponsible?.address?.street
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
                     : "w-1/4 text-right"
                 }
@@ -4378,24 +4972,29 @@ export function EditStudent() {
                     name="addressStreet"
                     disabled={!editAddress}
                     placeholder={
-                      errors.address?.street
+                      errors.financialResponsible?.address?.street
                         ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
                         : "Rua / Av. / Pça"
                     }
                     className={
                       editAddress
-                        ? errors.address?.street
+                        ? errors.financialResponsible?.address?.street
                           ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                           : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                         : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                     }
-                    value={studentEditData.address?.street}
+                    value={
+                      studentEditData.financialResponsible?.address?.street
+                    }
                     onChange={(e) =>
                       setStudentEditData({
                         ...studentEditData,
-                        address: {
-                          ...studentEditData.address,
-                          street: e.target.value,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          address: {
+                            ...studentEditData.financialResponsible.address,
+                            street: e.target.value,
+                          },
                         },
                       })
                     }
@@ -4408,19 +5007,26 @@ export function EditStudent() {
                   <input
                     type="text"
                     name="addressNumber"
-                    placeholder={errors.address?.number ? "Número" : "Número"}
+                    placeholder={
+                      errors.financialResponsible?.address?.number
+                        ? "Número"
+                        : "Número"
+                    }
                     className={
-                      errors.address?.number
+                      errors.financialResponsible?.address?.number
                         ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                         : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                     }
-                    value={studentEditData.address.number}
+                    value={studentEditData.financialResponsible.address.number}
                     onChange={(e) =>
                       setStudentEditData({
                         ...studentEditData,
-                        address: {
-                          ...studentEditData.address,
-                          number: e.target.value,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          address: {
+                            ...studentEditData.financialResponsible.address,
+                            number: e.target.value,
+                          },
                         },
                       })
                     }
@@ -4434,7 +5040,7 @@ export function EditStudent() {
               <label
                 htmlFor="addressNeighborhood"
                 className={
-                  errors.address?.neighborhood
+                  errors.financialResponsible?.address?.neighborhood
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
                     : "w-1/4 text-right"
                 }
@@ -4448,24 +5054,29 @@ export function EditStudent() {
                     name="addressNeighborhood"
                     disabled={!editAddress}
                     placeholder={
-                      errors.address?.neighborhood
+                      errors.financialResponsible?.address?.neighborhood
                         ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
                         : "Bairro"
                     }
                     className={
                       editAddress
-                        ? errors.address?.neighborhood
+                        ? errors.financialResponsible?.address?.neighborhood
                           ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                           : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                         : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                     }
-                    value={studentEditData.address.neighborhood}
+                    value={
+                      studentEditData.financialResponsible.address.neighborhood
+                    }
                     onChange={(e) =>
                       setStudentEditData({
                         ...studentEditData,
-                        address: {
-                          ...studentEditData.address,
-                          neighborhood: e.target.value,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          address: {
+                            ...studentEditData.financialResponsible.address,
+                            neighborhood: e.target.value,
+                          },
                         },
                       })
                     }
@@ -4480,17 +5091,22 @@ export function EditStudent() {
                     name="addressComplement"
                     placeholder={"Apto | Bloco"}
                     className={
-                      errors.address
+                      errors.financialResponsible?.address
                         ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                         : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                     }
-                    value={studentEditData.address.complement}
+                    value={
+                      studentEditData.financialResponsible.address.complement
+                    }
                     onChange={(e) =>
                       setStudentEditData({
                         ...studentEditData,
-                        address: {
-                          ...studentEditData.address,
-                          complement: e.target.value,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          address: {
+                            ...studentEditData.financialResponsible.address,
+                            complement: e.target.value,
+                          },
                         },
                       })
                     }
@@ -4504,7 +5120,7 @@ export function EditStudent() {
               <label
                 htmlFor="addressCity"
                 className={
-                  errors.address?.city
+                  errors.financialResponsible?.address?.city
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
                     : "w-1/4 text-right"
                 }
@@ -4518,24 +5134,27 @@ export function EditStudent() {
                     name="addressCity"
                     disabled={!editAddress}
                     placeholder={
-                      errors.address?.city
+                      errors.financialResponsible?.address?.city
                         ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
                         : "Cidade"
                     }
                     className={
                       editAddress
-                        ? errors.address?.city
+                        ? errors.financialResponsible?.address?.city
                           ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                           : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                         : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                     }
-                    value={studentEditData.address.city}
+                    value={studentEditData.financialResponsible.address.city}
                     onChange={(e) =>
                       setStudentEditData({
                         ...studentEditData,
-                        address: {
-                          ...studentEditData.address,
-                          city: e.target.value,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          address: {
+                            ...studentEditData.financialResponsible.address,
+                            city: e.target.value,
+                          },
                         },
                       })
                     }
@@ -4550,24 +5169,27 @@ export function EditStudent() {
                     name="addressState"
                     disabled={!editAddress}
                     placeholder={
-                      errors.address?.state
+                      errors.financialResponsible?.address?.state
                         ? `Busque pelo CEP ou clique em "Editar Endereço" para inserir manualmente`
                         : "UF"
                     }
                     className={
                       editAddress
-                        ? errors.address?.state
+                        ? errors.financialResponsible?.address?.state
                           ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                           : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                         : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                     }
-                    value={studentEditData.address.state}
+                    value={studentEditData.financialResponsible.address.state}
                     onChange={(e) =>
                       setStudentEditData({
                         ...studentEditData,
-                        address: {
-                          ...studentEditData.address,
-                          state: e.target.value,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          address: {
+                            ...studentEditData.financialResponsible.address,
+                            state: e.target.value,
+                          },
                         },
                       })
                     }
@@ -4592,501 +5214,6 @@ export function EditStudent() {
                   ? "Insira o Endereço manualmente, ou busque o CEP novamente"
                   : "Editar Endereço"}
               </button>
-            </div>
-
-            {/* PHONE */}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="phone"
-                className={
-                  errors.phone
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
-                Telefone:{" "}
-              </label>
-              <div className="flex w-2/4 gap-2">
-                <div className="flex w-10/12 items-center gap-1">
-                  <select
-                    id="phoneDDD"
-                    defaultValue={"DDD"}
-                    className={
-                      errors.phone?.ddd
-                        ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    }
-                    name="DDD"
-                    value={studentEditData.phone.ddd}
-                    onChange={(e) => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        phone: {
-                          ...studentEditData.phone,
-                          ddd: e.target.value,
-                        },
-                      });
-                    }}
-                  >
-                    <BrazilianStateSelectOptions />
-                  </select>
-                  <input
-                    type="text"
-                    name="phoneInitial"
-                    pattern="^[+ 0-9]{5}$"
-                    maxLength={5}
-                    value={studentEditData.phone.prefix}
-                    placeholder={
-                      errors.phone?.prefix ? "É necessário um" : "99999"
-                    }
-                    className={
-                      errors.phone?.prefix
-                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    }
-                    onChange={(e) => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        phone: {
-                          ...studentEditData.phone,
-                          prefix: e.target.value
-                            .replace(/[^0-9.]/g, "")
-                            .replace(/(\..*?)\..*/g, "$1"),
-                        },
-                      });
-                    }}
-                  />
-                  -
-                  <input
-                    type="text"
-                    name="phoneFinal"
-                    pattern="^[+ 0-9]{4}$"
-                    maxLength={4}
-                    value={studentEditData.phone.suffix}
-                    placeholder={
-                      errors.phone?.suffix ? "telefone válido" : "9990"
-                    }
-                    className={
-                      errors.phone?.suffix
-                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    }
-                    onChange={(e) => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        phone: {
-                          ...studentEditData.phone,
-                          suffix: e.target.value
-                            .replace(/[^0-9.]/g, "")
-                            .replace(/(\..*?)\..*/g, "$1"),
-                        },
-                      });
-                    }}
-                  />
-                </div>
-                <div className="w-2/12"></div>
-              </div>
-            </div>
-
-            {/* PHONE SECONDARY */}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="phoneSecondary"
-                className={
-                  errors.phoneSecondary
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
-                Telefone 2:{" "}
-              </label>
-              <div className="flex w-2/4 gap-2">
-                <div className="flex w-10/12 items-center gap-1">
-                  {/** NUMBER SECONDARY DDD */}
-                  <select
-                    id="phoneSecondaryDDD"
-                    disabled={!studentEditData.activePhoneSecondary}
-                    defaultValue={"DDD"}
-                    value={studentEditData.phoneSecondary.ddd}
-                    className={
-                      studentEditData.activePhoneSecondary
-                        ? errors.phoneSecondary?.ddd
-                          ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    }
-                    name="DDD"
-                    onChange={(e) => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        phoneSecondary: {
-                          ...studentEditData.phoneSecondary,
-                          ddd: e.target.value,
-                        },
-                      });
-                    }}
-                  >
-                    <BrazilianStateSelectOptions />
-                  </select>
-                  {/** NUMBER SECONDARY PREFIX */}
-                  <input
-                    type="text"
-                    name="phoneSecondaryInitial"
-                    disabled={!studentEditData.activePhoneSecondary}
-                    pattern="^[+ 0-9]{5}$"
-                    maxLength={5}
-                    value={studentEditData.phoneSecondary.prefix}
-                    placeholder={
-                      errors.phoneSecondary?.prefix
-                        ? "É necessário um"
-                        : "99999"
-                    }
-                    className={
-                      studentEditData.activePhoneSecondary
-                        ? errors.phoneSecondary?.prefix
-                          ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                    }
-                    onChange={(e) => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        phoneSecondary: {
-                          ...studentEditData.phoneSecondary,
-                          prefix: e.target.value
-                            .replace(/[^0-9.]/g, "")
-                            .replace(/(\..*?)\..*/g, "$1"),
-                        },
-                      });
-                    }}
-                  />
-                  -{/** NUMBER SECONDARY SUFFIX */}
-                  <input
-                    type="text"
-                    name="phoneSecondaryFinal"
-                    disabled={!studentEditData.activePhoneSecondary}
-                    pattern="^[+ 0-9]{4}$"
-                    maxLength={4}
-                    value={studentEditData.phoneSecondary.suffix}
-                    placeholder={
-                      errors.phoneSecondary?.prefix ? "telefone válido" : "9999"
-                    }
-                    className={
-                      studentEditData.activePhoneSecondary
-                        ? errors.phoneSecondary?.suffix
-                          ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                    }
-                    onChange={(e) => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        phoneSecondary: {
-                          ...studentEditData.phoneSecondary,
-                          suffix: e.target.value
-                            .replace(/[^0-9.]/g, "")
-                            .replace(/(\..*?)\..*/g, "$1"),
-                        },
-                      });
-                    }}
-                  />
-                </div>
-                {/** CHECKBOX INCLUDE NUMBER SECONDARY */}
-                <div className="flex w-2/12 items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="activePhoneSecondary"
-                    className="ml-1"
-                    checked={studentEditData.activePhoneSecondary}
-                    onChange={() => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        activePhoneSecondary:
-                          !studentEditData.activePhoneSecondary,
-                      });
-                    }}
-                  />
-                  <label htmlFor="activePhoneSecondary" className="text-sm">
-                    Incluir
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* PHONE TERTIARY */}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="phoneTertiary"
-                className={
-                  errors.phoneTertiary
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
-                Telefone 3:{" "}
-              </label>
-              <div className="flex w-2/4 gap-2">
-                <div className="flex w-10/12 items-center gap-1">
-                  {/** NUMBER TERTIARY DDD */}
-                  <select
-                    id="phoneTertiaryDDD"
-                    disabled={!studentEditData.activePhoneTertiary}
-                    defaultValue={"DDD"}
-                    value={studentEditData.phoneTertiary.ddd}
-                    className={
-                      studentEditData.activePhoneTertiary
-                        ? errors.phoneTertiary?.ddd
-                          ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    }
-                    name="DDD"
-                    onChange={(e) => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        phoneTertiary: {
-                          ...studentEditData.phoneTertiary,
-                          ddd: e.target.value,
-                        },
-                      });
-                    }}
-                  >
-                    <BrazilianStateSelectOptions />
-                  </select>
-                  {/** NUMBER TERTIARY PREFIX */}
-                  <input
-                    type="text"
-                    name="phoneTertiaryInitial"
-                    disabled={!studentEditData.activePhoneTertiary}
-                    pattern="^[+ 0-9]{5}$"
-                    maxLength={5}
-                    value={studentEditData.phoneTertiary.prefix}
-                    placeholder={
-                      errors.phoneTertiary?.prefix ? "É necessário um" : "99999"
-                    }
-                    className={
-                      studentEditData.activePhoneTertiary
-                        ? errors.phoneTertiary?.prefix
-                          ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                    }
-                    onChange={(e) => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        phoneTertiary: {
-                          ...studentEditData.phoneTertiary,
-                          prefix: e.target.value
-                            .replace(/[^0-9.]/g, "")
-                            .replace(/(\..*?)\..*/g, "$1"),
-                        },
-                      });
-                    }}
-                  />
-                  -{/** NUMBER TERTIARY SUFFIX */}
-                  <input
-                    type="text"
-                    name="phoneTertiaryFinal"
-                    disabled={!studentEditData.activePhoneTertiary}
-                    pattern="^[+ 0-9]{4}$"
-                    maxLength={4}
-                    value={studentEditData.phoneTertiary.suffix}
-                    placeholder={
-                      errors.phoneTertiary?.prefix ? "telefone válido" : "9999"
-                    }
-                    className={
-                      studentEditData.activePhoneTertiary
-                        ? errors.phoneTertiary?.suffix
-                          ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                    }
-                    onChange={(e) => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        phoneTertiary: {
-                          ...studentEditData.phoneTertiary,
-                          suffix: e.target.value
-                            .replace(/[^0-9.]/g, "")
-                            .replace(/(\..*?)\..*/g, "$1"),
-                        },
-                      });
-                    }}
-                  />
-                </div>
-                {/** CHECKBOX INCLUDE NUMBER TERTIARY */}
-                <div className="flex w-2/12 items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="activePhoneTertiary"
-                    className="ml-1"
-                    checked={studentEditData.activePhoneTertiary}
-                    onChange={() => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        activePhoneTertiary:
-                          !studentEditData.activePhoneTertiary,
-                      });
-                    }}
-                  />
-                  <label htmlFor="activePhoneTertiary" className="text-sm">
-                    Incluir
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* RESPONSIBLE */}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="responsible"
-                className={
-                  errors.responsible
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
-                Responsável{" "}
-                <span className="text-sm">
-                  (diferente do responsável pela cobrança)
-                </span>
-                :{" "}
-              </label>
-              <input
-                type="text"
-                name="responsible"
-                placeholder={
-                  errors.responsible
-                    ? "É necessário inserir o Nome completo do Responsável"
-                    : "Insira o nome completo do Responsável"
-                }
-                className={
-                  errors.responsible
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                value={studentEditData.responsible}
-                onChange={(e) =>
-                  setStudentEditData({
-                    ...studentEditData,
-                    responsible: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            {/* RESPONSIBLE DOCUMENT*/}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="responsibleDocument"
-                className={
-                  errors.responsibleDocument
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
-                CPF do Responsável:{" "}
-              </label>
-              <input
-                type="text"
-                name="responsibleDocument"
-                pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                placeholder={
-                  errors.responsibleDocument
-                    ? "É necessário inserir o CPF do Responsável"
-                    : "Insira o CPF do Responsável"
-                }
-                className={
-                  errors.responsible
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                value={studentEditData.responsibleDocument}
-                onChange={(e) => {
-                  if (e.target.value.length === 11) {
-                    setTestCPF(testaCPF(e.target.value));
-                  }
-                  setStudentEditData({
-                    ...studentEditData,
-                    responsibleDocument: formataCPF(e.target.value),
-                  });
-                }}
-              />
-            </div>
-
-            {/* FINANCIAL RESPONSIBLE */}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="financialResponsible"
-                className={
-                  errors.financialResponsible
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
-                Responsável Financeiro{" "}
-                <span className="text-sm">(responsável pela cobrança)</span>:{" "}
-              </label>
-              <input
-                type="text"
-                name="financialResponsible"
-                placeholder={
-                  errors.financialResponsible
-                    ? "É necessário inserir o Nome completo do Responsável Financeiro"
-                    : "Insira o nome completo do Responsável Financeiro"
-                }
-                className={
-                  errors.financialResponsible
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                value={studentEditData.financialResponsible}
-                onChange={(e) =>
-                  setStudentEditData({
-                    ...studentEditData,
-                    financialResponsible: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            {/* FINANCIAL RESPONSIBLE DOCUMENT*/}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="financialResponsibleDocument"
-                className={
-                  errors.financialResponsibleDocument
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
-                CPF do Responsável Financeiro:{" "}
-              </label>
-              <input
-                type="text"
-                name="financialResponsibleDocument"
-                pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                placeholder={
-                  errors.financialResponsibleDocument
-                    ? "É necessário inserir o CPF do Responsável Financeiro"
-                    : "Insira o CPF do Responsável Financeiro"
-                }
-                className={
-                  errors.responsible
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                value={studentEditData.financialResponsibleDocument}
-                onChange={(e) => {
-                  if (e.target.value.length === 11) {
-                    setTestFinancialCPF(testaCPF(e.target.value));
-                  }
-                  setStudentEditData({
-                    ...studentEditData,
-                    financialResponsibleDocument: formataCPF(e.target.value),
-                  });
-                }}
-              />
             </div>
 
             {/** EXPERIMENTAL CURRICULUM SECTION TITLE */}
@@ -5244,7 +5371,7 @@ export function EditStudent() {
                         : "w-1/4 text-right"
                     }
                   >
-                    Selecione a Turma:{" "}
+                    Selecione o Ano Escolar:{" "}
                   </label>
                   <select
                     id="newExperimentalSchoolClassSelect"
@@ -5378,7 +5505,7 @@ export function EditStudent() {
                                 >
                                   {experimentalCurriculumData.schoolName ===
                                   "Colégio Bernoulli" ? (
-                                    <p>Turma: {curriculum.schoolClass}</p>
+                                    <p>Ano Escolar: {curriculum.schoolClass}</p>
                                   ) : null}
                                   <p>Modalidade: {curriculum.schoolCourse}</p>
                                   {scheduleDatabaseData.map((details) =>
@@ -5422,8 +5549,8 @@ export function EditStudent() {
                   <>
                     {/* EXPERIMENTAL CURRICULUM PRE-SELECT DESCRIPTION */}
                     <p className="text-red-600 dark:text-yellow-500">
-                      Selecione um colégio e uma turma para ver as modalidades
-                      disponíveis.
+                      Selecione um colégio e um Ano Escolar para ver as
+                      modalidades disponíveis.
                     </p>
                   </>
                 )}
@@ -5682,7 +5809,7 @@ export function EditStudent() {
                         : "w-1/4 text-right"
                     }
                   >
-                    Selecione a Turma:{" "}
+                    Selecione o Ano Escolar:{" "}
                   </label>
                   <select
                     id="newSchoolClassSelect"
@@ -5843,10 +5970,7 @@ export function EditStudent() {
                                 htmlFor="curriculumCardDetails"
                                 className="flex flex-col gap-4"
                               >
-                                {curriculumData.schoolName ===
-                                "Colégio Bernoulli" ? (
-                                  <p>Turma: {curriculum.schoolClass}</p>
-                                ) : null}
+                                <p>Ano Escolar: {curriculum.schoolClass}</p>
                                 <p>Modalidade: {curriculum.schoolCourse}</p>
                                 {scheduleDatabaseData.map((details) =>
                                   details.name === curriculum.schedule
@@ -5886,8 +6010,8 @@ export function EditStudent() {
                   <>
                     {/* CURRICULUM PRE-SELECT DESCRIPTION */}
                     <p className="text-red-600 dark:text-yellow-500">
-                      Selecione um colégio e uma turma para ver as modalidades
-                      disponíveis.
+                      Selecione um colégio e um Ano Escolar para ver as
+                      modalidades disponíveis.
                     </p>
                   </>
                 )}
@@ -6219,7 +6343,7 @@ export function EditStudent() {
                         : "w-1/4 text-right"
                     }
                   >
-                    Selecione a Turma do Parente:{" "}
+                    Selecione o Ano Escolar do Parente:{" "}
                   </label>
                   <select
                     id="newFamilySchoolClassSelect"
@@ -6249,8 +6373,8 @@ export function EditStudent() {
                     ) : (
                       <option disabled value={" -- select an option -- "}>
                         {" "}
-                        -- Selecione uma escola para ver as turmas disponíveis
-                        --{" "}
+                        -- Selecione uma escola para ver os Anos Escolares
+                        disponíveis --{" "}
                       </option>
                     )}
                   </select>
@@ -6300,7 +6424,7 @@ export function EditStudent() {
                     ) : (
                       <option value={" -- select an option -- "}>
                         {" "}
-                        -- Selecione uma Turma para ver as modalidades
+                        -- Selecione um Ano Escolar para ver as modalidades
                         disponíveis --{" "}
                       </option>
                     )}
@@ -6351,8 +6475,8 @@ export function EditStudent() {
                     ) : (
                       <option disabled value={" -- select an option -- "}>
                         {" "}
-                        -- Selecione Colégio, Turma e Modalidade para ver os
-                        alunos disponíveis --{" "}
+                        -- Selecione Colégio, Ano Escolar e Modalidade para ver
+                        os alunos disponíveis --{" "}
                       </option>
                     )}
                   </select>
@@ -6546,7 +6670,7 @@ export function EditStudent() {
               </button>
             </div>
           </>
-        ) : null}
+        )}
       </form>
     </div>
   );

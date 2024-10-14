@@ -225,11 +225,9 @@ export function DeleteTeacher() {
         setIsSubmitting(false),
         toast.error(
           `Professor incluído em ${
-            teacherExistsOnCurriculum.length === 1 ? "Currículo" : "Currículos"
+            teacherExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
           }, exclua ou altere primeiramente ${
-            teacherExistsOnCurriculum.length === 1
-              ? "o Currículo"
-              : "os Currículos"
+            teacherExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
           } e depois exclua o Professor ${teacherFullData.name}... ❕`,
           {
             theme: "colored",
@@ -244,67 +242,6 @@ export function DeleteTeacher() {
       // IF NO EXISTS, DELETE
       deleteTeacher();
     }
-
-    // // CHECKING IF TEACHER EXISTS ON DATABASE
-    // const teacherRef = collection(db, "curriculum");
-    // const q = query(teacherRef, where("teacher", "==", teacherFullData.name));
-    // const querySnapshot = await getDocs(q);
-    // const promises: TeacherSearchProps[] = [];
-    // querySnapshot.forEach((doc) => {
-    //   const promise = doc.data() as TeacherSearchProps;
-    //   promises.push(promise);
-    // });
-    // Promise.all(promises).then((results) => {
-    //   // IF EXISTS, RETURN ERROR
-    //   if (results.length !== 0) {
-    //     return (
-    //       setIsSubmitting(false),
-    //       toast.error(
-    //         `Professor incluído em ${results.length} ${
-    //           results.length === 1 ? "Currículo" : "Currículos"
-    //         }, exclua ou altere primeiramente ${
-    //           results.length === 1 ? "o Currículo" : "os Currículos"
-    //         } e depois exclua o Professor ${teacherFullData.name}... ❕`,
-    //         {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         }
-    //       )
-    //     );
-    //   } else {
-    //     // IF NO EXISTS, DELETE
-    //     const deleteTeacher = async () => {
-    //       try {
-    //         await deleteDoc(doc(db, "teachers", data.teacherId));
-    //         resetForm();
-    //         toast.success(`Professor excluído com sucesso! 👌`, {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         });
-    //         setIsSubmitting(false);
-    //       } catch (error) {
-    //         console.log("ESSE É O ERROR", error);
-    //         toast.error(`Ocorreu um erro... 🤯`, {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         });
-    //         setIsSubmitting(false);
-    //       } finally {
-    //         resetForm();
-    //       }
-    //     };
-    //     deleteTeacher();
-    //   }
-    // });
   };
 
   return (

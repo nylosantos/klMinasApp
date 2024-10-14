@@ -21,6 +21,7 @@ import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteCurriculumValidationSchema } from "../../@types/zodValidation";
 import {
   CurriculumSearchProps,
+  DeleteClassDaysValidationZProps,
   DeleteCurriculumValidationZProps,
   ScheduleSearchProps,
   SchoolClassSearchProps,
@@ -44,6 +45,13 @@ export function DeleteCurriculum() {
     schoolCourseDatabaseData,
     studentsDatabaseData,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
+
+  // CLASS DAY DATA
+  const [classDaysData, setClassDaysData] =
+    useState<DeleteClassDaysValidationZProps>({
+      classDayId: "",
+      classDayName: "",
+    });
 
   // CURRICULUM DATA
   const [curriculumData, setCurriculumData] =
@@ -303,6 +311,10 @@ export function DeleteCurriculum() {
       schoolCourseId: "",
       confirmDelete: false,
     });
+    setClassDaysData({
+      classDayId: "",
+      classDayName: "",
+    });
     reset();
   };
 
@@ -351,8 +363,9 @@ export function DeleteCurriculum() {
     const deleteCurriculum = async () => {
       try {
         await deleteDoc(doc(db, "curriculum", data.curriculumId));
+        await deleteDoc(doc(db, "classDays", classDaysData.classDayId));
         resetForm();
-        toast.success(`Currículo excluído com sucesso! 👌`, {
+        toast.success(`Turma excluída com sucesso! 👌`, {
           theme: "colored",
           closeOnClick: true,
           pauseOnHover: true,
@@ -377,7 +390,7 @@ export function DeleteCurriculum() {
     if (!data.confirmDelete) {
       setIsSubmitting(false);
       return toast.error(
-        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir o Currículo... ☑️`,
+        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir a Turma... ☑️`,
         {
           theme: "colored",
           closeOnClick: true,
@@ -417,13 +430,13 @@ export function DeleteCurriculum() {
       return (
         setIsSubmitting(false),
         toast.error(
-          `Currículo incluído em ${curriculumExistsOnStudent.length} ${
+          `Turma incluída em ${curriculumExistsOnStudent.length} ${
             curriculumExistsOnStudent.length === 1
               ? "cadastro de aluno"
               : "cadastros de alunos"
           }, exclua ou altere primeiramente ${
             curriculumExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
-          } e depois exclua o currículo... ❕`,
+          } e depois exclua a turma... ❕`,
           {
             theme: "colored",
             closeOnClick: true,
@@ -437,43 +450,6 @@ export function DeleteCurriculum() {
       // IF NO EXISTS, DELETE
       deleteCurriculum();
     }
-
-    // const curriculumRef = collection(db, "students");
-    // const q = query(
-    //   curriculumRef,
-    //   where("curriculum", "array-contains-any", [data.curriculumId])
-    // );
-    // const querySnapshot = await getDocs(q);
-    // const promises: StudentSearchProps[] = [];
-    // querySnapshot.forEach((doc) => {
-    //   const promise = doc.data() as StudentSearchProps;
-    //   promises.push(promise);
-    // });
-    // Promise.all(promises).then((results) => {
-    //   // IF EXISTS, RETURN ERROR
-    //   if (results.length !== 0) {
-    //     return (
-    //       setIsSubmitting(false),
-    //       toast.error(
-    //         `Currículo incluído em ${results.length} ${
-    //           results.length === 1 ? "cadastro de aluno" : "cadastros de alunos"
-    //         }, exclua ou altere primeiramente ${
-    //           results.length === 1 ? "o aluno" : "os alunos"
-    //         } e depois exclua o currículo... ❕`,
-    //         {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         }
-    //       )
-    //     );
-    //   } else {
-    //     // IF NO EXISTS, DELETE
-    //     deleteCurriculum();
-    //   }
-    // });
   };
 
   return (
@@ -485,7 +461,7 @@ export function DeleteCurriculum() {
       <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Excluir Currículo</h1>
+      <h1 className="font-bold text-2xl my-4">Excluir Turma</h1>
 
       {/* FORM */}
       <form
@@ -534,7 +510,7 @@ export function DeleteCurriculum() {
                 : "w-1/4 text-right"
             }
           >
-            Selecione a Turma:{" "}
+            Selecione o Ano Escolar:{" "}
           </label>
           <select
             id="schoolClassSelect"
@@ -636,6 +612,10 @@ export function DeleteCurriculum() {
                         className="text-klGreen-500 dark:text-klGreen-500 border-none"
                         value={c.id}
                         onChange={(e) => {
+                          setClassDaysData({
+                            classDayId: c.classDayId,
+                            classDayName: c.classDay,
+                          });
                           setCurriculumData({
                             ...curriculumData,
                             curriculumId: e.target.value,
@@ -653,7 +633,7 @@ export function DeleteCurriculum() {
                           </span>
                         </p>
                         <p>
-                          Turma:{" "}
+                          Ano Escolar:{" "}
                           <span className="text-red-600 dark:text-yellow-500">
                             {c.schoolClass}
                           </span>
@@ -705,7 +685,7 @@ export function DeleteCurriculum() {
               <>
                 {/* CURRICULUM CARD EMPTY SUBTITLE */}
                 <h1 className="font-bold text-2xl pb-10 text-red-600 dark:text-yellow-500">
-                  Nenhum currículo disponível com as opções selecionadas, tente
+                  Nenhuma Turma disponível com as opções selecionadas, tente
                   novamente.
                 </h1>
               </>
@@ -732,7 +712,7 @@ export function DeleteCurriculum() {
                     }}
                   />
                   <label htmlFor="confirmDelete" className="text-sm">
-                    Confirmar exclusão do Currículo
+                    Confirmar exclusão da Turma
                   </label>
                 </div>
               </>
@@ -749,7 +729,7 @@ export function DeleteCurriculum() {
                 className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
               >
                 {curriculumCoursesData.length === 0
-                  ? "Nenhum currículo encontrado"
+                  ? "Nenhuma Turma encontrada"
                   : !isSubmitting
                   ? "Excluir"
                   : "Excluindo"}
