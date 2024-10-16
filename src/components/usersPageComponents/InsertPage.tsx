@@ -17,8 +17,8 @@ function classNames(...classes: any) {
 
 export default function InsertPage() {
   return (
-    <div className="w-10/12 px-2 py-8 sm:px-0">
-      <TabGroup>
+    <div className="h-full w-10/12 mx-2 my-4 sm:px-0 overflow-scroll no-scrollbar">
+      <TabGroup className="flex flex-col h-full overflow-scroll no-scrollbar">
         <TabList className="flex space-x-1 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 p-1">
           <Tab
             className={({ selected }) =>
@@ -105,7 +105,7 @@ export default function InsertPage() {
             Aluno
           </Tab>
         </TabList>
-        <TabPanels className="mt-2 flex justify-center">
+        <TabPanels className="mt-2 flex justify-center overflow-scroll h-full no-scrollbar">
           <TabPanel as={Fragment}>
             <InsertSchool />
           </TabPanel>

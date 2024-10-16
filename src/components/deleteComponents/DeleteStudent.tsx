@@ -2,7 +2,7 @@
 import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import {
   arrayRemove,
@@ -546,9 +546,6 @@ export function DeleteStudent() {
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="excluindo" />
 
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
-
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Excluir Aluno</h1>
 
@@ -743,8 +740,8 @@ export function DeleteStudent() {
         </div>
 
         {/* STUDENT SELECT CARD SECTION */}
-        {isSelected && (
-          loadingData ? (
+        {isSelected &&
+          (loadingData ? (
             <>
               {/* DATA LOADING */}
               <SubmitLoading
@@ -948,8 +945,7 @@ export function DeleteStudent() {
                 </button>
               </div>
             </>
-          )
-        )}
+          ))}
       </form>
     </div>
   );

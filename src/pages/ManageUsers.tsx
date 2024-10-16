@@ -23,7 +23,7 @@ export default function ManageUsers() {
   ) as GlobalDataContextType;
 
   return (
-    <div className="w-screen flex flex-col justify-center items-center">
+    <div className="w-screen h-full flex flex-col justify-center items-center overflow-scroll no-scrollbar">
       <div className="w-10/12 px-2 py-8 sm:px-0">
         <TabGroup>
           <TabList className="flex space-x-1 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 p-1">

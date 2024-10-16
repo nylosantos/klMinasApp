@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
 
@@ -665,9 +665,9 @@ export function InsertCurriculum() {
         }
       );
     }
-    
+
     const curriculumFormattedName = `${data.schoolName} | ${data.schoolCourseName} | ${data.scheduleName} | ${data.classDayName} | Professor: ${data.teacherName}`;
-    
+
     // CHECK IF ANY DAY WAS PICKED
     if (
       !classDaysData.sunday &&
@@ -820,20 +820,17 @@ export function InsertCurriculum() {
   };
 
   return (
-    <div className="flex flex-col container text-center">
+    <div className="flex flex-col h-full container text-center">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
-
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Adicionar Turma TESTANDO</h1>
+      <h1 className="font-bold text-2xl my-4">Adicionar Turma</h1>
 
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddCurriculum)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
+        className="flex flex-col w-full h-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2 overflow-scroll no-scrollbar"
       >
         {/* SCHOOL SELECT */}
         <div className="flex gap-2 items-center">

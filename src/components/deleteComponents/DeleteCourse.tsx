@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useContext } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import CurrencyInput from "react-currency-input-field";
 import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
@@ -265,9 +265,7 @@ export function DeleteCourse() {
         setIsSubmitting(false),
         toast.error(
           `Modalidade incluída em ${schoolCourseExistsOnCurriculum.length} ${
-            schoolCourseExistsOnCurriculum.length === 1
-              ? "Turma"
-              : "Turmas"
+            schoolCourseExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
           }, exclua ou altere primeiramente ${
             schoolCourseExistsOnCurriculum.length === 1
               ? "a Turma"
@@ -292,9 +290,6 @@ export function DeleteCourse() {
     <div className="flex flex-col container text-center">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="excluindo" />
-
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Excluir Modalidade</h1>

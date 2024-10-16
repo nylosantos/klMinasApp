@@ -4,12 +4,10 @@ import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import DatePicker from "react-multi-date-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import TimePicker from "react-multi-date-picker/plugins/time_picker";
-import {
-  doc, getFirestore, updateDoc
-} from "firebase/firestore";
+import { doc, getFirestore, updateDoc } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -258,9 +256,6 @@ export function EditSchedule() {
     <div className="flex flex-col container text-center">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
-
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">

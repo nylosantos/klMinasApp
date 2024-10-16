@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import DatePicker, { DateObject } from "react-multi-date-picker";
 import {
@@ -1968,15 +1968,12 @@ export function InsertStudent() {
   };
 
   return (
-    <div className="flex flex-col container text-center">
+    <div className="flex h-full flex-col container text-center overflow-scroll no-scrollbar rounded-xl">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
-
       {/* PAGE TITLE */}
-      {(userFullData && userFullData.role === "user") ?? (
+      {userFullData && userFullData.role !== "user" && (
         <h1 className="font-bold text-2xl my-4">Adicionar Aluno</h1>
       )}
 
@@ -3803,9 +3800,10 @@ export function InsertStudent() {
                                 ...studentData.financialResponsible,
                                 activePhoneSecondary: !activePhoneSecondary,
                                 phoneSecondary: {
-                                  ...studentData.financialResponsible.phoneSecondary,
-                                  ddd: "DDD"
-                                }
+                                  ...studentData.financialResponsible
+                                    .phoneSecondary,
+                                  ddd: "DDD",
+                                },
                               },
                             });
                           }}
@@ -3968,9 +3966,10 @@ export function InsertStudent() {
                                 ...studentData.financialResponsible,
                                 activePhoneTertiary: !activePhoneTertiary,
                                 phoneTertiary: {
-                                  ...studentData.financialResponsible.phoneTertiary,
-                                  ddd: "DDD"
-                                }
+                                  ...studentData.financialResponsible
+                                    .phoneTertiary,
+                                  ddd: "DDD",
+                                },
                               },
                             });
                           }}

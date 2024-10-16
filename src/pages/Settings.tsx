@@ -21,7 +21,7 @@ export default function Settings() {
   ) as GlobalDataContextType;
 
   return (
-    <div className="w-screen flex flex-col justify-center items-center">
+    <div className="w-screen h-full flex flex-col justify-start items-center overflow-scroll no-scrollbar">
       <div className="w-10/12 px-2 py-8 sm:px-0">
         <TabGroup>
           {(userFullData?.role === "root" ||

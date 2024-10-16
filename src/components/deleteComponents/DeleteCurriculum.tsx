@@ -2,7 +2,7 @@
 import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import {
   collection,
@@ -456,9 +456,6 @@ export function DeleteCurriculum() {
     <div className="flex flex-col container text-center">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="excluindo" />
-
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Excluir Turma</h1>

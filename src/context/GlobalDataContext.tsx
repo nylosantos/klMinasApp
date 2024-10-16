@@ -134,7 +134,6 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         promises.push(promise);
       });
       Promise.all(promises).then((results) => {
-        console.log("usuário: ", results[0]);
         if (results) {
           handleData();
           setUserFullData(results[0]);
@@ -157,7 +156,6 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   // MONITORING USER LOGIN
   useEffect(() => {
     setIsSubmitting(true);
-    console.log("do monitoramento do user: ", user);
     if (!user) {
       setLogged(false);
       setIsSubmitting(false);
@@ -233,7 +231,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     UserFullDataProps[]
   >([]);
 
-  function handleSystemConstants(){
+  function handleSystemConstants() {
     const systemConstantsQuery = query(collection(db, "systemConstants"));
     const systemConstantsListener = onSnapshot(
       systemConstantsQuery,
@@ -251,7 +249,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
 
   // GET SYSTEM CONSTANTS
   useEffect(() => {
-    handleSystemConstants()
+    handleSystemConstants();
   }, []);
 
   // GET DATA

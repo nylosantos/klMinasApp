@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useContext, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 import { LoginWithEmailAndPasswordZProps } from "../../@types";
@@ -108,9 +108,6 @@ export function FormLogin() {
 
   return (
     <>
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={2} />
-
       <div className="flex flex-col w-96 p-8 gap-6 border border-transparent dark:border-gray-100/30 rounded-3xl bg-gray-700/20 dark:bg-transparent">
         {/* SUBMIT LOADING */}
         <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="logando" />

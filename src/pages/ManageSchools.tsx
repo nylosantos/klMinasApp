@@ -13,9 +13,9 @@ function classNames(...classes: any) {
 
 export default function ManageSchools() {
   return (
-    <div className="w-screen flex flex-col justify-center items-center">
-      <div className="w-10/12 px-2 py-8 sm:px-0">
-        <TabGroup>
+    <div className="w-screen h-full flex flex-col justify-start items-center overflow-scroll no-scrollbar">
+      <div className="h-full w-10/12 mx-2 my-8 sm:px-0 overflow-scroll no-scrollbar">
+        <TabGroup className="flex flex-col h-full overflow-scroll no-scrollbar">
           <TabList className="flex space-x-1 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 p-1">
             <Tab
               className={({ selected }) =>
@@ -54,7 +54,7 @@ export default function ManageSchools() {
               Excluir
             </Tab>
           </TabList>
-          <TabPanels className="mt-2 flex justify-center">
+          <TabPanels className="flex flex-col h-full mt-2 items-center justify-center overflow-scroll no-scrollbar">
             <TabPanel as={Fragment}>
               <InsertPage />
             </TabPanel>

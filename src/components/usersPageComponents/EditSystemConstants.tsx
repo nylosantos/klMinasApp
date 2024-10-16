@@ -5,7 +5,7 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import {
   EditSystemConstantsValidationZProps,
   SystemConstantsSearchProps,
@@ -150,9 +150,6 @@ export default function EditSystemConstants() {
     <div className="flex flex-col container text-center">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
-
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
 
       {/* FORM */}
       <form

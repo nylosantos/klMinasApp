@@ -10,6 +10,7 @@ import Dashboard from "./Dashboard";
 import ManageSchools from "./ManageSchools";
 import ManageUsers from "./ManageUsers";
 import Settings from "./Settings";
+import { ToastContainer } from "react-toastify";
 
 export default function LandingPage() {
   // GET GLOBAL DATA
@@ -34,11 +35,13 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="flex flex-col justify-between scroll-smooth">
+    <div className="flex flex-col w-screen h-screen justify-between scroll-smooth overflow-scroll no-scrollbar">
       {/* <Notification /> */}
       {/* HEADER */}
       <Header />
-      {renderPage(page)}
+      {/* TOAST CONTAINER */}
+      <ToastContainer limit={5} />
+      <div className="flex justify-start h-full overflow-scroll no-scrollbar">{renderPage(page)}</div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { getFunctions } from "firebase/functions";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
 import {
@@ -375,9 +375,6 @@ export function EditUser() {
     <div className="flex flex-col container text-center">
       {/* SUBMITING LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="editando" />
-
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">

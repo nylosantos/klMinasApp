@@ -3,7 +3,7 @@ import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { getFunctions } from "firebase/functions";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
 import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
@@ -416,9 +416,6 @@ export function InsertUser() {
     <div className="flex flex-col container text-center">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
-
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Adicionar Usuário</h1>

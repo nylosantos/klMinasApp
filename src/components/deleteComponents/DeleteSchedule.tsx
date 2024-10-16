@@ -2,7 +2,7 @@
 import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
@@ -217,9 +217,7 @@ export function DeleteSchedule() {
           `Horário incluído em ${scheduleExistsOnCurriculum.length} ${
             scheduleExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
           }, exclua ou altere primeiramente ${
-            scheduleExistsOnCurriculum.length === 1
-              ? "a Turma"
-              : "as Turmas"
+            scheduleExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
           } e depois exclua o ${data.scheduleName}... ❕`,
           {
             theme: "colored",
@@ -240,9 +238,6 @@ export function DeleteSchedule() {
     <div className="flex flex-col container text-center">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="excluindo" />
-
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Excluir Horário</h1>

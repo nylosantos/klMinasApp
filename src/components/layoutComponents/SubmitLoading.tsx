@@ -9,7 +9,7 @@ export function SubmitLoading({
 }: SubmitLoadingProps) {
   return (
     <>
-      {isSubmitting ? (
+      {isSubmitting && (
         isNotFullScreen ? (
           <div className="flex flex-col items-center p-6 rounded-3xl bg-transparent">
             <DNA
@@ -42,7 +42,7 @@ export function SubmitLoading({
             </div>
           </div>
         )
-      ) : null}
+      )}
     </>
   );
 }

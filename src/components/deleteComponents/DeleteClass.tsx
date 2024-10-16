@@ -2,7 +2,7 @@
 import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
@@ -284,13 +284,9 @@ export function DeleteClass() {
         setIsSubmitting(false),
         toast.error(
           `Ano Escolar incluído em ${schoolClassExistsOnCurriculum.length} ${
-            schoolClassExistsOnCurriculum.length === 1
-              ? "Turma"
-              : "Turmas"
+            schoolClassExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
           }, exclua ou altere primeiramente ${
-            schoolClassExistsOnCurriculum.length === 1
-              ? "a Turma"
-              : "as Turmas"
+            schoolClassExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
           } e depois exclua o ${data.schoolClassName}... ❕`,
           {
             theme: "colored",
@@ -311,9 +307,6 @@ export function DeleteClass() {
     <div className="flex flex-col container text-center">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="excluindo" />
-
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
 
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Excluir Ano Escolar</h1>
@@ -395,7 +388,8 @@ export function DeleteClass() {
             ) : (
               <option disabled value={" -- select an option -- "}>
                 {" "}
-                -- Selecione uma escola para ver os anos escolares disponíveis --{" "}
+                -- Selecione uma escola para ver os anos escolares disponíveis
+                --{" "}
               </option>
             )}
           </select>
