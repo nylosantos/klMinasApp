@@ -16,6 +16,7 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { formataCPF, testaCPF } from "../../custom";
 
 export function EditMyUser() {
   // GET GLOBAL DATA
@@ -45,6 +46,9 @@ export function EditMyUser() {
     phone: "",
     role: "user",
   });
+
+  // TEST FINANCIAL RESPONSIBLE CPF (BRAZILIAN DOCUMENT) STATE
+  const [testFinancialCPF, setTestFinancialCPF] = useState(true);
 
   // PHONE FORMATTED STATE
   const [phoneFormatted, setPhoneFormatted] = useState({
@@ -78,6 +82,7 @@ export function EditMyUser() {
         name: userFullData.name,
         email: userFullData.email,
         role: userFullData.role,
+        document: userFullData.document ?? "",
       });
       setPhoneFormatted({
         ...phoneFormatted,
@@ -121,6 +126,7 @@ export function EditMyUser() {
       confirmPassword: "",
       phone: "",
       photo: "",
+      document: "",
       role: "user",
     });
     setPhoneFormatted({
@@ -142,6 +148,7 @@ export function EditMyUser() {
     setValue("confirmPassword", userEditData.confirmPassword);
     setValue("phone", userEditData.phone);
     setValue("role", userEditData.role);
+    setValue("document", userEditData.document);
   }, [userEditData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -152,6 +159,7 @@ export function EditMyUser() {
       errors.phone,
       errors.photo,
       errors.role,
+      errors.document,
       errors.changePassword,
       errors.password,
       errors.confirmPassword,
@@ -191,7 +199,7 @@ export function EditMyUser() {
       } else {
         setErrorPassword(false);
         try {
-          // UPDATE APP USER CHANGING PASSWORD FUNCTION
+          // UPDATE APP USER CHANGING PASSWORD FUNCTION (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
           await updateAppUserWithPassword(data);
           resetForm();
           toast.success(`${data.name} editado com sucesso! 👌`, {
@@ -202,7 +210,7 @@ export function EditMyUser() {
             autoClose: 3000,
           });
           setIsSubmitting(false);
-          setPage({ prev: page.show, show: "ManageUsers" });
+          setPage({ prev: page.show, show: "Settings" });
         } catch (error) {
           console.log("Erro: ", error);
           toast.error(`Ocorreu um erro... 🤯`, {
@@ -219,7 +227,7 @@ export function EditMyUser() {
     } else {
       setErrorPassword(false);
       try {
-        // UPDATE APP USER NOT CHANGING PASSWORD FUNCTION
+        // UPDATE APP USER NOT CHANGING PASSWORD FUNCTION (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
         await updateAppUserWithoutPassword(data);
         resetForm();
         toast.success(`${data.name} editado com sucesso! 👌`, {
@@ -230,7 +238,7 @@ export function EditMyUser() {
           autoClose: 3000,
         });
         setIsSubmitting(false);
-        setPage({ prev: page.show, show: "ManageUsers" });
+        setPage({ prev: page.show, show: "Settings" });
       } catch (error) {
         console.log("Erro: ", error);
         toast.error(`Ocorreu um erro... 🤯`, {
@@ -247,7 +255,7 @@ export function EditMyUser() {
   };
 
   return (
-    <div className="flex flex-col container text-center">
+    <div className="flex h-full flex-col container text-center overflow-scroll no-scrollbar rounded-xl">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="editando" />
 
@@ -343,118 +351,58 @@ export function EditMyUser() {
               />
             </div>
 
-            {/** CHECKBOX CONFIRM CHANGE PASSWORD */}
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="changePassword"
-                className={
-                  errors.password
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
-                Alterar Senha ?{" "}
-              </label>
-              <div className="w-3/4 flex items-center gap-2">
+            {/* FINANCIAL RESPONSIBLE DOCUMENT*/}
+            {userFullData.role === "user" && (
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="userDocument"
+                  className={
+                    testFinancialCPF
+                      ? errors.document
+                        ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                        : "w-1/4 text-right"
+                      : "w-1/4 text-right text-red-500 dark:text-red-400"
+                  }
+                >
+                  CPF
+                  {testFinancialCPF ? (
+                    ": "
+                  ) : (
+                    <span className="text-red-500 dark:text-red-400">
+                      {" "}
+                      Inválido, verifique:
+                    </span>
+                  )}
+                </label>
                 <input
-                  type="checkbox"
-                  name="changePassword"
-                  className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                  checked={userEditData.changePassword}
-                  onChange={() => {
+                  type="text"
+                  name="userDocument"
+                  pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                  placeholder={
+                    errors.document
+                      ? "É necessário inserir o CPF do Responsável Financeiro"
+                      : "Insira o CPF do Responsável Financeiro"
+                  }
+                  className={
+                    testFinancialCPF
+                      ? errors.document
+                        ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  }
+                  value={userEditData.document}
+                  onChange={(e) => {
+                    if (e.target.value.length === 11) {
+                      setTestFinancialCPF(testaCPF(e.target.value));
+                    }
                     setUserEditData({
                       ...userEditData,
-                      changePassword: !userEditData.changePassword,
+                      document: formataCPF(e.target.value),
                     });
                   }}
                 />
               </div>
-            </div>
-            {userEditData.changePassword ? (
-              <>
-                {/* PASSWORD */}
-                <div className="flex gap-2 items-center">
-                  <label
-                    htmlFor="password"
-                    className={
-                      !errorPassword
-                        ? errors.password
-                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                          : "w-1/4 text-right"
-                        : "w-1/4 text-right text-red-500 dark:text-red-400"
-                    }
-                  >
-                    Senha:{" "}
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    disabled={isSubmitting}
-                    placeholder={
-                      !errorPassword
-                        ? errors.password
-                          ? "É necessário inserir a Senha"
-                          : "Senha"
-                        : "É necessário inserir a Senha"
-                    }
-                    className={
-                      !errorPassword
-                        ? errors.password
-                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    }
-                    onChange={(e) => {
-                      setUserEditData({
-                        ...userEditData,
-                        password: e.target.value,
-                      });
-                    }}
-                  />
-                </div>
-
-                {/* CONFIRM PASSWORD */}
-                <div className="flex gap-2 items-center">
-                  <label
-                    htmlFor="confirmPassword"
-                    className={
-                      !errorPassword
-                        ? errors.confirmPassword
-                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                          : "w-1/4 text-right"
-                        : "w-1/4 text-right text-red-500 dark:text-red-400"
-                    }
-                  >
-                    Confirme a Senha:{" "}
-                  </label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    disabled={isSubmitting}
-                    placeholder={
-                      !errorPassword
-                        ? errors.confirmPassword
-                          ? "É necessário confirmar a Senha"
-                          : "Confirme a Senha"
-                        : "É necessário confirmar a Senha"
-                    }
-                    className={
-                      !errorPassword
-                        ? errors.confirmPassword
-                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    }
-                    onChange={(e) => {
-                      setUserEditData({
-                        ...userEditData,
-                        confirmPassword: e.target.value,
-                      });
-                    }}
-                  />
-                </div>
-              </>
-            ) : null}
+            )}
 
             {/* PHONE */}
             <div className="flex gap-2 items-center">
@@ -538,6 +486,119 @@ export function EditMyUser() {
                 <div className="w-2/12"></div>
               </div>
             </div>
+
+            {/** CHECKBOX CONFIRM CHANGE PASSWORD */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="changePassword"
+                className={
+                  errors.password
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Alterar Senha ?{" "}
+              </label>
+              <div className="w-3/4 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="changePassword"
+                  className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                  checked={userEditData.changePassword}
+                  onChange={() => {
+                    setUserEditData({
+                      ...userEditData,
+                      changePassword: !userEditData.changePassword,
+                    });
+                  }}
+                />
+              </div>
+            </div>
+            {userEditData.changePassword && (
+              <>
+                {/* PASSWORD */}
+                <div className="flex gap-2 items-center">
+                  <label
+                    htmlFor="password"
+                    className={
+                      !errorPassword
+                        ? errors.password
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                        : "w-1/4 text-right text-red-500 dark:text-red-400"
+                    }
+                  >
+                    Senha:{" "}
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    disabled={isSubmitting}
+                    placeholder={
+                      !errorPassword
+                        ? errors.password
+                          ? "É necessário inserir a Senha"
+                          : "Senha"
+                        : "É necessário inserir a Senha"
+                    }
+                    className={
+                      !errorPassword
+                        ? errors.password
+                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    }
+                    onChange={(e) => {
+                      setUserEditData({
+                        ...userEditData,
+                        password: e.target.value,
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* CONFIRM PASSWORD */}
+                <div className="flex gap-2 items-center">
+                  <label
+                    htmlFor="confirmPassword"
+                    className={
+                      !errorPassword
+                        ? errors.confirmPassword
+                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                          : "w-1/4 text-right"
+                        : "w-1/4 text-right text-red-500 dark:text-red-400"
+                    }
+                  >
+                    Confirme a Senha:{" "}
+                  </label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    disabled={isSubmitting}
+                    placeholder={
+                      !errorPassword
+                        ? errors.confirmPassword
+                          ? "É necessário confirmar a Senha"
+                          : "Confirme a Senha"
+                        : "É necessário confirmar a Senha"
+                    }
+                    className={
+                      !errorPassword
+                        ? errors.confirmPassword
+                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    }
+                    onChange={(e) => {
+                      setUserEditData({
+                        ...userEditData,
+                        confirmPassword: e.target.value,
+                      });
+                    }}
+                  />
+                </div>
+              </>
+            )}
 
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">

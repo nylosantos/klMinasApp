@@ -72,6 +72,7 @@ interface EditStudentFormProps {
   setIsSubmitting: (isSubmitting: boolean) => void;
   setStudentData?: (studentData: StudentDataProps) => void;
   onClose?: () => void;
+  onlyView?: boolean;
 }
 
 // INITIALIZING FIRESTORE DB
@@ -83,6 +84,7 @@ export function EditStudentForm({
   setIsSubmitting,
   setStudentData,
   onClose,
+  onlyView = false,
 }: EditStudentFormProps) {
   // GET GLOBAL DATA
   const {
@@ -3578,7 +3580,7 @@ export function EditStudentForm({
           <input
             type="text"
             name="name"
-            disabled={isSubmitting}
+            disabled={onlyView ?? isSubmitting}
             placeholder={
               errors.name
                 ? "É necessário inserir o nome do Aluno"
@@ -3615,6 +3617,7 @@ export function EditStudentForm({
             <DatePicker
               months={months}
               weekDays={weekDays}
+              disabled={onlyView}
               placeholder={
                 errors.birthDate
                   ? "É necessário selecionar uma Data"
@@ -3669,6 +3672,7 @@ export function EditStudentForm({
           <input
             type="text"
             name="parentOneName"
+            disabled={onlyView}
             placeholder={
               errors.parentOne?.name
                 ? "É necessário inserir o Nome completo do Responsável"
@@ -3707,7 +3711,7 @@ export function EditStudentForm({
           <input
             type="text"
             name="parentOneEmail"
-            disabled={isSubmitting}
+            disabled={onlyView ?? isSubmitting}
             placeholder={
               errors.parentOne?.email
                 ? "É necessário inserir o e-mail"
@@ -3747,6 +3751,7 @@ export function EditStudentForm({
             <div className="flex w-10/12 items-center gap-1">
               <select
                 id="parentOnePhoneDDD"
+                disabled={onlyView}
                 value={studentEditData.parentOne?.phone.prefix}
                 className={
                   errors.parentOne?.phone?.ddd
@@ -3774,6 +3779,7 @@ export function EditStudentForm({
                 name="parentOnePhoneInitial"
                 pattern="^[+ 0-9]{5}$"
                 maxLength={5}
+                disabled={onlyView}
                 value={studentEditData.parentOne?.phone.prefix}
                 placeholder={
                   errors.parentOne?.phone?.prefix ? "É necessário um" : "99999"
@@ -3804,6 +3810,7 @@ export function EditStudentForm({
                 name="parentOnePhoneFinal"
                 pattern="^[+ 0-9]{4}$"
                 maxLength={4}
+                disabled={onlyView}
                 value={studentEditData.parentOne?.phone.suffix}
                 placeholder={
                   errors.parentOne?.phone?.suffix ? "telefone válido" : "9990"
@@ -3853,7 +3860,7 @@ export function EditStudentForm({
           <input
             type="text"
             name="parentTwoName"
-            disabled={isSubmitting}
+            disabled={onlyView ?? isSubmitting}
             placeholder={
               errors.parentTwo?.name
                 ? "É necessário inserir o nome completo do aluno"
@@ -3892,7 +3899,7 @@ export function EditStudentForm({
           <input
             type="text"
             name="parentTwoEmail"
-            disabled={isSubmitting}
+            disabled={onlyView ?? isSubmitting}
             placeholder={
               errors.parentTwo?.email
                 ? "É necessário inserir o e-mail"
@@ -3932,6 +3939,7 @@ export function EditStudentForm({
             <div className="flex w-10/12 items-center gap-1">
               <select
                 id="parentTwoPhoneDDD"
+                disabled={onlyView}
                 value={studentEditData.parentTwo?.phone.prefix}
                 className={
                   errors.parentTwo?.phone?.ddd
@@ -3958,6 +3966,7 @@ export function EditStudentForm({
                 type="text"
                 name="parentTwoPhoneInitial"
                 pattern="^[+ 0-9]{5}$"
+                disabled={onlyView}
                 maxLength={5}
                 value={studentEditData.parentTwo?.phone.prefix}
                 placeholder={
@@ -3988,6 +3997,7 @@ export function EditStudentForm({
                 type="text"
                 name="parentTwoPhoneFinal"
                 pattern="^[+ 0-9]{4}$"
+                disabled={onlyView}
                 maxLength={4}
                 value={studentEditData.parentTwo?.phone.suffix}
                 placeholder={
@@ -4026,23 +4036,25 @@ export function EditStudentForm({
         </h1>
 
         {/** STUDENT FINANCIAL RESPONSIBLE SECTION SUBTITLE */}
-        <div className="flex gap-2 items-center py-2">
-          <div className="w-1/4" />
-          <div className="flex flex-col gap-2 w-3/4 items-start text-left pb-2">
-            {studentEditData.addExperimentalCurriculum && (
-              <p className="text-sm text-red-600 dark:text-yellow-500">
-                Após 5 dias da data escolhida para a aula experimental, os dados
-                abaixo serão utilizados para efetuar a matrícula do aluno.{" "}
-                <br /> Em caso de cancelamento dentro do prazo de 5 dias, os
-                dados serão descartados.
+        {!onlyView && (
+          <div className="flex gap-2 items-center py-2">
+            <div className="w-1/4" />
+            <div className="flex flex-col gap-2 w-3/4 items-start text-left pb-2">
+              {studentEditData.addExperimentalCurriculum && (
+                <p className="text-sm text-red-600 dark:text-yellow-500">
+                  Após 5 dias da data escolhida para a aula experimental, os
+                  dados abaixo serão utilizados para efetuar a matrícula do
+                  aluno. <br /> Em caso de cancelamento dentro do prazo de 5
+                  dias, os dados serão descartados.
+                </p>
+              )}
+              <p className="text-sm font-bold text-red-600 dark:text-yellow-500">
+                ATENÇÃO: A VERACIDADE DOS DADOS É DE SUA RESPONSABILIDADE AO
+                PREENCHER O CADASTRO
               </p>
-            )}
-            <p className="text-sm font-bold text-red-600 dark:text-yellow-500">
-              ATENÇÃO: A VERACIDADE DOS DADOS É DE SUA RESPONSABILIDADE AO
-              PREENCHER O CADASTRO
-            </p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* FINANCIAL RESPONSIBLE NAME */}
         <div className="flex gap-2 items-center">
@@ -4058,6 +4070,7 @@ export function EditStudentForm({
           </label>
           <input
             type="text"
+            disabled={onlyView}
             name="financialResponsible"
             placeholder={
               errors.financialResponsible
@@ -4097,7 +4110,7 @@ export function EditStudentForm({
           <input
             type="text"
             name="financialResponsibleEmail"
-            disabled={isSubmitting}
+            disabled={onlyView ?? isSubmitting}
             placeholder={
               errors.financialResponsible?.email
                 ? "É necessário inserir o e-mail"
@@ -4126,16 +4139,27 @@ export function EditStudentForm({
           <label
             htmlFor="financialResponsibleDocument"
             className={
-              errors.financialResponsible?.document
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
+              testFinancialCPF
+                ? errors.financialResponsible?.document
+                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                  : "w-1/4 text-right"
+                : "w-1/4 text-right text-red-500 dark:text-red-400"
             }
           >
-            CPF:{" "}
+            CPF
+            {testFinancialCPF ? (
+              ": "
+            ) : (
+              <span className="text-red-500 dark:text-red-400">
+                {" "}
+                Inválido, verifique:
+              </span>
+            )}
           </label>
           <input
             type="text"
             name="financialResponsibleDocument"
+            disabled={onlyView}
             pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
             placeholder={
               errors.financialResponsible?.document
@@ -4143,9 +4167,11 @@ export function EditStudentForm({
                 : "Insira o CPF do Responsável Financeiro"
             }
             className={
-              errors.financialResponsible?.document
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              testFinancialCPF
+                ? errors.financialResponsible?.document
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
             }
             value={studentEditData.financialResponsible?.document}
             onChange={(e) => {
@@ -4180,6 +4206,7 @@ export function EditStudentForm({
               <select
                 id="phoneDDD"
                 defaultValue={"DDD"}
+                disabled={onlyView}
                 className={
                   errors.financialResponsible?.phone?.ddd
                     ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -4206,6 +4233,7 @@ export function EditStudentForm({
                 type="text"
                 name="phoneInitial"
                 pattern="^[+ 0-9]{5}$"
+                disabled={onlyView}
                 maxLength={5}
                 value={studentEditData.financialResponsible?.phone.prefix}
                 placeholder={
@@ -4238,6 +4266,7 @@ export function EditStudentForm({
                 type="text"
                 name="phoneFinal"
                 pattern="^[+ 0-9]{4}$"
+                disabled={onlyView}
                 maxLength={4}
                 value={studentEditData.financialResponsible?.phone.suffix}
                 placeholder={
@@ -4271,308 +4300,333 @@ export function EditStudentForm({
         </div>
 
         {/* FINANCIAL RESPONSIBLE PHONE SECONDARY */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="phoneSecondary"
-            className={
-              errors.financialResponsible?.phoneSecondary
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            Telefone 2:{" "}
-          </label>
-          <div className="flex w-2/4 gap-2">
-            <div className="flex w-10/12 items-center gap-1">
-              {/** NUMBER SECONDARY DDD */}
-              <select
-                id="phoneSecondaryDDD"
-                disabled={
-                  !studentEditData.financialResponsible?.activePhoneSecondary
-                }
-                defaultValue={"DDD"}
-                value={studentEditData.financialResponsible?.phoneSecondary.ddd}
-                className={
-                  studentEditData.financialResponsible.activePhoneSecondary
-                    ? errors.financialResponsible?.phoneSecondary?.ddd
-                      ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+        {!(
+          onlyView && !studentEditData.financialResponsible.activePhoneSecondary
+        ) && (
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="phoneSecondary"
+              className={
+                errors.financialResponsible?.phoneSecondary
+                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                  : "w-1/4 text-right"
+              }
+            >
+              Telefone 2:{" "}
+            </label>
+            <div className="flex w-2/4 gap-2">
+              <div className="flex w-10/12 items-center gap-1">
+                {/** NUMBER SECONDARY DDD */}
+                <select
+                  id="phoneSecondaryDDD"
+                  disabled={
+                    onlyView ??
+                    !studentEditData.financialResponsible?.activePhoneSecondary
+                  }
+                  defaultValue={"DDD"}
+                  value={
+                    studentEditData.financialResponsible?.phoneSecondary.ddd
+                  }
+                  className={
+                    studentEditData.financialResponsible.activePhoneSecondary
+                      ? errors.financialResponsible?.phoneSecondary?.ddd
+                        ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                       : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                name="DDD"
-                onChange={(e) => {
-                  setStudentEditData({
-                    ...studentEditData,
-                    financialResponsible: {
-                      ...studentEditData.financialResponsible,
-                      phoneSecondary: {
-                        ...studentEditData.financialResponsible.phoneSecondary,
-                        ddd: e.target.value,
+                  }
+                  name="DDD"
+                  onChange={(e) => {
+                    setStudentEditData({
+                      ...studentEditData,
+                      financialResponsible: {
+                        ...studentEditData.financialResponsible,
+                        phoneSecondary: {
+                          ...studentEditData.financialResponsible
+                            .phoneSecondary,
+                          ddd: e.target.value,
+                        },
                       },
-                    },
-                  });
-                }}
-              >
-                <BrazilianStateSelectOptions />
-              </select>
-              {/** NUMBER SECONDARY PREFIX */}
-              <input
-                type="text"
-                name="phoneSecondaryInitial"
-                disabled={
-                  !studentEditData.financialResponsible?.activePhoneSecondary
-                }
-                pattern="^[+ 0-9]{5}$"
-                maxLength={5}
-                value={
-                  studentEditData.financialResponsible?.phoneSecondary.prefix
-                }
-                placeholder={
-                  errors.financialResponsible?.phoneSecondary?.prefix
-                    ? "É necessário um"
-                    : "99999"
-                }
-                className={
-                  studentEditData.financialResponsible?.activePhoneSecondary
-                    ? errors.financialResponsible?.phoneSecondary?.prefix
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                }
-                onChange={(e) => {
-                  setStudentEditData({
-                    ...studentEditData,
-                    financialResponsible: {
-                      ...studentEditData.financialResponsible,
-                      phoneSecondary: {
-                        ...studentEditData.financialResponsible.phoneSecondary,
-                        prefix: e.target.value
-                          .replace(/[^0-9.]/g, "")
-                          .replace(/(\..*?)\..*/g, "$1"),
+                    });
+                  }}
+                >
+                  <BrazilianStateSelectOptions />
+                </select>
+                {/** NUMBER SECONDARY PREFIX */}
+                <input
+                  type="text"
+                  name="phoneSecondaryInitial"
+                  disabled={
+                    onlyView ??
+                    !studentEditData.financialResponsible?.activePhoneSecondary
+                  }
+                  pattern="^[+ 0-9]{5}$"
+                  maxLength={5}
+                  value={
+                    studentEditData.financialResponsible?.phoneSecondary.prefix
+                  }
+                  placeholder={
+                    errors.financialResponsible?.phoneSecondary?.prefix
+                      ? "É necessário um"
+                      : "99999"
+                  }
+                  className={
+                    studentEditData.financialResponsible?.activePhoneSecondary
+                      ? errors.financialResponsible?.phoneSecondary?.prefix
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  }
+                  onChange={(e) => {
+                    setStudentEditData({
+                      ...studentEditData,
+                      financialResponsible: {
+                        ...studentEditData.financialResponsible,
+                        phoneSecondary: {
+                          ...studentEditData.financialResponsible
+                            .phoneSecondary,
+                          prefix: e.target.value
+                            .replace(/[^0-9.]/g, "")
+                            .replace(/(\..*?)\..*/g, "$1"),
+                        },
                       },
-                    },
-                  });
-                }}
-              />
-              -{/** NUMBER SECONDARY SUFFIX */}
-              <input
-                type="text"
-                name="phoneSecondaryFinal"
-                disabled={
-                  !studentEditData.financialResponsible?.activePhoneSecondary
-                }
-                pattern="^[+ 0-9]{4}$"
-                maxLength={4}
-                value={
-                  studentEditData.financialResponsible?.phoneSecondary.suffix
-                }
-                placeholder={
-                  errors.financialResponsible?.phoneSecondary?.prefix
-                    ? "telefone válido"
-                    : "9999"
-                }
-                className={
-                  studentEditData.financialResponsible?.activePhoneSecondary
-                    ? errors.financialResponsible?.phoneSecondary?.suffix
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                }
-                onChange={(e) => {
-                  setStudentEditData({
-                    ...studentEditData,
-                    financialResponsible: {
-                      ...studentEditData.financialResponsible,
-                      phoneSecondary: {
-                        ...studentEditData.financialResponsible.phoneSecondary,
-                        suffix: e.target.value
-                          .replace(/[^0-9.]/g, "")
-                          .replace(/(\..*?)\..*/g, "$1"),
+                    });
+                  }}
+                />
+                -{/** NUMBER SECONDARY SUFFIX */}
+                <input
+                  type="text"
+                  name="phoneSecondaryFinal"
+                  disabled={
+                    onlyView ??
+                    !studentEditData.financialResponsible?.activePhoneSecondary
+                  }
+                  pattern="^[+ 0-9]{4}$"
+                  maxLength={4}
+                  value={
+                    studentEditData.financialResponsible?.phoneSecondary.suffix
+                  }
+                  placeholder={
+                    errors.financialResponsible?.phoneSecondary?.prefix
+                      ? "telefone válido"
+                      : "9999"
+                  }
+                  className={
+                    studentEditData.financialResponsible?.activePhoneSecondary
+                      ? errors.financialResponsible?.phoneSecondary?.suffix
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  }
+                  onChange={(e) => {
+                    setStudentEditData({
+                      ...studentEditData,
+                      financialResponsible: {
+                        ...studentEditData.financialResponsible,
+                        phoneSecondary: {
+                          ...studentEditData.financialResponsible
+                            .phoneSecondary,
+                          suffix: e.target.value
+                            .replace(/[^0-9.]/g, "")
+                            .replace(/(\..*?)\..*/g, "$1"),
+                        },
                       },
-                    },
-                  });
-                }}
-              />
-            </div>
-            {/** CHECKBOX INCLUDE NUMBER SECONDARY */}
-            <div className="flex w-2/12 items-center gap-2">
-              <input
-                type="checkbox"
-                name="activePhoneSecondary"
-                className="ml-1"
-                checked={
-                  studentEditData.financialResponsible?.activePhoneSecondary
-                }
-                onChange={() => {
-                  setStudentEditData({
-                    ...studentEditData,
-                    financialResponsible: {
-                      ...studentEditData.financialResponsible,
-                      activePhoneSecondary:
-                        !studentEditData.financialResponsible
-                          .activePhoneSecondary,
-                    },
-                  });
-                }}
-              />
-              <label htmlFor="activePhoneSecondary" className="text-sm">
-                Incluir
-              </label>
+                    });
+                  }}
+                />
+              </div>
+              {/** CHECKBOX INCLUDE NUMBER SECONDARY */}
+              {!onlyView && (
+                <div className="flex w-2/12 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="activePhoneSecondary"
+                    className="ml-1"
+                    checked={
+                      studentEditData.financialResponsible?.activePhoneSecondary
+                    }
+                    onChange={() => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          activePhoneSecondary:
+                            !studentEditData.financialResponsible
+                              .activePhoneSecondary,
+                        },
+                      });
+                    }}
+                  />
+                  <label htmlFor="activePhoneSecondary" className="text-sm">
+                    Incluir
+                  </label>
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        )}
 
         {/* FINANCIAL RESPONSIBLE PHONE TERTIARY */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="phoneTertiary"
-            className={
-              errors.financialResponsible?.phoneTertiary
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            Telefone 3:{" "}
-          </label>
-          <div className="flex w-2/4 gap-2">
-            <div className="flex w-10/12 items-center gap-1">
-              {/** NUMBER TERTIARY DDD */}
-              <select
-                id="phoneTertiaryDDD"
-                disabled={
-                  !studentEditData.financialResponsible?.activePhoneTertiary
-                }
-                defaultValue={"DDD"}
-                value={studentEditData.financialResponsible?.phoneTertiary.ddd}
-                className={
-                  studentEditData.financialResponsible?.activePhoneTertiary
-                    ? errors.financialResponsible?.phoneTertiary?.ddd
-                      ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+        {!(
+          onlyView && !studentEditData.financialResponsible.activePhoneTertiary
+        ) && (
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="phoneTertiary"
+              className={
+                errors.financialResponsible?.phoneTertiary
+                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                  : "w-1/4 text-right"
+              }
+            >
+              Telefone 3:{" "}
+            </label>
+            <div className="flex w-2/4 gap-2">
+              <div className="flex w-10/12 items-center gap-1">
+                {/** NUMBER TERTIARY DDD */}
+                <select
+                  id="phoneTertiaryDDD"
+                  disabled={
+                    onlyView ??
+                    !studentEditData.financialResponsible?.activePhoneTertiary
+                  }
+                  defaultValue={"DDD"}
+                  value={
+                    studentEditData.financialResponsible?.phoneTertiary.ddd
+                  }
+                  className={
+                    studentEditData.financialResponsible?.activePhoneTertiary
+                      ? errors.financialResponsible?.phoneTertiary?.ddd
+                        ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                       : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "pr-8 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                name="DDD"
-                onChange={(e) => {
-                  setStudentEditData({
-                    ...studentEditData,
-                    financialResponsible: {
-                      ...studentEditData.financialResponsible,
-                      phoneTertiary: {
-                        ...studentEditData.financialResponsible.phoneTertiary,
-                        ddd: e.target.value,
+                  }
+                  name="DDD"
+                  onChange={(e) => {
+                    setStudentEditData({
+                      ...studentEditData,
+                      financialResponsible: {
+                        ...studentEditData.financialResponsible,
+                        phoneTertiary: {
+                          ...studentEditData.financialResponsible.phoneTertiary,
+                          ddd: e.target.value,
+                        },
                       },
-                    },
-                  });
-                }}
-              >
-                <BrazilianStateSelectOptions />
-              </select>
-              {/** NUMBER TERTIARY PREFIX */}
-              <input
-                type="text"
-                name="phoneTertiaryInitial"
-                disabled={
-                  !studentEditData.financialResponsible?.activePhoneTertiary
-                }
-                pattern="^[+ 0-9]{5}$"
-                maxLength={5}
-                value={
-                  studentEditData.financialResponsible?.phoneTertiary.prefix
-                }
-                placeholder={
-                  errors.financialResponsible?.phoneTertiary?.prefix
-                    ? "É necessário um"
-                    : "99999"
-                }
-                className={
-                  studentEditData.financialResponsible?.activePhoneTertiary
-                    ? errors.financialResponsible?.phoneTertiary?.prefix
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                }
-                onChange={(e) => {
-                  setStudentEditData({
-                    ...studentEditData,
-                    financialResponsible: {
-                      ...studentEditData.financialResponsible,
-                      phoneTertiary: {
-                        ...studentEditData.financialResponsible.phoneTertiary,
-                        prefix: e.target.value
-                          .replace(/[^0-9.]/g, "")
-                          .replace(/(\..*?)\..*/g, "$1"),
+                    });
+                  }}
+                >
+                  <BrazilianStateSelectOptions />
+                </select>
+                {/** NUMBER TERTIARY PREFIX */}
+                <input
+                  type="text"
+                  name="phoneTertiaryInitial"
+                  disabled={
+                    onlyView ??
+                    !studentEditData.financialResponsible?.activePhoneTertiary
+                  }
+                  pattern="^[+ 0-9]{5}$"
+                  maxLength={5}
+                  value={
+                    studentEditData.financialResponsible?.phoneTertiary.prefix
+                  }
+                  placeholder={
+                    errors.financialResponsible?.phoneTertiary?.prefix
+                      ? "É necessário um"
+                      : "99999"
+                  }
+                  className={
+                    studentEditData.financialResponsible?.activePhoneTertiary
+                      ? errors.financialResponsible?.phoneTertiary?.prefix
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  }
+                  onChange={(e) => {
+                    setStudentEditData({
+                      ...studentEditData,
+                      financialResponsible: {
+                        ...studentEditData.financialResponsible,
+                        phoneTertiary: {
+                          ...studentEditData.financialResponsible.phoneTertiary,
+                          prefix: e.target.value
+                            .replace(/[^0-9.]/g, "")
+                            .replace(/(\..*?)\..*/g, "$1"),
+                        },
                       },
-                    },
-                  });
-                }}
-              />
-              -{/** NUMBER TERTIARY SUFFIX */}
-              <input
-                type="text"
-                name="phoneTertiaryFinal"
-                disabled={
-                  !studentEditData.financialResponsible?.activePhoneTertiary
-                }
-                pattern="^[+ 0-9]{4}$"
-                maxLength={4}
-                value={
-                  studentEditData.financialResponsible?.phoneTertiary.suffix
-                }
-                placeholder={
-                  errors.financialResponsible?.phoneTertiary?.prefix
-                    ? "telefone válido"
-                    : "9999"
-                }
-                className={
-                  studentEditData.financialResponsible?.activePhoneTertiary
-                    ? errors.financialResponsible?.phoneTertiary?.suffix
-                      ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                }
-                onChange={(e) => {
-                  setStudentEditData({
-                    ...studentEditData,
-                    financialResponsible: {
-                      ...studentEditData.financialResponsible,
-                      phoneTertiary: {
-                        ...studentEditData.financialResponsible.phoneTertiary,
-                        suffix: e.target.value
-                          .replace(/[^0-9.]/g, "")
-                          .replace(/(\..*?)\..*/g, "$1"),
+                    });
+                  }}
+                />
+                -{/** NUMBER TERTIARY SUFFIX */}
+                <input
+                  type="text"
+                  name="phoneTertiaryFinal"
+                  disabled={
+                    onlyView ??
+                    !studentEditData.financialResponsible?.activePhoneTertiary
+                  }
+                  pattern="^[+ 0-9]{4}$"
+                  maxLength={4}
+                  value={
+                    studentEditData.financialResponsible?.phoneTertiary.suffix
+                  }
+                  placeholder={
+                    errors.financialResponsible?.phoneTertiary?.prefix
+                      ? "telefone válido"
+                      : "9999"
+                  }
+                  className={
+                    studentEditData.financialResponsible?.activePhoneTertiary
+                      ? errors.financialResponsible?.phoneTertiary?.suffix
+                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  }
+                  onChange={(e) => {
+                    setStudentEditData({
+                      ...studentEditData,
+                      financialResponsible: {
+                        ...studentEditData.financialResponsible,
+                        phoneTertiary: {
+                          ...studentEditData.financialResponsible.phoneTertiary,
+                          suffix: e.target.value
+                            .replace(/[^0-9.]/g, "")
+                            .replace(/(\..*?)\..*/g, "$1"),
+                        },
                       },
-                    },
-                  });
-                }}
-              />
-            </div>
-            {/** CHECKBOX INCLUDE NUMBER TERTIARY */}
-            <div className="flex w-2/12 items-center gap-2">
-              <input
-                type="checkbox"
-                name="activePhoneTertiary"
-                className="ml-1"
-                checked={
-                  studentEditData.financialResponsible?.activePhoneTertiary
-                }
-                onChange={() => {
-                  setStudentEditData({
-                    ...studentEditData,
-                    financialResponsible: {
-                      ...studentEditData.financialResponsible,
-                      activePhoneTertiary:
-                        !studentEditData.financialResponsible
-                          .activePhoneTertiary,
-                    },
-                  });
-                }}
-              />
-              <label htmlFor="activePhoneTertiary" className="text-sm">
-                Incluir
-              </label>
+                    });
+                  }}
+                />
+              </div>
+              {/** CHECKBOX INCLUDE NUMBER TERTIARY */}
+              {!onlyView && (
+                <div className="flex w-2/12 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="activePhoneTertiary"
+                    className="ml-1"
+                    checked={
+                      studentEditData.financialResponsible?.activePhoneTertiary
+                    }
+                    onChange={() => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        financialResponsible: {
+                          ...studentEditData.financialResponsible,
+                          activePhoneTertiary:
+                            !studentEditData.financialResponsible
+                              .activePhoneTertiary,
+                        },
+                      });
+                    }}
+                  />
+                  <label htmlFor="activePhoneTertiary" className="text-sm">
+                    Incluir
+                  </label>
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        )}
 
         {/* FINANCIAL RESPONSIBLE ADDRESS */}
         {/* CEP */}
@@ -4592,6 +4646,7 @@ export function EditStudentForm({
               <input
                 type="text"
                 name="addressCep"
+                disabled={onlyView}
                 maxLength={8}
                 placeholder={
                   errors.financialResponsible?.address?.cep || cepError
@@ -4619,16 +4674,18 @@ export function EditStudentForm({
                 }}
               />
             </div>
-            <button
-              type="button"
-              disabled={cepSubmitting}
-              className="border rounded-2xl border-blue-900 bg-blue-500 disabled:bg-blue-400 text-white w-2/12"
-              onClick={() => {
-                getCep(studentEditData.financialResponsible.address.cep);
-              }}
-            >
-              {cepSubmitting ? "Buscando..." : "Buscar"}
-            </button>
+            {!onlyView && (
+              <button
+                type="button"
+                disabled={cepSubmitting}
+                className="border rounded-2xl border-blue-900 bg-blue-500 disabled:bg-blue-400 text-white w-2/12"
+                onClick={() => {
+                  getCep(studentEditData.financialResponsible.address.cep);
+                }}
+              >
+                {cepSubmitting ? "Buscando..." : "Buscar"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -4656,7 +4713,7 @@ export function EditStudentForm({
                     : "Rua / Av. / Pça"
                 }
                 className={
-                  editAddress
+                  onlyView ?? editAddress
                     ? errors.financialResponsible?.address?.street
                       ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                       : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
@@ -4684,6 +4741,7 @@ export function EditStudentForm({
               <input
                 type="text"
                 name="addressNumber"
+                disabled={onlyView}
                 placeholder={
                   errors.financialResponsible?.address?.number
                     ? "Número"
@@ -4736,7 +4794,7 @@ export function EditStudentForm({
                     : "Bairro"
                 }
                 className={
-                  editAddress
+                  onlyView ?? editAddress
                     ? errors.financialResponsible?.address?.neighborhood
                       ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                       : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
@@ -4766,6 +4824,7 @@ export function EditStudentForm({
               <input
                 type="text"
                 name="addressComplement"
+                disabled={onlyView}
                 placeholder={"Apto | Bloco"}
                 className={
                   errors.financialResponsible?.address
@@ -4814,7 +4873,7 @@ export function EditStudentForm({
                     : "Cidade"
                 }
                 className={
-                  editAddress
+                  onlyView ?? editAddress
                     ? errors.financialResponsible?.address?.city
                       ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                       : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
@@ -4849,7 +4908,7 @@ export function EditStudentForm({
                     : "UF"
                 }
                 className={
-                  editAddress
+                  onlyView ?? editAddress
                     ? errors.financialResponsible?.address?.state
                       ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                       : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
@@ -4874,30 +4933,35 @@ export function EditStudentForm({
         </div>
 
         {/* EDIT ADDRESS BUTTON */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="editAddressButton"
-            className="w-1/4 text-right"
-          ></label>
-          <button
-            type="button"
-            disabled={editAddress}
-            className="border rounded-2xl mt-2 mb-4 border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-3/4"
-            onClick={() => setEditAddress(true)}
-          >
-            {editAddress
-              ? "Insira o Endereço manualmente, ou busque o CEP novamente"
-              : "Editar Endereço"}
-          </button>
-        </div>
+        {!onlyView && (
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="editAddressButton"
+              className="w-1/4 text-right"
+            ></label>
+            <button
+              type="button"
+              disabled={editAddress}
+              className="border rounded-2xl mt-2 mb-4 border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-3/4"
+              onClick={() => setEditAddress(true)}
+            >
+              {editAddress
+                ? "Insira o Endereço manualmente, ou busque o CEP novamente"
+                : "Editar Endereço"}
+            </button>
+          </div>
+        )}
 
         {/** EXPERIMENTAL CURRICULUM SECTION TITLE */}
-        <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
-          Aulas Experimentais:
-        </h1>
+        {!(onlyView && excludeExperimentalCurriculum.length < 1) && (
+          <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+            Aulas Experimentais:
+          </h1>
+        )}
 
         {/* EXISTENT EXPERIMENTAL CURRICULUM */}
-        {haveCurriculum &&
+        {!(onlyView && excludeExperimentalCurriculum.length < 1) &&
+          haveCurriculum &&
           excludeExperimentalCurriculum.map((curriculum, index) => (
             <div className="flex gap-2 items-center" key={curriculum.id}>
               <label
@@ -4911,7 +4975,9 @@ export function EditStudentForm({
                   <input
                     type="text"
                     name="existentExperimentalCurriculumName"
-                    disabled={isSubmitting ? true : curriculum.exclude}
+                    disabled={
+                      isSubmitting ? true : onlyView ? true : curriculum.exclude
+                    }
                     className={
                       curriculum.exclude
                         ? "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
@@ -4921,73 +4987,77 @@ export function EditStudentForm({
                     readOnly
                   />
                 </div>
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  className={
-                    curriculum.exclude
-                      ? "border rounded-2xl border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-2/12"
-                      : "border rounded-2xl border-red-900 bg-red-600 disabled:bg-red-400 text-white w-2/12"
-                  }
-                  onClick={() => {
-                    const data: ExcludeCurriculumProps = {
-                      exclude: !curriculum.exclude,
-                      id: curriculum.id,
-                      date: curriculum.date,
-                      isExperimental: curriculum.isExperimental,
-                      name: curriculum.name,
-                      indexDays: curriculum.indexDays,
-                      price: curriculum.price,
-                    };
-                    handleIncludeExcludeExperimentalCurriculum(index, data);
-                  }}
-                >
-                  {isSubmitting
-                    ? "Salvando..."
-                    : curriculum.exclude
-                    ? "Cancelar Exclusão"
-                    : "Excluir"}
-                </button>
+                {!onlyView && (
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    className={
+                      curriculum.exclude
+                        ? "border rounded-2xl border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-2/12"
+                        : "border rounded-2xl border-red-900 bg-red-600 disabled:bg-red-400 text-white w-2/12"
+                    }
+                    onClick={() => {
+                      const data: ExcludeCurriculumProps = {
+                        exclude: !curriculum.exclude,
+                        id: curriculum.id,
+                        date: curriculum.date,
+                        isExperimental: curriculum.isExperimental,
+                        name: curriculum.name,
+                        indexDays: curriculum.indexDays,
+                        price: curriculum.price,
+                      };
+                      handleIncludeExcludeExperimentalCurriculum(index, data);
+                    }}
+                  >
+                    {isSubmitting
+                      ? "Salvando..."
+                      : curriculum.exclude
+                      ? "Cancelar Exclusão"
+                      : "Excluir"}
+                  </button>
+                )}
               </div>
             </div>
           ))}
 
         {/** CHECKBOX ADD EXPERIMENTAL CURRICULUM */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="addExperimentalCurriculum"
-            className={
-              errors.addExperimentalCurriculum
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            Adicionar Aula Experimental ?{" "}
-          </label>
-          <div className="w-3/4 flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="addExperimentalCurriculum"
-              className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-              checked={studentEditData.addExperimentalCurriculum}
-              onChange={() => {
-                setStudentEditData({
-                  ...studentEditData,
-                  addExperimentalCurriculum:
-                    !studentEditData.addExperimentalCurriculum,
-                });
-                setExperimentalCurriculumData({
-                  schoolId: "",
-                  schoolName: "",
-                  schoolClassId: "",
-                  schoolClassName: "",
-                  schoolCourseId: "",
-                  schoolCourseName: "",
-                });
-              }}
-            />
+        {!onlyView && (
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="addExperimentalCurriculum"
+              className={
+                errors.addExperimentalCurriculum
+                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                  : "w-1/4 text-right"
+              }
+            >
+              Adicionar Aula Experimental ?{" "}
+            </label>
+            <div className="w-3/4 flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="addExperimentalCurriculum"
+                className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                checked={studentEditData.addExperimentalCurriculum}
+                onChange={() => {
+                  setStudentEditData({
+                    ...studentEditData,
+                    addExperimentalCurriculum:
+                      !studentEditData.addExperimentalCurriculum,
+                  });
+                  setExperimentalCurriculumData({
+                    schoolId: "",
+                    schoolName: "",
+                    schoolClassId: "",
+                    schoolClassName: "",
+                    schoolCourseId: "",
+                    schoolCourseName: "",
+                  });
+                }}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/** ADD EXPERIMENTAL CURRICULUM */}
         {studentEditData.addExperimentalCurriculum && (
@@ -5306,12 +5376,15 @@ export function EditStudentForm({
         )}
 
         {/** CURRICULUM SECTION TITLE */}
-        <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
-          Matriculado em:
-        </h1>
+        {!(onlyView && excludeCurriculum.length < 1) && (
+          <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+            Matriculado em:
+          </h1>
+        )}
 
         {/* EXISTENT CURRICULUM */}
-        {haveCurriculum &&
+        {!(onlyView && excludeCurriculum.length < 1) &&
+          haveCurriculum &&
           excludeCurriculum.map((curriculum, index) => (
             <div className="flex gap-2 items-center" key={curriculum.id}>
               <label
@@ -5325,7 +5398,9 @@ export function EditStudentForm({
                   <input
                     type="text"
                     name="existentCurriculumName"
-                    disabled={isSubmitting ? true : curriculum.exclude}
+                    disabled={
+                      isSubmitting ? true : onlyView ? true : curriculum.exclude
+                    }
                     className={
                       curriculum.exclude
                         ? "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
@@ -5335,76 +5410,80 @@ export function EditStudentForm({
                     readOnly
                   />
                 </div>
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  className={
-                    curriculum.exclude
-                      ? "border rounded-2xl border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-2/12"
-                      : "border rounded-2xl border-red-900 bg-red-600 disabled:bg-red-400 text-white w-2/12"
-                  }
-                  onClick={() => {
-                    const data: ExcludeCurriculumProps = {
-                      exclude: !curriculum.exclude,
-                      id: curriculum.id,
-                      date: curriculum.date,
-                      isExperimental: curriculum.isExperimental,
-                      name: curriculum.name,
-                      indexDays: curriculum.indexDays,
-                      price: curriculum.price,
-                    };
-                    handleIncludeExcludeCurriculum(index, data);
-                  }}
-                >
-                  {isSubmitting
-                    ? "Salvando..."
-                    : curriculum.exclude
-                    ? "Cancelar Exclusão"
-                    : "Excluir"}
-                </button>
+                {!onlyView && (
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    className={
+                      curriculum.exclude
+                        ? "border rounded-2xl border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-2/12"
+                        : "border rounded-2xl border-red-900 bg-red-600 disabled:bg-red-400 text-white w-2/12"
+                    }
+                    onClick={() => {
+                      const data: ExcludeCurriculumProps = {
+                        exclude: !curriculum.exclude,
+                        id: curriculum.id,
+                        date: curriculum.date,
+                        isExperimental: curriculum.isExperimental,
+                        name: curriculum.name,
+                        indexDays: curriculum.indexDays,
+                        price: curriculum.price,
+                      };
+                      handleIncludeExcludeCurriculum(index, data);
+                    }}
+                  >
+                    {isSubmitting
+                      ? "Salvando..."
+                      : curriculum.exclude
+                      ? "Cancelar Exclusão"
+                      : "Excluir"}
+                  </button>
+                )}
               </div>
             </div>
           ))}
 
         {/** CHECKBOX ADD CURRICULUM */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="addCurriculum"
-            className={
-              errors.addCurriculum
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            Adicionar Modalidade ?{" "}
-          </label>
-          <div className="w-3/4 flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="addCurriculum"
-              className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-              checked={studentEditData.addCurriculum}
-              onChange={() => {
-                setStudentEditData({
-                  ...studentEditData,
-                  addCurriculum: !studentEditData.addCurriculum,
-                });
-                setCurriculumData({
-                  schoolId: "",
-                  schoolName: "",
-                  schoolClassId: "",
-                  schoolClassName: "",
-                  schoolCourseId: "",
-                  schoolCourseName: "",
-                });
-                setNewClass({
-                  ...newClass,
-                  enrolledDays: [],
-                });
-              }}
-            />
+        {!onlyView && (
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="addCurriculum"
+              className={
+                errors.addCurriculum
+                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                  : "w-1/4 text-right"
+              }
+            >
+              Adicionar Modalidade ?{" "}
+            </label>
+            <div className="w-3/4 flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="addCurriculum"
+                className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                checked={studentEditData.addCurriculum}
+                onChange={() => {
+                  setStudentEditData({
+                    ...studentEditData,
+                    addCurriculum: !studentEditData.addCurriculum,
+                  });
+                  setCurriculumData({
+                    schoolId: "",
+                    schoolName: "",
+                    schoolClassId: "",
+                    schoolClassName: "",
+                    schoolCourseId: "",
+                    schoolCourseName: "",
+                  });
+                  setNewClass({
+                    ...newClass,
+                    enrolledDays: [],
+                  });
+                }}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/** ADD CURRICULUM */}
         {studentEditData.addCurriculum && (
@@ -5858,10 +5937,12 @@ export function EditStudentForm({
           </div>
         )}
 
-        {/** CURRICULUM SECTION TITLE */}
-        <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
-          Familiares:
-        </h1>
+        {/** FAMILY SECTION TITLE */}
+        {!(onlyView && !haveFamily) && (
+          <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+            Familiares:
+          </h1>
+        )}
 
         {/* EXISTENT FAMILY */}
         {haveFamily &&
@@ -5875,7 +5956,9 @@ export function EditStudentForm({
                   <input
                     type="text"
                     name="existentFamilyName"
-                    disabled={isSubmitting ? true : family.exclude}
+                    disabled={
+                      isSubmitting ? true : onlyView ? true : family.exclude
+                    }
                     className={
                       family.exclude
                         ? "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
@@ -5885,36 +5968,39 @@ export function EditStudentForm({
                     readOnly
                   />
                 </div>
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  className={
-                    family.exclude
-                      ? "border rounded-2xl border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-2/12"
-                      : "border rounded-2xl border-red-900 bg-red-600 disabled:bg-red-400 text-white w-2/12"
-                  }
-                  onClick={() => {
-                    const data: ExcludeFamilyProps = {
-                      exclude: !family.exclude,
-                      applyDiscount: family.applyDiscount,
-                      id: family.id,
-                      name: excludeFamily[index].name,
-                    };
-                    handleIncludeExcludeFamily(index, data);
-                  }}
-                >
-                  {isSubmitting
-                    ? "Salvando..."
-                    : family.exclude
-                    ? "Cancelar Exclusão"
-                    : "Excluir"}
-                </button>
+                {!onlyView && (
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    className={
+                      family.exclude
+                        ? "border rounded-2xl border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-2/12"
+                        : "border rounded-2xl border-red-900 bg-red-600 disabled:bg-red-400 text-white w-2/12"
+                    }
+                    onClick={() => {
+                      const data: ExcludeFamilyProps = {
+                        exclude: !family.exclude,
+                        applyDiscount: family.applyDiscount,
+                        id: family.id,
+                        name: excludeFamily[index].name,
+                      };
+                      handleIncludeExcludeFamily(index, data);
+                    }}
+                  >
+                    {isSubmitting
+                      ? "Salvando..."
+                      : family.exclude
+                      ? "Cancelar Exclusão"
+                      : "Excluir"}
+                  </button>
+                )}
               </div>
             </div>
           ))}
 
         {/** CHECKBOX ADD FAMILY */}
-        {studentSelectedData &&
+        {!onlyView &&
+          studentSelectedData &&
           studentSelectedData.studentFamilyAtSchool.length < 1 &&
           !willHaveFamily && (
             <div className="flex gap-2 items-center">
@@ -6157,7 +6243,7 @@ export function EditStudentForm({
           Financeiro:
         </h1>
 
-        {/** CHECKBOX ADD REGISTRATION EXEMPTION */}
+        {/** CHECKBOX ADD ENROLMENT EXEMPTION */}
         <div className="flex gap-2 items-center py-2">
           <label htmlFor="enrolmentExemption" className="w-1/4 text-right">
             Ativar Isenção de Matrícula ?{" "}
@@ -6168,6 +6254,7 @@ export function EditStudentForm({
               name="enrolmentExemption"
               className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
               checked={enrolmentExemption}
+              disabled={onlyView}
               onChange={() => {
                 setEnrolmentExemption(!enrolmentExemption);
               }}
@@ -6175,9 +6262,9 @@ export function EditStudentForm({
           </div>
         </div>
 
-        {/* STUDENT REGISTRATION PRICE */}
+        {/* STUDENT ENROLMENT PRICE */}
         <div className="flex gap-2 items-center">
-          <label htmlFor="experimentalClassPick" className="w-1/4 text-right">
+          <label htmlFor="enrolmentFee" className="w-1/4 text-right">
             Matrícula:
           </label>
           <input
@@ -6185,6 +6272,7 @@ export function EditStudentForm({
             name="enrolmentFee"
             className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             readOnly
+            disabled={onlyView}
             value={studentEditData.enrolmentFee.toLocaleString("pt-BR", {
               style: "currency",
               currency: "BRL",
@@ -6202,7 +6290,7 @@ export function EditStudentForm({
               type="checkbox"
               name="employeeDiscount"
               className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-              disabled={studentEditData.customDiscount}
+              disabled={onlyView ? true : studentEditData.customDiscount}
               checked={studentEditData.employeeDiscount}
               onChange={() => {
                 setStudentEditData({
@@ -6223,6 +6311,7 @@ export function EditStudentForm({
             <input
               type="checkbox"
               name="customDiscount"
+              disabled={onlyView}
               className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
               checked={studentEditData.customDiscount}
               onChange={() => {
@@ -6239,9 +6328,9 @@ export function EditStudentForm({
             <input
               type="text"
               name="customDiscountValue"
-              disabled={!studentEditData.customDiscount}
+              disabled={onlyView ? true : !studentEditData.customDiscount}
               className={
-                studentEditData.customDiscount
+                onlyView ?? studentEditData.customDiscount
                   ? errors.customDiscountValue
                     ? "w-1/12 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
@@ -6278,6 +6367,7 @@ export function EditStudentForm({
             type="text"
             name="monthlyPayment"
             className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            disabled={onlyView}
             readOnly
             value={newPrices.appliedPrice.toLocaleString("pt-BR", {
               style: "currency",
@@ -6287,15 +6377,17 @@ export function EditStudentForm({
         </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-4 justify-center">
           {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
-          >
-            {!isSubmitting ? "Salvar" : "Salvando"}
-          </button>
+          {!onlyView && (
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
+            >
+              {!isSubmitting ? "Salvar" : "Salvando"}
+            </button>
+          )}
 
           {/* RESET BUTTON */}
           <button
@@ -6306,7 +6398,7 @@ export function EditStudentForm({
               resetForm();
             }}
           >
-            {isSubmitting ? "Aguarde" : "Cancelar"}
+            {isSubmitting ? "Aguarde" : onlyView ? "Fechar" : "Cancelar"}
           </button>
         </div>
       </form>

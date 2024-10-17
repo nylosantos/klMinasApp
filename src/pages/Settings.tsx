@@ -22,8 +22,8 @@ export default function Settings() {
 
   return (
     <div className="w-screen h-full flex flex-col justify-start items-center overflow-scroll no-scrollbar">
-      <div className="w-10/12 px-2 py-8 sm:px-0">
-        <TabGroup>
+      <div className="h-full container mx-2 mb-1 sm:px-0 overflow-scroll no-scrollbar">
+        <TabGroup className="flex flex-col h-full overflow-scroll no-scrollbar">
           {(userFullData?.role === "root" ||
             userFullData?.role === "admin") && (
             <TabList className="flex space-x-1 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 p-1">
@@ -67,7 +67,7 @@ export default function Settings() {
               </>
             </TabList>
           )}
-          <TabPanels className="mt-2 flex justify-center">
+          <TabPanels className="flex flex-col h-full mt-2 items-center justify-center overflow-scroll no-scrollbar">
             <TabPanel as={Fragment}>
               <EditMyUser />
             </TabPanel>

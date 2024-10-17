@@ -2738,7 +2738,7 @@ export function InsertStudent() {
                     </select>
                   </div>
 
-                  {classDaySelectedData ? (
+                  {classDaySelectedData && (
                     newClass && classDaySelectedData?.indexDays.length > 0 ? (
                       <>
                         {/* EXPERIMENTAL/INITIAL DAY */}
@@ -2813,7 +2813,7 @@ export function InsertStudent() {
                         </div>
                       </>
                     ) : null
-                  ) : null}
+                  )}
 
                   {classDaySelectedData &&
                     !newClass.isExperimental &&

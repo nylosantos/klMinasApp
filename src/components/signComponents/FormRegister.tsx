@@ -27,7 +27,7 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import { systemSignUpClosed } from "../../custom";
+import { formataCPF, systemSignUpClosed, testaCPF } from "../../custom";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -42,9 +42,13 @@ export function FormRegister() {
     useState<SignUpWithEmailAndPasswordZProps>({
       name: "",
       email: "",
+      document: "",
       password: "",
       confirmPassword: "",
     });
+
+  // TEST FINANCIAL RESPONSIBLE CPF (BRAZILIAN DOCUMENT) STATE
+  const [testFinancialCPF, setTestFinancialCPF] = useState(true);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -56,6 +60,7 @@ export function FormRegister() {
     defaultValues: {
       name: "",
       email: "",
+      document: "",
       password: "",
       confirmPassword: "",
     },
@@ -65,6 +70,7 @@ export function FormRegister() {
   useEffect(() => {
     setValue("name", userSignUp.name);
     setValue("email", userSignUp.email);
+    setValue("document", userSignUp.document);
     setValue("confirmPassword", userSignUp.confirmPassword);
     setValue("password", userSignUp.password);
   }, [userSignUp]);
@@ -74,6 +80,7 @@ export function FormRegister() {
     const fullErrors = [
       errors.name,
       errors.email,
+      errors.document,
       errors.password,
       errors.confirmPassword,
     ];
@@ -119,6 +126,7 @@ export function FormRegister() {
                   email: user.email,
                   phone: null,
                   photo: null,
+                  document: data.document,
                   role: "user",
                   updatedAt: serverTimestamp(),
                 });
@@ -219,6 +227,50 @@ export function FormRegister() {
               setUserSignUp({ ...userSignUp, email: e.target.value });
             }}
           />
+
+          {/* FINANCIAL RESPONSIBLE DOCUMENT*/}
+          <div className="flex flex-col gap-2 items-center">
+            {(!testFinancialCPF || errors.document) && (
+              <label
+                htmlFor="financialResponsibleDocument"
+                className="text-red-500 dark:text-red-400 flex w-full justify-center text-xs text-center -mt-6"
+              >
+                <span className="text-red-500 dark:text-red-400">
+                  CPF Inválido, verifique:
+                </span>
+              </label>
+            )}
+            <input
+              type="text"
+              name="financialResponsibleDocument"
+              pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+              maxLength={11}
+              placeholder={
+                testFinancialCPF
+                  ? errors.document
+                    ? "É necessário inserir o CPF do Responsável Financeiro"
+                    : "Insira o CPF do Responsável Financeiro"
+                  : "CPF Inválido"
+              }
+              className={
+                testFinancialCPF
+                  ? errors.document
+                    ? "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
+                    : "w-full px-4 pb-2 dark:bg-gray-900 border border-transparent dark:border-transparent dark:text-gray-100 rounded-3xl cursor-default placeholder:text-sm disabled:opacity-70"
+                  : "w-full px-4 py-2 dark:bg-gray-900 border dark:text-gray-100 border-red-600 rounded-3xl placeholder:text-sm"
+              }
+              value={userSignUp.document}
+              onChange={(e) => {
+                if (e.target.value.length === 11) {
+                  setTestFinancialCPF(testaCPF(e.target.value));
+                }
+                setUserSignUp({
+                  ...userSignUp,
+                  document: formataCPF(e.target.value),
+                });
+              }}
+            />
+          </div>
 
           {/* PASSWORD */}
           <input

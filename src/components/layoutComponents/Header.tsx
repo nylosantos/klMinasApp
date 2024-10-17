@@ -164,7 +164,7 @@ export function Header() {
         <div className="flex w-1/6 justify-end items-center gap-4">
           {logged && userFullData && (
             <p
-              className="text-klGreen-500 dark:text-klOrange-500 font-bold cursor-pointer"
+              className="text-klGreen-500 dark:text-klOrange-500 hover:text-klGreen-500/70 hover:dark:text-klOrange-500/80 font-bold cursor-pointer"
               onClick={() => setPage({ prev: page.show, show: "Settings" })}
             >
               Olá, {userFullData.name}

@@ -20,14 +20,18 @@ export const createAppUser = https.onCall(async (data) => {
       phoneNumber: data.phone,
     })
     .then(async (user) => {
-      await firestore().collection("appUsers").doc(user.uid).set({
-        id: user.uid,
-        name: user.displayName,
-        email: user.email,
-        phone: user.phoneNumber,
-        role: data.role,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
-      });
+      await firestore()
+        .collection("appUsers")
+        .doc(user.uid)
+        .set({
+          id: user.uid,
+          name: user.displayName,
+          email: user.email,
+          phone: user.phoneNumber,
+          role: data.role,
+          document: data.role === "user" ? data.document : "",
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
       return user.uid;
     });
 });
@@ -49,13 +53,17 @@ export const updateAppUserWithoutPassword = https.onCall((data) => {
         displayName: data.name,
         phoneNumber: data.phone,
       });
-      await firestore().collection("appUsers").doc(data.id).update({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        role: data.role,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
-      });
+      await firestore()
+        .collection("appUsers")
+        .doc(data.id)
+        .update({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          role: data.role,
+          document: data.role === "user" ? data.document : "",
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
     });
   return userData;
 });
@@ -70,13 +78,17 @@ export const updateAppUserWithPassword = https.onCall((data) => {
         phoneNumber: data.phone,
         password: data.password,
       });
-      await firestore().collection("appUsers").doc(data.id).update({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        role: data.role,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
-      });
+      await firestore()
+        .collection("appUsers")
+        .doc(data.id)
+        .update({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          role: data.role,
+          document: data.role === "user" ? data.document : "",
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
     });
   return userData;
 });
@@ -88,11 +100,3 @@ export const getAuthUser = https.onCall(async (data) => {
       return userRecord;
     });
 });
-
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
-
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });

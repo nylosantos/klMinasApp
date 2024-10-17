@@ -820,7 +820,7 @@ export function InsertCurriculum() {
   };
 
   return (
-    <div className="flex flex-col h-full container text-center">
+    <div className="flex h-full flex-col container text-center overflow-scroll no-scrollbar rounded-xl">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
@@ -830,7 +830,7 @@ export function InsertCurriculum() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddCurriculum)}
-        className="flex flex-col w-full h-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2 overflow-scroll no-scrollbar"
+        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL SELECT */}
         <div className="flex gap-2 items-center">

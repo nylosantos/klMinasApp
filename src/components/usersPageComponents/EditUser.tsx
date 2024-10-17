@@ -372,7 +372,7 @@ export function EditUser() {
   };
 
   return (
-    <div className="flex flex-col container text-center">
+    <div className="flex h-full flex-col container text-center overflow-scroll no-scrollbar rounded-xl">
       {/* SUBMITING LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="editando" />
 

@@ -1,19 +1,20 @@
-import { useContext, useState } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useContext, useEffect, useState } from "react";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../context/GlobalDataContext";
 import { InsertStudent } from "../components/insertComponents/InsertStudent";
 import { SubmitLoading } from "../components/layoutComponents/SubmitLoading";
-import { IoIosArrowDown, IoMdClose } from "react-icons/io";
-import { IoPencil } from "react-icons/io5";
-import { TbCurrencyReal } from "react-icons/tb";
-import { MdDelete } from "react-icons/md";
-import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { EditStudentForm } from "../components/formComponents/EditStudentForm";
+import { StudentButtonDetails } from "../components/layoutComponents/StudentButtonDetails";
+import { FinanceStudentModal } from "../components/modalComponents/FinanceStudentModal";
+import { StudentSearchProps } from "../@types";
 
-// INITIALIZING FIRESTORE DB
-// const db = getFirestore(app);
+export interface HandleClickOpenFunctionProps {
+  id: string;
+  option: "edit" | "finance" | "details";
+}
 
 export default function Dashboard() {
   // GET GLOBAL DATA
@@ -32,22 +33,41 @@ export default function Dashboard() {
 
   const [open, setOpen] = useState(false);
 
-  const [studentId, setStudentId] = useState("");
+  const [studentSelected, setStudentSelected] =
+    useState<FilteredStudentsProps>();
 
-  const handleClickOpen = (id: string) => {
-    setStudentId(id);
-    setOpen(true);
+  const handleClickOpen = ({ id, option }: HandleClickOpenFunctionProps) => {
+    const studentToShow = filteredStudents.find((student) => student.id === id);
+    if (studentToShow) {
+      setStudentSelected(studentToShow);
+      setOpen(true);
+      if (option === "details") {
+        setIsDetailsViewing(true);
+        setIsEdit(false);
+        setIsFinance(false);
+      } else if (option === "edit") {
+        setIsDetailsViewing(false);
+        setIsEdit(true);
+        setIsFinance(false);
+      } else {
+        setIsDetailsViewing(false);
+        setIsEdit(false);
+        setIsFinance(true);
+      }
+    }
   };
 
   const handleClose = () => {
-    setStudentId("");
+    setStudentSelected(undefined);
     setOpen(false);
     setIsEdit(false);
     setIsFinance(false);
+    setIsDetailsViewing(false);
   };
 
   const [isEdit, setIsEdit] = useState(false);
   const [isFinance, setIsFinance] = useState(false);
+  const [isDetailsViewing, setIsDetailsViewing] = useState(false);
 
   function handleScheduleDetails(id: string) {
     const scheduleDetail = scheduleDatabaseData.find(
@@ -60,6 +80,49 @@ export default function Dashboard() {
     }
   }
 
+  interface FilteredStudentsProps extends StudentSearchProps {
+    isFinancialResponsible: boolean;
+  }
+
+  // FILTER STUDENTS STATE
+  const [filteredStudents, setFilteredStudents] = useState<
+    FilteredStudentsProps[]
+  >([]);
+
+  // FILTER STUDENTS IF USER.ROLE IS 'USER'
+  function filterStudents() {
+    if (userFullData) {
+      if (userFullData.role === "user") {
+        const studentsToShow: FilteredStudentsProps[] = [];
+        studentsDatabaseData.map((student) => {
+          if (student.financialResponsible.document === userFullData.document) {
+            studentsToShow.push({ ...student, isFinancialResponsible: true });
+          } else if (
+            student.parentOne?.email === userFullData.email ||
+            student.parentTwo?.email === userFullData.email
+          ) {
+            studentsToShow.push({ ...student, isFinancialResponsible: false });
+          }
+        });
+        setFilteredStudents(studentsToShow);
+      } else {
+        const studentsToShow: FilteredStudentsProps[] = [];
+        studentsDatabaseData.map((student) => {
+          studentsToShow.push({ ...student, isFinancialResponsible: true });
+        });
+        setFilteredStudents(studentsToShow);
+      }
+    }
+  }
+
+  useEffect(() => {
+    filterStudents();
+  }, [studentsDatabaseData, userFullData]);
+
+  useEffect(() => {
+    console.log(filteredStudents);
+  }, [filteredStudents]);
+
   const [showPage, setShowPage] = useState<
     | "school"
     | "schoolClass"
@@ -70,93 +133,6 @@ export default function Dashboard() {
     | "student"
     | "addStudent"
   >("school");
-
-  function studentButtonDetails(id: string) {
-    return (
-      <Menu>
-        <MenuButton className="inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-white focus:outline-none data-[hover]:bg-gray-700 data-[open]:bg-klGreen-500/70 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/70">
-          Opções <IoIosArrowDown size={10} />
-        </MenuButton>
-        <MenuItems
-          transition
-          anchor="bottom end"
-          className="w-52 origin-top-right rounded-xl border border-white/5 bg-klGreen-500 p-1 text-sm/6 text-white transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
-        >
-          {!isEdit && (
-            <MenuItem>
-              <button
-                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
-                onClick={() => {
-                  setIsFinance(false);
-                  setIsEdit(true);
-                  handleClickOpen(id);
-                }}
-              >
-                <IoPencil size={12} />
-                Editar
-                {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                                      ⌘E
-                                    </kbd> */}
-              </button>
-            </MenuItem>
-          )}
-
-          {!isFinance && (
-            <MenuItem>
-              <button
-                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
-                onClick={() => {
-                  setIsFinance(true);
-                  setIsEdit(false);
-                  handleClickOpen(id);
-                }}
-              >
-                <TbCurrencyReal />
-                Financeiro
-                {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                                      ⌘D
-                                    </kbd> */}
-              </button>
-            </MenuItem>
-          )}
-
-          {open && studentId !== "" && (
-            <MenuItem>
-              <button
-                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
-                onClick={() => {
-                  setIsFinance(false);
-                  setIsEdit(false);
-                  handleClose();
-                }}
-              >
-                <IoMdClose />
-                Fechar Detalhes
-                {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                                        ⌘D
-                                      </kbd> */}
-              </button>
-            </MenuItem>
-          )}
-
-          {userFullData && userFullData.role !== "user" && (
-            <>
-              <div className="my-1 h-px bg-white/5" />
-              <MenuItem>
-                <button className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30">
-                  <MdDelete />
-                  Deletar
-                  {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                                      ⌘D
-                                    </kbd> */}
-                </button>
-              </MenuItem>
-            </>
-          )}
-        </MenuItems>
-      </Menu>
-    );
-  }
 
   // LOADING
   if (!userFullData) {
@@ -243,7 +219,7 @@ export default function Dashboard() {
               Alunos Cadastrados:
             </p>
             <p className="font-bold text-klOrange-500 text-2xl">
-              {studentsDatabaseData.length}
+              {filteredStudents.length}
             </p>
           </div>
           {userFullData.role === "user" && (
@@ -471,11 +447,11 @@ export default function Dashboard() {
             <div className="flex w-full h-full justify-start container no-scrollbar rounded-xl pt-4 gap-4">
               <div
                 className={`${
-                  open && studentId !== "" ? "w-2/6" : "w-full"
+                  open && studentSelected ? "w-2/6" : "w-full"
                 } ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container [&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl transition-all duration-1000`}
               >
-                {studentsDatabaseData.length !== 0 ? (
-                  studentsDatabaseData
+                {filteredStudents.length !== 0 ? (
+                  filteredStudents
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((student) => {
                       return (
@@ -485,111 +461,36 @@ export default function Dashboard() {
                         >
                           <div className="flex items-center w-full">
                             <div className="w-1/6" />
-                            <p className="w-4/6 text-klGreen-500 dark:text-white">
-                              {student.name}
-                            </p>
-                            {
-                              !open &&
-                                studentId === "" &&
-                                studentButtonDetails(student.id)
-                              // <Menu>
-                              //   <MenuButton className="inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-white focus:outline-none data-[hover]:bg-gray-700 data-[open]:bg-klGreen-500/70 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/70">
-                              //     Opções <IoIosArrowDown size={10} />
-                              //   </MenuButton>
-                              //   <MenuItems
-                              //     transition
-                              //     anchor="bottom end"
-                              //     className="w-52 origin-top-right rounded-xl border border-white/5 bg-klGreen-500 p-1 text-sm/6 text-white transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
-                              //   >
-                              //     {open && studentId !== "" && (
-                              //       <MenuItem>
-                              //         <button
-                              //           className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
-                              //           onClick={() => {
-                              //             setIsFinance(false);
-                              //             setIsEdit(false);
-                              //             handleClose();
-                              //           }}
-                              //         >
-                              //           <MdDelete />
-                              //           Fechar
-                              //           {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                              //           ⌘D
-                              //         </kbd> */}
-                              //         </button>
-                              //       </MenuItem>
-                              //     )}
-                              //     {!isEdit && (
-                              //       <MenuItem>
-                              //         <button
-                              //           className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
-                              //           onClick={() => {
-                              //             setIsFinance(false);
-                              //             setIsEdit(true);
-                              //             handleClickOpen(student.id);
-                              //           }}
-                              //         >
-                              //           <IoPencil size={12} />
-                              //           Editar
-                              //           {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                              //         ⌘E
-                              //       </kbd> */}
-                              //         </button>
-                              //       </MenuItem>
-                              //     )}
-                              //     {!isFinance && (
-                              //       <MenuItem>
-                              //         <button
-                              //           className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
-                              //           onClick={() => {
-                              //             setIsFinance(true);
-                              //             setIsEdit(false);
-                              //             handleClickOpen(student.id);
-                              //           }}
-                              //         >
-                              //           <TbCurrencyReal />
-                              //           Financeiro
-                              //           {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                              //         ⌘D
-                              //       </kbd> */}
-                              //         </button>
-                              //       </MenuItem>
-                              //     )}
-                              //     <div className="my-1 h-px bg-white/5" />
-                              //     <MenuItem>
-                              //       <button className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30">
-                              //         <MdDelete />
-                              //         Deletar
-                              //         {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                              //         ⌘D
-                              //       </kbd> */}
-                              //       </button>
-                              //     </MenuItem>
-                              //   </MenuItems>
-                              // </Menu>
-                            }
-                            {/* <p
-                              className={`flex items-center justify-center gap-1 w-20 text-white cursor-pointer ${
-                                studentId === student.id
-                                  ? "bg-red-600 hover:bg-red-800"
-                                  : "bg-klGreen-500 dark:bg-klGreen-500/50 hover:dark:bg-klGreen-500 hover:bg-klGreen-500/70"
-                              } rounded py-1 text-center transition-all duration-100`}
-                              onClick={() => {
-                                if (studentId === student.id) {
-                                  handleClose();
-                                } else {
-                                  handleClickOpen(student.id);
+                            <div className="flex w-4/6">
+                              <p
+                                className="text-klGreen-500 dark:text-white hover:text-klOrange-500 hover:dark:text-klOrange-500 cursor-pointer"
+                                onClick={() =>
+                                  handleClickOpen({
+                                    id: student.id,
+                                    option: "details",
+                                  })
                                 }
-                              }}
-                            >
-                              {studentId === student.id ? (
-                                "Fechar"
-                              ) : (
-                                <>
-                                  Opções <IoIosArrowDown size={10} />
-                                </>
-                              )}
-                            </p> */}
+                              >
+                                {student.name}
+                              </p>
+                            </div>
+                            {!open && student.id !== "" && (
+                              <StudentButtonDetails
+                                id={student.id}
+                                isEdit={isEdit}
+                                isFinance={isFinance}
+                                isDetailsViewing={isDetailsViewing}
+                                isFinancialResponsible={
+                                  student.isFinancialResponsible
+                                }
+                                open={open}
+                                handleClickOpen={handleClickOpen}
+                                handleClose={handleClose}
+                                setIsEdit={setIsEdit}
+                                setIsFinance={setIsFinance}
+                                setIsDetailsViewing={setIsDetailsViewing}
+                              />
+                            )}
                           </div>
                         </div>
                       );
@@ -602,28 +503,60 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
+              {/* VIEW STUDENT DETAILS */}
+              {open && isDetailsViewing && (
+                <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-white dark:bg-gray-800 overflow-scroll no-scrollbar">
+                  <EditStudentForm
+                    isSubmitting={isSubmitting}
+                    setIsSubmitting={setIsSubmitting}
+                    studentId={studentSelected!.id}
+                    key={studentSelected!.id}
+                    onClose={handleClose}
+                    onlyView
+                  />
+                </div>
+              )}
+              {/* EDIT STUDENT */}
               {open && isEdit && (
                 <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-white dark:bg-gray-800 overflow-scroll no-scrollbar">
                   <EditStudentForm
                     isSubmitting={isSubmitting}
                     setIsSubmitting={setIsSubmitting}
-                    studentId={studentId}
-                    key={studentId}
+                    studentId={studentSelected!.id}
+                    key={studentSelected!.id}
                     onClose={handleClose}
                   />
                 </div>
               )}
-              {open && studentId !== "" && (
-                <div>{studentButtonDetails(studentId)}</div>
+              {/* FINANCE REGISTER STUDENT */}
+              {open && isFinance && studentSelected && (
+                <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-white dark:bg-gray-800 overflow-scroll no-scrollbar">
+                  <FinanceStudentModal
+                    isFinancialResponsible={
+                      studentSelected.isFinancialResponsible
+                    }
+                  />
+                </div>
               )}
-              {/* EDIT STUDENT MODAL */}
-              {/* {open && studentId !== "" && (
-                <EditStudentModal
-                  open={open && studentId !== ""}
-                  studentId={studentId}
-                  onClose={handleClose}
-                />
-              )} */}
+              {open && studentSelected && (
+                <div>
+                  <StudentButtonDetails
+                    id={studentSelected.id}
+                    isEdit={isEdit}
+                    isFinance={isFinance}
+                    isDetailsViewing={isDetailsViewing}
+                    isFinancialResponsible={
+                      studentSelected.isFinancialResponsible
+                    }
+                    open={open}
+                    handleClickOpen={handleClickOpen}
+                    handleClose={handleClose}
+                    setIsEdit={setIsEdit}
+                    setIsFinance={setIsFinance}
+                    setIsDetailsViewing={setIsDetailsViewing}
+                  />
+                </div>
+              )}
             </div>
           )}
           {userFullData.role === "user" && showPage === "addStudent" && (

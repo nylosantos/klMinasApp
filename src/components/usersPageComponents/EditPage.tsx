@@ -8,6 +8,7 @@ import { EditStudent } from "../editComponents/EditStudent";
 import { EditTeacher } from "../editComponents/EditTeacher";
 import { EditSchedule } from "../editComponents/EditSchedule";
 import { EditCurriculum } from "../editComponents/EditCurriculum";
+import { PageLayoutComponent } from "../layoutComponents/PageLayoutComponent";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function classNames(...classes: any) {
@@ -16,7 +17,7 @@ function classNames(...classes: any) {
 
 export default function EditPage() {
   return (
-    <div className="h-full w-10/12 mx-2 my-4 sm:px-0 overflow-scroll no-scrollbar">
+    <PageLayoutComponent>
       <TabGroup className="flex flex-col h-full overflow-scroll no-scrollbar">
         <TabList className="flex space-x-1 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 p-1">
           <Tab
@@ -128,6 +129,6 @@ export default function EditPage() {
           </TabPanel>
         </TabPanels>
       </TabGroup>
-    </div>
+    </PageLayoutComponent>
   );
 }

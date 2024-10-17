@@ -49,6 +49,7 @@ export interface UserFullDataProps {
   email: string;
   phone?: string;
   photo?: string;
+  document?: string;
   role: "root" | "admin" | "editor" | "teacher" | "user";
   updatedAt: Date;
 }

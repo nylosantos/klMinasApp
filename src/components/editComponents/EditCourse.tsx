@@ -156,6 +156,7 @@ export function EditCourse() {
             bundleDays: data.bundleDays,
           }
         );
+        // CHANGE PRICE ON STUDENTS REGISTERS
         resetForm();
         toast.success(`${schoolCourseEditData.name} alterado com sucesso! 👌`, {
           theme: "colored",
@@ -201,7 +202,7 @@ export function EditCourse() {
   };
 
   return (
-    <div className="flex flex-col container text-center">
+    <div className="flex h-full flex-col container text-center overflow-scroll no-scrollbar rounded-xl">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
 

@@ -166,7 +166,21 @@ export function SelectOptions({
 
   useEffect(() => {
     handleDataOptions();
-  }, [curriculumId, dataType, schoolId, schoolClassId]);
+  }, [
+    curriculumId,
+    dataType,
+    schoolId,
+    schoolClassId,
+    appUsersDatabaseData,
+    classDaysDatabaseData,
+    schoolDatabaseData,
+    schoolClassDatabaseData,
+    schoolCourseDatabaseData,
+    scheduleDatabaseData,
+    teacherDatabaseData,
+    curriculumDatabaseData,
+    studentsDatabaseData,
+  ]);
 
   return (
     // DYNAMIC OPTIONS
@@ -240,9 +254,9 @@ export function SelectOptions({
                       ? option.name + " (Turma Fechada)"
                       : option.name + " (Lista de Espera)"
                     : option.name} */}
-                  {displaySchoolCourseAndSchedule
-                    ? `${option.schoolCourse} | ${option.schedule}`
-                    : option.name}
+                {displaySchoolCourseAndSchedule
+                  ? `${option.schoolCourse} | ${option.schedule}`
+                  : option.name}
               </option>
             </>
           ))
@@ -270,9 +284,9 @@ export function SelectOptions({
                       ? option.name + " (Turma Fechada)"
                       : option.name + " (Lista de Espera)"
                     : option.name} */}
-                  {displaySchoolCourseAndSchedule
-                    ? `${option.schoolCourse} | ${option.schedule}`
-                    : option.name}
+                {displaySchoolCourseAndSchedule
+                  ? `${option.schoolCourse} | ${option.schedule}`
+                  : option.name}
               </option>
             </>
           ))}

@@ -10,6 +10,7 @@ import { InsertStudent } from "../insertComponents/InsertStudent";
 import { InsertTeacher } from "../insertComponents/InsertTeacher";
 import { InsertSchedule } from "../insertComponents/InsertSchedule";
 import { InsertCurriculum } from "../insertComponents/InsertCurriculum";
+import { PageLayoutComponent } from "../layoutComponents/PageLayoutComponent";
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
@@ -17,7 +18,7 @@ function classNames(...classes: any) {
 
 export default function InsertPage() {
   return (
-    <div className="h-full w-10/12 mx-2 my-4 sm:px-0 overflow-scroll no-scrollbar">
+    <PageLayoutComponent>
       <TabGroup className="flex flex-col h-full overflow-scroll no-scrollbar">
         <TabList className="flex space-x-1 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 p-1">
           <Tab
@@ -129,6 +130,6 @@ export default function InsertPage() {
           </TabPanel>
         </TabPanels>
       </TabGroup>
-    </div>
+    </PageLayoutComponent>
   );
 }

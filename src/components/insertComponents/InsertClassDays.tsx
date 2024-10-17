@@ -400,7 +400,7 @@ export function InsertClassDays() {
   };
 
   return (
-    <div className="flex flex-col container text-center">
+    <div className="flex h-full flex-col container text-center overflow-scroll no-scrollbar rounded-xl">
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
