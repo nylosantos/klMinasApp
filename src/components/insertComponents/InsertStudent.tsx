@@ -1980,7 +1980,11 @@ export function InsertStudent() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddStudent)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
+        className={`flex flex-col w-full gap-2 rounded-xl ${
+          userFullData && userFullData.role !== "user"
+            ? "bg-klGreen-500/20 dark:bg-klGreen-500/30 p-4"
+            : "pb-4 px-4 pt-2"
+        }`}
       >
         {/* // -------------------------------------------------------- SECTION 1: STUDENT DATA -------------------------------------------------------- // */}
 
@@ -2738,8 +2742,8 @@ export function InsertStudent() {
                     </select>
                   </div>
 
-                  {classDaySelectedData && (
-                    newClass && classDaySelectedData?.indexDays.length > 0 ? (
+                  {classDaySelectedData &&
+                    (newClass && classDaySelectedData?.indexDays.length > 0 ? (
                       <>
                         {/* EXPERIMENTAL/INITIAL DAY */}
                         <div className="flex gap-2 items-center">
@@ -2812,8 +2816,7 @@ export function InsertStudent() {
                           </div>
                         </div>
                       </>
-                    ) : null
-                  )}
+                    ) : null)}
 
                   {classDaySelectedData &&
                     !newClass.isExperimental &&

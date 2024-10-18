@@ -199,7 +199,11 @@ export function EditStudent() {
       {/* PAGE TITLE */}
       <h1 className="font-bold text-2xl my-4">Editar Aluno</h1>
 
-      <div className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2">
+      <div
+        className={`flex flex-col w-full gap-2 ${
+          isEdit ? "pt-4 px-4" : "p-4"
+        } rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2`}
+      >
         {/* SCHOOL SELECT */}
         <div className="flex gap-2 items-center">
           <label htmlFor="schoolSelect" className="w-1/4 text-right">

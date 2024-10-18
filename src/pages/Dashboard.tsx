@@ -16,6 +16,16 @@ export interface HandleClickOpenFunctionProps {
   option: "edit" | "finance" | "details";
 }
 
+export type PaymentArrayProps = {
+  type: "enrolledFee" | "montlyPayment";
+  dueDate: Date;
+  paymentDate: Date | string;
+  creationDate: Date;
+  description: string;
+  invoiceId: number;
+  value: number;
+};
+
 export default function Dashboard() {
   // GET GLOBAL DATA
   const {
@@ -64,6 +74,138 @@ export default function Dashboard() {
     setIsFinance(false);
     setIsDetailsViewing(false);
   };
+
+  const paymentArray: PaymentArrayProps[] = [
+    {
+      type: "enrolledFee",
+      dueDate: new Date("01/31/2024"),
+      paymentDate: new Date("01/10/2024"),
+      creationDate: new Date("01/5/2024"),
+      description: "Matrícula 2024",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("01/15/2024"),
+      paymentDate: new Date("01/10/2024"),
+      creationDate: new Date("01/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("02/15/2024"),
+      paymentDate: new Date("02/6/2024"),
+      creationDate: new Date("02/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("03/15/2024"),
+      paymentDate: new Date("03/5/2024"),
+      creationDate: new Date("03/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("04/15/2024"),
+      paymentDate: new Date("04/11/2024"),
+      creationDate: new Date("04/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("05/15/2024"),
+      paymentDate: new Date("05/17/2024"),
+      creationDate: new Date("05/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("06/15/2024"),
+      paymentDate: new Date("06/20/2024"),
+      creationDate: new Date("06/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("07/15/2024"),
+      paymentDate: new Date("07/22/2024"),
+      creationDate: new Date("07/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("08/15/2024"),
+      paymentDate: new Date("08/8/2024"),
+      creationDate: new Date("08/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("09/15/2024"),
+      paymentDate: new Date("09/9/2024"),
+      creationDate: new Date("09/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("10/15/2024"),
+      paymentDate: "   ",
+      creationDate: new Date("10/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("11/15/2024"),
+      paymentDate: "   ",
+      creationDate: new Date("11/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+    {
+      type: "montlyPayment",
+      dueDate: new Date("12/15/2024"),
+      paymentDate: "   ",
+      creationDate: new Date("12/5/2024"),
+      description:
+        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
+      invoiceId: Math.floor(Math.random() * 20 * 100000000),
+      value: Math.floor(Math.random() * 20 * 100),
+    },
+  ];
 
   const [isEdit, setIsEdit] = useState(false);
   const [isFinance, setIsFinance] = useState(false);
@@ -119,20 +261,97 @@ export default function Dashboard() {
     filterStudents();
   }, [studentsDatabaseData, userFullData]);
 
-  useEffect(() => {
-    console.log(filteredStudents);
-  }, [filteredStudents]);
+  function handleDeleteUser() {
+    if (studentSelected) {
+      console.log(
+        "Deletando usuário: ",
+        studentSelected.name,
+        " - ID: ",
+        studentSelected.id
+      );
+    } else {
+      console.log("Nenhum usuário selecionado.");
+    }
+  }
 
-  const [showPage, setShowPage] = useState<
-    | "school"
-    | "schoolClass"
-    | "schoolCourse"
-    | "schedule"
-    | "teacher"
-    | "curriculum"
-    | "student"
-    | "addStudent"
-  >("school");
+  type DashBoardPageProps = {
+    page:
+      | "school"
+      | "schoolClass"
+      | "schoolCourse"
+      | "schedule"
+      | "teacher"
+      | "curriculum"
+      | "student"
+      | "addStudent";
+  };
+
+  const [showDashboardPage, setShowDashboardPage] =
+    useState<DashBoardPageProps>({
+      page: "school",
+    });
+
+  useEffect(() => {
+    userFullData && userFullData.role === "user"
+      ? setShowDashboardPage({ page: "student" })
+      : setShowDashboardPage({ page: "school" });
+  }, [userFullData]);
+
+  interface DashboardMenuArrayProps extends DashBoardPageProps {
+    title: string;
+    array: unknown[];
+  }
+
+  const dashboardMenuArray: DashboardMenuArrayProps[] = [
+    { title: "Escolas Cadastradas", page: "school", array: schoolDatabaseData },
+    {
+      title: "Anos Escolares Cadastrados",
+      page: "schoolClass",
+      array: schoolClassDatabaseData,
+    },
+    {
+      title: "Modalidades Cadastradas",
+      page: "schoolCourse",
+      array: schoolCourseDatabaseData,
+    },
+    {
+      title: "Horários Cadastrados",
+      page: "schedule",
+      array: scheduleDatabaseData,
+    },
+    {
+      title: "Professores Cadastrados",
+      page: "teacher",
+      array: teacherDatabaseData,
+    },
+    {
+      title: "Turmas cadastradas",
+      page: "curriculum",
+      array: curriculumDatabaseData,
+    },
+    {
+      title: "Alunos Cadastrados",
+      page: "student",
+      array: studentsDatabaseData,
+    },
+    { title: "Adicionar Aluno", page: "addStudent", array: [] },
+  ];
+
+  function renderDashboardMenu(itemMenu: DashboardMenuArrayProps) {
+    return (
+      <div
+        className="flex flex-col w-36 h-full justify-center items-center text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 hover:bg-klGreen-500/30 hover:dark:bg-klGreen-500/70 py-2 px-3 rounded-xl cursor-pointer"
+        onClick={() => setShowDashboardPage({ page: itemMenu.page })}
+      >
+        <p className="text-klGreen-500 dark:text-gray-100 text-md/snug">
+          {itemMenu.title}
+        </p>
+        <p className="text-klOrange-500 text-md/snug">
+          {itemMenu.array.length > 0 ? itemMenu.array.length : ""}
+        </p>
+      </div>
+    );
+  }
 
   // LOADING
   if (!userFullData) {
@@ -140,111 +359,38 @@ export default function Dashboard() {
   } else {
     return (
       <div className="w-screen h-full flex flex-col justify-start items-center overflow-scroll no-scrollbar">
+        {/* DASHBOARD BUTTONS MENU */}
         <div className="flex container items-center justify-center gap-4">
-          {userFullData.role !== "user" && (
-            <>
-              <div
-                className="flex flex-col w-56 items-center gap-2 text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 py-2 pt-4 rounded-xl cursor-pointer"
-                onClick={() => setShowPage("school")}
-              >
-                <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
-                  Escolas Cadastradas:
-                </p>
-                <p className="font-bold text-klOrange-500 text-2xl">
-                  {schoolDatabaseData.length}
-                </p>
-              </div>
-              <div
-                className="flex flex-col w-56 items-center gap-2 text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 py-2 pt-4 rounded-xl cursor-pointer"
-                onClick={() => setShowPage("schoolClass")}
-              >
-                <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
-                  Anos Escolares Cadastrados:
-                </p>
-                <p className="font-bold text-klOrange-500 text-2xl">
-                  {schoolClassDatabaseData.length}
-                </p>
-              </div>
-              <div
-                className="flex flex-col w-56 items-center gap-2 text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 py-2 pt-4 rounded-xl cursor-pointer"
-                onClick={() => setShowPage("schoolCourse")}
-              >
-                <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
-                  Modalidades Cadastradas:
-                </p>
-                <p className="font-bold text-klOrange-500 text-2xl">
-                  {schoolCourseDatabaseData.length}
-                </p>
-              </div>
-              <div
-                className="flex flex-col w-56 items-center gap-2 text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 py-2 pt-4 rounded-xl cursor-pointer"
-                onClick={() => setShowPage("schedule")}
-              >
-                <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
-                  Horários Cadastrados:
-                </p>
-                <p className="font-bold text-klOrange-500 text-2xl">
-                  {scheduleDatabaseData.length}
-                </p>
-              </div>
-              <div
-                className="flex flex-col w-56 items-center gap-2 text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 py-2 pt-4 rounded-xl cursor-pointer"
-                onClick={() => setShowPage("teacher")}
-              >
-                <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
-                  Professores Cadastrados:
-                </p>
-                <p className="font-bold text-klOrange-500 text-2xl">
-                  {teacherDatabaseData.length}
-                </p>
-              </div>
-              <div
-                className="flex flex-col w-56 items-center gap-2 text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 py-2 pt-4 rounded-xl cursor-pointer"
-                onClick={() => setShowPage("curriculum")}
-              >
-                <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
-                  Turmas cadastradas:
-                </p>
-                <p className="font-bold text-klOrange-500 text-2xl">
-                  {curriculumDatabaseData.length}
-                </p>
-              </div>
-            </>
-          )}
-          <div
-            className="flex flex-col w-56 items-center gap-2 text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 py-2 pt-4 rounded-xl cursor-pointer"
-            onClick={() => setShowPage("student")}
-          >
-            <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
-              Alunos Cadastrados:
-            </p>
-            <p className="font-bold text-klOrange-500 text-2xl">
-              {filteredStudents.length}
-            </p>
-          </div>
-          {userFullData.role === "user" && (
-            <div
-              className="flex flex-col w-56 h-32 items-center justify-center gap-2 text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 py-2 rounded-xl cursor-pointer"
-              onClick={() => setShowPage("addStudent")}
-            >
-              <p className="font-bold text-klGreen-500 dark:text-gray-100 text-2xl">
-                Adicionar Aluno
-              </p>
-            </div>
-          )}
+          {dashboardMenuArray.map((itemMenu) => {
+            if (userFullData) {
+              if (
+                userFullData.role !== "user" &&
+                itemMenu.page !== "addStudent"
+              ) {
+                return renderDashboardMenu(itemMenu);
+              } else if (
+                userFullData.role === "user" &&
+                (itemMenu.page === "addStudent" || itemMenu.page === "student")
+              ) {
+                return renderDashboardMenu(itemMenu);
+              } else return;
+            }
+          })}
         </div>
+
+        {/* PAGES TO SHOW */}
         <div
           className={
-            showPage === "curriculum"
+            showDashboardPage.page === "curriculum"
               ? `pb-4 flex h-full overflow-scroll no-scrollbar flex-wrap justify-center container mt-4 [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl gap-2`
-              : showPage === "student"
+              : showDashboardPage.page === "student"
               ? "pb-4 flex h-full overflow-scroll no-scrollbar justify-center w-full"
               : `pb-4 flex h-full overflow-scroll no-scrollbar flex-col container mt-4 [&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl`
           }
         >
           {userFullData.role !== "user" && (
             <>
-              {showPage === "school" &&
+              {showDashboardPage.page === "school" &&
                 (schoolDatabaseData.length !== 0 ? (
                   schoolDatabaseData
                     .sort((a, b) => a.name.localeCompare(b.name))
@@ -267,7 +413,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                 ))}
-              {showPage === "schoolClass" &&
+              {showDashboardPage.page === "schoolClass" &&
                 (schoolClassDatabaseData.length !== 0 ? (
                   schoolClassDatabaseData
                     .sort((a, b) => a.name.localeCompare(b.name))
@@ -290,7 +436,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                 ))}
-              {showPage === "schoolCourse" &&
+              {showDashboardPage.page === "schoolCourse" &&
                 (schoolCourseDatabaseData.length !== 0 ? (
                   schoolCourseDatabaseData
                     .sort((a, b) => a.name.localeCompare(b.name))
@@ -313,7 +459,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                 ))}
-              {showPage === "schedule" &&
+              {showDashboardPage.page === "schedule" &&
                 (scheduleDatabaseData.length !== 0 ? (
                   scheduleDatabaseData
                     .sort((a, b) => a.name.localeCompare(b.name))
@@ -336,7 +482,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                 ))}
-              {showPage === "teacher" &&
+              {showDashboardPage.page === "teacher" &&
                 (teacherDatabaseData.length !== 0 ? (
                   teacherDatabaseData
                     .sort((a, b) => a.name.localeCompare(b.name))
@@ -359,7 +505,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                 ))}
-              {showPage === "curriculum" &&
+              {showDashboardPage.page === "curriculum" &&
                 (curriculumDatabaseData.length !== 0 ? (
                   curriculumDatabaseData
                     .sort((a, b) => a.name.localeCompare(b.name))
@@ -443,7 +589,7 @@ export default function Dashboard() {
                 ))}
             </>
           )}
-          {showPage === "student" && (
+          {showDashboardPage.page === "student" && (
             <div className="flex w-full h-full justify-start container no-scrollbar rounded-xl pt-4 gap-4">
               <div
                 className={`${
@@ -486,6 +632,7 @@ export default function Dashboard() {
                                 open={open}
                                 handleClickOpen={handleClickOpen}
                                 handleClose={handleClose}
+                                handleDeleteUser={handleDeleteUser}
                                 setIsEdit={setIsEdit}
                                 setIsFinance={setIsFinance}
                                 setIsDetailsViewing={setIsDetailsViewing}
@@ -503,67 +650,60 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
-              {/* VIEW STUDENT DETAILS */}
-              {open && isDetailsViewing && (
-                <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-white dark:bg-gray-800 overflow-scroll no-scrollbar">
+
+              {/* STUDENT FORM FOR VIEW DETAILS OR EDIT STUDENT */}
+              {open && (isEdit || isDetailsViewing) && (
+                <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 overflow-scroll no-scrollbar">
                   <EditStudentForm
                     isSubmitting={isSubmitting}
                     setIsSubmitting={setIsSubmitting}
                     studentId={studentSelected!.id}
                     key={studentSelected!.id}
                     onClose={handleClose}
-                    onlyView
+                    isEdit={isEdit}
+                    isFinance={isFinance}
+                    isFinancialResponsible={
+                      studentSelected && studentSelected.isFinancialResponsible
+                    }
+                    open={open}
+                    handleClickOpen={handleClickOpen}
+                    handleDeleteUser={handleDeleteUser}
+                    setIsEdit={setIsEdit}
+                    setIsFinance={setIsFinance}
+                    setIsDetailsViewing={setIsDetailsViewing}
+                    onlyView={isDetailsViewing}
                   />
                 </div>
               )}
-              {/* EDIT STUDENT */}
-              {open && isEdit && (
-                <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-white dark:bg-gray-800 overflow-scroll no-scrollbar">
-                  <EditStudentForm
-                    isSubmitting={isSubmitting}
-                    setIsSubmitting={setIsSubmitting}
-                    studentId={studentSelected!.id}
-                    key={studentSelected!.id}
-                    onClose={handleClose}
-                  />
-                </div>
-              )}
+
               {/* FINANCE REGISTER STUDENT */}
               {open && isFinance && studentSelected && (
                 <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-white dark:bg-gray-800 overflow-scroll no-scrollbar">
                   <FinanceStudentModal
-                    isFinancialResponsible={
-                      studentSelected.isFinancialResponsible
-                    }
-                  />
-                </div>
-              )}
-              {open && studentSelected && (
-                <div>
-                  <StudentButtonDetails
-                    id={studentSelected.id}
+                    studentId={studentSelected!.id}
+                    key={studentSelected!.id}
+                    onClose={handleClose}
                     isEdit={isEdit}
                     isFinance={isFinance}
-                    isDetailsViewing={isDetailsViewing}
                     isFinancialResponsible={
                       studentSelected.isFinancialResponsible
                     }
                     open={open}
+                    paymentArray={paymentArray}
+                    studentName={studentSelected.name}
                     handleClickOpen={handleClickOpen}
-                    handleClose={handleClose}
+                    handleDeleteUser={handleDeleteUser}
                     setIsEdit={setIsEdit}
                     setIsFinance={setIsFinance}
                     setIsDetailsViewing={setIsDetailsViewing}
+                    onlyView={isDetailsViewing}
                   />
                 </div>
               )}
             </div>
           )}
-          {userFullData.role === "user" && showPage === "addStudent" && (
-            <div className="flex flex-col w-screen px-8 pb-8 gap-6 items-center">
-              <InsertStudent />
-            </div>
-          )}
+          {userFullData.role === "user" &&
+            showDashboardPage.page === "addStudent" && <InsertStudent />}
         </div>
       </div>
     );

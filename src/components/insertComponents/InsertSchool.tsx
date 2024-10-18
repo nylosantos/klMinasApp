@@ -89,7 +89,7 @@ export function InsertSchool() {
         const commonId = uuidv4();
         await setDoc(doc(db, "schools", commonId), {
           id: commonId,
-          name: `Colégio ${data.name}`,
+          name: data.name,
           timestamp: serverTimestamp(),
         });
         resetForm();

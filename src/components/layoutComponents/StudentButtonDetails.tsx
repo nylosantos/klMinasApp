@@ -23,6 +23,7 @@ type StudentButtonDetailsProps = {
   setIsEdit: (option: boolean) => void;
   setIsFinance: (option: boolean) => void;
   setIsDetailsViewing: (option: boolean) => void;
+  handleDeleteUser: () => void;
 };
 
 export function StudentButtonDetails({
@@ -34,6 +35,7 @@ export function StudentButtonDetails({
   open,
   handleClickOpen,
   handleClose,
+  handleDeleteUser,
   setIsEdit,
   setIsFinance,
   setIsDetailsViewing,
@@ -45,7 +47,7 @@ export function StudentButtonDetails({
 
   return (
     <Menu>
-      <MenuButton className="inline-flex items-center gap-2 rounded-md bg-klGreen-500/20 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-klGreen-500 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/10 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/10">
+      <MenuButton className="inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
         Opções <IoIosArrowDown size={10} />
       </MenuButton>
       <MenuItems
@@ -133,13 +135,16 @@ export function StudentButtonDetails({
           </MenuItem>
         )}
 
-        {userFullData && userFullData.role !== "user" && (
+        {userFullData && userFullData.role !== "user" && open && (
           <>
             <div className="my-1 h-px bg-white/5" />
             <MenuItem>
-              <button className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30">
+              <button
+                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
+                onClick={() => handleDeleteUser()}
+              >
                 <MdDelete />
-                Deletar
+                Deletar Cadastro
                 {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
                                         ⌘D
                                       </kbd> */}
