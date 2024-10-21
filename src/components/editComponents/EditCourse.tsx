@@ -5,32 +5,57 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import CurrencyInput from "react-currency-input-field";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { doc, getFirestore, updateDoc } from "firebase/firestore";
+import {
+  arrayRemove,
+  arrayUnion,
+  collection,
+  doc,
+  getDocs,
+  getFirestore,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { editSchoolCourseValidationSchema } from "../../@types/zodValidation";
 import {
+  CurriculumSearchProps,
   EditSchoolCourseValidationZProps,
   SchoolCourseSearchProps,
+  StudentSearchProps,
 } from "../../@types";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import {
+  employeeDiscountValue,
+  familyDiscountValue,
+  secondCourseDiscountValue,
+} from "../../custom";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditCourse() {
   // GET GLOBAL DATA
-  const { isSubmitting, schoolCourseDatabaseData, setIsSubmitting } =
-    useContext(GlobalDataContext) as GlobalDataContextType;
+  const {
+    isSubmitting,
+    schoolCourseDatabaseData,
+    curriculumDatabaseData,
+    studentsDatabaseData,
+    setIsSubmitting,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // SCHOOL COURSE DATA
   const [schoolCourseData, setSchoolCourseData] = useState({
     schoolCourseId: "",
+    bundleDays: 0,
+    priceBundle: 0,
+    priceUnit: 0,
   });
 
   // SCHOOL COURSE EDIT DATA
@@ -74,6 +99,12 @@ export function EditCourse() {
         priceBundle: schoolCourseSelectedData?.priceBundle,
         bundleDays: schoolCourseSelectedData?.bundleDays,
       });
+      setSchoolCourseData({
+        ...schoolCourseData,
+        priceUnit: schoolCourseSelectedData.priceUnit,
+        priceBundle: schoolCourseSelectedData.priceBundle,
+        bundleDays: schoolCourseSelectedData.bundleDays,
+      });
     }
   }, [schoolCourseSelectedData]);
 
@@ -102,6 +133,9 @@ export function EditCourse() {
     setIsSelected(false);
     setSchoolCourseData({
       schoolCourseId: "",
+      bundleDays: 0,
+      priceBundle: 0,
+      priceUnit: 0,
     });
     setSchoolCourseEditData({
       name: "",
@@ -114,8 +148,18 @@ export function EditCourse() {
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("name", schoolCourseEditData.name);
-    setValue("priceUnit", schoolCourseEditData.priceUnit / 100);
-    setValue("priceBundle", schoolCourseEditData.priceBundle / 100);
+    setValue(
+      "priceUnit",
+      schoolCourseData.priceUnit !== schoolCourseEditData.priceUnit / 100
+        ? schoolCourseEditData.priceUnit / 100
+        : schoolCourseEditData.priceUnit
+    );
+    setValue(
+      "priceBundle",
+      schoolCourseData.priceBundle !== schoolCourseEditData.priceBundle / 100
+        ? schoolCourseEditData.priceBundle / 100
+        : schoolCourseEditData.priceBundle
+    );
     setValue("bundleDays", schoolCourseEditData.bundleDays);
   }, [schoolCourseEditData]);
 
@@ -138,6 +182,275 @@ export function EditCourse() {
     });
   }, [errors]);
 
+  // EDIT PRICE ON STUDENTS REGISTERS
+  async function updatePriceOnStudentsData() {
+    // SEARCH SCHOOLCOURSE ON CURRICULUMS
+    const foundedCurriculums: CurriculumSearchProps[] = [];
+    curriculumDatabaseData.map((curriculum) => {
+      if (curriculum.schoolCourseId === schoolCourseData.schoolCourseId) {
+        foundedCurriculums.push(curriculum);
+      }
+    });
+    // GETTING STUDENTS FROM CURRICULUMS
+    if (foundedCurriculums.length > 0) {
+      const foundedStudentsToEdit: StudentSearchProps[] = [];
+      foundedCurriculums.map((foundedCurriculum) => {
+        studentsDatabaseData.map((student) => {
+          student.curriculumIds.map((curriculum) => {
+            if (curriculum.id === foundedCurriculum.id) {
+              foundedStudentsToEdit.push(student);
+            }
+          });
+        });
+      });
+      // MAKING CHANGINGS ON ALL STUDENT
+      if (foundedStudentsToEdit.length > 0) {
+        foundedStudentsToEdit.map(async (student) => {
+          // DISCOUNT VARIABLE
+          // const customDiscountValueSum = 100 - +student.customDiscountValue;
+          // const customDiscountFinalValue = +`0.${
+          //   customDiscountValueSum > 9
+          //     ? customDiscountValueSum
+          //     : `0${customDiscountValueSum}`
+          // }`;
+
+          // const discountVariable = student.customDiscount
+          //   ? customDiscountFinalValue
+          //   : student.employeeDiscount
+          //   ? employeeDiscountValue
+          //   : familyDiscountValue;
+
+          if (student.curriculumIds.length <= 1) {
+            // IF STUDENT HAS ONLY ONE CURRICULUM
+            // CHANGING CURRICULUM STUDENT PRICES
+            // REMOVING PREVIOUS DATA
+            await updateDoc(doc(db, "students", student.id), {
+              curriculumIds: arrayRemove({
+                date: student.curriculumIds[0].date,
+                id: student.curriculumIds[0].id,
+                isExperimental: student.curriculumIds[0].isExperimental,
+                name: student.curriculumIds[0].name,
+                indexDays: student.curriculumIds[0].indexDays,
+                price: student.curriculumIds[0].price,
+              }),
+            });
+
+            // WRITING UPDATED DATA
+            if (student.curriculumIds[0].indexDays.length === 1) {
+              await updateDoc(doc(db, "students", student.id), {
+                curriculumIds: arrayUnion({
+                  date: student.curriculumIds[0].date,
+                  id: student.curriculumIds[0].id,
+                  isExperimental: student.curriculumIds[0].isExperimental,
+                  name: student.curriculumIds[0].name,
+                  indexDays: student.curriculumIds[0].indexDays,
+                  price: schoolCourseEditData.priceUnit / 100,
+                }),
+              });
+            }
+
+            if (student.curriculumIds[0].indexDays.length > 1) {
+              const result = Math.floor(
+                student.curriculumIds[0].indexDays.length /
+                  schoolCourseEditData.bundleDays
+              );
+              const rest =
+                student.curriculumIds[0].indexDays.length %
+                schoolCourseEditData.bundleDays;
+              await updateDoc(doc(db, "students", student.id), {
+                curriculumIds: arrayUnion({
+                  date: student.curriculumIds[0].date,
+                  id: student.curriculumIds[0].id,
+                  isExperimental: student.curriculumIds[0].isExperimental,
+                  name: student.curriculumIds[0].name,
+                  indexDays: student.curriculumIds[0].indexDays,
+                  price:
+                    result * (schoolCourseEditData.priceBundle / 100) +
+                    rest * (schoolCourseEditData.priceUnit / 100),
+                }),
+              });
+            }
+
+            // // CALCULATE AND CHANGING TOTAL STUDENT PRICES
+            // if (
+            //   student.customDiscount ||
+            //   student.employeeDiscount ||
+            //   student.familyDiscount
+            // ) {
+            //   // WITH DISCOUNT
+            //   const priceUnitDiscount = +(
+            //     (schoolCourseEditData.priceUnit / 100) *
+            //     discountVariable
+            //   ).toFixed(2);
+
+            //   const priceBundleDiscount = +(
+            //     (schoolCourseEditData.priceBundle / 100) *
+            //     discountVariable
+            //   ).toFixed(2);
+
+            //   if (student.curriculumIds[0].indexDays.length === 1) {
+            //     await updateDoc(doc(db, "students", student.id), {
+            //       fullPrice: schoolCourseEditData.priceUnit / 100,
+            //       appliedPrice: priceUnitDiscount,
+            //     });
+            //   }
+
+            //   if (student.curriculumIds[0].indexDays.length > 1) {
+            //     const result = Math.floor(
+            //       student.curriculumIds[0].indexDays.length /
+            //         schoolCourseEditData.bundleDays
+            //     );
+            //     const rest =
+            //       student.curriculumIds[0].indexDays.length %
+            //       schoolCourseEditData.bundleDays;
+            //     await updateDoc(doc(db, "students", student.id), {
+            //       appliedPrice:
+            //         result * priceBundleDiscount + rest * priceUnitDiscount,
+            //       fullPrice:
+            //         (result * schoolCourseEditData.priceBundle) / 100 +
+            //         (rest * schoolCourseEditData.priceUnit) / 100,
+            //     });
+            //   }
+            // } else {
+            //   // WITHOUT DISCOUNT
+            //   if (student.curriculumIds[0].indexDays.length === 1) {
+            //     await updateDoc(doc(db, "students", student.id), {
+            //       appliedPrice: schoolCourseEditData.priceUnit / 100,
+            //       fullPrice: schoolCourseEditData.priceUnit / 100,
+            //     });
+            //   }
+            //   if (student.curriculumIds[0].indexDays.length > 1) {
+            //     const result = Math.floor(
+            //       student.curriculumIds[0].indexDays.length /
+            //         schoolCourseEditData.bundleDays
+            //     );
+            //     const rest =
+            //       student.curriculumIds[0].indexDays.length %
+            //       schoolCourseEditData.bundleDays;
+            //     await updateDoc(doc(db, "students", student.id), {
+            //       appliedPrice:
+            //         result * (schoolCourseEditData.priceBundle / 100) +
+            //         rest * (schoolCourseEditData.priceUnit / 100),
+            //       fullPrice:
+            //         result * (schoolCourseEditData.priceBundle / 100) +
+            //         rest * (schoolCourseEditData.priceUnit / 100),
+            //     });
+            //   }
+            // }
+          } else {
+            // IF STUDENT HAS MORE THAN ONE CURRICULUM
+            // CHANGING CURRICULUM PRICE ON STUDENT.CURRICULUMIDS
+            student.curriculumIds.map((studentCurriculum) => {
+              foundedCurriculums.map(async (foundedCurriculum) => {
+                if (foundedCurriculum.id === studentCurriculum.id) {
+                  // CHANGING CURRICULUM STUDENT PRICES
+                  // REMOVING PREVIOUS DATA
+                  await updateDoc(doc(db, "students", student.id), {
+                    curriculumIds: arrayRemove({
+                      date: studentCurriculum.date,
+                      id: studentCurriculum.id,
+                      isExperimental: studentCurriculum.isExperimental,
+                      name: studentCurriculum.name,
+                      indexDays: studentCurriculum.indexDays,
+                      price: studentCurriculum.price,
+                    }),
+                  });
+                  // WRITING UPDATED DATA
+                  if (studentCurriculum.indexDays.length === 1) {
+                    await updateDoc(doc(db, "students", student.id), {
+                      curriculumIds: arrayUnion({
+                        date: studentCurriculum.date,
+                        id: studentCurriculum.id,
+                        isExperimental: studentCurriculum.isExperimental,
+                        name: studentCurriculum.name,
+                        indexDays: studentCurriculum.indexDays,
+                        price: schoolCourseEditData.priceUnit / 100,
+                      }),
+                    });
+                  }
+
+                  if (studentCurriculum.indexDays.length > 1) {
+                    const result = Math.floor(
+                      studentCurriculum.indexDays.length /
+                        schoolCourseEditData.bundleDays
+                    );
+                    const rest =
+                      studentCurriculum.indexDays.length %
+                      schoolCourseEditData.bundleDays;
+                    await updateDoc(doc(db, "students", student.id), {
+                      curriculumIds: arrayUnion({
+                        date: studentCurriculum.date,
+                        id: studentCurriculum.id,
+                        isExperimental: studentCurriculum.isExperimental,
+                        name: studentCurriculum.name,
+                        indexDays: studentCurriculum.indexDays,
+                        price:
+                          result * (schoolCourseEditData.priceBundle / 100) +
+                          rest * (schoolCourseEditData.priceUnit / 100),
+                      }),
+                    });
+                  }
+                }
+              });
+            });
+          }
+          const userRef = collection(db, "students");
+          const q = query(userRef, where("id", "==", student.id));
+          const querySnapshot = await getDocs(q);
+          const promises: StudentSearchProps[] = [];
+          querySnapshot.forEach((doc) => {
+            const promise = doc.data() as StudentSearchProps;
+            promises.push(promise);
+          });
+          Promise.all(promises).then((results) => {
+            const studentToCalcPrices = results;
+            studentToCalcPrices.map(async (student) => {
+              // DISCOUNT VARIABLE
+              const customDiscountValueSum = 100 - +student.customDiscountValue;
+              const customDiscountFinalValue = +`0.${
+                customDiscountValueSum > 9
+                  ? customDiscountValueSum
+                  : `0${customDiscountValueSum}`
+              }`;
+
+              const discountVariable = student.customDiscount
+                ? customDiscountFinalValue
+                : student.employeeDiscount
+                ? employeeDiscountValue
+                : student.familyDiscount
+                ? familyDiscountValue
+                : student.secondCourseDiscount
+                ? secondCourseDiscountValue
+                : 1; // WITHOUT DISCOUNT
+
+              // CALC OF FULL AND APPLY PRICE OF STUDENT
+              let smallestPrice = 0;
+              let otherSumPrices = 0;
+              let olderSmallestPrice = 0;
+              student.curriculumIds.map(async (studentCurriculum, index) => {
+                if (index === 0) {
+                  smallestPrice = studentCurriculum.price;
+                } else {
+                  if (studentCurriculum.price <= smallestPrice) {
+                    olderSmallestPrice = smallestPrice;
+                    smallestPrice = studentCurriculum.price;
+                    otherSumPrices = olderSmallestPrice + otherSumPrices;
+                  } else {
+                    otherSumPrices = otherSumPrices + studentCurriculum.price;
+                  }
+                }
+              });
+              await updateDoc(doc(db, "students", student.id), {
+                appliedPrice: smallestPrice * discountVariable + otherSumPrices,
+                fullPrice: smallestPrice + otherSumPrices,
+              });
+            });
+          });
+        });
+      }
+    }
+  }
+
   // SUBMIT DATA FUNCTION
   const handleEditSchool: SubmitHandler<
     EditSchoolCourseValidationZProps
@@ -157,6 +470,13 @@ export function EditCourse() {
           }
         );
         // CHANGE PRICE ON STUDENTS REGISTERS
+        if (
+          schoolCourseData.priceUnit !== data.priceUnit ||
+          schoolCourseData.priceBundle !== data.priceBundle ||
+          schoolCourseData.bundleDays !== data.bundleDays
+        ) {
+          await updatePriceOnStudentsData();
+        }
         resetForm();
         toast.success(`${schoolCourseEditData.name} alterado com sucesso! 👌`, {
           theme: "colored",
@@ -330,14 +650,15 @@ export function EditCourse() {
                 decimalsLimit={2}
                 decimalScale={2}
                 prefix="R$"
+                decimalSeparator=","
+                groupSeparator="."
                 disableAbbreviations
                 onValueChange={(value) =>
-                  value
-                    ? setSchoolCourseEditData({
-                        ...schoolCourseEditData,
-                        priceUnit: +value.replace(/\D/g, ""),
-                      })
-                    : null
+                  value &&
+                  setSchoolCourseEditData({
+                    ...schoolCourseEditData,
+                    priceUnit: +value.replace(/\D/g, ""),
+                  })
                 }
                 className={
                   errors.priceUnit
@@ -370,14 +691,15 @@ export function EditCourse() {
                 decimalsLimit={2}
                 decimalScale={2}
                 prefix="R$"
+                decimalSeparator=","
+                groupSeparator="."
                 disableAbbreviations
                 onValueChange={(value) =>
-                  value
-                    ? setSchoolCourseEditData({
-                        ...schoolCourseEditData,
-                        priceBundle: +value.replace(/\D/g, ""),
-                      })
-                    : null
+                  value &&
+                  setSchoolCourseEditData({
+                    ...schoolCourseEditData,
+                    priceBundle: +value.replace(/\D/g, ""),
+                  })
                 }
                 className={
                   errors.priceBundle

@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useContext, useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import {
   GlobalDataContext,
   GlobalDataContextType,
@@ -342,12 +343,17 @@ export default function Dashboard() {
       <div
         className="flex flex-col w-36 h-full justify-center items-center text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 hover:bg-klGreen-500/30 hover:dark:bg-klGreen-500/70 py-2 px-3 rounded-xl cursor-pointer"
         onClick={() => setShowDashboardPage({ page: itemMenu.page })}
+        key={uuidv4()}
       >
         <p className="text-klGreen-500 dark:text-gray-100 text-md/snug">
           {itemMenu.title}
         </p>
         <p className="text-klOrange-500 text-md/snug">
-          {itemMenu.array.length > 0 ? itemMenu.array.length : ""}
+          {itemMenu.title === "Adicionar Aluno"
+            ? ""
+            : itemMenu.array.length > 0
+            ? itemMenu.array.length
+            : "0"}
         </p>
       </div>
     );
