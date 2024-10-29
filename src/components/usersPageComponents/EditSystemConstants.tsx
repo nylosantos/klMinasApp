@@ -10,12 +10,12 @@ import {
   EditSystemConstantsValidationZProps,
   SystemConstantsSearchProps,
 } from "../../@types";
-import CurrencyInput from "react-currency-input-field";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { editSystemConstantsValidationSchema } from "../../@types/zodValidation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { doc, getFirestore, updateDoc } from "firebase/firestore";
 import { app } from "../../db/Firebase";
+import { NumericFormat } from "react-number-format";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -168,7 +168,7 @@ export default function EditSystemConstants() {
           >
             Valor da matrícula:{" "}
           </label>
-          <CurrencyInput
+          <NumericFormat
             name="enrolmentFee"
             placeholder={
               errors.enrolmentFee
@@ -180,16 +180,17 @@ export default function EditSystemConstants() {
                 ? systemConstantsDatabaseData[0].enrolmentFee
                 : 0
             }
-            decimalsLimit={2}
+            thousandSeparator="."
+            decimalSeparator=","
+            allowNegative={false}
             decimalScale={2}
-            prefix="R$"
-            disableAbbreviations
-            onValueChange={(value) =>
-              value &&
+            fixedDecimalScale
+            prefix={"R$ "}
+            onValueChange={(values) =>
               systemConstantsEditData &&
               setSystemConstantsEditData({
                 ...systemConstantsEditData,
-                enrolmentFee: +value.replace(/\D/g, ""),
+                enrolmentFee: values.floatValue ?? 0,
               })
             }
             className={
@@ -212,7 +213,7 @@ export default function EditSystemConstants() {
           >
             Valor da aula matrícula com desconto:{" "}
           </label>
-          <CurrencyInput
+          <NumericFormat
             name="enrolmentFeeDiscount"
             placeholder={
               errors.enrolmentFeeDiscount
@@ -224,16 +225,17 @@ export default function EditSystemConstants() {
                 ? systemConstantsDatabaseData[0].enrolmentFeeDiscount
                 : 0
             }
-            decimalsLimit={2}
+            thousandSeparator="."
+            decimalSeparator=","
+            allowNegative={false}
             decimalScale={2}
-            prefix="R$"
-            disableAbbreviations
-            onValueChange={(value) =>
-              value &&
+            fixedDecimalScale
+            prefix={"R$ "}
+            onValueChange={(values) =>
               systemConstantsEditData &&
               setSystemConstantsEditData({
                 ...systemConstantsEditData,
-                enrolmentFeeDiscount: +value.replace(/\D/g, ""),
+                enrolmentFeeDiscount: values.floatValue ?? 0,
               })
             }
             className={

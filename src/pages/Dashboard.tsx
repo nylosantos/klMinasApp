@@ -10,7 +10,7 @@ import { SubmitLoading } from "../components/layoutComponents/SubmitLoading";
 import { EditStudentForm } from "../components/formComponents/EditStudentForm";
 import { StudentButtonDetails } from "../components/layoutComponents/StudentButtonDetails";
 import { FinanceStudentModal } from "../components/modalComponents/FinanceStudentModal";
-import { StudentSearchProps } from "../@types";
+import { FilteredStudentsProps } from "../@types";
 
 export interface HandleClickOpenFunctionProps {
   id: string;
@@ -39,6 +39,8 @@ export default function Dashboard() {
     curriculumDatabaseData,
     studentsDatabaseData,
     userFullData,
+    handleDeleteStudent,
+    handleOneCurriculumDetails,
     setIsSubmitting,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
@@ -223,10 +225,6 @@ export default function Dashboard() {
     }
   }
 
-  interface FilteredStudentsProps extends StudentSearchProps {
-    isFinancialResponsible: boolean;
-  }
-
   // FILTER STUDENTS STATE
   const [filteredStudents, setFilteredStudents] = useState<
     FilteredStudentsProps[]
@@ -264,12 +262,13 @@ export default function Dashboard() {
 
   function handleDeleteUser() {
     if (studentSelected) {
-      console.log(
-        "Deletando usuário: ",
-        studentSelected.name,
-        " - ID: ",
-        studentSelected.id
-      );
+      // console.log(
+      //   "Deletando usuário: ",
+      //   studentSelected.name,
+      //   " - ID: ",
+      //   studentSelected.id
+      // );
+      handleDeleteStudent(studentSelected.id, handleClose);
     } else {
       console.log("Nenhum usuário selecionado.");
     }
@@ -342,7 +341,13 @@ export default function Dashboard() {
     return (
       <div
         className="flex flex-col w-36 h-full justify-center items-center text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 hover:bg-klGreen-500/30 hover:dark:bg-klGreen-500/70 py-2 px-3 rounded-xl cursor-pointer"
-        onClick={() => setShowDashboardPage({ page: itemMenu.page })}
+        onClick={() => {
+          setShowDashboardPage({ page: itemMenu.page }),
+            setIsEdit(false),
+            setOpen(false);
+          setIsFinance(false);
+          setIsDetailsViewing(false);
+        }}
         key={uuidv4()}
       >
         <p className="text-klGreen-500 dark:text-gray-100 text-md/snug">
@@ -514,7 +519,25 @@ export default function Dashboard() {
               {showDashboardPage.page === "curriculum" &&
                 (curriculumDatabaseData.length !== 0 ? (
                   curriculumDatabaseData
-                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .sort((a, b) =>
+                      handleOneCurriculumDetails(a.id).schoolName.localeCompare(
+                        handleOneCurriculumDetails(b.id).schoolName
+                      )
+                    )
+                    .sort((a, b) =>
+                      handleOneCurriculumDetails(
+                        a.id
+                      ).scheduleName.localeCompare(
+                        handleOneCurriculumDetails(b.id).scheduleName
+                      )
+                    )
+                    .sort((a, b) =>
+                      handleOneCurriculumDetails(
+                        a.id
+                      ).schoolCourseName.localeCompare(
+                        handleOneCurriculumDetails(b.id).schoolCourseName
+                      )
+                    )
                     .map((curriculum) => {
                       return (
                         <div
@@ -524,63 +547,90 @@ export default function Dashboard() {
                           <p>
                             Colégio:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {curriculum.school}
+                              {
+                                handleOneCurriculumDetails(curriculum.id)
+                                  .schoolName
+                              }
                             </span>
                           </p>
 
                           <p>
                             Ano Escolar:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {curriculum.schoolClass}
+                              {
+                                handleOneCurriculumDetails(curriculum.id)
+                                  .schoolClassName
+                              }
                             </span>
                           </p>
 
                           <p>
                             Modalidade:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {curriculum.schoolCourse}
+                              {
+                                handleOneCurriculumDetails(curriculum.id)
+                                  .schoolCourseName
+                              }
                             </span>
                           </p>
                           <p>
                             Dias:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {curriculum.classDay}
+                              {
+                                handleOneCurriculumDetails(curriculum.id)
+                                  .classDayName
+                              }
                             </span>
                           </p>
-                          {handleScheduleDetails(curriculum.scheduleId) !==
-                            undefined && (
+                          {handleScheduleDetails(
+                            handleOneCurriculumDetails(curriculum.id).scheduleId
+                          ) !== undefined && (
                             <p>
                               Horário:{" "}
                               <span className="text-red-600 dark:text-yellow-500">
                                 De{" "}
                                 {`${handleScheduleDetails(
-                                  curriculum.scheduleId
+                                  handleOneCurriculumDetails(curriculum.id)
+                                    .scheduleId
                                 )!.classStart.slice(0, 2)}h${
                                   handleScheduleDetails(
-                                    curriculum.scheduleId
+                                    handleOneCurriculumDetails(curriculum.id)
+                                      .scheduleId
                                   )!.classStart.slice(3, 5) === "00"
                                     ? ""
                                     : handleScheduleDetails(
-                                        curriculum.scheduleId
+                                        handleOneCurriculumDetails(
+                                          curriculum.id
+                                        ).scheduleId
                                       )!.classStart.slice(3, 5) + "min"
                                 } a ${handleScheduleDetails(
-                                  curriculum.scheduleId
+                                  handleOneCurriculumDetails(curriculum.id)
+                                    .scheduleId
                                 )!.classEnd.slice(0, 2)}h${
                                   handleScheduleDetails(
-                                    curriculum.scheduleId
+                                    handleOneCurriculumDetails(curriculum.id)
+                                      .scheduleId
                                   )!.classEnd.slice(3, 5) === "00"
                                     ? ""
                                     : handleScheduleDetails(
-                                        curriculum.scheduleId
+                                        handleOneCurriculumDetails(
+                                          curriculum.id
+                                        ).scheduleId
                                       )!.classEnd.slice(3, 5) + "min"
-                                } (${curriculum.schedule})`}
+                                } (${
+                                  handleOneCurriculumDetails(curriculum.id)
+                                    .scheduleName
+                                })`}
                               </span>
                             </p>
                           )}
                           <p>
                             Professor:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {curriculum.teacher}
+                              {
+                                handleOneCurriculumDetails(curriculum.id)
+                                  .teacherName
+                              }
                             </span>
                           </p>
                         </div>

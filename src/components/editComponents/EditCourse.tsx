@@ -133,9 +133,6 @@ export function EditCourse() {
       priceUnit: 0,
     });
   };
-  useEffect(() => {
-    console.log(schoolCourseEditData.priceBundle);
-  }, [schoolCourseEditData.priceBundle]);
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
@@ -491,8 +488,7 @@ export function EditCourse() {
                 decimalScale={2}
                 fixedDecimalScale
                 prefix={"R$ "}
-                onValueChange={(values, sourceInfo) => {
-                  console.log("do numeric: ", values, sourceInfo);
+                onValueChange={(values) => {
                   setSchoolCourseEditData({
                     ...schoolCourseEditData,
                     priceUnit: values.floatValue ?? 0,
@@ -526,8 +522,7 @@ export function EditCourse() {
                 decimalScale={2}
                 fixedDecimalScale
                 prefix={"R$ "}
-                onValueChange={(values, sourceInfo) => {
-                  console.log("do numeric: ", values, sourceInfo);
+                onValueChange={(values) => {
                   setSchoolCourseEditData({
                     ...schoolCourseEditData,
                     priceBundle: values.floatValue ?? 0,
@@ -560,8 +555,7 @@ export function EditCourse() {
                 allowNegative={false}
                 decimalScale={0}
                 fixedDecimalScale
-                onValueChange={(values, sourceInfo) => {
-                  console.log("do numeric: ", values, sourceInfo);
+                onValueChange={(values) => {
                   setSchoolCourseEditData({
                     ...schoolCourseEditData,
                     bundleDays: values.floatValue ?? 0,

@@ -10,9 +10,7 @@ import {
 import { ExcludeCurriculumProps } from "../../@types";
 
 type EditCurriculumButtonDetailsProps = {
-  // id: string;
-  // isEdit: boolean;
-  // isFinancialResponsible: boolean;
+  isExperimental?: boolean;
   openEditCurriculumDays: boolean;
   setOpenEditCurriculumDays: (option: boolean) => void;
   curriculum: ExcludeCurriculumProps;
@@ -21,20 +19,17 @@ type EditCurriculumButtonDetailsProps = {
     index: number,
     data: ExcludeCurriculumProps
   ) => void;
-
-  // handleClickOpen: ({ id, option }: HandleClickOpenFunctionProps) => void;
-  // setIsEdit: (option: boolean) => void;
-  // setIsFinance: (option: boolean) => void;
-  // setIsDetailsViewing: (option: boolean) => void;
-  // handleDeleteUser: () => void;
+  cancelEditFunction: (id: string) => void;
 };
 
 export function EditCurriculumButton({
   curriculum,
   index,
+  isExperimental = false,
   openEditCurriculumDays,
   handleIncludeExcludeFunction,
   setOpenEditCurriculumDays,
+  cancelEditFunction,
 }: EditCurriculumButtonDetailsProps) {
   // GET GLOBAL DATA
   const { userFullData } = useContext(
@@ -51,51 +46,54 @@ export function EditCurriculumButton({
         anchor="bottom end"
         className="w-52 origin-top-right rounded-xl border border-white/5 bg-klGreen-500 p-1 text-sm/6 text-white transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
       >
-        <MenuItem>
-          <button
-            className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
-            onClick={() => {
-              setOpenEditCurriculumDays(!openEditCurriculumDays);
-            }}
-          >
-            <IoPencil size={12} />
-            {openEditCurriculumDays ? "Cancelar edição" : "Editar"}
-            {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
+        {!isExperimental && (
+          <MenuItem>
+            <button
+              className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
+              onClick={() => {
+                setOpenEditCurriculumDays(!openEditCurriculumDays);
+                cancelEditFunction(curriculum.id);
+              }}
+            >
+              <IoPencil size={12} />
+              {openEditCurriculumDays ? "Cancelar edição" : "Editar"}
+              {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
               ⌘E
             </kbd> */}
-          </button>
-        </MenuItem>
+            </button>
+          </MenuItem>
+        )}
+        {!isExperimental && userFullData && userFullData.role !== "user" && (
+          <div className="my-1 h-px bg-white/5" />
+        )}
 
         {userFullData && userFullData.role !== "user" && (
-          <>
-            <div className="my-1 h-px bg-white/5" />
-            <MenuItem>
-              <button
-                className={`group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 ${
-                  curriculum.exclude
-                    ? "data-[focus]:bg-klOrange-500/30"
-                    : "data-[focus]:bg-red-600/30"
-                }`}
-                onClick={() => {
-                  const data: ExcludeCurriculumProps = {
-                    exclude: !curriculum.exclude,
-                    id: curriculum.id,
-                    date: curriculum.date,
-                    isExperimental: curriculum.isExperimental,
-                    indexDays: curriculum.indexDays,
-                    price: curriculum.price,
-                  };
-                  handleIncludeExcludeFunction(index, data);
-                }}
-              >
-                <MdDelete />
-                {curriculum.exclude ? "Cancelar Exclusão" : "Excluir"}
-                {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
+          <MenuItem>
+            <button
+              className={`group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 ${
+                curriculum.exclude
+                  ? "data-[focus]:bg-klOrange-500/30"
+                  : "data-[focus]:bg-red-600/30"
+              }`}
+              onClick={() => {
+                const data: ExcludeCurriculumProps = {
+                  exclude: !curriculum.exclude,
+                  id: curriculum.id,
+                  date: curriculum.date,
+                  isExperimental: curriculum.isExperimental,
+                  indexDays: curriculum.indexDays,
+                  price: curriculum.price,
+                };
+                handleIncludeExcludeFunction(index, data);
+              }}
+            >
+              <MdDelete />
+              {curriculum.exclude ? "Cancelar Exclusão" : "Excluir"}
+              {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
                                         ⌘D
                                       </kbd> */}
-              </button>
-            </MenuItem>
-          </>
+            </button>
+          </MenuItem>
         )}
       </MenuItems>
     </Menu>

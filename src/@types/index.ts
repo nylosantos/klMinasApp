@@ -208,7 +208,14 @@ export interface SelectProps {
   availableAndWaitingClasses?: boolean;
   onlyEnrolledStudents?: boolean;
   dontShowMyself?: boolean;
+  parentOneEmail?: string;
+  parentTwoEmail?: string;
+  financialResponsibleDocument?: string;
   handleData?: (data: any) => void;
+}
+
+export interface FilteredStudentsProps extends StudentSearchProps {
+  isFinancialResponsible: boolean;
 }
 
 export interface ToggleClassDaysFunctionProps {

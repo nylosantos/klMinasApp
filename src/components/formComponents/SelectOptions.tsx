@@ -2,7 +2,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useContext, useEffect, useState } from "react";
 
-import { SelectProps, StudentSearchProps } from "../../@types";
+import {
+  FilteredStudentsProps,
+  SelectProps,
+  StudentSearchProps,
+} from "../../@types";
 import {
   GlobalDataContext,
   GlobalDataContextType,
@@ -27,6 +31,9 @@ export function SelectOptions({
   displayAdmins = false,
   availableAndWaitingClasses = false,
   dontShowMyself = false,
+  parentOneEmail,
+  parentTwoEmail,
+  financialResponsibleDocument,
 }: SelectProps) {
   // GET GLOBAL DATA
   const {
@@ -127,24 +134,58 @@ export function SelectOptions({
       setData(foundedStudentsArray);
     }
 
-    if (dataType === "searchEnrolledStudent" && curriculumId) {
-      const foundedStudentsArray: StudentSearchProps[] = [];
+    if (
+      dataType === "searchEnrolledStudent" &&
+      (parentOneEmail || parentTwoEmail || financialResponsibleDocument)
+    ) {
+      const studentsToShow: FilteredStudentsProps[] = [];
       studentsDatabaseData.map((student) => {
-        // EXCLUDE STUDENTS THAT ALREADY HAVE FAMILY DISCOUNT
-        if (student.curriculumIds && !student.familyDiscount) {
-          const foundedFamilyStudent = student.curriculumIds.find(
-            (curriculum) => curriculum.id === curriculumId
-          );
-          if (foundedFamilyStudent) {
-            if (dontShowMyself && studentId !== student.id) {
-              foundedStudentsArray.push(student);
-            } else {
-              foundedStudentsArray.push(student);
-            }
+        if (studentId) {
+          if (
+            student.financialResponsible.document ===
+              financialResponsibleDocument &&
+            student.id !== studentId
+          ) {
+            studentsToShow.push({ ...student, isFinancialResponsible: true });
+          } else if (
+            (student.parentOne?.email === parentOneEmail ||
+              student.parentTwo?.email === parentTwoEmail) &&
+            student.id !== studentId
+          ) {
+            studentsToShow.push({ ...student, isFinancialResponsible: false });
+          }
+        } else {
+          if (
+            student.financialResponsible.document ===
+            financialResponsibleDocument
+          ) {
+            studentsToShow.push({ ...student, isFinancialResponsible: true });
+          } else if (
+            student.parentOne?.email === parentOneEmail ||
+            student.parentTwo?.email === parentTwoEmail
+          ) {
+            studentsToShow.push({ ...student, isFinancialResponsible: false });
           }
         }
       });
-      setData(foundedStudentsArray);
+      setData(studentsToShow);
+      // const foundedStudentsArray: StudentSearchProps[] = [];
+      // studentsDatabaseData.map((student) => {
+      //   // EXCLUDE STUDENTS THAT ALREADY HAVE FAMILY DISCOUNT
+      //   if (student.curriculumIds && !student.familyDiscount) {
+      //     const foundedFamilyStudent = student.curriculumIds.find(
+      //       (curriculum) => curriculum.id === curriculumId
+      //     );
+      //     if (foundedFamilyStudent) {
+      //       if (dontShowMyself && studentId !== student.id) {
+      //         foundedStudentsArray.push(student);
+      //       } else {
+      //         foundedStudentsArray.push(student);
+      //       }
+      //     }
+      //   }
+      // });
+      // setData(foundedStudentsArray);
     }
 
     if (dataType === "appUsers") {
@@ -185,6 +226,9 @@ export function SelectOptions({
     dataType,
     schoolId,
     schoolClassId,
+    parentOneEmail,
+    parentTwoEmail,
+    financialResponsibleDocument,
     appUsersDatabaseData,
     classDaysDatabaseData,
     schoolDatabaseData,

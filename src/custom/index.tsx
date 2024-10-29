@@ -97,7 +97,7 @@ export const classDayIndexNames = [
 export const minimumStudents = 20;
 
 // STANDARD PAYMENT DAY
-export const standardPaymentDay = "10";
+export const standardPaymentDay = "5";
 
 // DISCOUNT VARIABLES
 export const employeeDiscountValue = 0.8;

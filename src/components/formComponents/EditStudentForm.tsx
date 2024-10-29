@@ -53,6 +53,7 @@ import {
 import { HandleClickOpenFunctionProps } from "../../pages/Dashboard";
 import EditDashboardHeader from "../layoutComponents/EditDashboardHeader";
 import { EditCurriculumButton } from "../layoutComponents/EditCurriculumButton";
+import { EditFamilyButton } from "../layoutComponents/EditFamilyButton";
 
 export type NewPricesProps = {
   appliedPrice: number;
@@ -119,6 +120,7 @@ export function EditStudentForm({
     schoolCourseDatabaseData,
     studentsDatabaseData,
     page,
+    userFullData,
     formatCurriculumName,
     handleOneCurriculumDetails,
     handleOneStudentDetails,
@@ -472,6 +474,14 @@ export function EditStudentForm({
       });
     }
   }
+  type WasCurriculumEditProps = {
+    id: string;
+    isEdited: boolean;
+  };
+
+  const [wasCurriculumEdit, setWasCurriculumEdit] = useState<
+    WasCurriculumEditProps[]
+  >([]);
 
   // OPEN EDIT CURRICULUM PANEL DAYS
   const [openEditCurriculumDays, setOpenEditCurriculumDays] = useState(false);
@@ -489,12 +499,14 @@ export function EditStudentForm({
   }: ToggleCurriculumClassDaysProps) => {
     let indexDaysToUpdate: number[] = curriculum.indexDays;
 
-    console.log(day);
-
     if (indexDaysToUpdate.includes(day)) {
-      indexDaysToUpdate = indexDaysToUpdate.filter(
-        (classDay) => classDay !== day
-      );
+      if (indexDaysToUpdate.length === 1) {
+        return toast.error("É preciso selecionar ao menos um dia de aula.");
+      } else {
+        indexDaysToUpdate = indexDaysToUpdate.filter(
+          (classDay) => classDay !== day
+        );
+      }
     } else {
       if (day === 0) {
         indexDaysToUpdate = [day, ...curriculum.indexDays];
@@ -615,23 +627,86 @@ export function EditStudentForm({
         indexDaysToUpdate = [...indexDaysToUpdate, day];
       }
     }
-    const newExcludeCurriculum = excludeCurriculum.map((curriculum, i) => {
-      if (i === index) {
-        return {
-          exclude: curriculum.exclude,
-          id: curriculum.id,
-          date: curriculum.date,
-          isExperimental: curriculum.isExperimental,
-          indexDays: indexDaysToUpdate,
-          price: curriculum.price,
-        };
-      } else {
-        // THE REST HAVEN'T CHANGED
-        return curriculum;
+    // NEW PRICE CALC
+    const changedCurriculum = curriculumDatabaseData.find(
+      (changedCurriculumDatabase) =>
+        changedCurriculumDatabase.id === curriculum.id
+    );
+    if (changedCurriculum) {
+      const foundedSchoolCourseDetails = schoolCourseDatabaseData.find(
+        (schoolCourse) => schoolCourse.id === changedCurriculum.schoolCourseId
+      );
+      if (foundedSchoolCourseDetails) {
+        const result = Math.floor(
+          indexDaysToUpdate.length / foundedSchoolCourseDetails.bundleDays
+        );
+        const rest =
+          indexDaysToUpdate.length % foundedSchoolCourseDetails.bundleDays;
+        const newExcludeCurriculum = excludeCurriculum.map((curriculum, i) => {
+          if (i === index) {
+            return {
+              exclude: curriculum.exclude,
+              id: curriculum.id,
+              date: curriculum.date,
+              isExperimental: curriculum.isExperimental,
+              indexDays: indexDaysToUpdate,
+              price:
+                result * foundedSchoolCourseDetails.priceBundle +
+                rest * foundedSchoolCourseDetails.priceUnit,
+            };
+          } else {
+            // THE REST HAVEN'T CHANGED
+            return curriculum;
+          }
+        });
+        const newWasCurriculumEdit = excludeCurriculum.map((curriculum, i) => {
+          if (i === index) {
+            return {
+              id: curriculum.id,
+              isEdited: true,
+            };
+          } else {
+            // THE REST HAVEN'T CHANGED
+            return {
+              id: curriculum.id,
+              isEdited: false,
+            };
+          }
+        });
+        setWasCurriculumEdit(newWasCurriculumEdit);
+        setExcludeCurriculum(newExcludeCurriculum);
       }
-    });
-    setExcludeCurriculum(newExcludeCurriculum);
+    }
   };
+
+  function restoreEditedExcludeCurriculum(id: string) {
+    if (studentCurriculumDetails !== undefined) {
+      if (studentCurriculumDetails.length > 0) {
+        const foundedExcludeCurriculum = studentCurriculumDetails.find(
+          (curriculumDetails) => curriculumDetails.id === id
+        );
+
+        if (foundedExcludeCurriculum) {
+          const newExcludeCurriculum = excludeCurriculum.map((curriculum) => {
+            if (curriculum.id === foundedExcludeCurriculum.id) {
+              return {
+                exclude: curriculum.exclude,
+                id: curriculum.id,
+                date: curriculum.date,
+                isExperimental: curriculum.isExperimental,
+                indexDays: foundedExcludeCurriculum.indexDays,
+                price: foundedExcludeCurriculum.price,
+              };
+            } else {
+              // THE REST HAVEN'T CHANGED
+              return curriculum;
+            }
+          });
+          setExcludeCurriculum(newExcludeCurriculum);
+        }
+      }
+    }
+  }
 
   // -------------------------- END OF CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
 
@@ -1628,19 +1703,19 @@ export function EditStudentForm({
         newFamilyCurriculumId: "",
       });
       if (studentEditData.addFamily) {
-        (
-          document.getElementById("newFamilySchoolSelect") as HTMLSelectElement
-        ).selectedIndex = 0;
-        (
-          document.getElementById(
-            "newFamilySchoolClassSelect"
-          ) as HTMLSelectElement
-        ).selectedIndex = 0;
-        (
-          document.getElementById(
-            "newFamilyCurriculumSelect"
-          ) as HTMLSelectElement
-        ).selectedIndex = 0;
+        // (
+        //   document.getElementById("newFamilySchoolSelect") as HTMLSelectElement
+        // ).selectedIndex = 0;
+        // (
+        //   document.getElementById(
+        //     "newFamilySchoolClassSelect"
+        //   ) as HTMLSelectElement
+        // ).selectedIndex = 0;
+        // (
+        //   document.getElementById(
+        //     "newFamilyCurriculumSelect"
+        //   ) as HTMLSelectElement
+        // ).selectedIndex = 0;
         (
           document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
         ).selectedIndex = 0;
@@ -1705,73 +1780,73 @@ export function EditStudentForm({
   }, [studentEditData.addExperimentalCurriculum]);
 
   // WHEN NEW FAMILY CURRICULUM SCHOOL ID CHANGE
-  useEffect(() => {
-    if (studentSelectedData) {
-      if (studentEditData.addFamily) {
-        (
-          document.getElementById(
-            "newFamilySchoolClassSelect"
-          ) as HTMLSelectElement
-        ).selectedIndex = 0;
-        (
-          document.getElementById(
-            "newFamilyCurriculumSelect"
-          ) as HTMLSelectElement
-        ).selectedIndex = 0;
-        (
-          document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-        ).selectedIndex = 0;
-      }
-    }
-  }, [newStudentData.newFamilySchoolId]);
+  // useEffect(() => {
+  //   if (studentSelectedData) {
+  //     if (studentEditData.addFamily) {
+  //       // (
+  //       //   document.getElementById(
+  //       //     "newFamilySchoolClassSelect"
+  //       //   ) as HTMLSelectElement
+  //       // ).selectedIndex = 0;
+  //       // (
+  //       //   document.getElementById(
+  //       //     "newFamilyCurriculumSelect"
+  //       //   ) as HTMLSelectElement
+  //       // ).selectedIndex = 0;
+  //       // (
+  //       //   document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
+  //       // ).selectedIndex = 0;
+  //     }
+  //   }
+  // }, [newStudentData.newFamilySchoolId]);
 
   // WHEN NEW FAMILY SCHOOL ID CHANGE
-  useEffect(() => {
-    if (studentSelectedData) {
-      if (studentEditData.addFamily) {
-        (
-          document.getElementById(
-            "newFamilySchoolClassSelect"
-          ) as HTMLSelectElement
-        ).selectedIndex = 0;
-        (
-          document.getElementById(
-            "newFamilyCurriculumSelect"
-          ) as HTMLSelectElement
-        ).selectedIndex = 0;
-        (
-          document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-        ).selectedIndex = 0;
-      }
-    }
-  }, [newStudentData.newFamilySchoolId]);
+  // useEffect(() => {
+  //   if (studentSelectedData) {
+  //     if (studentEditData.addFamily) {
+  //       (
+  //         document.getElementById(
+  //           "newFamilySchoolClassSelect"
+  //         ) as HTMLSelectElement
+  //       ).selectedIndex = 0;
+  //       (
+  //         document.getElementById(
+  //           "newFamilyCurriculumSelect"
+  //         ) as HTMLSelectElement
+  //       ).selectedIndex = 0;
+  //       (
+  //         document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
+  //       ).selectedIndex = 0;
+  //     }
+  //   }
+  // }, [newStudentData.newFamilySchoolId]);
 
   // WHEN NEW FAMILY SCHOOL CLASS ID CHANGE
-  useEffect(() => {
-    if (studentSelectedData) {
-      if (studentEditData.addFamily) {
-        (
-          document.getElementById(
-            "newFamilyCurriculumSelect"
-          ) as HTMLSelectElement
-        ).selectedIndex = 0;
-        (
-          document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-        ).selectedIndex = 0;
-      }
-    }
-  }, [newStudentData.newFamilySchoolClassId]);
+  // useEffect(() => {
+  //   if (studentSelectedData) {
+  //     if (studentEditData.addFamily) {
+  //       (
+  //         document.getElementById(
+  //           "newFamilyCurriculumSelect"
+  //         ) as HTMLSelectElement
+  //       ).selectedIndex = 0;
+  //       (
+  //         document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
+  //       ).selectedIndex = 0;
+  //     }
+  //   }
+  // }, [newStudentData.newFamilySchoolClassId]);
 
   // WHEN NEW FAMILY CURRICULUM ID CHANGE
-  useEffect(() => {
-    if (studentSelectedData) {
-      if (studentEditData.addFamily) {
-        (
-          document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-        ).selectedIndex = 0;
-      }
-    }
-  }, [newStudentData.newFamilyCurriculumId]);
+  // useEffect(() => {
+  //   if (studentSelectedData) {
+  //     if (studentEditData.addFamily) {
+  //       (
+  //         document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
+  //       ).selectedIndex = 0;
+  //     }
+  //   }
+  // }, [newStudentData.newFamilyCurriculumId]);
   // ---------------------------------------- END OF ADD NEW CURRICULUM STATES AND FUNCTIONS ---------------------------------------- //
 
   // CHANGE MONTHLY PAYMENT WHEN ADD SCHOOL CLASS
@@ -2427,13 +2502,229 @@ export function EditStudentForm({
     });
   }, [errors]);
 
+  // CONFIRM ALERT MODAL
+  // const ConfirmationAlert = withReactContent(Swal);
+
+  // function deleteStudent(studentId: string) {
+  //   ConfirmationAlert.fire({
+  //     title: "Você tem certeza?",
+  //     text: "Não vai ser possível modificar o palpite!",
+  //     icon: "warning",
+  //     showCancelButton: true,
+  //     cancelButtonColor: "#d33",
+  //     confirmButtonColor: "#0d9488",
+  //     confirmButtonText: "Sim, confirmar!",
+  //   }).then(async (result) => {
+  //     if (result.isConfirmed) {
+  //       const studentToDelete = studentsDatabaseData.find(
+  //         (student) => student.id === studentId
+  //       );
+  //       if (studentToDelete) {
+  //         // TEST FOR BROTHERS REGISTERED
+  //         if (studentToDelete.studentFamilyAtSchool.length > 0) {
+  //           // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
+  //           studentToDelete.studentFamilyAtSchool.map(async (studentFamily) => {
+  //             const editingStudentFamily = studentsDatabaseData.find(
+  //               (student) => student.id === studentFamily.id
+  //             );
+  //             if (editingStudentFamily) {
+  //               const foundedStudentOnFamilyRecord =
+  //                 editingStudentFamily.studentFamilyAtSchool.find(
+  //                   (student) => student.id === studentId
+  //                 );
+  //               if (foundedStudentOnFamilyRecord) {
+  //                 // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
+  //                 if (
+  //                   editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+  //                   editingStudentFamily.studentFamilyAtSchool.length === 1 &&
+  //                   !editingStudentFamily.secondCourseDiscount
+  //                 ) {
+  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
+  //                     studentFamilyAtSchool: arrayRemove({
+  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+  //                       id: foundedStudentOnFamilyRecord.id,
+  //                     }),
+  //                     familyDiscount: false,
+  //                     appliedPrice: editingStudentFamily.fullPrice,
+  //                   });
+  //                   // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
+  //                 } else if (
+  //                   editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+  //                   editingStudentFamily.studentFamilyAtSchool.length === 1
+  //                 ) {
+  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
+  //                     studentFamilyAtSchool: arrayRemove({
+  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+  //                       id: foundedStudentOnFamilyRecord.id,
+  //                     }),
+  //                     familyDiscount: false,
+  //                   });
+  //                   // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
+  //                 } else if (
+  //                   editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+  //                   editingStudentFamily.studentFamilyAtSchool.length > 1
+  //                 ) {
+  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
+  //                     studentFamilyAtSchool: arrayRemove({
+  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+  //                       id: foundedStudentOnFamilyRecord.id,
+  //                     }),
+  //                   });
+  //                   // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
+  //                 } else if (
+  //                   !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+  //                   editingStudentFamily.studentFamilyAtSchool.length === 1 &&
+  //                   !editingStudentFamily.secondCourseDiscount
+  //                 ) {
+  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
+  //                     studentFamilyAtSchool: arrayRemove({
+  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+  //                       id: foundedStudentOnFamilyRecord.id,
+  //                     }),
+  //                     familyDiscount: false,
+  //                     appliedPrice: editingStudentFamily.fullPrice,
+  //                   });
+  //                   // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
+  //                 } else if (
+  //                   !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+  //                   editingStudentFamily.studentFamilyAtSchool.length === 1
+  //                 ) {
+  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
+  //                     studentFamilyAtSchool: arrayRemove({
+  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+  //                       id: foundedStudentOnFamilyRecord.id,
+  //                     }),
+  //                     familyDiscount: false,
+  //                   });
+  //                   // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
+  //                 } else if (
+  //                   !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+  //                   editingStudentFamily.studentFamilyAtSchool.length > 1
+  //                 ) {
+  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
+  //                     studentFamilyAtSchool: arrayRemove({
+  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
+  //                       id: foundedStudentOnFamilyRecord.id,
+  //                     }),
+  //                   });
+  //                 }
+  //               }
+  //             }
+  //           });
+  //         }
+
+  //         // DELETE STUDENT FROM EXPERIMENTAL CLASSES
+  //         if (studentToDelete.experimentalCurriculumIds.length > 0) {
+  //           studentToDelete.experimentalCurriculumIds.map(
+  //             async (experimentalStudentCurriculum) => {
+  //               const editingExperimentalCurriculum = curriculumDatabaseData.find(
+  //                 (experimentalCurriculum) =>
+  //                   experimentalCurriculum.id === experimentalStudentCurriculum.id
+  //               );
+  //               if (editingExperimentalCurriculum) {
+  //                 const foundedStudentOnExperimentalCurriculum =
+  //                   editingExperimentalCurriculum.experimentalStudents.find(
+  //                     (student) => student.id === studentId
+  //                   );
+
+  //                 if (foundedStudentOnExperimentalCurriculum) {
+  //                   await updateDoc(
+  //                     doc(db, "curriculum", editingExperimentalCurriculum.id),
+  //                     {
+  //                       experimentalStudents: arrayRemove({
+  //                         date: foundedStudentOnExperimentalCurriculum.date,
+  //                         id: foundedStudentOnExperimentalCurriculum.id,
+  //                         indexDays:
+  //                           foundedStudentOnExperimentalCurriculum.indexDays,
+  //                         isExperimental:
+  //                           foundedStudentOnExperimentalCurriculum.isExperimental,
+  //                         price: foundedStudentOnExperimentalCurriculum.price,
+  //                       }),
+  //                     }
+  //                   );
+  //                 }
+  //               }
+  //             }
+  //           );
+  //         }
+
+  //         // DELETE STUDENT FROM CURRICULUM
+  //         if (studentToDelete.curriculumIds.length > 0) {
+  //           studentToDelete.curriculumIds.map(async (studentCurriculum) => {
+  //             const editingCurriculum = curriculumDatabaseData.find(
+  //               (curriculum) => curriculum.id === studentCurriculum.id
+  //             );
+  //             if (editingCurriculum) {
+  //               const foundedStudentOnCurriculum = editingCurriculum.students.find(
+  //                 (student) => student.id === studentId
+  //               );
+
+  //               if (foundedStudentOnCurriculum) {
+  //                 await updateDoc(doc(db, "curriculum", editingCurriculum.id), {
+  //                   students: arrayRemove({
+  //                     date: foundedStudentOnCurriculum.date,
+  //                     id: foundedStudentOnCurriculum.id,
+  //                     indexDays: foundedStudentOnCurriculum.indexDays,
+  //                     isExperimental: foundedStudentOnCurriculum.isExperimental,
+  //                     price: foundedStudentOnCurriculum.price,
+  //                   }),
+  //                 });
+  //               }
+  //             }
+  //           });
+  //         }
+
+  //         // DELETE STUDENT
+  //         const deleteStudent = async () => {
+  //           try {
+  //             await deleteDoc(doc(db, "students", studentId));
+  //             resetForm();
+  //             toast.success(`Aluno excluído com sucesso! 👌`, {
+  //               theme: "colored",
+  //               closeOnClick: true,
+  //               pauseOnHover: true,
+  //               draggable: true,
+  //               autoClose: 3000,
+  //             });
+  //             setIsSubmitting(false);
+  //           } catch (error) {
+  //             console.log("ESSE É O ERROR", error);
+  //             toast.error(`Ocorreu um erro... 🤯`, {
+  //               theme: "colored",
+  //               closeOnClick: true,
+  //               pauseOnHover: true,
+  //               draggable: true,
+  //               autoClose: 3000,
+  //             });
+  //             setIsSubmitting(false);
+  //           }
+  //         };
+  //         deleteStudent();
+  //       } else {
+  //         toast.error(
+  //           `Ocorreu um erro, aluno não encontrado no banco de dados... 🤯`,
+  //           {
+  //             theme: "colored",
+  //             closeOnClick: true,
+  //             pauseOnHover: true,
+  //             draggable: true,
+  //             autoClose: 3000,
+  //           }
+  //         );
+  //         setIsSubmitting(false);
+  //       }
+  //     } else {
+  //     }
+  //   });
+  // }
+
   // SUBMIT DATA FUNCTION
   const handleEditStudent: SubmitHandler<EditStudentValidationZProps> = async (
     data
   ) => {
     setIsSubmitting(true);
 
-    // CHEKING VALID FINANCIAL RESPONSIBLE DOCUMENT
+    // CHECKING VALID FINANCIAL RESPONSIBLE DOCUMENT
     if (!testFinancialCPF) {
       return (
         setIsSubmitting(false),
@@ -2451,7 +2742,61 @@ export function EditStudentForm({
       );
     }
 
-    // CHEKING IF EXPERIMENTAL CLASS DATE WAS PICKED
+    // CHECKING IF CURRICULUM WAS EDITED
+    let triggerCurriculumEdit = false;
+    const newStudentsCurriculumIds: CurriculumArrayProps[] = [];
+    wasCurriculumEdit.map((curriculum) => {
+      if (curriculum.isEdited) {
+        triggerCurriculumEdit = true;
+      }
+    });
+    if (triggerCurriculumEdit) {
+      excludeCurriculum.map(async (curriculum) => {
+        // SET ALL STUDENTS CURRICULUM
+        newStudentsCurriculumIds.push({
+          id: curriculum.id,
+          date: curriculum.date,
+          indexDays: curriculum.indexDays,
+          isExperimental: curriculum.isExperimental,
+          price: curriculum.price,
+        });
+
+        // SEARCH CURRICULUM TO CHANGE STUDENT ON CURRICULUM DATABASE
+        const changedCurriculum = curriculumDatabaseData.find(
+          (changedCurriculumDatabase) =>
+            changedCurriculumDatabase.id === curriculum.id
+        );
+        if (changedCurriculum) {
+          const oldStudentOnCurriculum = changedCurriculum.students.find(
+            (student) => student.id === data.id
+          );
+          if (oldStudentOnCurriculum) {
+            // UPDATE CURRICULUM (UPDATE STUDENT IN CURRICULUM DATABASE)
+            await updateDoc(doc(db, "curriculum", changedCurriculum.id), {
+              students: arrayRemove({
+                date: oldStudentOnCurriculum.date,
+                id: oldStudentOnCurriculum.id,
+                indexDays: oldStudentOnCurriculum.indexDays,
+              }),
+            });
+            await updateDoc(doc(db, "curriculum", changedCurriculum.id), {
+              students: arrayUnion({
+                date: oldStudentOnCurriculum.date,
+                id: oldStudentOnCurriculum.id,
+                indexDays: curriculum.indexDays,
+              }),
+            });
+          }
+        }
+      });
+
+      // UPDATE STUDENT (UPDATE CURRICULUM IN STUDENT DATABASE)
+      await updateDoc(doc(db, "students", data.id), {
+        curriculumIds: newStudentsCurriculumIds,
+      });
+    }
+
+    // CHECKING IF EXPERIMENTAL CLASS DATE WAS PICKED
     if (
       newStudentData.confirmAddExperimentalCurriculum &&
       newStudentData.experimentalCurriculumInitialDate === ""
@@ -2471,7 +2816,7 @@ export function EditStudentForm({
       setExperimentalClassError(false);
     }
 
-    // CHEKING IF CURRICULUM INITIAL CLASS DATE WAS PICKED
+    // CHECKING IF CURRICULUM INITIAL CLASS DATE WAS PICKED
     if (
       newStudentData.confirmAddCurriculum &&
       newStudentData.curriculumInitialDate === ""
@@ -2917,7 +3262,7 @@ export function EditStudentForm({
       addNewFamily();
     }
 
-    // CHEKING VALID SECONDARY PHONE
+    // CHECKING VALID SECONDARY PHONE
     if (studentEditData.financialResponsible.activePhoneSecondary) {
       if (studentEditData.financialResponsible.phoneSecondary.ddd === "DDD") {
         return (
@@ -2936,7 +3281,7 @@ export function EditStudentForm({
       }
     }
 
-    // CHEKING VALID TERTIARY PHONE
+    // CHECKING VALID TERTIARY PHONE
     if (studentEditData.financialResponsible.activePhoneTertiary) {
       if (studentEditData.financialResponsible.phoneTertiary.ddd === "DDD") {
         return (
@@ -4523,7 +4868,10 @@ export function EditStudentForm({
                 >
                   Aula Experimental {index + 1}{" "}
                   {curriculum.exclude && (
-                    <span>(selecionada para exclusão)</span>
+                    <span className="text-xs">
+                      {" "}
+                      (selecionada para exclusão)
+                    </span>
                   )}
                   :{" "}
                 </label>
@@ -4541,24 +4889,28 @@ export function EditStudentForm({
                       }
                       className={
                         curriculum.exclude
-                          ? "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          ? "w-full px-2 py-1 dark:bg-gray-800 border border-klOrange-500 dark:border-klOrange-500 dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                           : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                       }
                       value={formatCurriculumName(curriculum.id)}
                       readOnly
                     />
                   </div>
-                  {!onlyView && (
-                    <EditCurriculumButton
-                      curriculum={curriculum}
-                      index={index}
-                      handleIncludeExcludeFunction={
-                        handleIncludeExcludeExperimentalCurriculum
-                      }
-                      openEditCurriculumDays={openEditCurriculumDays}
-                      setOpenEditCurriculumDays={setOpenEditCurriculumDays}
-                    />
-                  )}
+                  {!onlyView &&
+                    userFullData &&
+                    userFullData.role !== "user" && (
+                      <EditCurriculumButton
+                        curriculum={curriculum}
+                        index={index}
+                        handleIncludeExcludeFunction={
+                          handleIncludeExcludeExperimentalCurriculum
+                        }
+                        openEditCurriculumDays={openEditCurriculumDays}
+                        setOpenEditCurriculumDays={setOpenEditCurriculumDays}
+                        isExperimental
+                        cancelEditFunction={restoreEditedExcludeCurriculum}
+                      />
+                    )}
                 </div>
               </div>
             ))}
@@ -4997,6 +5349,7 @@ export function EditStudentForm({
                         handleIncludeExcludeFunction={
                           handleIncludeExcludeCurriculum
                         }
+                        cancelEditFunction={restoreEditedExcludeCurriculum}
                       />
                     )}
                   </div>
@@ -5639,29 +5992,34 @@ export function EditStudentForm({
                     />
                   </div>
                   {!onlyView && (
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      className={
-                        family.exclude
-                          ? "border rounded-2xl border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-2/12"
-                          : "border rounded-2xl border-red-900 bg-red-600 disabled:bg-red-400 text-white w-2/12"
-                      }
-                      onClick={() => {
-                        const data: ExcludeFamilyProps = {
-                          exclude: !family.exclude,
-                          applyDiscount: family.applyDiscount,
-                          id: family.id,
-                        };
-                        handleIncludeExcludeFamily(index, data);
-                      }}
-                    >
-                      {isSubmitting
-                        ? "Salvando..."
-                        : family.exclude
-                        ? "Cancelar Exclusão"
-                        : "Excluir"}
-                    </button>
+                    <EditFamilyButton
+                      family={family}
+                      index={index}
+                      handleIncludeExcludeFunction={handleIncludeExcludeFamily}
+                    />
+                    // <button
+                    //   type="button"
+                    //   disabled={isSubmitting}
+                    //   className={
+                    //     family.exclude
+                    //       ? "border rounded-2xl border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-2/12"
+                    //       : "border rounded-2xl border-red-900 bg-red-600 disabled:bg-red-400 text-white w-2/12"
+                    //   }
+                    //   onClick={() => {
+                    //     const data: ExcludeFamilyProps = {
+                    //       exclude: !family.exclude,
+                    //       applyDiscount: family.applyDiscount,
+                    //       id: family.id,
+                    //     };
+                    //     handleIncludeExcludeFamily(index, data);
+                    //   }}
+                    // >
+                    //   {isSubmitting
+                    //     ? "Salvando..."
+                    //     : family.exclude
+                    //     ? "Cancelar Exclusão"
+                    //     : "Excluir"}
+                    // </button>
                   )}
                 </div>
               </div>
@@ -5702,15 +6060,15 @@ export function EditStudentForm({
 
           {/** ADD FAMILY */}
           {studentEditData.addFamily && (
-            <div className="flex flex-col py-2 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
+            <div className="flex flex-col p-4 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
               {/** ADD FAMILY SECTION TITLE */}
-              <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+              <h1 className="font-bold text-lg pb-4 text-red-600 dark:text-yellow-500">
                 Atenção: a seguir insira os dados do aluno que estuda na KL
-                Minas, e é parente de {studentEditData.name}:
+                Minas, <br />e é familiar de {studentEditData.name}:
               </h1>
 
               {/* FAMILY SCHOOL SELECT */}
-              <div className="flex gap-2 items-center">
+              {/* <div className="flex gap-2 items-center">
                 <label
                   htmlFor="newFamilySchoolSelect"
                   className={
@@ -5739,10 +6097,10 @@ export function EditStudentForm({
                 >
                   <SelectOptions returnId dataType="schools" />
                 </select>
-              </div>
+              </div> */}
 
               {/* FAMILY SCHOOL CLASS SELECT */}
-              <div className="flex gap-2 items-center">
+              {/* <div className="flex gap-2 items-center">
                 <label
                   htmlFor="newFamilySchoolClassSelect"
                   className={
@@ -5786,10 +6144,10 @@ export function EditStudentForm({
                     </option>
                   )}
                 </select>
-              </div>
+              </div> */}
 
               {/* FAMILY SCHOOL COURSE SELECT */}
-              <div className="flex gap-2 items-center">
+              {/* <div className="flex gap-2 items-center">
                 <label
                   htmlFor="newFamilyCurriculumSelect"
                   className={
@@ -5837,7 +6195,7 @@ export function EditStudentForm({
                     </option>
                   )}
                 </select>
-              </div>
+              </div> */}
 
               {/* FAMILY STUDENT SELECT */}
               <div className="flex gap-2 items-center pb-2">
@@ -5849,18 +6207,15 @@ export function EditStudentForm({
                       : "w-1/4 text-right"
                   }
                 >
-                  Selecione o Parente:{" "}
+                  Selecione o Familiar:{" "}
                 </label>
                 <select
                   id="newFamilyStudentSelect"
                   defaultValue={" -- select an option -- "}
-                  disabled={newStudentData.newFamilyCurriculumId ? false : true}
                   className={
-                    newStudentData.newFamilyCurriculumId
-                      ? errors.addFamily
-                        ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                    errors.addFamily
+                      ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                   }
                   name="newFamilyStudentSelect"
                   onChange={(e) => {
@@ -5870,21 +6225,26 @@ export function EditStudentForm({
                     });
                   }}
                 >
-                  {newStudentData.newFamilyCurriculumId ? (
-                    <SelectOptions
-                      returnId
-                      dataType="searchEnrolledStudent"
-                      dontShowMyself
-                      studentId={studentId}
-                      curriculumId={newStudentData.newFamilyCurriculumId}
-                    />
-                  ) : (
+                  {/* {newStudentData.newFamilyCurriculumId ? ( */}
+                  <SelectOptions
+                    returnId
+                    dataType="searchEnrolledStudent"
+                    // dontShowMyself
+                    studentId={studentId}
+                    // curriculumId={newStudentData.newFamilyCurriculumId}
+                    parentOneEmail={studentEditData.parentOne.email}
+                    parentTwoEmail={studentEditData.parentTwo.email}
+                    financialResponsibleDocument={
+                      studentEditData.financialResponsible.document
+                    }
+                  />
+                  {/* ) : (
                     <option disabled value={" -- select an option -- "}>
                       {" "}
                       -- Selecione Colégio, Ano Escolar e Modalidade para ver os
                       alunos disponíveis --{" "}
                     </option>
-                  )}
+                  )} */}
                 </select>
               </div>
 

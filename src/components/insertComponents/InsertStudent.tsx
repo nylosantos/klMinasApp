@@ -49,7 +49,6 @@ import {
   SchoolCourseSearchProps,
   SchoolSearchProps,
   SearchCurriculumValidationZProps,
-  StudentSearchProps,
   ToggleClassDaysFunctionProps,
 } from "../../@types";
 import {
@@ -203,85 +202,85 @@ export function InsertStudent() {
 
   // -------------------------- FAMILY CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
   // FAMILY STUDENT SELECTED STATE DATA
-  const [familyStudentSelectedData, setFamilyStudentSelectedData] =
-    useState<StudentSearchProps>();
+  // const [familyStudentSelectedData, setFamilyStudentSelectedData] =
+  //   useState<StudentSearchProps>();
 
   // SET FAMILY STUDENT SELECTED STATE WHEN SELECT FAMILY STUDENT
-  useEffect(() => {
-    if (familyStudentData.studentId !== "") {
-      setFamilyStudentSelectedData(
-        studentsDatabaseData.find(
-          ({ id }) => id === familyStudentData.studentId
-        )
-      );
-    } else {
-      setFamilyStudentSelectedData(undefined);
-    }
-  }, [familyStudentData.studentId]);
+  // useEffect(() => {
+  //   if (familyStudentData.studentId !== "") {
+  //     setFamilyStudentSelectedData(
+  //       studentsDatabaseData.find(
+  //         ({ id }) => id === familyStudentData.studentId
+  //       )
+  //     );
+  //   } else {
+  //     setFamilyStudentSelectedData(undefined);
+  //   }
+  // }, [familyStudentData.studentId]);
 
   // -------------------------- RESET SELECTS -------------------------- //
   // RESET ALL UNDER FAMILY SCHOOL SELECT WHEN CHANGE FAMILY SCHOOL
-  useEffect(() => {
-    if (studentData.familyDiscount) {
-      (
-        document.getElementById("familySchoolClassSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
-      (
-        document.getElementById("familySchoolCourseSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
-      (
-        document.getElementById("familyStudentSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
-      setFamilyStudentData({
-        ...familyStudentData,
-        schoolClassId: "",
-        curriculumId: "",
-        studentId: "",
-      });
-      setStudentData({
-        ...studentData,
-        confirmInsert: false,
-      });
-    }
-  }, [familyStudentData.schoolId]);
+  // useEffect(() => {
+  //   if (studentData.familyDiscount) {
+  //     // (
+  //     //   document.getElementById("familySchoolClassSelect") as HTMLSelectElement
+  //     // ).selectedIndex = 0;
+  //     // (
+  //     //   document.getElementById("familySchoolCourseSelect") as HTMLSelectElement
+  //     // ).selectedIndex = 0;
+  //     // (
+  //     //   document.getElementById("familyStudentSelect") as HTMLSelectElement
+  //     // ).selectedIndex = 0;
+  //     setFamilyStudentData({
+  //       ...familyStudentData,
+  //       schoolClassId: "",
+  //       curriculumId: "",
+  //       studentId: "",
+  //     });
+  //     setStudentData({
+  //       ...studentData,
+  //       confirmInsert: false,
+  //     });
+  //   }
+  // }, [familyStudentData.schoolId]);
 
   // RESET ALL UNDER FAMILY SCHOOL CLASS SELECT WHEN CHANGE FAMILY SCHOOL CLASS
-  useEffect(() => {
-    if (studentData.familyDiscount) {
-      (
-        document.getElementById("familySchoolCourseSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
-      (
-        document.getElementById("familyStudentSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
-      setFamilyStudentData({
-        ...familyStudentData,
-        curriculumId: "",
-        studentId: "",
-      });
-      setStudentData({
-        ...studentData,
-        confirmInsert: false,
-      });
-    }
-  }, [familyStudentData.schoolClassId]);
+  // useEffect(() => {
+  //   if (studentData.familyDiscount) {
+  //     // (
+  //     //   document.getElementById("familySchoolCourseSelect") as HTMLSelectElement
+  //     // ).selectedIndex = 0;
+  //     // (
+  //     //   document.getElementById("familyStudentSelect") as HTMLSelectElement
+  //     // ).selectedIndex = 0;
+  //     setFamilyStudentData({
+  //       ...familyStudentData,
+  //       curriculumId: "",
+  //       studentId: "",
+  //     });
+  //     setStudentData({
+  //       ...studentData,
+  //       confirmInsert: false,
+  //     });
+  //   }
+  // }, [familyStudentData.schoolClassId]);
 
   // RESET ALL UNDER FAMILY CURRICULUM SELECT WHEN CHANGE FAMILY CURRICULUM
-  useEffect(() => {
-    if (studentData.familyDiscount) {
-      (
-        document.getElementById("familyStudentSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
-      setFamilyStudentData({
-        ...familyStudentData,
-        studentId: "",
-      });
-      setStudentData({
-        ...studentData,
-        confirmInsert: false,
-      });
-    }
-  }, [familyStudentData.curriculumId]);
+  // useEffect(() => {
+  //   if (studentData.familyDiscount) {
+  //     // (
+  //     //   document.getElementById("familyStudentSelect") as HTMLSelectElement
+  //     // ).selectedIndex = 0;
+  //     setFamilyStudentData({
+  //       ...familyStudentData,
+  //       studentId: "",
+  //     });
+  //     setStudentData({
+  //       ...studentData,
+  //       confirmInsert: false,
+  //     });
+  //   }
+  // }, [familyStudentData.curriculumId]);
 
   // SET FAMILY STUDENT ID TO STUDENT DATA AND RESET CONFIRM INSERT WHEN CHANGE FAMILY STUDENT
   useEffect(() => {
@@ -1507,7 +1506,7 @@ export function InsertStudent() {
           familyDiscount: data.familyDiscount,
           secondCourseDiscount: data.secondCourseDiscount,
           paymentDay:
-            data.paymentDay === "" ? standardPaymentDay : data.paymentDay,
+            /*data.paymentDay === "" ? */ standardPaymentDay /* : data.paymentDay*/, // UNCOMMENT TO MAKE POSSIBLE TO SELECT PAYMENT DAY
           experimentalCurriculumIds: newClass.isExperimental
             ? arrayUnion({
                 id: data.curriculum,
@@ -1529,7 +1528,6 @@ export function InsertStudent() {
           studentFamilyAtSchool: data.familyDiscount
             ? arrayUnion({
                 id: data.familyAtSchoolId!,
-                name: familyStudentSelectedData?.name,
                 applyDiscount: true,
               })
             : arrayUnion(),
@@ -1607,7 +1605,6 @@ export function InsertStudent() {
             {
               studentFamilyAtSchool: arrayUnion({
                 id: newStudentId,
-                name: data.name,
                 applyDiscount: false,
               }),
             },
@@ -1750,9 +1747,9 @@ export function InsertStudent() {
     // CHECK FAMILY AT SCHOOL DETAILS
     if (studentData.familyDiscount) {
       if (
-        familyStudentData.schoolId === "" ||
-        familyStudentData.schoolClassId === "" ||
-        familyStudentData.curriculumId === "" ||
+        // familyStudentData.schoolId === "" ||
+        // familyStudentData.schoolClassId === "" ||
+        // familyStudentData.curriculumId === "" ||
         familyStudentData.studentId === ""
       ) {
         setIsSubmitting(false);
@@ -2590,7 +2587,8 @@ export function InsertStudent() {
                   </div>
 
                   {classDaySelectedData &&
-                    (newClass && classDaySelectedData?.indexDays.length > 0 ? (
+                    newClass &&
+                    classDaySelectedData?.indexDays.length > 0 && (
                       <>
                         {/* EXPERIMENTAL/INITIAL DAY */}
                         <div className="flex gap-2 items-center">
@@ -2652,18 +2650,17 @@ export function InsertStudent() {
                               editable={false}
                               format="DD/MM/YYYY"
                               onChange={(e: DateObject) => {
-                                e !== null
-                                  ? setNewClass({
-                                      ...newClass,
-                                      date: `${e.month}/${e.day}/${e.year}`,
-                                    })
-                                  : null;
+                                e !== null &&
+                                  setNewClass({
+                                    ...newClass,
+                                    date: `${e.month}/${e.day}/${e.year}`,
+                                  });
                               }}
                             />
                           </div>
                         </div>
                       </>
-                    ) : null)}
+                    )}
 
                   {classDaySelectedData &&
                     !newClass.isExperimental &&
@@ -2907,13 +2904,28 @@ export function InsertStudent() {
                           <div className="flex flex-col py-2 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
                             {/* FAMILY AT SCHOOL TITLE */}
                             <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
-                              Atenção: a seguir insira os dados do aluno que já
-                              é matriculado na {customerFullName}, e é parente
-                              de {studentData.name}:
+                              Atenção: a seguir selecione o aluno que já é
+                              matriculado na {customerFullName}, e é parente de{" "}
+                              {studentData.name}:
                             </h1>
 
+                            {/** FAMILY AT SCHOOL SUBTITLE */}
+                            <div className="flex gap-2 items-center py-2">
+                              <div className="w-1/4" />
+                              <div className="flex gap-2 w-3/4 items-start text-left py-2">
+                                <p className="text-sm text-red-600 dark:text-yellow-500">
+                                  Não encontrou o parente? Verifique os dados de
+                                  Filiação e/ou Responsável financeiro.
+                                  <br />
+                                  Apenas alunos com a mesma filiação e/ou
+                                  Responsáveis Financeiros podem ser
+                                  selecionados como "parentes".
+                                </p>
+                              </div>
+                            </div>
+
                             {/* FAMILY SCHOOL SELECT */}
-                            <div className="flex gap-2 items-center">
+                            {/* <div className="flex gap-2 items-center">
                               <label
                                 htmlFor="familySchoolSelect"
                                 className={
@@ -2947,10 +2959,10 @@ export function InsertStudent() {
                               >
                                 <SelectOptions returnId dataType="schools" />
                               </select>
-                            </div>
+                            </div> */}
 
                             {/* FAMILY SCHOOL CLASS SELECT */}
-                            <div className="flex gap-2 items-center">
+                            {/* <div className="flex gap-2 items-center">
                               <label
                                 htmlFor="familySchoolClassSelect"
                                 className={
@@ -3005,10 +3017,10 @@ export function InsertStudent() {
                                   </option>
                                 )}
                               </select>
-                            </div>
+                            </div> */}
 
                             {/* FAMILY SCHOOL COURSE SELECT */}
-                            <div className="flex gap-2 items-center">
+                            {/* <div className="flex gap-2 items-center">
                               <label
                                 htmlFor="familySchoolCourseSelect"
                                 className={
@@ -3064,7 +3076,7 @@ export function InsertStudent() {
                                   </option>
                                 )}
                               </select>
-                            </div>
+                            </div> */}
 
                             {/* STUDENT SELECT */}
                             <div className="flex gap-2 items-center pb-2">
@@ -3081,17 +3093,10 @@ export function InsertStudent() {
                               <select
                                 id="familyStudentSelect"
                                 defaultValue={" -- select an option -- "}
-                                disabled={
-                                  !familyStudentData.curriculumId
-                                    ? true
-                                    : isSubmitting
-                                }
                                 className={
-                                  familyStudentData.curriculumId
-                                    ? errors.familyAtSchoolId
-                                      ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                                  errors.familyAtSchoolId
+                                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                                 }
                                 name="familyStudentSelect"
                                 onChange={(e) => {
@@ -3102,15 +3107,24 @@ export function InsertStudent() {
                                   });
                                 }}
                               >
-                                {familyStudentData.curriculumId ? (
-                                  <SelectOptions
-                                    returnId
-                                    dataType="searchEnrolledStudent"
-                                    curriculumId={
-                                      familyStudentData.curriculumId
-                                    }
-                                  />
-                                ) : (
+                                {/* {familyStudentData.curriculumId ? ( */}
+                                <SelectOptions
+                                  returnId
+                                  dataType="searchEnrolledStudent"
+                                  // dontShowMyself
+                                  // curriculumId={newStudentData.newFamilyCurriculumId}
+                                  parentOneEmail={studentData.parentOne.email}
+                                  parentTwoEmail={studentData.parentTwo.email}
+                                  financialResponsibleDocument={
+                                    studentData.financialResponsible.document
+                                  }
+                                />
+                                {/* <SelectOptions
+                                  returnId
+                                  dataType="searchEnrolledStudent"
+                                  curriculumId={familyStudentData.curriculumId}
+                                /> */}
+                                {/* ) : (
                                   <option
                                     disabled
                                     value={" -- select an option -- "}
@@ -3119,7 +3133,7 @@ export function InsertStudent() {
                                     -- Selecione Colégio, Ano Escolar e
                                     Modalidade para ver os alunos disponíveis --{" "}
                                   </option>
-                                )}
+                                )} */}
                               </select>
                             </div>
                           </div>
@@ -3178,14 +3192,19 @@ export function InsertStudent() {
 
                         {/* STUDENT PAYMENT DAY */}
                         <div className="flex gap-2 items-center">
-                          <label
+                          {/* <label
                             htmlFor="dayPayment"
                             className="w-1/4 text-right"
                           >
                             Melhor dia para pagamento:
-                          </label>
+                          </label> */}
+                          <div className="flex w-1/4" />
                           <div className="flex w-3/4 px-2 py-1 gap-10 justify-start items-center">
-                            <label className="flex items-center gap-2">
+                            <p className="text-sm text-red-600 dark:text-yellow-500">
+                              Data de vencimento dia 05 do mês a cursar,
+                              pagamento antecipado
+                            </p>
+                            {/* <label className="flex items-center gap-2">
                               <input
                                 type="radio"
                                 className="text-klGreen-500 dark:text-klGreen-500 border-none"
@@ -3229,7 +3248,7 @@ export function InsertStudent() {
                                 }
                               />{" "}
                               15
-                            </label>
+                            </label> */}
                           </div>
                         </div>
                       </>
