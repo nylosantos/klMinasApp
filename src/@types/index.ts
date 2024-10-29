@@ -248,7 +248,6 @@ export interface SchoolSearchProps {
 export interface SchoolClassSearchProps {
   id: string;
   name: string;
-  schoolName: string;
   schoolId: string;
   available: "open" | "closed" | "waitingList";
   updatedAt: Date;
@@ -289,45 +288,8 @@ export interface ScheduleSearchProps {
   classEnd: string;
   exit: string;
   schoolId: string;
-  schoolName: string;
   updatedAt: Date;
 }
-
-// export interface StudentSearchProps {
-//   [x: string]: any;
-//   id: string;
-//   name: string;
-//   email: string;
-//   birthDate: string;
-//   address: {
-//     street: string;
-//     number: string;
-//     complement: string;
-//     neighborhood: string;
-//     city: string;
-//     state: string;
-//     cep: string;
-//   };
-//   phone: string;
-//   activePhoneSecondary: boolean;
-//   phoneSecondary: string;
-//   activePhoneTertiary: boolean;
-//   phoneTertiary: string;
-//   responsible: string;
-//   responsibleDocument: string;
-//   financialResponsible: string;
-//   financialResponsibleDocument: string;
-//   enrolmentFee: number;
-//   fullPrice: number;
-//   appliedPrice: number;
-//   customDiscount: boolean;
-//   customDiscountValue: string;
-//   employeeDiscount: boolean;
-//   enrolmentExemption: boolean;
-//   familyDiscount: boolean;
-//   secondCourseDiscount: boolean;
-//   updatedAt: Date;
-// }
 
 export interface StudentSearchProps {
   [x: string]: any;
@@ -393,81 +355,44 @@ export interface StudentSearchProps {
 
 export interface StudentFamilyAtSchoolProps {
   id: string;
-  name: string;
   applyDiscount: boolean;
 }
+export interface ExcludeFamilyProps extends StudentFamilyAtSchoolProps {
+  exclude: boolean;
+}
+
 export interface CurriculumArrayProps {
   date: string;
   id: string;
-  name: string;
   isExperimental: boolean;
   indexDays: Array<number>;
   price: number;
 }
 
-// export interface CurriculumSearchProps {
-//   id: string;
-//   name: string;
-//   school: string;
-//   schoolId: string;
-//   schoolClass: string;
-//   schoolClassId: string;
-//   schoolCourse: string;
-//   schoolCourseId: string;
-//   classDay: string;
-//   classDayId: string;
-//   schedule: string;
-//   scheduleId: string;
-//   teacher: string;
-//   teacherId: string;
-//   students: [];
-//   updatedAt: Date;
-// }
+export interface ExcludeCurriculumProps extends CurriculumArrayProps {
+  exclude: boolean;
+}
+
+export interface CurriculumWithNamesProps extends CurriculumSearchProps {
+  schoolName: string;
+  schoolClassName: string;
+  schoolCourseName: string;
+  classDayName: string;
+  scheduleName: string;
+  teacherName: string;
+}
 
 export interface CurriculumSearchProps {
   id: string;
-  name: string;
-  school: string;
   schoolId: string;
-  schoolClass: string;
   schoolClassId: string;
-  schoolCourse: string;
   schoolCourseId: string;
-  classDay: string;
   classDayId: string;
-  schedule: string;
   scheduleId: string;
-  teacher: string;
   teacherId: string;
-  students: Array<CurriculumStudentsProps>;
-  experimentalStudents: Array<CurriculumStudentsProps>;
+  students: Array<CurriculumArrayProps>;
+  experimentalStudents: Array<CurriculumArrayProps>;
   updatedAt: Date;
-}
-
-export interface CurriculumStudentsProps {
-  date: string;
-  id: string;
-  name: string;
-  isExperimental: boolean;
-  indexDays: Array<number>;
-  price: number;
-}
-
-export interface ExcludeCurriculumProps {
-  exclude: boolean;
-  id: string;
-  name: string;
-  isExperimental: boolean;
-  date: string;
-  indexDays: Array<number>;
-  price: number;
-}
-
-export interface ExcludeFamilyProps {
-  exclude: boolean;
-  applyDiscount: boolean;
-  id: string;
-  name: string;
 }
 
 export interface SubmitLoadingProps {
@@ -482,22 +407,6 @@ export interface ButtonSignProps {
   isClosed?: boolean;
 }
 
-export interface SubCollectionProps {
-  idsArray: Array<string>;
-  detailsArray: Array<SubCollectionDetailsProps>;
-  id: string;
-  name: string;
-}
-
-export interface SubCollectionDetailsProps {
-  date: string;
-  id: string;
-  name: string;
-  isExperimental: boolean;
-  indexDays: Array<number>;
-  price: number;
-}
-
 export interface SubCollectionFamilyProps {
   idsArray: Array<string>;
   detailsArray: Array<SubCollectionFamilyDetailsProps>;
@@ -509,11 +418,6 @@ export interface SubCollectionFamilyDetailsProps {
   id: string;
   name: string;
   applyDiscount: boolean;
-}
-
-export interface SubCollectionStudentCurriculumProps
-  extends SubCollectionProps {
-  paymentRegister?: PaymentRegisterProps;
 }
 
 export interface PaymentRegisterProps {

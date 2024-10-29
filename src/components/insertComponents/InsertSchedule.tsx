@@ -41,7 +41,6 @@ export function InsertSchedule() {
       classEnd: "",
       exit: "",
       schoolId: "",
-      schoolName: "",
       confirmInsert: false,
     });
 
@@ -49,6 +48,7 @@ export function InsertSchedule() {
   // SCHOOL DATA
   const [schoolData, setSchoolData] = useState({
     schoolId: "",
+    schoolName: "",
   });
 
   // SCHOOL SELECTED STATE DATA
@@ -72,9 +72,9 @@ export function InsertSchedule() {
     if (schoolSelectedData) {
       setScheduleData({
         ...scheduleData,
-        schoolName: schoolSelectedData.name,
         schoolId: schoolSelectedData.id,
       });
+      setSchoolData({ ...schoolData, schoolName: schoolSelectedData.name });
     }
   }, [schoolSelectedData]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
@@ -98,7 +98,6 @@ export function InsertSchedule() {
       classEnd: "",
       exit: "",
       schoolId: "",
-      schoolName: "",
       confirmInsert: false,
     },
   });
@@ -113,7 +112,6 @@ export function InsertSchedule() {
       classEnd: "",
       exit: "",
       schoolId: "",
-      schoolName: "",
       confirmInsert: false,
     });
     reset();
@@ -128,7 +126,6 @@ export function InsertSchedule() {
     setValue("classEnd", scheduleData.classEnd);
     setValue("exit", scheduleData.exit);
     setValue("schoolId", scheduleData.schoolId);
-    setValue("schoolName", scheduleData.schoolName);
     setValue("confirmInsert", scheduleData.confirmInsert);
   }, [scheduleData]);
 
@@ -173,12 +170,11 @@ export function InsertSchedule() {
           classEnd: data.classEnd,
           exit: data.exit,
           schoolId: data.schoolId,
-          schoolName: data.schoolName,
           timestamp: serverTimestamp(),
         });
         resetForm();
         toast.success(
-          `Horário ${data.name} criado com sucesso no ${data.schoolName}! 👌`,
+          `Horário ${data.name} criado com sucesso em ${schoolData.schoolName}! 👌`,
           {
             theme: "colored",
             closeOnClick: true,
@@ -219,8 +215,7 @@ export function InsertSchedule() {
     // CHECKING IF SCHEDULE EXISTS ON DATABASE
     const scheduleExists = scheduleDatabaseData.find(
       (schedule) =>
-        schedule.name === `${data.name}` &&
-        data.schoolName === schedule.schoolName
+        schedule.name === `${data.name}` && data.schoolId === schedule.schoolId
     );
 
     if (scheduleExists) {
@@ -512,7 +507,7 @@ export function InsertSchedule() {
           />
           <label htmlFor="confirmInsert" className="text-sm">
             {scheduleData.name
-              ? `Confirmar criação do horário ${scheduleData.name} no ${scheduleData.schoolName}`
+              ? `Confirmar criação do horário ${scheduleData.name} no ${schoolData.schoolName}`
               : `Confirmar criação`}
           </label>
         </div>

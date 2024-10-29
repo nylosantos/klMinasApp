@@ -39,6 +39,7 @@ export function SelectOptions({
     teacherDatabaseData,
     curriculumDatabaseData,
     studentsDatabaseData,
+    handleAllCurriculumDetails,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // DATA STATE
@@ -48,28 +49,41 @@ export function SelectOptions({
     // QUERY TO SEARCH ALL STUDENTS EXCLUDING THE SELECTED STUDENT ITSELF
     if (schoolId && schoolClassId) {
       if (dataType === "curriculum") {
-        const filterCurriculum = curriculumDatabaseData.filter(
-          (curriculum) =>
-            curriculum.schoolId === schoolId &&
-            curriculum.schoolClassId === schoolClassId
+        setData(
+          handleAllCurriculumDetails({
+            schoolId: schoolId,
+            schoolClassId: schoolClassId,
+          })
         );
-        setData(filterCurriculum);
       }
     } else {
       if (schoolId) {
         if (dataType === "schoolClasses") {
-          if (availableAndWaitingClasses) {
-            const filterClasses = schoolClassDatabaseData.filter(
-              (schoolClass) =>
-                schoolClass.schoolId === schoolId &&
-                schoolClass.available !== "closed"
-            );
-            setData(filterClasses);
+          if (schoolId === "all") {
+            const foundedStudentsArray: StudentSearchProps[] = [];
+            studentsDatabaseData.map((student) => {
+              if (
+                student.curriculumIds.length === 0 &&
+                student.experimentalCurriculumIds.length === 0
+              ) {
+                foundedStudentsArray.push(student);
+              }
+            });
+            setData(foundedStudentsArray);
           } else {
-            const filterClasses = schoolClassDatabaseData.filter(
-              (schoolClass) => schoolClass.schoolId === schoolId
-            );
-            setData(filterClasses);
+            if (availableAndWaitingClasses) {
+              const filterClasses = schoolClassDatabaseData.filter(
+                (schoolClass) =>
+                  schoolClass.schoolId === schoolId &&
+                  schoolClass.available !== "closed"
+              );
+              setData(filterClasses);
+            } else {
+              const filterClasses = schoolClassDatabaseData.filter(
+                (schoolClass) => schoolClass.schoolId === schoolId
+              );
+              setData(filterClasses);
+            }
           }
         }
 
@@ -215,9 +229,7 @@ export function SelectOptions({
                       ? option.name + " (Turma Fechada)"
                       : option.name + " (Lista de Espera)"
                     : option.name} */}
-                  {displaySchoolCourseAndSchedule
-                    ? `${option.schoolCourse} | ${option.schedule}`
-                    : option.name}
+                  {option.name}
                 </option>
               ) : null}
             </>
@@ -255,7 +267,7 @@ export function SelectOptions({
                       : option.name + " (Lista de Espera)"
                     : option.name} */}
                 {displaySchoolCourseAndSchedule
-                  ? `${option.schoolCourse} | ${option.schedule}`
+                  ? `${option.schoolCourseName} | ${option.scheduleName}`
                   : option.name}
               </option>
             </>
@@ -285,7 +297,7 @@ export function SelectOptions({
                       : option.name + " (Lista de Espera)"
                     : option.name} */}
                 {displaySchoolCourseAndSchedule
-                  ? `${option.schoolCourse} | ${option.schedule}`
+                  ? `${option.schoolCourseName} | ${option.scheduleName}`
                   : option.name}
               </option>
             </>

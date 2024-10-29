@@ -24,9 +24,8 @@ const db = getFirestore(app);
 
 export function DeleteSchedule() {
   // GET GLOBAL DATA
-  const { curriculumDatabaseData, scheduleDatabaseData } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const { schoolDatabaseData, curriculumDatabaseData, scheduleDatabaseData } =
+    useContext(GlobalDataContext) as GlobalDataContextType;
 
   // SCHEDULE DATA
   const [scheduleData, setScheduleData] =
@@ -41,6 +40,7 @@ export function DeleteSchedule() {
   // SCHOOL DATA STATE
   const [school, setSchool] = useState({
     id: "",
+    name: "",
   });
 
   // RESET SCHOOL CLASS, SCHOOL COURSE AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
@@ -49,11 +49,20 @@ export function DeleteSchedule() {
       ((
         document.getElementById("scheduleSelect") as HTMLSelectElement
       ).selectedIndex = 0);
+
     setScheduleData({
       schoolId: school.id,
       scheduleName: "",
       scheduleId: "",
       confirmDelete: false,
+    });
+    schoolDatabaseData.find((databaseSchool) => {
+      if (school.id === databaseSchool.id) {
+        setSchool({
+          ...school,
+          name: databaseSchool.name,
+        });
+      }
     });
   }, [school.id]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
@@ -123,7 +132,7 @@ export function DeleteSchedule() {
       confirmDelete: false,
     });
     setIsSelected(false);
-    setSchool({ id: "" });
+    setSchool({ id: "", name: "" });
     reset();
   };
 
@@ -331,7 +340,7 @@ export function DeleteSchedule() {
                   name="scheduleSchool"
                   disabled
                   className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                  value={scheduleSelectedData!.schoolName}
+                  value={school.name}
                 />
               </div>
 

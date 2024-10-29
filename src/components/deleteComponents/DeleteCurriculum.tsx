@@ -4,23 +4,14 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  getFirestore,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
+import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteCurriculumValidationSchema } from "../../@types/zodValidation";
 import {
-  CurriculumSearchProps,
+  CurriculumWithNamesProps,
   DeleteClassDaysValidationZProps,
   DeleteCurriculumValidationZProps,
   ScheduleSearchProps,
@@ -44,27 +35,35 @@ export function DeleteCurriculum() {
     schoolClassDatabaseData,
     schoolCourseDatabaseData,
     studentsDatabaseData,
+    handleAllCurriculumDetails,
+    handleCurriculumDetailsWithSchoolCourse,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // CLASS DAY DATA
   const [classDaysData, setClassDaysData] =
     useState<DeleteClassDaysValidationZProps>({
       classDayId: "",
-      classDayName: "",
     });
 
   // CURRICULUM DATA
   const [curriculumData, setCurriculumData] =
     useState<DeleteCurriculumValidationZProps>({
       curriculumId: "",
-      school: "",
       schoolId: "",
-      schoolClass: "",
       schoolClassId: "",
-      schoolCourse: "",
       schoolCourseId: "",
       confirmDelete: false,
     });
+
+  const [curriculumFormattedName, setCurriculumFormattedName] = useState({
+    formattedName: "",
+    schoolName: "",
+    schoolClassName: "",
+    schoolCourseName: "",
+    scheduleName: "",
+    classDayName: "",
+    teacherName: "",
+  });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL SELECTED STATE DATA
@@ -85,9 +84,9 @@ export function DeleteCurriculum() {
   // SET SCHOOL NAME WITH SCHOOL SELECTED DATA WHEN SELECT SCHOOL
   useEffect(() => {
     if (schoolSelectedData !== undefined) {
-      setCurriculumData({
-        ...curriculumData,
-        school: schoolSelectedData!.name,
+      setCurriculumFormattedName({
+        ...curriculumFormattedName,
+        schoolName: schoolSelectedData!.name,
       });
     }
   }, [schoolSelectedData]);
@@ -115,9 +114,9 @@ export function DeleteCurriculum() {
   // SET SCHOOL CLASS NAME WITH SCHOOL CLASS SELECTED DATA WHEN SELECT SCHOOL CLASS
   useEffect(() => {
     if (schoolClassSelectedData !== undefined) {
-      setCurriculumData({
-        ...curriculumData,
-        schoolClass: schoolClassSelectedData!.name,
+      setCurriculumFormattedName({
+        ...curriculumFormattedName,
+        schoolClassName: schoolClassSelectedData!.name,
       });
     }
   }, [schoolClassSelectedData]);
@@ -144,9 +143,9 @@ export function DeleteCurriculum() {
   // SET SCHOOL COURSE NAME WITH SCHOOL COURSE SELECTED DATA WHEN SELECT SCHOOL COURSE
   useEffect(() => {
     if (schoolCourseSelectedData !== undefined) {
-      setCurriculumData({
-        ...curriculumData,
-        schoolCourse: schoolCourseSelectedData!.name,
+      setCurriculumFormattedName({
+        ...curriculumFormattedName,
+        schoolCourseName: schoolCourseSelectedData!.name,
       });
     }
   }, [schoolCourseSelectedData]);
@@ -158,21 +157,9 @@ export function DeleteCurriculum() {
     ScheduleSearchProps[]
   >([]);
 
-  // GETTING SCHEDULES DATA
-  const handleSchedulesDetails = async () => {
-    const q = query(collection(db, "schedules"));
-    const querySnapshot = await getDocs(q);
-    const promises: ScheduleSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as ScheduleSearchProps;
-      promises.push(promise);
-    });
-    setSchedulesDetailsData(promises);
-  };
-
   // GETTING SCHEDULES DETAILS
   useEffect(() => {
-    handleSchedulesDetails();
+    setSchedulesDetailsData(schedulesDetailsData);
   }, []);
 
   // SET IS SELECTED WHEN SCHOOL, SCHOOL CLASS AND SCHOOL COURSE ARE CHOSEN
@@ -191,40 +178,40 @@ export function DeleteCurriculum() {
   // -------------------------- CURRICULUM STATES AND FUNCTIONS -------------------------- //
   // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF CURRICULUM
   const [curriculumCoursesData, setCurriculumCoursesData] = useState<
-    CurriculumSearchProps[]
+    CurriculumWithNamesProps[]
   >([]);
 
   // GETTING CURRICULUM DATA
-  const handleAvailableCoursesData = async () => {
+  const handleAvailableCoursesData = () => {
     if (curriculumData.schoolCourseId === "all") {
-      const q = query(
-        collection(db, "curriculum"),
-        where("schoolId", "==", curriculumData.schoolId),
-        where("schoolClassId", "==", curriculumData.schoolClassId),
-        orderBy("name")
+      setCurriculumCoursesData(
+        handleAllCurriculumDetails({
+          schoolId: curriculumData.schoolId,
+          schoolClassId: curriculumData.schoolClassId,
+        })
       );
-      const querySnapshot = await getDocs(q);
-      const promises: CurriculumSearchProps[] = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data() as CurriculumSearchProps;
-        promises.push(promise);
-      });
-      setCurriculumCoursesData(promises);
+      //   collection(db, "curriculum"),
+      //   where("schoolId", "==", curriculumData.schoolId),
+      //   where("schoolClassId", "==", curriculumData.schoolClassId),
+      //   orderBy("name")
+      // );
+      // const querySnapshot = await getDocs(q);
+      // const promises: CurriculumSearchProps[] = [];
+      // querySnapshot.forEach((doc) => {
+      //   const promise = doc.data() as CurriculumSearchProps;
+      //   promises.push(promise);
+      // });
+      // setCurriculumCoursesData(promises);
     } else {
-      const q = query(
-        collection(db, "curriculum"),
-        where("schoolId", "==", curriculumData.schoolId),
-        where("schoolClassId", "==", curriculumData.schoolClassId),
-        where("schoolCourseId", "==", curriculumData.schoolCourseId),
-        orderBy("name")
-      );
-      const querySnapshot = await getDocs(q);
-      const promises: CurriculumSearchProps[] = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data() as CurriculumSearchProps;
-        promises.push(promise);
-      });
-      setCurriculumCoursesData(promises);
+      if (curriculumData.schoolCourseId) {
+        setCurriculumCoursesData(
+          handleCurriculumDetailsWithSchoolCourse({
+            schoolId: curriculumData.schoolId,
+            schoolClassId: curriculumData.schoolClassId,
+            schoolCourseId: curriculumData.schoolCourseId,
+          })
+        );
+      }
     }
   };
 
@@ -246,9 +233,7 @@ export function DeleteCurriculum() {
     setCurriculumData({
       ...curriculumData,
       schoolClassId: "",
-      schoolClass: "",
       schoolCourseId: "",
-      schoolCourse: "",
     });
   }, [curriculumData.schoolId]);
 
@@ -260,7 +245,6 @@ export function DeleteCurriculum() {
     setCurriculumData({
       ...curriculumData,
       schoolCourseId: "",
-      schoolCourse: "",
     });
   }, [curriculumData.schoolClassId]);
   // -------------------------- END OF RESET SELECTS -------------------------- //
@@ -279,11 +263,8 @@ export function DeleteCurriculum() {
     resolver: zodResolver(deleteCurriculumValidationSchema),
     defaultValues: {
       curriculumId: "",
-      school: "",
       schoolId: "",
-      schoolClass: "",
       schoolClassId: "",
-      schoolCourse: "",
       schoolCourseId: "",
       confirmDelete: false,
     },
@@ -303,17 +284,13 @@ export function DeleteCurriculum() {
     setIsSelected(false);
     setCurriculumData({
       curriculumId: "",
-      school: "",
       schoolId: "",
-      schoolClass: "",
       schoolClassId: "",
-      schoolCourse: "",
       schoolCourseId: "",
       confirmDelete: false,
     });
     setClassDaysData({
       classDayId: "",
-      classDayName: "",
     });
     reset();
   };
@@ -321,11 +298,8 @@ export function DeleteCurriculum() {
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("curriculumId", curriculumData.curriculumId);
-    setValue("school", curriculumData.school);
     setValue("schoolId", curriculumData.schoolId);
-    setValue("schoolClass", curriculumData.schoolClass);
     setValue("schoolClassId", curriculumData.schoolClassId);
-    setValue("schoolCourse", curriculumData.schoolCourse);
     setValue("schoolCourseId", curriculumData.schoolCourseId);
     setValue("confirmDelete", curriculumData.confirmDelete);
   }, [curriculumData]);
@@ -334,11 +308,8 @@ export function DeleteCurriculum() {
   useEffect(() => {
     const fullErrors = [
       errors.curriculumId,
-      errors.school,
       errors.schoolId,
-      errors.schoolClass,
       errors.schoolClassId,
-      errors.schoolCourse,
       errors.schoolCourseId,
       errors.confirmDelete,
     ];
@@ -574,125 +545,125 @@ export function DeleteCurriculum() {
 
         {/* CURRICULUM SELECT */}
         {curriculumData.schoolId &&
-        curriculumData.schoolClassId &&
-        curriculumData.schoolCourseId ? (
-          <>
-            {/* CURRICULUM CARD SECTION TITLE */}
-            <h1 className="font-bold text-2xl my-4">
-              {schoolSelectedData?.name} - {schoolClassSelectedData?.name} -{" "}
-              {curriculumData.schoolCourseId === "all"
-                ? "Todas as Modalidades"
-                : schoolCourseSelectedData?.name}
-              :
-            </h1>
+          curriculumData.schoolClassId &&
+          curriculumData.schoolCourseId && (
+            <>
+              {/* CURRICULUM CARD SECTION TITLE */}
+              <h1 className="font-bold text-2xl my-4">
+                {curriculumFormattedName.schoolName} -{" "}
+                {curriculumFormattedName.schoolClassName} -{" "}
+                {curriculumData.schoolCourseId === "all"
+                  ? "Todas as Modalidades"
+                  : curriculumFormattedName.schoolCourseName}
+                :
+              </h1>
 
-            {/* SEPARATOR */}
-            <hr className="pb-4" />
+              {/* SEPARATOR */}
+              <hr className="pb-4" />
 
-            {curriculumCoursesData.length !== 0 ? (
-              <>
-                {/* CURRICULUM CARD */}
-                <div className="flex flex-wrap gap-4 justify-center">
-                  {curriculumCoursesData.map((c) => (
-                    <div
-                      className={
-                        errors.curriculumId
-                          ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                          : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                      }
-                      key={c.id}
-                    >
-                      <input
-                        type="radio"
-                        id={c.id}
-                        name="curriculumSelect"
-                        className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                        value={c.id}
-                        onChange={(e) => {
-                          setClassDaysData({
-                            classDayId: c.classDayId,
-                            classDayName: c.classDay,
-                          });
-                          setCurriculumData({
-                            ...curriculumData,
-                            curriculumId: e.target.value,
-                          });
-                        }}
-                      />
-                      <label
-                        htmlFor="curriculumSelect"
-                        className="flex flex-col gap-4"
+              {curriculumCoursesData.length !== 0 ? (
+                <>
+                  {/* CURRICULUM CARD */}
+                  <div className="flex flex-wrap gap-4 justify-center">
+                    {curriculumCoursesData.map((c) => (
+                      <div
+                        className={
+                          errors.curriculumId
+                            ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                            : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                        }
+                        key={c.id}
                       >
-                        <p>
-                          Colégio:{" "}
-                          <span className="text-red-600 dark:text-yellow-500">
-                            {c.school}
-                          </span>
-                        </p>
-                        <p>
-                          Ano Escolar:{" "}
-                          <span className="text-red-600 dark:text-yellow-500">
-                            {c.schoolClass}
-                          </span>
-                        </p>
-                        <p>
-                          Modalidade:{" "}
-                          <span className="text-red-600 dark:text-yellow-500">
-                            {c.schoolCourse}
-                          </span>
-                        </p>
-                        {schedulesDetailsData.map(
-                          (details: ScheduleSearchProps) =>
-                            details.name === c.schedule ? (
-                              <p>
-                                Horário:{" "}
-                                <span className="text-red-600 dark:text-yellow-500">
-                                  De{" "}
-                                  {`${details.classStart.slice(0, 2)}h${
-                                    details.classStart.slice(3, 5) === "00"
-                                      ? ""
-                                      : details.classStart.slice(3, 5) + "min"
-                                  } a ${details.classEnd.slice(0, 2)}h${
-                                    details.classEnd.slice(3, 5) === "00"
-                                      ? ""
-                                      : details.classEnd.slice(3, 5) + "min"
-                                  }`}
-                                </span>
-                              </p>
-                            ) : null
-                        )}
-                        <p>
-                          Dias:{" "}
-                          <span className="text-red-600 dark:text-yellow-500">
-                            {c.classDay}
-                          </span>
-                        </p>
-                        <p>
-                          Professor:{" "}
-                          <span className="text-red-600 dark:text-yellow-500">
-                            {c.teacher}
-                          </span>
-                        </p>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <>
-                {/* CURRICULUM CARD EMPTY SUBTITLE */}
-                <h1 className="font-bold text-2xl pb-10 text-red-600 dark:text-yellow-500">
-                  Nenhuma Turma disponível com as opções selecionadas, tente
-                  novamente.
-                </h1>
-              </>
-            )}
-          </>
-        ) : null}
+                        <input
+                          type="radio"
+                          id={c.id}
+                          name="curriculumSelect"
+                          className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                          value={c.id}
+                          onChange={(e) => {
+                            setClassDaysData({
+                              classDayId: c.classDayId,
+                            });
+                            setCurriculumData({
+                              ...curriculumData,
+                              curriculumId: e.target.value,
+                            });
+                          }}
+                        />
+                        <label
+                          htmlFor="curriculumSelect"
+                          className="flex flex-col gap-4"
+                        >
+                          <p>
+                            Colégio:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.schoolName}
+                            </span>
+                          </p>
+                          <p>
+                            Ano Escolar:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.schoolClassName}
+                            </span>
+                          </p>
+                          <p>
+                            Modalidade:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.schoolCourseName}
+                            </span>
+                          </p>
+                          {schedulesDetailsData.map(
+                            (details: ScheduleSearchProps) =>
+                              details.name === c.scheduleName && (
+                                <p>
+                                  Horário:{" "}
+                                  <span className="text-red-600 dark:text-yellow-500">
+                                    De{" "}
+                                    {`${details.classStart.slice(0, 2)}h${
+                                      details.classStart.slice(3, 5) === "00"
+                                        ? ""
+                                        : details.classStart.slice(3, 5) + "min"
+                                    } a ${details.classEnd.slice(0, 2)}h${
+                                      details.classEnd.slice(3, 5) === "00"
+                                        ? ""
+                                        : details.classEnd.slice(3, 5) + "min"
+                                    }`}
+                                  </span>
+                                </p>
+                              )
+                          )}
+                          <p>
+                            Dias:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.classDayName}
+                            </span>
+                          </p>
+                          <p>
+                            Professor:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {c.teacherName}
+                            </span>
+                          </p>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* CURRICULUM CARD EMPTY SUBTITLE */}
+                  <h1 className="font-bold text-2xl pb-10 text-red-600 dark:text-yellow-500">
+                    Nenhuma Turma disponível com as opções selecionadas, tente
+                    novamente.
+                  </h1>
+                </>
+              )}
+            </>
+          )}
 
-        {isSelected ? (
+        {isSelected && (
           <>
-            {curriculumCoursesData.length !== 0 ? (
+            {curriculumCoursesData.length !== 0 && (
               <>
                 {/** CHECKBOX CONFIRM DELETE */}
                 <div className="flex justify-center items-center gap-2 mt-6">
@@ -713,7 +684,7 @@ export function DeleteCurriculum() {
                   </label>
                 </div>
               </>
-            ) : null}
+            )}
 
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">
@@ -745,7 +716,7 @@ export function DeleteCurriculum() {
               </button>
             </div>
           </>
-        ) : null}
+        )}
       </form>
     </div>
   );

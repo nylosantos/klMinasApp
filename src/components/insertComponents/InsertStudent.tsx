@@ -31,7 +31,6 @@ import {
   formataCPF,
   months,
   paymentArray,
-  secondCourseDiscountValue,
   standardPaymentDay,
   testaCPF,
   weekDays,
@@ -44,6 +43,7 @@ import {
   ClassDaySearchProps,
   CreateStudentValidationZProps,
   CurriculumSearchProps,
+  CurriculumWithNamesProps,
   ScheduleSearchProps,
   SchoolClassSearchProps,
   SchoolCourseSearchProps,
@@ -73,6 +73,8 @@ export function InsertStudent() {
     studentsDatabaseData,
     setIsExperimentalClass,
     userFullData,
+    handleAllCurriculumDetails,
+    handleCurriculumDetailsWithSchoolCourse,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // STUDENT DATA
@@ -299,11 +301,8 @@ export function InsertStudent() {
   const [curriculumData, setCurriculumData] =
     useState<SearchCurriculumValidationZProps>({
       schoolId: "",
-      schoolName: "",
       schoolClassId: "",
-      schoolClassName: "",
       schoolCourseId: "",
-      schoolCourseName: "",
     });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
@@ -322,15 +321,15 @@ export function InsertStudent() {
     }
   }, [curriculumData.schoolId]);
 
-  // SET SCHOOL NAME WITH SCHOOL SELECTED DATA WHEN SELECT SCHOOL
-  useEffect(() => {
-    if (schoolSelectedData !== undefined) {
-      setCurriculumData({
-        ...curriculumData,
-        schoolName: schoolSelectedData!.name,
-      });
-    }
-  }, [schoolSelectedData]);
+  // // SET SCHOOL NAME WITH SCHOOL SELECTED DATA WHEN SELECT SCHOOL
+  // useEffect(() => {
+  //   if (schoolSelectedData !== undefined) {
+  //     setCurriculumData({
+  //       ...curriculumData,
+  //       schoolName: schoolSelectedData!.name,
+  //     });
+  //   }
+  // }, [schoolSelectedData]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
@@ -351,15 +350,15 @@ export function InsertStudent() {
     }
   }, [curriculumData.schoolClassId]);
 
-  // SET SCHOOL CLASS NAME WITH SCHOOL CLASS SELECTED DATA WHEN SELECT SCHOOL CLASS
-  useEffect(() => {
-    if (schoolClassSelectedData !== undefined) {
-      setCurriculumData({
-        ...curriculumData,
-        schoolClassName: schoolClassSelectedData!.name,
-      });
-    }
-  }, [schoolClassSelectedData]);
+  // // SET SCHOOL CLASS NAME WITH SCHOOL CLASS SELECTED DATA WHEN SELECT SCHOOL CLASS
+  // useEffect(() => {
+  //   if (schoolClassSelectedData !== undefined) {
+  //     setCurriculumData({
+  //       ...curriculumData,
+  //       schoolClassName: schoolClassSelectedData!.name,
+  //     });
+  //   }
+  // }, [schoolClassSelectedData]);
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
@@ -390,10 +389,10 @@ export function InsertStudent() {
   // SET SCHOOL COURSE NAME WITH SCHOOL COURSE SELECTED DATA WHEN SELECT SCHOOL COURSE
   useEffect(() => {
     if (schoolCourseSelectedData !== undefined) {
-      setCurriculumData({
-        ...curriculumData,
-        schoolCourseName: schoolCourseSelectedData!.name,
-      });
+      // setCurriculumData({
+      //   ...curriculumData,
+      //   schoolCourseName: schoolCourseSelectedData!.name,
+      // });
       setSchoolCourseSelectedPrice({
         bundleDays: schoolCourseSelectedData.bundleDays,
         priceBundle: schoolCourseSelectedData.priceBundle,
@@ -433,7 +432,6 @@ export function InsertStudent() {
   const [newClass, setNewClass] = useState({
     isExperimental: true,
     date: "",
-    name: "",
     enrolledDays: [] as number[],
     enrolmentFee:
       new Date().getMonth() < 6
@@ -460,7 +458,7 @@ export function InsertStudent() {
             : 0,
       });
     }
-  }, [studentData.enrolmentExemption, newClass.name]);
+  }, [studentData.enrolmentExemption]);
 
   // SET CUSTOM DISCOUNT VALUE TO 0 WHEN CUSTOM DISCOUNT IS UNCHECKED
   useEffect(() => {
@@ -469,184 +467,61 @@ export function InsertStudent() {
     }
   }, [studentData.customDiscount]);
 
-  function handleValueWithoutDiscount() {
+  // SET MONTHLY PAYMENT WHEN SCHOOL COURSE PRICE, OR ADD FAMILY, OR EMPLOYEE DISCOUNT CHANGE
+  useEffect(() => {
+    // DISCOUNT VARIABLE
+    const customDiscountValueSum =
+      100 -
+      (studentData.customDiscount ? +studentData.customDiscountValue! : 0);
+    const customDiscountFinalValue =
+      !studentData.customDiscount ||
+      studentData.customDiscountValue === "0" ||
+      studentData.customDiscountValue === ""
+        ? 1
+        : +`0.${
+            customDiscountValueSum > 9
+              ? customDiscountValueSum
+              : `0${customDiscountValueSum}`
+          }`;
+
+    const discountVariable = studentData.customDiscount
+      ? customDiscountFinalValue
+      : studentData.employeeDiscount
+      ? employeeDiscountValue
+      : studentData.familyDiscount
+      ? familyDiscountValue
+      : 1; // WITHOUT DISCOUNT
+
     const priceUnit = schoolCourseSelectedPrice.priceUnit;
     const priceBundle = schoolCourseSelectedPrice.priceBundle;
+    const bundleDays = schoolCourseSelectedPrice.bundleDays;
+
+    // ----------- CALC ALSO PRESENT IN EDIT STUDENT ----------- //
     if (newClass.enrolledDays.length === 0) {
       setNewClass({
         ...newClass,
-        fullPrice: 0,
         appliedPrice: 0,
+        fullPrice: 0,
       });
     }
     if (newClass.enrolledDays.length === 1) {
       setNewClass({
         ...newClass,
-        appliedPrice: priceUnit,
+        appliedPrice: priceUnit * discountVariable,
         fullPrice: priceUnit,
       });
     }
     if (newClass.enrolledDays.length > 1) {
-      const result = Math.floor(3 / schoolCourseSelectedPrice.bundleDays);
-      const rest =
-        newClass.enrolledDays.length % schoolCourseSelectedPrice.bundleDays;
+      const result = Math.floor(newClass.enrolledDays.length / bundleDays);
+      const rest = newClass.enrolledDays.length % bundleDays;
       setNewClass({
         ...newClass,
         appliedPrice:
-          result * priceBundle + rest * (priceUnit * secondCourseDiscountValue),
+          (result * priceBundle + rest * priceUnit) * discountVariable,
         fullPrice: result * priceBundle + rest * priceUnit,
       });
     }
-  }
-
-  function handleValueWithCustomDiscount() {
-    if (
-      studentData.customDiscountValue &&
-      +studentData.customDiscountValue > 0
-    ) {
-      const customDiscountValueSum = 100 - +studentData.customDiscountValue;
-      const priceUnitDiscount = +(
-        schoolCourseSelectedPrice.priceUnit *
-        +`0.${
-          customDiscountValueSum > 9
-            ? customDiscountValueSum
-            : `0${customDiscountValueSum}`
-        }`
-      ).toFixed(2);
-      const priceBundleDiscount = +(
-        schoolCourseSelectedPrice.priceBundle *
-        +`0.${
-          customDiscountValueSum > 9
-            ? customDiscountValueSum
-            : `0${customDiscountValueSum}`
-        }`
-      ).toFixed(2);
-      if (newClass.enrolledDays.length === 0) {
-        setNewClass({
-          ...newClass,
-          appliedPrice: 0,
-          fullPrice: 0,
-        });
-      }
-      if (newClass.enrolledDays.length === 1) {
-        setNewClass({
-          ...newClass,
-          appliedPrice: priceUnitDiscount,
-          fullPrice: schoolCourseSelectedPrice.priceUnit,
-        });
-      }
-      if (newClass.enrolledDays.length > 1) {
-        const result = Math.floor(
-          newClass.enrolledDays.length / schoolCourseSelectedPrice.bundleDays
-        );
-        const rest =
-          newClass.enrolledDays.length % schoolCourseSelectedPrice.bundleDays;
-        setNewClass({
-          ...newClass,
-          appliedPrice: result * priceBundleDiscount + rest * priceUnitDiscount,
-          fullPrice:
-            result * schoolCourseSelectedPrice.priceBundle +
-            rest * schoolCourseSelectedPrice.priceUnit,
-        });
-      }
-    } else {
-      // PRICE CALC WITHOUT DISCOUNT APPLIED
-      handleValueWithoutDiscount();
-    }
-  }
-
-  function handleValueWithEmployeeDiscount() {
-    const priceUnitDiscount = +(
-      schoolCourseSelectedPrice.priceUnit * employeeDiscountValue
-    ).toFixed(2);
-    const priceBundleDiscount = +(
-      schoolCourseSelectedPrice.priceBundle * employeeDiscountValue
-    ).toFixed(2);
-    if (newClass.enrolledDays.length === 0) {
-      setNewClass({
-        ...newClass,
-        appliedPrice: 0,
-        fullPrice: 0,
-      });
-    }
-    if (newClass.enrolledDays.length === 1) {
-      setNewClass({
-        ...newClass,
-        appliedPrice: priceUnitDiscount,
-        fullPrice: schoolCourseSelectedPrice.priceUnit,
-      });
-    }
-    if (newClass.enrolledDays.length > 1) {
-      const result = Math.floor(
-        newClass.enrolledDays.length / schoolCourseSelectedPrice.bundleDays
-      );
-      const rest =
-        newClass.enrolledDays.length % schoolCourseSelectedPrice.bundleDays;
-      setNewClass({
-        ...newClass,
-        appliedPrice: result * priceBundleDiscount + rest * priceUnitDiscount,
-        fullPrice:
-          result * schoolCourseSelectedPrice.priceBundle +
-          rest * schoolCourseSelectedPrice.priceUnit,
-      });
-    }
-  }
-
-  function handleValueWithFamilyDiscount() {
-    const priceUnitDiscount = +(
-      schoolCourseSelectedPrice.priceUnit * familyDiscountValue
-    ).toFixed(2);
-    const priceBundleDiscount = +(
-      schoolCourseSelectedPrice.priceBundle * familyDiscountValue
-    ).toFixed(2);
-    if (newClass.enrolledDays.length === 0) {
-      setNewClass({
-        ...newClass,
-        fullPrice: 0,
-        appliedPrice: 0,
-      });
-    }
-    if (newClass.enrolledDays.length === 1) {
-      setNewClass({
-        ...newClass,
-        appliedPrice: priceUnitDiscount,
-        fullPrice: schoolCourseSelectedPrice.priceUnit,
-      });
-    }
-    if (newClass.enrolledDays.length > 1) {
-      const result = Math.floor(
-        newClass.enrolledDays.length / schoolCourseSelectedPrice.bundleDays
-      );
-      const rest =
-        newClass.enrolledDays.length % schoolCourseSelectedPrice.bundleDays;
-      setNewClass({
-        ...newClass,
-        appliedPrice: result * priceBundleDiscount + rest * priceUnitDiscount,
-        fullPrice:
-          result * schoolCourseSelectedPrice.priceBundle +
-          rest * schoolCourseSelectedPrice.priceUnit,
-      });
-    }
-  }
-
-  // SET MONTHLY PAYMENT WHEN SCHOOL COURSE PRICE, OR ADD FAMILY, OR EMPLOYEE DISCOUNT CHANGE
-  useEffect(() => {
-    // PRICE CALC IF CUSTOM DISCOUNT IS APPLIED
-    if (studentData.customDiscount) {
-      handleValueWithCustomDiscount();
-    }
-    // PRICE CALC IF EMPLOYEE DISCOUNT IS APPLIED
-    else if (studentData.employeeDiscount) {
-      handleValueWithEmployeeDiscount();
-    }
-    // PRICE CALC IF FAMILY DISCOUNT IS APPLIED
-    else if (studentData.familyDiscount) {
-      handleValueWithFamilyDiscount();
-    }
-    // PRICE CALC WITHOUT DISCOUNT APPLIED
-    else {
-      handleValueWithoutDiscount();
-    }
+    // ----------- CALC ALSO PRESENT IN EDIT STUDENT ----------- //
   }, [
     newClass.enrolledDays,
     studentData.familyDiscount,
@@ -904,41 +779,39 @@ export function InsertStudent() {
   // -------------------------- CURRICULUM STATES AND FUNCTIONS -------------------------- //
   // CURRICULUM DATA ARRAY WITH ALL OPTIONS OF CURRICULUM
   const [curriculumCoursesData, setCurriculumCoursesData] = useState<
-    CurriculumSearchProps[]
+    CurriculumWithNamesProps[]
   >([]);
 
   // GETTING CURRICULUM DATA
   const handleAvailableCoursesData = async () => {
-    if (userFullData && userFullData.role === "user") {
+    if (userFullData) {
       if (curriculumData.schoolCourseId === "all") {
-        const filterCurriculum = curriculumDatabaseData.filter(
-          (curriculum) => curriculum.schoolId === curriculumData.schoolId
+        // const filterCurriculum = curriculumDatabaseData.filter(
+        //   (curriculum) =>
+        //     curriculum.schoolId === curriculumData.schoolId &&
+        //     curriculum.schoolClassId === curriculumData.schoolClassId
+        // );
+        setCurriculumCoursesData(
+          handleAllCurriculumDetails({
+            schoolId: curriculumData.schoolId,
+            schoolClassId: curriculumData.schoolClassId,
+          })
         );
-        setCurriculumCoursesData(filterCurriculum);
       } else {
-        const filterCurriculum = curriculumDatabaseData.filter(
-          (curriculum) =>
-            curriculum.schoolId === curriculumData.schoolId &&
-            curriculum.schoolCourseId === curriculumData.schoolCourseId
+        setCurriculumCoursesData(
+          handleCurriculumDetailsWithSchoolCourse({
+            schoolId: curriculumData.schoolId,
+            schoolClassId: curriculumData.schoolClassId,
+            schoolCourseId: curriculumData.schoolCourseId,
+          })
         );
-        setCurriculumCoursesData(filterCurriculum);
-      }
-    } else {
-      if (curriculumData.schoolCourseId === "all") {
-        const filterCurriculum = curriculumDatabaseData.filter(
-          (curriculum) =>
-            curriculum.schoolId === curriculumData.schoolId &&
-            curriculum.schoolClassId === curriculumData.schoolClassId
-        );
-        setCurriculumCoursesData(filterCurriculum);
-      } else {
-        const filterCurriculum = curriculumDatabaseData.filter(
-          (curriculum) =>
-            curriculum.schoolId === curriculumData.schoolId &&
-            curriculum.schoolClassId === curriculumData.schoolClassId &&
-            curriculum.schoolCourseId === curriculumData.schoolCourseId
-        );
-        setCurriculumCoursesData(filterCurriculum);
+        // const filterCurriculum = curriculumDatabaseData.filter(
+        //   (curriculum) =>
+        //     curriculum.schoolId === curriculumData.schoolId &&
+        //     curriculum.schoolClassId === curriculumData.schoolClassId &&
+        //     curriculum.schoolCourseId === curriculumData.schoolCourseId
+        // );
+        // setCurriculumCoursesData(filterCurriculum);
       }
     }
   };
@@ -981,9 +854,7 @@ export function InsertStudent() {
     setCurriculumData({
       ...curriculumData,
       schoolClassId: "",
-      schoolClassName: "",
       schoolCourseId: "",
-      schoolCourseName: "",
     });
     setStudentData({
       ...studentData,
@@ -996,7 +867,6 @@ export function InsertStudent() {
     setNewClass({
       isExperimental: true,
       date: "",
-      name: "",
       enrolmentFee:
         new Date().getMonth() < 6
           ? enrolmentFee
@@ -1018,7 +888,6 @@ export function InsertStudent() {
       setCurriculumData({
         ...curriculumData,
         schoolCourseId: "",
-        schoolCourseName: "",
       });
     }
     setStudentData({
@@ -1032,7 +901,6 @@ export function InsertStudent() {
     setNewClass({
       isExperimental: true,
       date: "",
-      name: "",
       enrolmentFee:
         new Date().getMonth() < 6
           ? enrolmentFee
@@ -1058,7 +926,6 @@ export function InsertStudent() {
     setNewClass({
       isExperimental: true,
       date: "",
-      name: "",
       enrolmentFee:
         new Date().getMonth() < 6
           ? enrolmentFee
@@ -1078,7 +945,6 @@ export function InsertStudent() {
         ...newClass,
         isExperimental: true,
         date: "",
-        name: "",
         enrolledDays: [],
       });
     }
@@ -1356,16 +1222,12 @@ export function InsertStudent() {
     });
     setCurriculumData({
       schoolId: "",
-      schoolName: "",
       schoolClassId: "",
-      schoolClassName: "",
       schoolCourseId: "",
-      schoolCourseName: "",
     });
     setNewClass({
       isExperimental: true,
       date: "",
-      name: "",
       enrolmentFee:
         new Date().getMonth() < 6
           ? enrolmentFee
@@ -1649,7 +1511,6 @@ export function InsertStudent() {
           experimentalCurriculumIds: newClass.isExperimental
             ? arrayUnion({
                 id: data.curriculum,
-                name: newClass.name,
                 date: Timestamp.fromDate(new Date(newClass.date)),
                 isExperimental: true,
                 indexDays: [],
@@ -1659,7 +1520,6 @@ export function InsertStudent() {
           curriculumIds: !newClass.isExperimental
             ? arrayUnion({
                 id: data.curriculum,
-                name: newClass.name,
                 date: Timestamp.fromDate(new Date(newClass.date)),
                 isExperimental: false,
                 indexDays: newClass.enrolledDays,
@@ -2574,7 +2434,6 @@ export function InsertStudent() {
                 {curriculumData.schoolCourseId === "all"
                   ? "Todas as Modalidades"
                   : schoolCourseSelectedData?.name}
-                :
               </h1>
 
               {/** SEPARATOR */}
@@ -2583,8 +2442,10 @@ export function InsertStudent() {
               {/* CURRICULUM SELECT CARD */}
               <div className="flex flex-wrap gap-4 justify-center">
                 {curriculumCoursesData
-                  .sort((a, b) => a.schoolClass.localeCompare(b.schoolClass))
-                  .map((c: CurriculumSearchProps) => (
+                  .sort((a, b) =>
+                    a.schoolClassName.localeCompare(b.schoolClassName)
+                  )
+                  .map((c) => (
                     <>
                       <div
                         className={
@@ -2604,28 +2465,14 @@ export function InsertStudent() {
                           className="text-klGreen-500 dark:text-klGreen-500 border-none"
                           value={c.id}
                           onChange={(e) => {
-                            if (userFullData && userFullData.role === "user") {
-                              setCurriculumData({
-                                ...curriculumData,
-                                schoolClassId: c.schoolClassId,
-                                schoolClassName: c.schoolClass,
-                                schoolCourseId: c.schoolCourseId,
-                                schoolCourseName: c.schoolCourse,
-                              });
-                            } else {
-                              setCurriculumData({
-                                ...curriculumData,
-                                schoolCourseId: c.schoolCourseId,
-                                schoolCourseName: c.schoolCourse,
-                              });
-                            }
+                            setCurriculumData({
+                              ...curriculumData,
+                              schoolCourseId: c.schoolCourseId,
+                            });
+
                             setStudentData({
                               ...studentData,
                               curriculum: e.target.value,
-                            });
-                            setNewClass({
-                              ...newClass,
-                              name: c.name,
                             });
                           }}
                         />
@@ -2636,27 +2483,27 @@ export function InsertStudent() {
                           <p>
                             Escola:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {c.school}
+                              {c.schoolName}
                             </span>
                           </p>
 
                           <p>
                             Ano Escolar:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {c.schoolClass}
+                              {c.schoolClassName}
                             </span>
                           </p>
 
                           <p>
                             Modalidade:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {c.schoolCourse}
+                              {c.schoolCourseName}
                             </span>
                           </p>
                           <p>
                             Dias:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {c.classDay}
+                              {c.classDayName}
                             </span>
                           </p>
                           {schedulesDetailsData.map(
@@ -2683,7 +2530,7 @@ export function InsertStudent() {
                           <p>
                             Professor:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {c.teacher}
+                              {c.teacherName}
                             </span>
                           </p>
                         </label>
@@ -3056,7 +2903,7 @@ export function InsertStudent() {
                         </div>
 
                         {/* SELECT FAMILY AT SCHOOL SECTION */}
-                        {studentData.familyDiscount ? (
+                        {studentData.familyDiscount && (
                           <div className="flex flex-col py-2 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
                             {/* FAMILY AT SCHOOL TITLE */}
                             <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
@@ -3276,7 +3123,7 @@ export function InsertStudent() {
                               </select>
                             </div>
                           </div>
-                        ) : null}
+                        )}
 
                         {/** PAYMENT DETAILS SECTION TITLE */}
                         <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
@@ -3329,7 +3176,7 @@ export function InsertStudent() {
                           />
                         </div>
 
-                        {/* STUDENT MONTHLY PRICE */}
+                        {/* STUDENT PAYMENT DAY */}
                         <div className="flex gap-2 items-center">
                           <label
                             htmlFor="dayPayment"

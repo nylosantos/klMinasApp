@@ -13,7 +13,6 @@ import { editSchoolClassValidationSchema } from "../../@types/zodValidation";
 import {
   EditSchoolClassValidationZProps,
   SchoolClassSearchProps,
-  SchoolSearchProps,
 } from "../../@types";
 import {
   GlobalDataContext,
@@ -25,7 +24,7 @@ const db = getFirestore(app);
 
 export function EditClass() {
   // GET GLOBAL DATA
-  const { schoolDatabaseData, schoolClassDatabaseData } = useContext(
+  const { schoolClassDatabaseData } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
 
@@ -44,26 +43,6 @@ export function EditClass() {
   // SCHOOL CLASS SELECTED AND EDIT ACTIVE STATES
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-
-  // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL SELECTED STATE DATA
-  const [schoolSelectedData, setSchoolSelectedData] =
-    useState<SchoolSearchProps>();
-
-  // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
-  useEffect(() => {
-    setIsEdit(false);
-    setIsSelected(false);
-    setSchoolClassSelectedData(undefined);
-    if (schoolClassData.schoolId !== "") {
-      setSchoolSelectedData(
-        schoolDatabaseData.find(({ id }) => id === schoolClassData.schoolId)
-      );
-    } else {
-      setSchoolSelectedData(undefined);
-    }
-  }, [schoolSelectedData]);
-  // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL CLASS SELECTED STATE DATA
@@ -304,7 +283,7 @@ export function EditClass() {
           </select>
         </div>
 
-        {isSelected ? (
+        {isSelected && (
           <>
             {/* EDIT BUTTON */}
             <div className="flex gap-2 mt-4 justify-center">
@@ -322,9 +301,9 @@ export function EditClass() {
               </button>
             </div>
           </>
-        ) : null}
+        )}
 
-        {isEdit ? (
+        {isEdit && (
           <>
             {/* SCHOOL CLASS NAME */}
             <div className="flex gap-2 items-center">
@@ -458,7 +437,7 @@ export function EditClass() {
               </button>
             </div>
           </>
-        ) : null}
+        )}
       </form>
     </div>
   );

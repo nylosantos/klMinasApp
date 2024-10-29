@@ -355,7 +355,6 @@ export function DeleteStudent() {
                   studentFamilyAtSchool: arrayRemove({
                     applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
                     id: foundedStudentOnFamilyRecord.id,
-                    name: foundedStudentOnFamilyRecord.name,
                   }),
                   familyDiscount: false,
                   appliedPrice: editingStudentFamily.fullPrice,
@@ -369,7 +368,6 @@ export function DeleteStudent() {
                   studentFamilyAtSchool: arrayRemove({
                     applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
                     id: foundedStudentOnFamilyRecord.id,
-                    name: foundedStudentOnFamilyRecord.name,
                   }),
                   familyDiscount: false,
                 });
@@ -382,7 +380,6 @@ export function DeleteStudent() {
                   studentFamilyAtSchool: arrayRemove({
                     applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
                     id: foundedStudentOnFamilyRecord.id,
-                    name: foundedStudentOnFamilyRecord.name,
                   }),
                 });
                 // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
@@ -395,7 +392,6 @@ export function DeleteStudent() {
                   studentFamilyAtSchool: arrayRemove({
                     applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
                     id: foundedStudentOnFamilyRecord.id,
-                    name: foundedStudentOnFamilyRecord.name,
                   }),
                   familyDiscount: false,
                   appliedPrice: editingStudentFamily.fullPrice,
@@ -409,7 +405,6 @@ export function DeleteStudent() {
                   studentFamilyAtSchool: arrayRemove({
                     applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
                     id: foundedStudentOnFamilyRecord.id,
-                    name: foundedStudentOnFamilyRecord.name,
                   }),
                   familyDiscount: false,
                 });
@@ -422,7 +417,6 @@ export function DeleteStudent() {
                   studentFamilyAtSchool: arrayRemove({
                     applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
                     id: foundedStudentOnFamilyRecord.id,
-                    name: foundedStudentOnFamilyRecord.name,
                   }),
                 });
               }
@@ -456,7 +450,6 @@ export function DeleteStudent() {
                         foundedStudentOnExperimentalCurriculum.indexDays,
                       isExperimental:
                         foundedStudentOnExperimentalCurriculum.isExperimental,
-                      name: foundedStudentOnExperimentalCurriculum.name,
                       price: foundedStudentOnExperimentalCurriculum.price,
                     }),
                   }
@@ -485,7 +478,6 @@ export function DeleteStudent() {
                   id: foundedStudentOnCurriculum.id,
                   indexDays: foundedStudentOnCurriculum.indexDays,
                   isExperimental: foundedStudentOnCurriculum.isExperimental,
-                  name: foundedStudentOnCurriculum.name,
                   price: foundedStudentOnCurriculum.price,
                 }),
               });

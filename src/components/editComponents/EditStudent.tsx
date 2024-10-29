@@ -27,6 +27,9 @@ export function EditStudent() {
   // STUDENT SELECTED AND EDIT ACTIVE STATES
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  const [studentsWithoutSchool, setIsStudentsWithoutSchool] = useState<
+    "true" | "false" | undefined
+  >();
 
   // STUDENT DATA
   const [studentData, setStudentData] = useState({
@@ -52,25 +55,33 @@ export function EditStudent() {
     setCurriculumSelectedData(undefined);
     // setStudentSelectedData(undefined);
     if (studentData.schoolId !== "") {
-      setSchoolSelectedData(
-        schoolDatabaseData.find(({ id }) => id === studentData.schoolId)
-      );
+      if (studentData.schoolId === "all") {
+        setIsStudentsWithoutSchool("true");
+      } else {
+        setIsStudentsWithoutSchool("false");
+        setSchoolSelectedData(
+          schoolDatabaseData.find(({ id }) => id === studentData.schoolId)
+        );
+      }
     } else {
+      setIsStudentsWithoutSchool(undefined);
       setSchoolSelectedData(undefined);
     }
   }, [schoolSelectedData]);
 
   // RESET SCHOOL CLASS, CURRICULUM AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
   useEffect(() => {
-    (
-      document.getElementById("schoolClassSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById("curriculumSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById("studentSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    if (studentsWithoutSchool === "false") {
+      (
+        document.getElementById("schoolClassSelect") as HTMLSelectElement
+      ).selectedIndex = 0;
+      (
+        document.getElementById("curriculumSelect") as HTMLSelectElement
+      ).selectedIndex = 0;
+      (
+        document.getElementById("studentSelect") as HTMLSelectElement
+      ).selectedIndex = 0;
+    }
     setIsEdit(false);
     setIsSelected(false);
     setStudentData({
@@ -108,12 +119,14 @@ export function EditStudent() {
 
   // RESET CURRICULUM AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CLASS CHANGE
   useEffect(() => {
-    (
-      document.getElementById("curriculumSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById("studentSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    if (studentsWithoutSchool === "false") {
+      (
+        document.getElementById("curriculumSelect") as HTMLSelectElement
+      ).selectedIndex = 0;
+      (
+        document.getElementById("studentSelect") as HTMLSelectElement
+      ).selectedIndex = 0;
+    }
     setIsEdit(false);
     setIsSelected(false);
     setStudentData({
@@ -151,9 +164,11 @@ export function EditStudent() {
 
   // RESET STUDENT SELECT TO INDEX 0 WHEN CURRICULUM CHANGE
   useEffect(() => {
-    (
-      document.getElementById("studentSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    if (studentsWithoutSchool === "false") {
+      (
+        document.getElementById("studentSelect") as HTMLSelectElement
+      ).selectedIndex = 0;
+    }
     setIsEdit(false);
     setIsSelected(false);
     setStudentData({
@@ -171,15 +186,15 @@ export function EditStudent() {
     (
       document.getElementById("schoolSelect") as HTMLSelectElement
     ).selectedIndex = 0;
-    (
-      document.getElementById("schoolClassSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById("curriculumSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById("studentSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    // (
+    //   document.getElementById("schoolClassSelect") as HTMLSelectElement
+    // ).selectedIndex = 0;
+    // (
+    //   document.getElementById("curriculumSelect") as HTMLSelectElement
+    // ).selectedIndex = 0;
+    // (
+    //   document.getElementById("studentSelect") as HTMLSelectElement
+    // ).selectedIndex = 0;
     setStudentData({
       schoolId: "",
       schoolClassId: "",
@@ -189,6 +204,7 @@ export function EditStudent() {
       schoolCoursePriceBundle: 0,
       schoolCourseBundleDays: 0,
     });
+    setIsStudentsWithoutSchool(undefined);
   };
 
   return (
@@ -222,104 +238,163 @@ export function EditStudent() {
                 ...studentData,
                 schoolId: e.target.value,
               });
+              if (
+                e.target.value === "" ||
+                e.target.value === " -- select an option -- "
+              ) {
+                setIsStudentsWithoutSchool(undefined);
+              } else if (e.target.value === "all") {
+                setIsStudentsWithoutSchool("true");
+              } else {
+                setIsStudentsWithoutSchool("false");
+              }
             }}
           >
             <SelectOptions returnId dataType="schools" />
+            <option value={"all"}>
+              Alunos atualmente sem matrícula ou aula experimental agendada
+            </option>
           </select>
         </div>
 
-        {/* SCHOOL CLASS SELECT */}
-        <div className="flex gap-2 items-center">
-          <label htmlFor="schoolClassSelect" className="w-1/4 text-right">
-            Selecione o Ano Escolar:{" "}
-          </label>
-          <select
-            id="schoolClassSelect"
-            defaultValue={" -- select an option -- "}
-            disabled={isEdit ? true : studentData.schoolId ? false : true}
-            className={
-              studentData.schoolId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-            }
-            name="schoolClassSelect"
-            onChange={(e) => {
-              setStudentData({
-                ...studentData,
-                schoolClassId: e.target.value,
-              });
-            }}
-          >
-            <SelectOptions
-              returnId
-              dataType="schoolClasses"
-              schoolId={studentData.schoolId}
-            />
-          </select>
-        </div>
+        {studentsWithoutSchool === "false" && (
+          <>
+            {/* SCHOOL CLASS SELECT */}
+            <div className="flex gap-2 items-center">
+              <label htmlFor="schoolClassSelect" className="w-1/4 text-right">
+                Selecione o Ano Escolar:{" "}
+              </label>
+              <select
+                id="schoolClassSelect"
+                defaultValue={" -- select an option -- "}
+                disabled={isEdit ? true : studentData.schoolId ? false : true}
+                className={
+                  studentData.schoolId
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                }
+                name="schoolClassSelect"
+                onChange={(e) => {
+                  setStudentData({
+                    ...studentData,
+                    schoolClassId: e.target.value,
+                  });
+                }}
+              >
+                <SelectOptions
+                  returnId
+                  dataType="schoolClasses"
+                  schoolId={studentData.schoolId}
+                />
+              </select>
+            </div>
 
-        {/* CURRICULUM SELECT */}
-        <div className="flex gap-2 items-center">
-          <label htmlFor="curriculumSelect" className="w-1/4 text-right">
-            Selecione a Modalidade:{" "}
-          </label>
-          <select
-            id="curriculumSelect"
-            defaultValue={" -- select an option -- "}
-            disabled={isEdit ? true : studentData.schoolClassId ? false : true}
-            className={
-              studentData.schoolId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-            }
-            name="curriculumSelect"
-            onChange={(e) => {
-              setStudentData({
-                ...studentData,
-                curriculumId: e.target.value,
-              });
-            }}
-          >
-            <SelectOptions
-              returnId
-              dataType="curriculum"
-              displaySchoolCourseAndSchedule
-              schoolId={studentData.schoolId}
-              schoolClassId={studentData.schoolClassId}
-            />
-          </select>
-        </div>
+            {/* CURRICULUM SELECT */}
+            <div className="flex gap-2 items-center">
+              <label htmlFor="curriculumSelect" className="w-1/4 text-right">
+                Selecione a Modalidade:{" "}
+              </label>
+              <select
+                id="curriculumSelect"
+                defaultValue={" -- select an option -- "}
+                disabled={
+                  isEdit ? true : studentData.schoolClassId ? false : true
+                }
+                className={
+                  studentData.schoolId
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                }
+                name="curriculumSelect"
+                onChange={(e) => {
+                  setStudentData({
+                    ...studentData,
+                    curriculumId: e.target.value,
+                  });
+                }}
+              >
+                <SelectOptions
+                  returnId
+                  dataType="curriculum"
+                  displaySchoolCourseAndSchedule
+                  schoolId={studentData.schoolId}
+                  schoolClassId={studentData.schoolClassId}
+                />
+              </select>
+            </div>
 
-        {/* STUDENT SELECT */}
-        <div className="flex gap-2 items-center">
-          <label htmlFor="studentSelect" className={"w-1/4 text-right"}>
-            Selecione o Aluno:{" "}
-          </label>
-          <select
-            id="studentSelect"
-            defaultValue={" -- select an option -- "}
-            disabled={isEdit ? true : studentData.curriculumId ? false : true}
-            className={
-              studentData.schoolId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-            }
-            name="studentSelect"
-            onChange={(e) => {
-              setStudentData({
-                ...studentData,
-                studentId: e.target.value,
-              });
-              setIsSelected(true);
-            }}
-          >
-            <SelectOptions
-              returnId
-              dataType="searchStudent"
-              curriculumId={studentData.curriculumId}
-            />
-          </select>
-        </div>
+            {/* STUDENT SELECT */}
+            <div className="flex gap-2 items-center">
+              <label htmlFor="studentSelect" className={"w-1/4 text-right"}>
+                Selecione o Aluno:{" "}
+              </label>
+              <select
+                id="studentSelect"
+                defaultValue={" -- select an option -- "}
+                disabled={
+                  isEdit ? true : studentData.curriculumId ? false : true
+                }
+                className={
+                  studentData.schoolId
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                }
+                name="studentSelect"
+                onChange={(e) => {
+                  setStudentData({
+                    ...studentData,
+                    studentId: e.target.value,
+                  });
+                  setIsSelected(true);
+                }}
+              >
+                <SelectOptions
+                  returnId
+                  dataType="searchStudent"
+                  curriculumId={studentData.curriculumId}
+                />
+              </select>
+            </div>
+          </>
+        )}
+
+        {studentsWithoutSchool === "true" && (
+          <>
+            {/* SCHOOL CLASS SELECT */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="studentWithoutSchoolSelect"
+                className="w-1/4 text-right"
+              >
+                Selecione o Aluno:{" "}
+              </label>
+              <select
+                id="studentWithoutSchoolSelect"
+                defaultValue={" -- select an option -- "}
+                disabled={isEdit ? true : studentData.schoolId ? false : true}
+                className={
+                  studentData.schoolId
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                }
+                name="studentWithoutSchoolSelect"
+                onChange={(e) => {
+                  setStudentData({
+                    ...studentData,
+                    studentId: e.target.value,
+                  });
+                  setIsSelected(true);
+                }}
+              >
+                <SelectOptions
+                  returnId
+                  dataType="schoolClasses"
+                  schoolId={studentData.schoolId}
+                />
+              </select>
+            </div>
+          </>
+        )}
 
         {/* EDIT BUTTON */}
         {isSelected && (

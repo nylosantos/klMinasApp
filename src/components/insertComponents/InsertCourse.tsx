@@ -3,11 +3,9 @@ import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import CurrencyInput from "react-currency-input-field";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
-
 import { app } from "../../db/Firebase";
 import { CreateCourseValidationZProps } from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
@@ -16,6 +14,7 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { NumericFormat } from "react-number-format";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -249,30 +248,29 @@ export function InsertCourse() {
           >
             Valor da Aula Avulsa:{" "}
           </label>
-          <CurrencyInput
-            name="priceUnit"
+          <NumericFormat
             placeholder={
               errors.priceUnit
-                ? "É necessário inserir o valor mensal da aula avulsa"
-                : "Insira o valor mensal da aula avulsa"
+                ? "É necessário inserir o valor mensal do pacote de Aulas"
+                : "Insira o valor mensal do pacote de Aulas"
             }
             defaultValue={0}
-            decimalsLimit={2}
+            thousandSeparator="."
+            decimalSeparator=","
+            allowNegative={false}
             decimalScale={2}
-            prefix="R$"
-            disableAbbreviations
-            onValueChange={(value) =>
-              value
-                ? setCourseData({
-                    ...courseData,
-                    priceUnit: +value.replace(/\D/g, ""),
-                  })
-                : null
-            }
+            fixedDecimalScale
+            prefix={"R$ "}
+            onValueChange={(values) => {
+              setCourseData({
+                ...courseData,
+                priceUnit: values.floatValue ?? 0,
+              });
+            }}
             className={
               errors.priceUnit
                 ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
             }
           />
         </div>
@@ -289,30 +287,30 @@ export function InsertCourse() {
           >
             Valor do Pacote de Aulas:{" "}
           </label>
-          <CurrencyInput
-            name="priceBundle"
+
+          <NumericFormat
             placeholder={
               errors.priceBundle
                 ? "É necessário inserir o valor mensal do pacote de Aulas"
                 : "Insira o valor mensal do pacote de Aulas"
             }
             defaultValue={0}
-            decimalsLimit={2}
+            thousandSeparator="."
+            decimalSeparator=","
+            allowNegative={false}
             decimalScale={2}
-            prefix="R$"
-            disableAbbreviations
-            onValueChange={(value) =>
-              value
-                ? setCourseData({
-                    ...courseData,
-                    priceBundle: +value.replace(/\D/g, ""),
-                  })
-                : null
-            }
+            fixedDecimalScale
+            prefix={"R$ "}
+            onValueChange={(values) => {
+              setCourseData({
+                ...courseData,
+                priceBundle: values.floatValue ?? 0,
+              });
+            }}
             className={
               errors.priceBundle
                 ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
             }
           />
         </div>

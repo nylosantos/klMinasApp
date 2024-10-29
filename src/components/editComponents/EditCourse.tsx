@@ -2,19 +2,12 @@
 import { useState, useEffect, useContext } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import CurrencyInput from "react-currency-input-field";
 import { toast } from "react-toastify";
+import { NumericFormat } from "react-number-format";
 import { SubmitHandler, useForm } from "react-hook-form";
 import {
   arrayRemove,
-  arrayUnion,
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  updateDoc,
-  where,
+  arrayUnion, doc, getFirestore, updateDoc
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -31,11 +24,6 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import {
-  employeeDiscountValue,
-  familyDiscountValue,
-  secondCourseDiscountValue,
-} from "../../custom";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -47,6 +35,7 @@ export function EditCourse() {
     schoolCourseDatabaseData,
     curriculumDatabaseData,
     studentsDatabaseData,
+    calcStudentPrice,
     setIsSubmitting,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
@@ -144,22 +133,15 @@ export function EditCourse() {
       priceUnit: 0,
     });
   };
+  useEffect(() => {
+    console.log(schoolCourseEditData.priceBundle);
+  }, [schoolCourseEditData.priceBundle]);
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("name", schoolCourseEditData.name);
-    setValue(
-      "priceUnit",
-      schoolCourseData.priceUnit !== schoolCourseEditData.priceUnit / 100
-        ? schoolCourseEditData.priceUnit / 100
-        : schoolCourseEditData.priceUnit
-    );
-    setValue(
-      "priceBundle",
-      schoolCourseData.priceBundle !== schoolCourseEditData.priceBundle / 100
-        ? schoolCourseEditData.priceBundle / 100
-        : schoolCourseEditData.priceBundle
-    );
+    setValue("priceUnit", schoolCourseEditData.priceUnit);
+    setValue("priceBundle", schoolCourseEditData.priceBundle);
     setValue("bundleDays", schoolCourseEditData.bundleDays);
   }, [schoolCourseEditData]);
 
@@ -184,7 +166,7 @@ export function EditCourse() {
 
   // EDIT PRICE ON STUDENTS REGISTERS
   async function updatePriceOnStudentsData() {
-    // SEARCH SCHOOLCOURSE ON CURRICULUMS
+    // SEARCH SCHOOL COURSE ON CURRICULUMS
     const foundedCurriculums: CurriculumSearchProps[] = [];
     curriculumDatabaseData.map((curriculum) => {
       if (curriculum.schoolCourseId === schoolCourseData.schoolCourseId) {
@@ -206,20 +188,6 @@ export function EditCourse() {
       // MAKING CHANGINGS ON ALL STUDENT
       if (foundedStudentsToEdit.length > 0) {
         foundedStudentsToEdit.map(async (student) => {
-          // DISCOUNT VARIABLE
-          // const customDiscountValueSum = 100 - +student.customDiscountValue;
-          // const customDiscountFinalValue = +`0.${
-          //   customDiscountValueSum > 9
-          //     ? customDiscountValueSum
-          //     : `0${customDiscountValueSum}`
-          // }`;
-
-          // const discountVariable = student.customDiscount
-          //   ? customDiscountFinalValue
-          //   : student.employeeDiscount
-          //   ? employeeDiscountValue
-          //   : familyDiscountValue;
-
           if (student.curriculumIds.length <= 1) {
             // IF STUDENT HAS ONLY ONE CURRICULUM
             // CHANGING CURRICULUM STUDENT PRICES
@@ -229,7 +197,6 @@ export function EditCourse() {
                 date: student.curriculumIds[0].date,
                 id: student.curriculumIds[0].id,
                 isExperimental: student.curriculumIds[0].isExperimental,
-                name: student.curriculumIds[0].name,
                 indexDays: student.curriculumIds[0].indexDays,
                 price: student.curriculumIds[0].price,
               }),
@@ -242,9 +209,8 @@ export function EditCourse() {
                   date: student.curriculumIds[0].date,
                   id: student.curriculumIds[0].id,
                   isExperimental: student.curriculumIds[0].isExperimental,
-                  name: student.curriculumIds[0].name,
                   indexDays: student.curriculumIds[0].indexDays,
-                  price: schoolCourseEditData.priceUnit / 100,
+                  price: schoolCourseEditData.priceUnit,
                 }),
               });
             }
@@ -262,81 +228,13 @@ export function EditCourse() {
                   date: student.curriculumIds[0].date,
                   id: student.curriculumIds[0].id,
                   isExperimental: student.curriculumIds[0].isExperimental,
-                  name: student.curriculumIds[0].name,
                   indexDays: student.curriculumIds[0].indexDays,
                   price:
-                    result * (schoolCourseEditData.priceBundle / 100) +
-                    rest * (schoolCourseEditData.priceUnit / 100),
+                    result * schoolCourseEditData.priceBundle +
+                    rest * schoolCourseEditData.priceUnit,
                 }),
               });
             }
-
-            // // CALCULATE AND CHANGING TOTAL STUDENT PRICES
-            // if (
-            //   student.customDiscount ||
-            //   student.employeeDiscount ||
-            //   student.familyDiscount
-            // ) {
-            //   // WITH DISCOUNT
-            //   const priceUnitDiscount = +(
-            //     (schoolCourseEditData.priceUnit / 100) *
-            //     discountVariable
-            //   ).toFixed(2);
-
-            //   const priceBundleDiscount = +(
-            //     (schoolCourseEditData.priceBundle / 100) *
-            //     discountVariable
-            //   ).toFixed(2);
-
-            //   if (student.curriculumIds[0].indexDays.length === 1) {
-            //     await updateDoc(doc(db, "students", student.id), {
-            //       fullPrice: schoolCourseEditData.priceUnit / 100,
-            //       appliedPrice: priceUnitDiscount,
-            //     });
-            //   }
-
-            //   if (student.curriculumIds[0].indexDays.length > 1) {
-            //     const result = Math.floor(
-            //       student.curriculumIds[0].indexDays.length /
-            //         schoolCourseEditData.bundleDays
-            //     );
-            //     const rest =
-            //       student.curriculumIds[0].indexDays.length %
-            //       schoolCourseEditData.bundleDays;
-            //     await updateDoc(doc(db, "students", student.id), {
-            //       appliedPrice:
-            //         result * priceBundleDiscount + rest * priceUnitDiscount,
-            //       fullPrice:
-            //         (result * schoolCourseEditData.priceBundle) / 100 +
-            //         (rest * schoolCourseEditData.priceUnit) / 100,
-            //     });
-            //   }
-            // } else {
-            //   // WITHOUT DISCOUNT
-            //   if (student.curriculumIds[0].indexDays.length === 1) {
-            //     await updateDoc(doc(db, "students", student.id), {
-            //       appliedPrice: schoolCourseEditData.priceUnit / 100,
-            //       fullPrice: schoolCourseEditData.priceUnit / 100,
-            //     });
-            //   }
-            //   if (student.curriculumIds[0].indexDays.length > 1) {
-            //     const result = Math.floor(
-            //       student.curriculumIds[0].indexDays.length /
-            //         schoolCourseEditData.bundleDays
-            //     );
-            //     const rest =
-            //       student.curriculumIds[0].indexDays.length %
-            //       schoolCourseEditData.bundleDays;
-            //     await updateDoc(doc(db, "students", student.id), {
-            //       appliedPrice:
-            //         result * (schoolCourseEditData.priceBundle / 100) +
-            //         rest * (schoolCourseEditData.priceUnit / 100),
-            //       fullPrice:
-            //         result * (schoolCourseEditData.priceBundle / 100) +
-            //         rest * (schoolCourseEditData.priceUnit / 100),
-            //     });
-            //   }
-            // }
           } else {
             // IF STUDENT HAS MORE THAN ONE CURRICULUM
             // CHANGING CURRICULUM PRICE ON STUDENT.CURRICULUMIDS
@@ -350,7 +248,6 @@ export function EditCourse() {
                       date: studentCurriculum.date,
                       id: studentCurriculum.id,
                       isExperimental: studentCurriculum.isExperimental,
-                      name: studentCurriculum.name,
                       indexDays: studentCurriculum.indexDays,
                       price: studentCurriculum.price,
                     }),
@@ -362,9 +259,8 @@ export function EditCourse() {
                         date: studentCurriculum.date,
                         id: studentCurriculum.id,
                         isExperimental: studentCurriculum.isExperimental,
-                        name: studentCurriculum.name,
                         indexDays: studentCurriculum.indexDays,
-                        price: schoolCourseEditData.priceUnit / 100,
+                        price: schoolCourseEditData.priceUnit,
                       }),
                     });
                   }
@@ -382,11 +278,10 @@ export function EditCourse() {
                         date: studentCurriculum.date,
                         id: studentCurriculum.id,
                         isExperimental: studentCurriculum.isExperimental,
-                        name: studentCurriculum.name,
                         indexDays: studentCurriculum.indexDays,
                         price:
-                          result * (schoolCourseEditData.priceBundle / 100) +
-                          rest * (schoolCourseEditData.priceUnit / 100),
+                          result * schoolCourseEditData.priceBundle +
+                          rest * schoolCourseEditData.priceUnit,
                       }),
                     });
                   }
@@ -394,58 +289,7 @@ export function EditCourse() {
               });
             });
           }
-          const userRef = collection(db, "students");
-          const q = query(userRef, where("id", "==", student.id));
-          const querySnapshot = await getDocs(q);
-          const promises: StudentSearchProps[] = [];
-          querySnapshot.forEach((doc) => {
-            const promise = doc.data() as StudentSearchProps;
-            promises.push(promise);
-          });
-          Promise.all(promises).then((results) => {
-            const studentToCalcPrices = results;
-            studentToCalcPrices.map(async (student) => {
-              // DISCOUNT VARIABLE
-              const customDiscountValueSum = 100 - +student.customDiscountValue;
-              const customDiscountFinalValue = +`0.${
-                customDiscountValueSum > 9
-                  ? customDiscountValueSum
-                  : `0${customDiscountValueSum}`
-              }`;
-
-              const discountVariable = student.customDiscount
-                ? customDiscountFinalValue
-                : student.employeeDiscount
-                ? employeeDiscountValue
-                : student.familyDiscount
-                ? familyDiscountValue
-                : student.secondCourseDiscount
-                ? secondCourseDiscountValue
-                : 1; // WITHOUT DISCOUNT
-
-              // CALC OF FULL AND APPLY PRICE OF STUDENT
-              let smallestPrice = 0;
-              let otherSumPrices = 0;
-              let olderSmallestPrice = 0;
-              student.curriculumIds.map(async (studentCurriculum, index) => {
-                if (index === 0) {
-                  smallestPrice = studentCurriculum.price;
-                } else {
-                  if (studentCurriculum.price <= smallestPrice) {
-                    olderSmallestPrice = smallestPrice;
-                    smallestPrice = studentCurriculum.price;
-                    otherSumPrices = olderSmallestPrice + otherSumPrices;
-                  } else {
-                    otherSumPrices = otherSumPrices + studentCurriculum.price;
-                  }
-                }
-              });
-              await updateDoc(doc(db, "students", student.id), {
-                appliedPrice: smallestPrice * discountVariable + otherSumPrices,
-                fullPrice: smallestPrice + otherSumPrices,
-              });
-            });
-          });
+          await calcStudentPrice(student.id);
         });
       }
     }
@@ -639,27 +483,21 @@ export function EditCourse() {
               >
                 Valor da aula avulsa:{" "}
               </label>
-              <CurrencyInput
-                name="price"
-                placeholder={
-                  errors.priceUnit
-                    ? "É necessário inserir o valor mensal da aula avulsa"
-                    : "Insira o valor mensal da aula avulsa"
-                }
-                defaultValue={schoolCourseEditData.priceUnit}
-                decimalsLimit={2}
-                decimalScale={2}
-                prefix="R$"
+              <NumericFormat
+                value={schoolCourseEditData.priceUnit}
+                thousandSeparator="."
                 decimalSeparator=","
-                groupSeparator="."
-                disableAbbreviations
-                onValueChange={(value) =>
-                  value &&
+                allowNegative={false}
+                decimalScale={2}
+                fixedDecimalScale
+                prefix={"R$ "}
+                onValueChange={(values, sourceInfo) => {
+                  console.log("do numeric: ", values, sourceInfo);
                   setSchoolCourseEditData({
                     ...schoolCourseEditData,
-                    priceUnit: +value.replace(/\D/g, ""),
-                  })
-                }
+                    priceUnit: values.floatValue ?? 0,
+                  });
+                }}
                 className={
                   errors.priceUnit
                     ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -680,27 +518,21 @@ export function EditCourse() {
               >
                 Valor do pacote de aulas:{" "}
               </label>
-              <CurrencyInput
-                name="price"
-                placeholder={
-                  errors.priceBundle
-                    ? "É necessário inserir o valor mensal do pacote de aulas"
-                    : "Insira o valor mensal do pacote de aulas"
-                }
-                defaultValue={schoolCourseEditData.priceBundle}
-                decimalsLimit={2}
-                decimalScale={2}
-                prefix="R$"
+              <NumericFormat
+                value={schoolCourseEditData.priceBundle}
+                thousandSeparator="."
                 decimalSeparator=","
-                groupSeparator="."
-                disableAbbreviations
-                onValueChange={(value) =>
-                  value &&
+                allowNegative={false}
+                decimalScale={2}
+                fixedDecimalScale
+                prefix={"R$ "}
+                onValueChange={(values, sourceInfo) => {
+                  console.log("do numeric: ", values, sourceInfo);
                   setSchoolCourseEditData({
                     ...schoolCourseEditData,
-                    priceBundle: +value.replace(/\D/g, ""),
-                  })
-                }
+                    priceBundle: values.floatValue ?? 0,
+                  });
+                }}
                 className={
                   errors.priceBundle
                     ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -721,28 +553,24 @@ export function EditCourse() {
               >
                 Quantidade de aulas p/ semana no pacote:{" "}
               </label>
-              <CurrencyInput
-                name="bundleDays"
-                placeholder={
-                  errors.bundleDays
-                    ? "É necessário inserir a quantidade de aulas p/ semana no pacote"
-                    : "Insira a quantidade de aulas p/ semana no pacote"
-                }
-                defaultValue={schoolCourseEditData.bundleDays}
-                decimalsLimit={0}
-                disableAbbreviations
-                onValueChange={(value) =>
-                  value
-                    ? setSchoolCourseEditData({
-                        ...schoolCourseEditData,
-                        bundleDays: +value.replace(/\D/g, ""),
-                      })
-                    : null
-                }
+              <NumericFormat
+                value={schoolCourseEditData.bundleDays}
+                thousandSeparator="."
+                decimalSeparator=","
+                allowNegative={false}
+                decimalScale={0}
+                fixedDecimalScale
+                onValueChange={(values, sourceInfo) => {
+                  console.log("do numeric: ", values, sourceInfo);
+                  setSchoolCourseEditData({
+                    ...schoolCourseEditData,
+                    bundleDays: values.floatValue ?? 0,
+                  });
+                }}
                 className={
                   errors.bundleDays
                     ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
                 }
               />
             </div>

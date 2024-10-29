@@ -2,7 +2,6 @@
 import { useState, useEffect, useContext } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
-import CurrencyInput from "react-currency-input-field";
 import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
 import { deleteDoc, doc, getFirestore } from "firebase/firestore";
@@ -20,6 +19,7 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { NumericFormat } from "react-number-format";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -331,7 +331,7 @@ export function DeleteCourse() {
           </select>
         </div>
 
-        {isSelected ? (
+        {isSelected && (
           <>
             <div className="flex flex-col pt-2 pb-6 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
               {/* DETAILS TITLE */}
@@ -356,28 +356,24 @@ export function DeleteCourse() {
               {/* SCHOOL COURSE PRICE UNIT */}
               <div className="flex gap-2 items-center">
                 <label
-                  htmlFor="priceUnit"
+                  htmlFor="price"
                   className={
                     errors.priceUnit
                       ? "w-1/4 text-right text-red-500 dark:text-red-400"
                       : "w-1/4 text-right"
                   }
                 >
-                  Valor da Aula Avulsa:{" "}
+                  Valor da aula avulsa:{" "}
                 </label>
-                <CurrencyInput
-                  name="priceUnit"
-                  placeholder={
-                    errors.priceUnit
-                      ? "É necessário inserir o valor mensal da aula avulsa"
-                      : "Insira o valor mensal da aula avulsa"
-                  }
-                  value={schoolCourseData.priceUnit}
-                  decimalsLimit={2}
-                  decimalScale={2}
-                  prefix="R$"
+                <NumericFormat
                   disabled
-                  disableAbbreviations
+                  value={schoolCourseData.priceUnit}
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  allowNegative={false}
+                  decimalScale={2}
+                  fixedDecimalScale
+                  prefix={"R$ "}
                   className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 />
               </div>
@@ -385,31 +381,28 @@ export function DeleteCourse() {
               {/* SCHOOL COURSE PRICE BUNDLE */}
               <div className="flex gap-2 items-center">
                 <label
-                  htmlFor="priceBundle"
+                  htmlFor="price"
                   className={
                     errors.priceBundle
                       ? "w-1/4 text-right text-red-500 dark:text-red-400"
                       : "w-1/4 text-right"
                   }
                 >
-                  Valor do Pacote de Aulas:{" "}
+                  Valor do pacote de aulas:{" "}
                 </label>
-                <CurrencyInput
-                  name="priceBundle"
-                  placeholder={
-                    errors.priceBundle
-                      ? "É necessário inserir o valor mensal do pacote de Aulas"
-                      : "Insira o valor mensal do pacote de Aulas"
-                  }
-                  value={schoolCourseData.priceBundle}
-                  decimalsLimit={2}
-                  decimalScale={2}
-                  prefix="R$"
+                <NumericFormat
                   disabled
-                  disableAbbreviations
+                  value={schoolCourseData.priceBundle}
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  allowNegative={false}
+                  decimalScale={2}
+                  fixedDecimalScale
+                  prefix={"R$ "}
                   className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 />
               </div>
+
               {/* SCHOOL COURSE BUNDLE DAYS */}
               <div className="flex gap-2 items-center">
                 <label
@@ -420,23 +413,17 @@ export function DeleteCourse() {
                       : "w-1/4 text-right"
                   }
                 >
-                  Número de aulas no pacote:{" "}
+                  Quantidade de aulas p/ semana no pacote:{" "}
                 </label>
-                <input
-                  type="text"
-                  name="bundleDays"
+                <NumericFormat
                   disabled
-                  className={
-                    errors.bundleDays
-                      ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                  }
-                  placeholder={
-                    errors.bundleDays
-                      ? "É necessário inserir o número de aulas contidas no pacote"
-                      : "Insira o número de aulas contidas no pacote"
-                  }
                   value={schoolCourseData.bundleDays}
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  allowNegative={false}
+                  decimalScale={0}
+                  fixedDecimalScale
+                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 />
               </div>
             </div>
@@ -486,7 +473,7 @@ export function DeleteCourse() {
               </button>
             </div>
           </>
-        ) : null}
+        )}
       </form>
     </div>
   );

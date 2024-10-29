@@ -167,7 +167,7 @@ export function Header() {
               className="text-klGreen-500 dark:text-klOrange-500 hover:text-klGreen-500/70 hover:dark:text-klOrange-500/80 font-bold cursor-pointer"
               onClick={() => setPage({ prev: page.show, show: "Settings" })}
             >
-              Olá, {userFullData.name}
+              Olá, {userFullData.name.split(' ')[0]}
             </p>
           )}
           {renderThemeChanger()}

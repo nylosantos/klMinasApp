@@ -11,7 +11,7 @@ import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { createClassValidationSchema } from "../../@types/zodValidation";
-import { CreateClassValidationZProps, SchoolSearchProps } from "../../@types";
+import { CreateClassValidationZProps } from "../../@types";
 import {
   GlobalDataContext,
   GlobalDataContextType,
@@ -22,7 +22,7 @@ const db = getFirestore(app);
 
 export function InsertClass() {
   // GET GLOBAL DATA
-  const { schoolDatabaseData, schoolClassDatabaseData } = useContext(
+  const { schoolClassDatabaseData } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
 
@@ -30,37 +30,9 @@ export function InsertClass() {
   const [schoolClassData, setSchoolClassData] =
     useState<CreateClassValidationZProps>({
       name: "",
-      schoolName: "",
       schoolId: "",
       confirmInsert: false,
     });
-
-  // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL SELECTED STATE DATA
-  const [schoolSelectedData, setSchoolSelectedData] =
-    useState<SchoolSearchProps>();
-
-  // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
-  useEffect(() => {
-    if (schoolClassData.schoolId !== "") {
-      setSchoolSelectedData(
-        schoolDatabaseData.find(({ id }) => id === schoolClassData.schoolId)
-      );
-    } else {
-      setSchoolSelectedData(undefined);
-    }
-  }, [schoolClassData.schoolId]);
-
-  // SET SCHOOL NAME WITH SCHOOL SELECTED DATA WHEN SELECT SCHOOL
-  useEffect(() => {
-    if (schoolSelectedData !== undefined) {
-      setSchoolClassData({
-        ...schoolClassData,
-        schoolName: schoolSelectedData!.name,
-      });
-    }
-  }, [schoolSelectedData]);
-  // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,7 +47,6 @@ export function InsertClass() {
     resolver: zodResolver(createClassValidationSchema),
     defaultValues: {
       name: "",
-      schoolName: "",
       schoolId: "",
       confirmInsert: false,
     },
@@ -85,7 +56,6 @@ export function InsertClass() {
   const resetForm = () => {
     setSchoolClassData({
       name: "",
-      schoolName: "",
       schoolId: "",
       confirmInsert: false,
     });
@@ -99,7 +69,6 @@ export function InsertClass() {
   useEffect(() => {
     setValue("name", schoolClassData.name);
     setValue("schoolId", schoolClassData.schoolId);
-    setValue("schoolName", schoolClassData.schoolName);
     setValue("confirmInsert", schoolClassData.confirmInsert);
   }, [schoolClassData]);
 
@@ -145,7 +114,6 @@ export function InsertClass() {
         await setDoc(doc(db, "schoolClasses", commonId), {
           id: commonId,
           name: data.name,
-          schoolName: data.schoolName,
           schoolId: data.schoolId,
           updatedAt: serverTimestamp(),
         });

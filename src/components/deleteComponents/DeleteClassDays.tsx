@@ -32,8 +32,9 @@ export function DeleteClassDays() {
   const [classDaysData, setClassDaysData] =
     useState<DeleteClassDaysValidationZProps>({
       classDayId: "",
-      classDayName: "",
     });
+
+  const [classDayName, setClassDayName] = useState("");
 
   // -------------------------- CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
   // CLASS DAY SELECTED STATE DATA
@@ -55,10 +56,7 @@ export function DeleteClassDays() {
   // SET CLASS DAY NAME WITH CLASS DAY SELECTED DATA WHEN SELECT CLASS DAY
   useEffect(() => {
     if (classDaySelectedData !== undefined) {
-      setClassDaysData({
-        ...classDaysData,
-        classDayName: classDaySelectedData!.name,
-      });
+      setClassDayName(classDaySelectedData!.name);
     }
   }, [classDaySelectedData]);
   // -------------------------- END OF CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
@@ -77,7 +75,6 @@ export function DeleteClassDays() {
     resolver: zodResolver(deleteClassDaysValidationSchema),
     defaultValues: {
       classDayId: "",
-      classDayName: "",
     },
   });
 
@@ -89,7 +86,6 @@ export function DeleteClassDays() {
     setIsSelected(false);
     setClassDaysData({
       classDayId: "",
-      classDayName: "",
     });
     reset();
   };
@@ -97,12 +93,11 @@ export function DeleteClassDays() {
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("classDayId", classDaysData.classDayId);
-    setValue("classDayName", classDaysData.classDayName);
   }, [classDaysData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [errors.classDayId, errors.classDayName];
+    const fullErrors = [errors.classDayId];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -162,7 +157,7 @@ export function DeleteClassDays() {
             classDaysExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
           }, exclua ou altere primeiramente ${
             classDaysExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
-          } e depois exclua o dia de aula: ${data.classDayName}... ❕`,
+          } e depois exclua o dia de aula: ${classDayName}... ❕`,
           {
             theme: "colored",
             closeOnClick: true,

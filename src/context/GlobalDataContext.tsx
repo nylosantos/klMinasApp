@@ -7,6 +7,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import {
   ClassDaySearchProps,
   CurriculumSearchProps,
+  CurriculumWithNamesProps,
   ScheduleSearchProps,
   SchoolClassSearchProps,
   SchoolCourseSearchProps,
@@ -19,17 +20,34 @@ import {
 import { toast } from "react-toastify";
 import {
   collection,
+  doc,
   getDocs,
   getFirestore,
   onSnapshot,
   query,
+  updateDoc,
   where,
 } from "firebase/firestore";
+import {
+  employeeDiscountValue,
+  familyDiscountValue,
+  secondCourseDiscountValue,
+} from "../custom";
 
 export type SetPageProps = {
   prev: "Dashboard" | "Settings" | "ManageSchools" | "ManageUsers";
   show: "Dashboard" | "Settings" | "ManageSchools" | "ManageUsers";
 };
+
+type HandleCurriculumDetailsProps = {
+  schoolId: string;
+  schoolClassId: string;
+};
+
+interface HandleCurriculumDetailsWithScoolCourseProps
+  extends HandleCurriculumDetailsProps {
+  schoolCourseId: string;
+}
 
 export type GlobalDataContextType = {
   auth: Auth;
@@ -55,6 +73,19 @@ export type GlobalDataContextType = {
   user: User | null | undefined;
   userFullData: UserFullDataProps | undefined;
   userLoading: boolean;
+  handleAllCurriculumDetails: ({
+    schoolId,
+    schoolClassId,
+  }: HandleCurriculumDetailsProps) => CurriculumWithNamesProps[];
+  handleCurriculumDetailsWithSchoolCourse: ({
+    schoolId,
+    schoolClassId,
+    schoolCourseId,
+  }: HandleCurriculumDetailsWithScoolCourseProps) => CurriculumWithNamesProps[];
+  calcStudentPrice: (studentId: string) => Promise<void>;
+  formatCurriculumName: (id: string) => string;
+  handleOneCurriculumDetails: (id: string) => CurriculumWithNamesProps;
+  handleOneStudentDetails: (id: string) => StudentSearchProps | undefined;
   setCheckUser: (option: boolean) => void;
   setIsExperimentalClass: (option: boolean) => void;
   setIsSubmitting: (option: boolean) => void;
@@ -152,6 +183,349 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         })
       );
   };
+
+  // HANDLE CURRICULUM DETAILS (NAMES)
+  function handleAllCurriculumDetails({
+    schoolId,
+    schoolClassId,
+  }: HandleCurriculumDetailsProps) {
+    const curriculumsToShow: CurriculumWithNamesProps[] = [];
+    let curriculumToPush: CurriculumWithNamesProps = {
+      id: "",
+      schoolId: "",
+      schoolName: "",
+      schoolClassId: "",
+      schoolClassName: "",
+      schoolCourseId: "",
+      schoolCourseName: "",
+      classDayId: "",
+      classDayName: "",
+      scheduleId: "",
+      scheduleName: "",
+      teacherId: "",
+      teacherName: "",
+      students: [],
+      experimentalStudents: [],
+      updatedAt: new Date(),
+    };
+
+    curriculumDatabaseData.map((curriculum) => {
+      if (
+        curriculum.schoolId === schoolId &&
+        curriculum.schoolClassId === schoolClassId
+      ) {
+        curriculumToPush = {
+          ...curriculumToPush,
+          id: curriculum.id,
+          schoolId: curriculum.schoolId,
+          schoolClassId: curriculum.schoolClassId,
+          schoolCourseId: curriculum.schoolCourseId,
+          classDayId: curriculum.classDayId,
+          scheduleId: curriculum.scheduleId,
+          teacherId: curriculum.teacherId,
+          students: curriculum.students,
+          experimentalStudents: curriculum.experimentalStudents,
+          updatedAt: curriculum.updatedAt,
+        };
+        schoolDatabaseData.map((school) => {
+          if (school.id === curriculum.schoolId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              schoolName: school.name,
+            };
+          }
+        });
+        schoolClassDatabaseData.map((schoolClass) => {
+          if (schoolClass.id === curriculum.schoolClassId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              schoolClassName: schoolClass.name,
+            };
+          }
+        });
+        schoolCourseDatabaseData.map((schoolCourse) => {
+          if (schoolCourse.id === curriculum.schoolCourseId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              schoolCourseName: schoolCourse.name,
+            };
+          }
+        });
+        classDaysDatabaseData.map((classDay) => {
+          if (classDay.id === curriculum.classDayId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              classDayName: classDay.name,
+            };
+          }
+        });
+        scheduleDatabaseData.map((schedule) => {
+          if (schedule.id === curriculum.scheduleId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              scheduleName: schedule.name,
+            };
+          }
+        });
+        teacherDatabaseData.map((teacher) => {
+          if (teacher.id === curriculum.teacherId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              teacherName: teacher.name,
+            };
+          }
+        });
+        curriculumsToShow.push(curriculumToPush);
+      }
+    });
+    return curriculumsToShow;
+  }
+
+  // HANDLE CURRICULUM DETAILS (NAMES) OF ONE SCHOOL COURSE
+  function handleCurriculumDetailsWithSchoolCourse({
+    schoolId,
+    schoolClassId,
+    schoolCourseId,
+  }: HandleCurriculumDetailsWithScoolCourseProps) {
+    const curriculumsToShow: CurriculumWithNamesProps[] = [];
+    let curriculumToPush: CurriculumWithNamesProps = {
+      id: "",
+      schoolId: "",
+      schoolName: "",
+      schoolClassId: "",
+      schoolClassName: "",
+      schoolCourseId: "",
+      schoolCourseName: "",
+      classDayId: "",
+      classDayName: "",
+      scheduleId: "",
+      scheduleName: "",
+      teacherId: "",
+      teacherName: "",
+      students: [],
+      experimentalStudents: [],
+      updatedAt: new Date(),
+    };
+
+    curriculumDatabaseData.map((curriculum) => {
+      if (
+        curriculum.schoolId === schoolId &&
+        curriculum.schoolClassId === schoolClassId &&
+        curriculum.schoolCourseId === schoolCourseId
+      ) {
+        curriculumToPush = {
+          ...curriculumToPush,
+          id: curriculum.id,
+          schoolId: curriculum.schoolId,
+          schoolClassId: curriculum.schoolClassId,
+          schoolCourseId: curriculum.schoolCourseId,
+          classDayId: curriculum.classDayId,
+          scheduleId: curriculum.scheduleId,
+          teacherId: curriculum.teacherId,
+          students: curriculum.students,
+          experimentalStudents: curriculum.experimentalStudents,
+          updatedAt: curriculum.updatedAt,
+        };
+        schoolDatabaseData.map((school) => {
+          if (school.id === curriculum.schoolId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              schoolName: school.name,
+            };
+          }
+        });
+        schoolClassDatabaseData.map((schoolClass) => {
+          if (schoolClass.id === curriculum.schoolClassId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              schoolClassName: schoolClass.name,
+            };
+          }
+        });
+        schoolCourseDatabaseData.map((schoolCourse) => {
+          if (schoolCourse.id === curriculum.schoolCourseId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              schoolCourseName: schoolCourse.name,
+            };
+          }
+        });
+        classDaysDatabaseData.map((classDay) => {
+          if (classDay.id === curriculum.classDayId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              classDayName: classDay.name,
+            };
+          }
+        });
+        scheduleDatabaseData.map((schedule) => {
+          if (schedule.id === curriculum.scheduleId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              scheduleName: schedule.name,
+            };
+          }
+        });
+        teacherDatabaseData.map((teacher) => {
+          if (teacher.id === curriculum.teacherId) {
+            curriculumToPush = {
+              ...curriculumToPush,
+              teacherName: teacher.name,
+            };
+          }
+        });
+        curriculumsToShow.push(curriculumToPush);
+      }
+    });
+    return curriculumsToShow;
+  }
+
+  // HANDLE CURRICULUM DETAILS (NAMES) OF ONE SCHOOL COURSE
+  function handleOneCurriculumDetails(id: string) {
+    let curriculumToShow: CurriculumWithNamesProps = {
+      id: "",
+      schoolId: "",
+      schoolName: "",
+      schoolClassId: "",
+      schoolClassName: "",
+      schoolCourseId: "",
+      schoolCourseName: "",
+      classDayId: "",
+      classDayName: "",
+      scheduleId: "",
+      scheduleName: "",
+      teacherId: "",
+      teacherName: "",
+      students: [],
+      experimentalStudents: [],
+      updatedAt: new Date(),
+    };
+
+    const foundedCurriculum: CurriculumSearchProps | undefined =
+      curriculumDatabaseData.find((curriculum) => curriculum.id === id);
+
+    if (foundedCurriculum) {
+      schoolDatabaseData.map((school) => {
+        if (school.id === foundedCurriculum.schoolId) {
+          curriculumToShow = {
+            ...curriculumToShow,
+            schoolName: school.name,
+          };
+        }
+      });
+      schoolClassDatabaseData.map((schoolClass) => {
+        if (schoolClass.id === foundedCurriculum.schoolClassId) {
+          curriculumToShow = {
+            ...curriculumToShow,
+            schoolClassName: schoolClass.name,
+          };
+        }
+      });
+      schoolCourseDatabaseData.map((schoolCourse) => {
+        if (schoolCourse.id === foundedCurriculum.schoolCourseId) {
+          curriculumToShow = {
+            ...curriculumToShow,
+            schoolCourseName: schoolCourse.name,
+          };
+        }
+      });
+      classDaysDatabaseData.map((classDay) => {
+        if (classDay.id === foundedCurriculum.classDayId) {
+          curriculumToShow = {
+            ...curriculumToShow,
+            classDayName: classDay.name,
+          };
+        }
+      });
+      scheduleDatabaseData.map((schedule) => {
+        if (schedule.id === foundedCurriculum.scheduleId) {
+          curriculumToShow = {
+            ...curriculumToShow,
+            scheduleName: schedule.name,
+          };
+        }
+      });
+      teacherDatabaseData.map((teacher) => {
+        if (teacher.id === foundedCurriculum.teacherId) {
+          curriculumToShow = {
+            ...curriculumToShow,
+            teacherName: teacher.name,
+          };
+        }
+      });
+    }
+    return curriculumToShow;
+  }
+
+  // FORMAT CURRICULUM NAME TO SHOW FUNCTION
+  function formatCurriculumName(id: string) {
+    const curriculumDetails = handleOneCurriculumDetails(id);
+    const curriculumFormattedName = `${curriculumDetails.schoolName} | ${curriculumDetails.schoolCourseName} | ${curriculumDetails.scheduleName} | ${curriculumDetails.classDayName} | Professor: ${curriculumDetails.teacherName}`;
+    return curriculumFormattedName;
+  }
+
+  // GET ONE STUDENT DETAILS FUNCTION
+  function handleOneStudentDetails(id: string) {
+    const studentDetails: StudentSearchProps | undefined =
+      studentsDatabaseData.find((student) => student.id === id);
+    return studentDetails;
+  }
+
+  // CALC STUDENT PRICE (PRICE WITH DISCOUNT: APPLIED PRICE | PRICE WITHOUT DISCOUNTS: FULL PRICE)
+  async function calcStudentPrice(studentId: string) {
+    const userRef = collection(db, "students");
+    const q = query(userRef, where("id", "==", studentId));
+    const querySnapshot = await getDocs(q);
+    const promises: StudentSearchProps[] = [];
+    querySnapshot.forEach((doc) => {
+      const promise = doc.data() as StudentSearchProps;
+      promises.push(promise);
+    });
+    Promise.all(promises).then((results) => {
+      const studentToCalcPrices = results;
+      studentToCalcPrices.map(async (student) => {
+        // DISCOUNT VARIABLE
+        const customDiscountValueSum = 100 - +student.customDiscountValue;
+        const customDiscountFinalValue = +`0.${
+          customDiscountValueSum > 9
+            ? customDiscountValueSum
+            : `0${customDiscountValueSum}`
+        }`;
+
+        const discountVariable = student.customDiscount
+          ? customDiscountFinalValue
+          : student.employeeDiscount
+          ? employeeDiscountValue
+          : student.familyDiscount
+          ? familyDiscountValue
+          : student.secondCourseDiscount
+          ? secondCourseDiscountValue
+          : 1; // WITHOUT DISCOUNT
+
+        // CALC OF FULL AND APPLY PRICE OF STUDENT
+        let smallestPrice = 0;
+        let otherSumPrices = 0;
+        let olderSmallestPrice = 0;
+        student.curriculumIds.map(async (studentCurriculum, index) => {
+          if (index === 0) {
+            smallestPrice = studentCurriculum.price;
+          } else {
+            if (studentCurriculum.price <= smallestPrice) {
+              olderSmallestPrice = smallestPrice;
+              smallestPrice = studentCurriculum.price;
+              otherSumPrices = olderSmallestPrice + otherSumPrices;
+            } else {
+              otherSumPrices = otherSumPrices + studentCurriculum.price;
+            }
+          }
+        });
+        await updateDoc(doc(db, "students", student.id), {
+          appliedPrice: smallestPrice * discountVariable + otherSumPrices,
+          fullPrice: smallestPrice + otherSumPrices,
+        });
+      });
+    });
+  }
 
   // MONITORING USER LOGIN
   useEffect(() => {
@@ -335,9 +709,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           const curriculum = doc.data() as CurriculumSearchProps;
           curriculumsDatabaseData.push(curriculum);
         });
-        setCurriculumDatabaseData(
-          curriculumsDatabaseData.sort((a, b) => a.name.localeCompare(b.name))
-        );
+        setCurriculumDatabaseData(curriculumsDatabaseData);
       }
     );
     curriculumsListener;
@@ -408,6 +780,12 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         user,
         userFullData,
         userLoading,
+        calcStudentPrice,
+        formatCurriculumName,
+        handleAllCurriculumDetails,
+        handleCurriculumDetailsWithSchoolCourse,
+        handleOneCurriculumDetails,
+        handleOneStudentDetails,
         setCheckUser,
         setIsExperimentalClass,
         setIsSubmitting,

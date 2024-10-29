@@ -4,7 +4,14 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { doc, getFirestore, setDoc, updateDoc } from "firebase/firestore";
+import {
+  arrayRemove,
+  arrayUnion,
+  doc,
+  getFirestore,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -19,7 +26,7 @@ import {
   ClassDaySearchProps,
   TeacherSearchProps,
   EditClassDayValidationZProps,
-  ToggleClassDaysFunctionProps,
+  ToggleClassDaysFunctionProps
 } from "../../@types";
 import {
   GlobalDataContext,
@@ -36,49 +43,37 @@ export function EditCurriculum() {
   const {
     schoolDatabaseData,
     schoolClassDatabaseData,
+    schoolCourseDatabaseData,
     curriculumDatabaseData,
     scheduleDatabaseData,
     classDaysDatabaseData,
     teacherDatabaseData,
+    studentsDatabaseData,
+    calcStudentPrice,
+    handleOneCurriculumDetails,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
   // CURRICULUM DATA
   const [curriculumEditData, setCurriculumEditData] =
     useState<EditCurriculumValidationZProps>({
-      name: "",
       curriculumId: "",
-      school: "",
       schoolId: "",
-      schoolClass: "",
       schoolClassId: "",
-      schoolCourse: "",
       schoolCourseId: "",
-      schedule: "",
       scheduleId: "",
-      classDay: "",
       classDayId: "",
-      teacher: "",
       teacherId: "",
     });
 
   // CURRICULUM NAME FORMATTED STATE
-  const [curriculumName, setCurriculumName] = useState({
-    name: "",
+  const [curriculumFormattedName, setCurriculumFormattedName] = useState({
+    formattedName: "",
+    schoolName: "",
+    schoolClassName: "",
+    schoolCourseName: "",
+    scheduleName: "",
+    classDayName: "",
+    teacherName: "",
   });
-
-  // SET CURRICULUM FORMATTED NAME WHEN CHANGE CURRICULUM EDIT SELECT
-  useEffect(() => {
-    setCurriculumName({
-      name: `${curriculumEditData.school} | ${
-        curriculumEditData.schoolCourse
-      } | ${
-        scheduleSelectedData
-          ? scheduleSelectedData.name
-          : curriculumEditData.schedule
-      } | ${classDayName.length > 0 ? `${classDayName.join(" - ")} | ` : ""}${
-        curriculumEditData.schoolClass
-      } | Professor: ${curriculumEditData.teacher}`,
-    });
-  }, [curriculumEditData]);
 
   // CURRICULUM SELECTED AND EDIT ACTIVE STATES
   const [isSelected, setIsSelected] = useState(false);
@@ -112,9 +107,9 @@ export function EditCurriculum() {
 
   // SET CURRICULUM EDIT DATA WHEN SCHOOL CHANGE
   useEffect(() => {
-    setCurriculumEditData({
-      ...curriculumEditData,
-      school: schoolSelectedData ? schoolSelectedData.name : "",
+    setCurriculumFormattedName({
+      ...curriculumFormattedName,
+      schoolName: schoolSelectedData ? schoolSelectedData.name : "",
     });
   }, [schoolSelectedData]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
@@ -145,9 +140,11 @@ export function EditCurriculum() {
 
   // SET CURRICULUM EDIT DATA WHEN SCHOOL CLASS CHANGE
   useEffect(() => {
-    setCurriculumEditData({
-      ...curriculumEditData,
-      schoolClass: schoolClassSelectedData ? schoolClassSelectedData.name : "",
+    setCurriculumFormattedName({
+      ...curriculumFormattedName,
+      schoolClassName: schoolClassSelectedData
+        ? schoolClassSelectedData.name
+        : "",
     });
   }, [schoolClassSelectedData]);
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
@@ -167,6 +164,16 @@ export function EditCurriculum() {
           ({ id }) => id === curriculumEditData.curriculumId
         )
       );
+      const curriculumToShow = handleOneCurriculumDetails(
+        curriculumEditData.curriculumId
+      );
+      setCurriculumFormattedName({
+        ...curriculumFormattedName,
+        schoolCourseName: curriculumToShow.schoolCourseName,
+        scheduleName: curriculumToShow.scheduleName,
+        classDayName: curriculumToShow.classDayName,
+        teacherName: curriculumToShow.teacherName,
+      });
     } else {
       setCurriculumSelectedData(undefined);
     }
@@ -174,30 +181,16 @@ export function EditCurriculum() {
 
   // SET CURRICULUM EDIT DATA WHEN CURRICULUM CHANGE
   useEffect(() => {
-    setCurriculumEditData({
-      ...curriculumEditData,
-      schoolCourseId: curriculumSelectedData
-        ? curriculumSelectedData.schoolCourseId
-        : "",
-      schoolCourse: curriculumSelectedData
-        ? curriculumSelectedData.schoolCourse
-        : "",
-      scheduleId: curriculumSelectedData
-        ? curriculumSelectedData.scheduleId
-        : "",
-      schedule: curriculumSelectedData ? curriculumSelectedData.schedule : "",
-      classDayId: curriculumSelectedData
-        ? curriculumSelectedData.classDayId
-        : "",
-      classDay: curriculumSelectedData ? curriculumSelectedData.classDay : "",
-      teacherId: curriculumSelectedData
-        ? curriculumSelectedData.teacherId
-        : "Jesus amado",
-      teacher: curriculumSelectedData
-        ? curriculumSelectedData.teacher
-        : "Jesus amado Nome",
-    });
-  }, [curriculumSelectedData, curriculumEditData.curriculumId]);
+    if (curriculumSelectedData) {
+      setCurriculumEditData({
+        ...curriculumEditData,
+        schoolCourseId: curriculumSelectedData.schoolCourseId,
+        scheduleId: curriculumSelectedData.scheduleId,
+        classDayId: curriculumSelectedData.classDayId,
+        teacherId: curriculumSelectedData.teacherId,
+      });
+    }
+  }, [curriculumSelectedData]);
   // -------------------------- END OF CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
@@ -222,8 +215,11 @@ export function EditCurriculum() {
   useEffect(() => {
     setCurriculumEditData({
       ...curriculumEditData,
-      schedule: scheduleSelectedData ? scheduleSelectedData.name : "",
       scheduleId: scheduleSelectedData ? scheduleSelectedData.id : "",
+    });
+    setCurriculumFormattedName({
+      ...curriculumFormattedName,
+      scheduleName: scheduleSelectedData ? scheduleSelectedData.name : "",
     });
   }, [scheduleSelectedData]);
   // -------------------------- END OF SCHEDULE SELECT STATES AND FUNCTIONS -------------------------- //
@@ -231,9 +227,9 @@ export function EditCurriculum() {
   // -------------------------- CLASS DAY SELECT STATES AND FUNCTIONS -------------------------- //
   // CLASS DAY SELECTED STATE DATA
   // CLASS DAY DATA
-  const [classDayData, setClassDayData] = useState({
-    classDayId: "",
-  });
+  // const [classDayData, setClassDayData] = useState({
+  //   classDayId: "",
+  // });
 
   // CLASS DAY EDIT DATA
   const [classDayEditData, setClassDayEditData] =
@@ -266,6 +262,50 @@ export function EditCurriculum() {
       setClassDaySelectedData(undefined);
     }
   }, [curriculumEditData.classDayId]);
+
+  // SET CLASS DAY NAME AND PRICE TO CLASS DAY EDIT NAME AND PRICE
+  useEffect(() => {
+    if (classDaySelectedData !== undefined) {
+      if (classDaySelectedData.indexDays.length > 0) {
+        const days = {
+          name: "",
+          sunday: false,
+          monday: false,
+          tuesday: false,
+          wednesday: false,
+          thursday: false,
+          friday: false,
+          saturday: false,
+        };
+        (days.name = classDaySelectedData.name),
+          classDaySelectedData.indexDays.map((day) => {
+            if (day === 0) {
+              days.sunday = true;
+            }
+            if (day === 1) {
+              days.monday = true;
+            }
+            if (day === 2) {
+              days.tuesday = true;
+            }
+            if (day === 3) {
+              days.wednesday = true;
+            }
+            if (day === 4) {
+              days.thursday = true;
+            }
+            if (day === 5) {
+              days.friday = true;
+            }
+            if (day === 6) {
+              days.saturday = true;
+            }
+          });
+        setClassDayEditData(days);
+        setClassDayName(classDaySelectedData.indexNames);
+      }
+    }
+  }, [classDaySelectedData]);
 
   // SET CURRICULUM EDIT DATA WHEN CLASS DAY CHANGE
   useEffect(() => {
@@ -310,7 +350,6 @@ export function EditCurriculum() {
       }
       setCurriculumEditData({
         ...curriculumEditData,
-        classDay: classDaySelectedData.name,
         classDayId: classDaySelectedData.id,
       });
     }
@@ -509,8 +548,11 @@ export function EditCurriculum() {
   useEffect(() => {
     setCurriculumEditData({
       ...curriculumEditData,
-      teacher: teacherSelectedData ? teacherSelectedData.name : "",
       teacherId: teacherSelectedData ? teacherSelectedData.id : "",
+    });
+    setCurriculumFormattedName({
+      ...curriculumFormattedName,
+      teacherName: teacherSelectedData ? teacherSelectedData.name : "",
     });
   }, [teacherSelectedData]);
   // -------------------------- END OF TEACHER SELECT STATES AND FUNCTIONS -------------------------- //
@@ -518,13 +560,24 @@ export function EditCurriculum() {
   // SUBMITTING STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // SET CURRICULUM EDIT DATA NAME WHEN CHANGE CURRICULUM FORMATTED NAME
+  // CHANGE CURRICULUM NAME
   useEffect(() => {
-    setCurriculumEditData({
-      ...curriculumEditData,
-      name: curriculumName.name,
+    setCurriculumFormattedName({
+      ...curriculumFormattedName,
+      formattedName: `${curriculumFormattedName.schoolName} | ${
+        curriculumFormattedName.schoolCourseName
+      } | ${curriculumFormattedName.scheduleName} | ${classDayName.join(
+        " - "
+      )} | Professor: ${curriculumFormattedName.teacherName}`,
     });
-  }, [curriculumName.name, classDayName]);
+  }, [
+    curriculumFormattedName.schoolName,
+    curriculumFormattedName.schoolClassName,
+    curriculumFormattedName.schoolCourseName,
+    curriculumFormattedName.scheduleName,
+    classDayName,
+    curriculumFormattedName.teacherName,
+  ]);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -535,19 +588,13 @@ export function EditCurriculum() {
   } = useForm<EditCurriculumValidationZProps>({
     resolver: zodResolver(editCurriculumValidationSchema),
     defaultValues: {
-      name: "",
+      // name: "",
       curriculumId: "",
-      school: "",
       schoolId: "",
-      schoolClass: "",
       schoolClassId: "",
-      schoolCourse: "",
       schoolCourseId: "",
-      schedule: "",
       scheduleId: "",
-      classDay: "",
       classDayId: "",
-      teacher: "",
       teacherId: "",
     },
   });
@@ -558,24 +605,18 @@ export function EditCurriculum() {
       document.getElementById("schoolSelect") as HTMLSelectElement
     ).selectedIndex = 0;
     setCurriculumEditData({
-      name: "",
+      // name: "",
       curriculumId: "",
-      school: "",
       schoolId: "",
-      schoolClass: "",
       schoolClassId: "",
-      schoolCourse: "",
       schoolCourseId: "",
-      schedule: "",
       scheduleId: "",
-      classDay: "",
       classDayId: "",
-      teacher: "",
       teacherId: "",
     });
-    setClassDayData({
-      classDayId: "",
-    });
+    // setClassDayData({
+    //   classDayId: "",
+    // });
     setClassDayEditData({
       name: "",
       sunday: false,
@@ -594,41 +635,26 @@ export function EditCurriculum() {
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
-    setValue("name", curriculumEditData.name);
+    // setValue("name", curriculumEditData.name);
     setValue("curriculumId", curriculumEditData.curriculumId);
-    setValue("school", curriculumEditData.school);
     setValue("schoolId", curriculumEditData.schoolId);
-    setValue("schoolClass", curriculumEditData.schoolClass);
     setValue("schoolClassId", curriculumEditData.schoolClassId);
-    setValue("schoolCourse", curriculumEditData.schoolCourse);
     setValue("schoolCourseId", curriculumEditData.schoolCourseId);
-    setValue("schedule", curriculumEditData.schedule);
     setValue("scheduleId", curriculumEditData.scheduleId);
-    setValue(
-      "classDay",
-      classDayName.length > 0 ? classDayName.join(" - ") : ""
-    );
     setValue("classDayId", curriculumEditData.classDayId);
-    setValue("teacher", curriculumEditData.teacher);
     setValue("teacherId", curriculumEditData.teacherId);
   }, [curriculumEditData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
     const fullErrors = [
-      errors.name,
+      // errors.name,
       errors.curriculumId,
-      errors.school,
       errors.schoolId,
-      errors.schoolClass,
       errors.schoolClassId,
-      errors.schoolCourse,
       errors.schoolCourseId,
-      errors.schedule,
       errors.scheduleId,
-      errors.classDay,
       errors.classDayId,
-      errors.teacher,
       errors.teacherId,
     ];
     fullErrors.map((fieldError) => {
@@ -646,23 +672,21 @@ export function EditCurriculum() {
   const handleEditCurriculum: SubmitHandler<
     EditCurriculumValidationZProps
   > = async (data) => {
+    // CHECKING IF CURRICULUM AND CLASSDAYS EXISTS ON DATABASE
+    const curriculumExists = curriculumDatabaseData.find(
+      (curriculum) => curriculum.id === data.curriculumId
+    );
+    const classDaysExists = classDaysDatabaseData.find(
+      (classDays) => classDays.id === data.classDayId
+    );
+
     // EDIT CURRICULUM FUNCTION
     const editCurriculum = async () => {
       try {
-        await updateDoc(
-          doc(db, "curriculum", curriculumEditData.curriculumId),
-          {
-            name: data.name,
-            schoolClass: data.schoolClass,
-            schoolClassId: data.schoolClassId,
-            schedule: data.schedule,
-            scheduleId: data.scheduleId,
-            classDay: data.classDay,
-            classDayId: data.classDayId,
-            teacher: data.teacher,
-            teacherId: data.teacherId,
-          }
-        );
+        await updateDoc(doc(db, "curriculum", data.curriculumId), {
+          scheduleId: data.scheduleId,
+          teacherId: data.teacherId,
+        });
         resetForm();
         toast.success(`Turma alterada com sucesso! 👌`, {
           theme: "colored",
@@ -684,6 +708,101 @@ export function EditCurriculum() {
         setIsSubmitting(false);
       }
     };
+
+    const editStudentsClassDays = async (daysIncluded: number[]) => {
+      if (curriculumSelectedData) {
+        // CHANGING STUDENT INDEX DAYS IN CURRICULUM DATABASE
+        curriculumSelectedData.students.map(async (student) => {
+          const daysToDelete = student.indexDays.filter(
+            (days) => !daysIncluded.includes(days)
+          );
+          const daysToRemain = student.indexDays.filter((days) =>
+            daysIncluded.includes(days)
+          );
+          if (daysToDelete.length > 0) {
+            await updateDoc(doc(db, "curriculum", data.curriculumId), {
+              students: arrayRemove(student),
+            });
+            await updateDoc(doc(db, "curriculum", data.curriculumId), {
+              students: arrayUnion({
+                date: student.date,
+                id: student.id,
+                indexDays: daysToRemain,
+              }),
+            });
+            // CHANGING STUDENT INDEX DAYS AND PRICE IN STUDENT DATABASE
+            const studentToChange = studentsDatabaseData.find(
+              (studentOnDatabase) => student.id === studentOnDatabase.id
+            );
+            if (studentToChange) {
+              const curriculumInsideStudentToChange =
+                studentToChange.curriculumIds.find(
+                  (curriculumInsideStudent) =>
+                    curriculumInsideStudent.id === data.curriculumId
+                );
+              const schoolCourseDetails = schoolCourseDatabaseData.find(
+                (schoolCourse) => schoolCourse.id === data.schoolCourseId
+              );
+              // CHANGING PRICE OF CURRICULUM THAT HAS CLASS DAYS CHANGED
+              if (schoolCourseDetails) {
+                if (curriculumInsideStudentToChange) {
+                  let studentFinalPrice;
+                  if (daysToRemain.length === schoolCourseDetails.bundleDays) {
+                    studentFinalPrice = schoolCourseDetails.priceBundle;
+                  } else if (
+                    daysToRemain.length > schoolCourseDetails.bundleDays
+                  ) {
+                    studentFinalPrice =
+                      schoolCourseDetails.priceUnit * daysToRemain.length;
+                  } else {
+                    const rest =
+                      daysToRemain.length % schoolCourseDetails.bundleDays;
+                    const result = Math.floor(
+                      daysToRemain.length / schoolCourseDetails.bundleDays
+                    );
+                    if (isNaN(result) || isNaN(rest)) {
+                      studentFinalPrice = 0;
+                    } else {
+                      studentFinalPrice =
+                        result * schoolCourseDetails.priceBundle +
+                        rest * schoolCourseDetails.priceUnit;
+                    }
+                  }
+                  await updateDoc(doc(db, "students", student.id), {
+                    curriculumIds: arrayRemove(curriculumInsideStudentToChange),
+                  });
+                  await updateDoc(doc(db, "students", student.id), {
+                    curriculumIds: arrayUnion({
+                      date: curriculumInsideStudentToChange.date,
+                      id: curriculumInsideStudentToChange.id,
+                      indexDays: daysToRemain,
+                      isExperimental:
+                        curriculumInsideStudentToChange.isExperimental,
+                      price: studentFinalPrice,
+                    }),
+                  });
+                }
+              }
+              // UPDATING STUDENT PRICE WITH NEW CURRICULUM PRICE
+              await calcStudentPrice(studentToChange.id);
+            }
+          }
+        });
+      }
+    };
+
+    // COMPARE INDEX CLASS DAYS FUNCTION
+    function arraysEqual(
+      oldIndexClassDays: number[],
+      newIndexClassDays: number[]
+    ) {
+      return (
+        oldIndexClassDays.length === newIndexClassDays.length &&
+        oldIndexClassDays.every(
+          (value, index) => value === newIndexClassDays[index]
+        )
+      );
+    }
 
     // EDIT CLASS DAY FUNCTION
     const editClassDay = async () => {
@@ -709,27 +828,35 @@ export function EditCurriculum() {
       if (classDayEditData.saturday) {
         daysIncluded.push(6);
       }
-      try {
-        await setDoc(
-          doc(db, "classDays", data.classDayId),
-          {
-            name:
-              classDayName.length > 0 ? classDayName.join(" - ") : data.name,
-            indexDays: daysIncluded,
-            indexNames: classDayName,
-          },
-          { merge: true }
-        );
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
+      // CHECKING IF CLASSDAYS WAS CHANGED
+      if (classDaysExists) {
+        if (!arraysEqual(classDaysExists.indexDays, daysIncluded)) {
+          try {
+            await setDoc(
+              doc(db, "classDays", data.classDayId),
+              {
+                name:
+                  classDayName.length > 0
+                    ? classDayName.join(" - ")
+                    : curriculumFormattedName.formattedName,
+                indexDays: daysIncluded,
+                indexNames: classDayName,
+              },
+              { merge: true }
+            );
+            editStudentsClassDays(daysIncluded);
+          } catch (error) {
+            console.log("ESSE É O ERROR", error);
+            toast.error(`Ocorreu um erro... 🤯`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            setIsSubmitting(false);
+          }
+        }
       }
     };
 
@@ -747,7 +874,7 @@ export function EditCurriculum() {
     ) {
       setIsSubmitting(false);
       return toast.error(
-        `Por favor, selecione algum dia para editar a Turma ${data.name}... ☑️`,
+        `Por favor, selecione algum dia para editar a Turma ${curriculumFormattedName.formattedName}... ☑️`,
         {
           theme: "colored",
           closeOnClick: true,
@@ -757,15 +884,6 @@ export function EditCurriculum() {
         }
       );
     }
-
-    // CHECKING IF CURRICULUM AND CLASSDAYS EXISTS ON DATABASE
-
-    const curriculumExists = curriculumDatabaseData.find(
-      (curriculum) => curriculum.id === curriculumEditData.curriculumId
-    );
-    const classDaysExists = classDaysDatabaseData.find(
-      (classDays) => classDays.id === classDayData.classDayId
-    );
 
     if (!curriculumExists && !classDaysExists) {
       // IF NOT EXISTS, RETURN ERROR
@@ -781,8 +899,8 @@ export function EditCurriculum() {
       );
     } else {
       // IF EXISTS, EDIT
-      editCurriculum();
       editClassDay();
+      editCurriculum();
     }
   };
 
@@ -958,7 +1076,7 @@ export function EditCurriculum() {
                 name="name"
                 disabled
                 className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                value={curriculumName.name}
+                value={curriculumFormattedName.formattedName}
               />
             </div>
 
@@ -972,7 +1090,7 @@ export function EditCurriculum() {
                 name="schoolName"
                 disabled
                 className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                value={curriculumEditData.school}
+                value={curriculumFormattedName.schoolName}
               />
             </div>
 
@@ -986,7 +1104,7 @@ export function EditCurriculum() {
                 name="schoolClass"
                 disabled
                 className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                value={curriculumEditData.schoolClass}
+                value={curriculumFormattedName.schoolClassName}
               />
             </div>
 
@@ -1000,7 +1118,7 @@ export function EditCurriculum() {
                 name="schoolCourse"
                 disabled
                 className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                value={curriculumEditData.schoolCourse}
+                value={curriculumFormattedName.schoolCourseName}
               />
             </div>
 
@@ -1015,8 +1133,6 @@ export function EditCurriculum() {
             </div>
 
             {/* SCHEDULE SELECT */}
-            {/* {scheduleSelectedData !== undefined &&
-            scheduleSelectedData.id !== undefined ? ( */}
             <div className="flex gap-2 items-center">
               <label
                 htmlFor="scheduleSelect"
@@ -1046,7 +1162,6 @@ export function EditCurriculum() {
                   setCurriculumEditData({
                     ...curriculumEditData,
                     scheduleId: e.target.value,
-                    schedule: scheduleSelectedData!.name,
                   });
                 }}
               >
@@ -1059,7 +1174,6 @@ export function EditCurriculum() {
                 />
               </select>
             </div>
-            {/* ) : null} */}
 
             {/* TRANSITION START */}
             <div className="flex gap-2 items-center">
@@ -1195,14 +1309,7 @@ export function EditCurriculum() {
 
             {/* CLASS DAY NAME */}
             <div className="hidden gap-2 items-center">
-              <label
-                htmlFor="name"
-                className={
-                  errors.name
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                }
-              >
+              <label htmlFor="name" className="w-1/4 text-right">
                 Identificador:{" "}
               </label>
               <input
@@ -1210,16 +1317,8 @@ export function EditCurriculum() {
                 name="name"
                 disabled={isSubmitting}
                 readOnly
-                placeholder={
-                  errors.name
-                    ? "É necessário inserir o Identificador dos dias de Aula"
-                    : "Selecione os dias para formar o Identificador dos Dias de Aula"
-                }
-                className={
-                  errors.name
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
+                placeholder="Selecione os dias para formar o Identificador dos Dias de Aula"
+                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 value={classDayName.length > 0 ? classDayName.join(" - ") : ""}
               />
             </div>
