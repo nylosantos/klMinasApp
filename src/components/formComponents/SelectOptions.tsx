@@ -169,23 +169,6 @@ export function SelectOptions({
         }
       });
       setData(studentsToShow);
-      // const foundedStudentsArray: StudentSearchProps[] = [];
-      // studentsDatabaseData.map((student) => {
-      //   // EXCLUDE STUDENTS THAT ALREADY HAVE FAMILY DISCOUNT
-      //   if (student.curriculumIds && !student.familyDiscount) {
-      //     const foundedFamilyStudent = student.curriculumIds.find(
-      //       (curriculum) => curriculum.id === curriculumId
-      //     );
-      //     if (foundedFamilyStudent) {
-      //       if (dontShowMyself && studentId !== student.id) {
-      //         foundedStudentsArray.push(student);
-      //       } else {
-      //         foundedStudentsArray.push(student);
-      //       }
-      //     }
-      //   }
-      // });
-      // setData(foundedStudentsArray);
     }
 
     if (dataType === "appUsers") {

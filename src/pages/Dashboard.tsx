@@ -39,6 +39,7 @@ export default function Dashboard() {
     curriculumDatabaseData,
     studentsDatabaseData,
     userFullData,
+    calcStudentPrice2,
     handleDeleteStudent,
     handleOneCurriculumDetails,
     setIsSubmitting,
@@ -302,6 +303,14 @@ export default function Dashboard() {
     array: unknown[];
   }
 
+  function StudentsToShowOnDashboardMenu() {
+    if (userFullData && userFullData.role !== "user") {
+      return studentsDatabaseData;
+    } else {
+      return filteredStudents;
+    }
+  }
+
   const dashboardMenuArray: DashboardMenuArrayProps[] = [
     { title: "Escolas Cadastradas", page: "school", array: schoolDatabaseData },
     {
@@ -332,7 +341,7 @@ export default function Dashboard() {
     {
       title: "Alunos Cadastrados",
       page: "student",
-      array: studentsDatabaseData,
+      array: StudentsToShowOnDashboardMenu(),
     },
     { title: "Adicionar Aluno", page: "addStudent", array: [] },
   ];
@@ -666,12 +675,13 @@ export default function Dashboard() {
                             <div className="flex w-4/6">
                               <p
                                 className="text-klGreen-500 dark:text-white hover:text-klOrange-500 hover:dark:text-klOrange-500 cursor-pointer"
-                                onClick={() =>
+                                onClick={() => {
                                   handleClickOpen({
                                     id: student.id,
                                     option: "details",
-                                  })
-                                }
+                                  }),
+                                    calcStudentPrice2(student.id);
+                                }}
                               >
                                 {student.name}
                               </p>

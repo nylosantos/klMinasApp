@@ -24,13 +24,14 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { formataCPF, testaCPF } from "../../custom";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditUser() {
   // GET GLOBAL DATA
-  const { appUsersDatabaseData, isSubmitting, userFullData, setIsSubmitting } =
+  const { appUsersDb, isSubmitting, userFullData, setIsSubmitting } =
     useContext(GlobalDataContext) as GlobalDataContextType;
 
   // EDIT USER WITHOUT CHANGING PASSWORD CLOUD FUNCTION HOOK
@@ -58,6 +59,9 @@ export function EditUser() {
     photo: "",
     role: "user",
   });
+
+  // TEST FINANCIAL RESPONSIBLE CPF (BRAZILIAN DOCUMENT) STATE
+  const [testFinancialCPF, setTestFinancialCPF] = useState(true);
 
   // PHONE FORMATTED STATE
   const [phoneFormatted, setPhoneFormatted] = useState({
@@ -93,9 +97,11 @@ export function EditUser() {
   // SET USER SELECTED STATE WHEN SELECT USER
   useEffect(() => {
     setIsEdit(false);
-    if (userEditData.id !== "") {
+    if (userEditData.id !== "" && appUsersDb) {
       setUserSelectedData(
-        appUsersDatabaseData.find(({ id }) => id === userEditData.id)
+        appUsersDb.find(
+          (user) => user.id === userEditData.id
+        ) as UserFullDataProps
       );
     } else {
       setUserSelectedData(undefined);
@@ -145,6 +151,7 @@ export function EditUser() {
       phone: "",
       photo: "",
       role: "user",
+      document: "",
     },
   });
 
@@ -185,6 +192,7 @@ export function EditUser() {
     setValue("confirmPassword", userEditData.confirmPassword);
     setValue("phone", userEditData.phone);
     setValue("role", userEditData.role);
+    setValue("document", userEditData.document);
   }, [userEditData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -198,6 +206,7 @@ export function EditUser() {
       errors.changePassword,
       errors.password,
       errors.confirmPassword,
+      errors.document,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -236,7 +245,7 @@ export function EditUser() {
         setErrorPassword(false);
         try {
           // UPDATE USER WITH PASSWORD FUNCTION
-          await updateAppUserWithPassword(data);
+          await updateAppUserWithPassword(data); // (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
           // CHECKING IF USER IS WAS AND NOW ISN'T A TEACHER
           if (
             userSelectedData?.role === "teacher" &&
@@ -305,7 +314,8 @@ export function EditUser() {
       setErrorPassword(false);
       try {
         // UPDATE USER WITHOUT PASSWORD FUNCTION
-        await updateAppUserWithoutPassword(data);
+        console.log("to mandando isso: ", data);
+        await updateAppUserWithoutPassword(data); // (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
         // CHECKING IF USER IS WAS AND NOW ISN'T A TEACHER
         if (
           userSelectedData?.role === "teacher" &&
@@ -516,6 +526,59 @@ export function EditUser() {
                 }}
               />
             </div>
+
+            {/* FINANCIAL RESPONSIBLE DOCUMENT*/}
+            {userEditData.role === "user" && (
+              <div className="flex gap-2 items-center">
+                <label
+                  htmlFor="userDocument"
+                  className={
+                    testFinancialCPF
+                      ? errors.document
+                        ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                        : "w-1/4 text-right"
+                      : "w-1/4 text-right text-red-500 dark:text-red-400"
+                  }
+                >
+                  CPF
+                  {testFinancialCPF ? (
+                    ": "
+                  ) : (
+                    <span className="text-red-500 dark:text-red-400">
+                      {" "}
+                      Inválido, verifique:
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  name="userDocument"
+                  pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                  placeholder={
+                    errors.document
+                      ? "É necessário inserir o CPF do Responsável Financeiro"
+                      : "Insira o CPF do Responsável Financeiro"
+                  }
+                  className={
+                    testFinancialCPF
+                      ? errors.document
+                        ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  }
+                  value={userEditData.document}
+                  onChange={(e) => {
+                    if (e.target.value.length === 11) {
+                      setTestFinancialCPF(testaCPF(e.target.value));
+                    }
+                    setUserEditData({
+                      ...userEditData,
+                      document: formataCPF(e.target.value),
+                    });
+                  }}
+                />
+              </div>
+            )}
 
             {/** CHECKBOX CHANGE PASSWORD */}
             <div className="flex gap-2 items-center">

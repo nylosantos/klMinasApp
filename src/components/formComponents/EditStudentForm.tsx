@@ -13,6 +13,7 @@ import {
   doc,
   getFirestore,
   serverTimestamp,
+  setDoc,
   Timestamp,
   updateDoc,
 } from "firebase/firestore";
@@ -32,7 +33,6 @@ import {
   SchoolCourseSearchProps,
   SchoolSearchProps,
   SearchCurriculumValidationZProps,
-  StudentFamilyAtSchoolProps,
   StudentSearchProps,
   ToggleClassDaysFunctionProps,
 } from "../../@types";
@@ -878,9 +878,9 @@ export function EditStudentForm({
   }, [studentId]);
 
   // STUDENT FAMILY DETAILS STATE
-  const [studentFamilyDetails, setStudentFamilyDetails] = useState<
-    StudentFamilyAtSchoolProps[]
-  >([]);
+  const [studentFamilyDetails, setStudentFamilyDetails] = useState<string[]>(
+    []
+  );
 
   // STUDENT CURRICULUM DETAILS STATE
   const [studentCurriculumDetails, setStudentCurriculumDetails] = useState<
@@ -1218,8 +1218,8 @@ export function EditStudentForm({
             ...excludeFamily,
             {
               exclude: false,
-              applyDiscount: studentFamilyDetails![index]!.applyDiscount,
-              id: studentFamilyDetails![index]!.id,
+              // applyDiscount: studentFamilyDetails![index]!.applyDiscount,
+              id: studentFamilyDetails![index]!,
             },
           ]);
         }
@@ -1254,7 +1254,7 @@ export function EditStudentForm({
       if (i === index) {
         return {
           exclude: data.exclude,
-          applyDiscount: data.applyDiscount,
+          // applyDiscount: data.applyDiscount,
           id: data.id,
         };
       } else {
@@ -2777,6 +2777,8 @@ export function EditStudentForm({
                 date: oldStudentOnCurriculum.date,
                 id: oldStudentOnCurriculum.id,
                 indexDays: oldStudentOnCurriculum.indexDays,
+                isExperimental: oldStudentOnCurriculum.isExperimental,
+                price: oldStudentOnCurriculum.price,
               }),
             });
             await updateDoc(doc(db, "curriculum", changedCurriculum.id), {
@@ -2784,6 +2786,8 @@ export function EditStudentForm({
                 date: oldStudentOnCurriculum.date,
                 id: oldStudentOnCurriculum.id,
                 indexDays: curriculum.indexDays,
+                isExperimental: oldStudentOnCurriculum.isExperimental,
+                price: curriculum.price,
               }),
             });
           }
@@ -3062,6 +3066,13 @@ export function EditStudentForm({
 
     // CHECK IF SOME CURRICULUM WAS INCLUDED
     if (studentEditData.addCurriculum) {
+      const result = Math.floor(
+        newClass.enrolledDays.length / newStudentData.curriculumCourseBundleDays
+      );
+      const rest =
+        newClass.enrolledDays.length %
+        newStudentData.curriculumCourseBundleDays;
+
       // UPDATE STUDENT (INSERT CURRICULUM)
       await updateDoc(doc(db, "students", data.id), {
         curriculumIds: arrayUnion({
@@ -3071,7 +3082,9 @@ export function EditStudentForm({
           id: newStudentData.curriculum,
           isExperimental: false,
           indexDays: newClass.enrolledDays,
-          price: newStudentData.curriculumCoursePriceBundle,
+          price:
+            result * newStudentData.curriculumCoursePriceBundle +
+            rest * newStudentData.curriculumCoursePriceUnit,
         }),
       });
 
@@ -3084,7 +3097,9 @@ export function EditStudentForm({
           id: data.id,
           indexDays: newClass.enrolledDays,
           isExperimental: false,
-          price: newStudentData.curriculumCoursePriceBundle,
+          price:
+            result * newStudentData.curriculumCoursePriceBundle +
+            rest * newStudentData.curriculumCoursePriceUnit,
         }),
       });
     }
@@ -3125,8 +3140,8 @@ export function EditStudentForm({
     // CHECK IF NEW FAMILY MEMBER ALREADY EXISTS ON STUDENT DATABASE
     const checkExistentFamily = [];
     studentFamilyDetails!.map((familyDetail) => {
-      if (familyDetail!.id === newStudentData.familyId) {
-        checkExistentFamily.push(familyDetail.id);
+      if (familyDetail! === newStudentData.familyId) {
+        checkExistentFamily.push(familyDetail);
       }
     });
     if (checkExistentFamily.length > 0) {
@@ -3151,112 +3166,160 @@ export function EditStudentForm({
       studentSelectedData?.studentFamilyAtSchool.length
     ) {
       // VERIFY IF USER HAVE SOME FAMILY AFTER EXCLUSION
-      let haveFamily = false;
-      excludeFamily.map((family) => {
-        if (!family.exclude) {
-          haveFamily = true;
-        }
-      });
-
+      const familyArray: string[] = studentFamilyDetails;
+      familyArray.push(data.id);
+      const familyToExcludeArray: string[] = [];
       excludeFamily.map(async (familyToExclude) => {
         if (familyToExclude.exclude) {
-          // UPDATE STUDENT (DELETE FAMILY FROM STUDENT DATABASE)
-          await updateDoc(doc(db, "students", data.id), {
-            familyDiscount: haveFamily,
-            studentFamilyAtSchool: arrayRemove({
-              applyDiscount: familyToExclude.applyDiscount,
-              id: familyToExclude.id,
-            }),
-          });
-
-          // IF YOU ADDED FAMILY IN BOTH DIRECTIONS UNCOMMENT THIS SECTION FOR DELETE STUDENT FROM FAMILY DATABASE
-          // UPDATE FAMILY (DELETE STUDENT FROM FAMILY DATABASE)
-
-          // IF APPLY DISCOUNT OF ACCOUNT TO EDIT IS FALSE THEN GO TO FAMILY (WHICH IS REQUIRED TO BE TRUE ON APPLY DISCOUNT), EXCLUDE FAMILY AND RECALCULATE DISCOUNT
-          if (!familyToExclude.applyDiscount) {
-            const familyData = studentsDatabaseData.find(
-              (student) => student.id === familyToExclude.id
-            );
-            if (familyData) {
-              let otherFamilyApplyDiscount = false;
-              familyData.studentFamilyAtSchool.map((family) => {
-                if (family.applyDiscount) {
-                  otherFamilyApplyDiscount = true;
-                }
-              });
-              if (!otherFamilyApplyDiscount) {
-                await updateDoc(doc(db, "students", familyToExclude.id), {
-                  familyDiscount: otherFamilyApplyDiscount,
-                  studentFamilyAtSchool: arrayRemove({
-                    applyDiscount: !familyToExclude.applyDiscount,
-                    id: data.id,
-                  }),
-                });
-              } else {
-                if (familyData.curriculumIds.length <= 1) {
-                  await updateDoc(doc(db, "students", familyToExclude.id), {
-                    familyDiscount: otherFamilyApplyDiscount,
-                    studentFamilyAtSchool: arrayRemove({
-                      applyDiscount: !familyToExclude.applyDiscount,
-                      id: data.id,
-                    }),
-                    appliedPrice: familyData.fullPrice,
-                  });
-                } else {
-                  let biggerPrice = 0;
-                  let othersPricesSum = 0;
-                  familyData.curriculumIds.map((curriculum) => {
-                    if (curriculum.price > biggerPrice) {
-                      biggerPrice = curriculum.price;
-                    } else {
-                      othersPricesSum = othersPricesSum + curriculum.price;
-                    }
-                  });
-                  await updateDoc(doc(db, "students", familyToExclude.id), {
-                    familyDiscount: otherFamilyApplyDiscount,
-                    studentFamilyAtSchool: arrayRemove({
-                      applyDiscount: !familyToExclude.applyDiscount,
-                      id: data.id,
-                    }),
-                    appliedPrice:
-                      biggerPrice * secondCourseDiscountValue + othersPricesSum,
-                    fullPrice: biggerPrice + othersPricesSum,
-                  });
-                }
-              }
-            }
-          } else {
-            await updateDoc(doc(db, "students", familyToExclude.id), {
-              familyDiscount: haveFamily,
-              studentFamilyAtSchool: arrayRemove({
-                applyDiscount: !familyToExclude.applyDiscount,
-                id: data.id,
-              }),
+          familyToExcludeArray.push(familyToExclude.id);
+        }
+      });
+      // UPDATE STUDENT AND FAMILY
+      familyArray.map(async (studentToDeleteFamily) => {
+        const filteredMySelf = familyArray.filter(
+          (item) => item !== studentToDeleteFamily
+        );
+        const familyArrayToStay = filteredMySelf.filter(
+          (familyMember) => !familyToExcludeArray.includes(familyMember)
+        );
+        const studentAllDetails = studentsDatabaseData.find(
+          (student) => student.id === studentToDeleteFamily
+        );
+        if (studentAllDetails) {
+          if (familyToExcludeArray.includes(studentToDeleteFamily)) {
+            await updateDoc(doc(db, "students", studentToDeleteFamily), {
+              familyDiscount: false,
+              studentFamilyAtSchool: [],
             });
+          } else {
+            if (studentAllDetails.studentFamilyAtSchool.length > 1) {
+              await updateDoc(doc(db, "students", studentToDeleteFamily), {
+                familyDiscount: true,
+                studentFamilyAtSchool: familyArrayToStay,
+              });
+            } else {
+              await updateDoc(doc(db, "students", studentToDeleteFamily), {
+                familyDiscount: false,
+                studentFamilyAtSchool: familyArrayToStay,
+              });
+            }
           }
         }
       });
+      // excludeFamily.map(async (familyToExclude) => {
+      //   if (familyToExclude.exclude) {
+      //     // UPDATE STUDENT (DELETE FAMILY FROM STUDENT DATABASE)
+      //     await updateDoc(doc(db, "students", data.id), {
+      //       familyDiscount: haveFamily,
+      //       studentFamilyAtSchool: arrayRemove({
+      //         // applyDiscount: familyToExclude.applyDiscount,
+      //         id: familyToExclude.id,
+      //       }),
+      //     });
+      //     // IF YOU ADDED FAMILY IN BOTH DIRECTIONS UNCOMMENT THIS SECTION FOR DELETE STUDENT FROM FAMILY DATABASE
+      //     // UPDATE FAMILY (DELETE STUDENT FROM FAMILY DATABASE)
+      //     // IF APPLY DISCOUNT OF ACCOUNT TO EDIT IS FALSE THEN GO TO FAMILY (WHICH IS REQUIRED TO BE TRUE ON APPLY DISCOUNT), EXCLUDE FAMILY AND RECALCULATE DISCOUNT
+      //     if (!familyToExclude.applyDiscount) {
+      //       const familyData = studentsDatabaseData.find(
+      //         (student) => student.id === familyToExclude.id
+      //       );
+      //       if (familyData) {
+      //         let otherFamilyApplyDiscount = false;
+      //         familyData.studentFamilyAtSchool.map((family) => {
+      //           if (family.applyDiscount) {
+      //             otherFamilyApplyDiscount = true;
+      //           }
+      //         });
+      //         if (!otherFamilyApplyDiscount) {
+      //           await updateDoc(doc(db, "students", familyToExclude.id), {
+      //             familyDiscount: otherFamilyApplyDiscount,
+      //             studentFamilyAtSchool: arrayRemove({
+      //               applyDiscount: !familyToExclude.applyDiscount,
+      //               id: data.id,
+      //             }),
+      //           });
+      //         } else {
+      //           if (familyData.curriculumIds.length <= 1) {
+      //             await updateDoc(doc(db, "students", familyToExclude.id), {
+      //               familyDiscount: otherFamilyApplyDiscount,
+      //               studentFamilyAtSchool: arrayRemove({
+      //                 applyDiscount: !familyToExclude.applyDiscount,
+      //                 id: data.id,
+      //               }),
+      //               appliedPrice: familyData.fullPrice,
+      //             });
+      //           } else {
+      //             let biggerPrice = 0;
+      //             let othersPricesSum = 0;
+      //             familyData.curriculumIds.map((curriculum) => {
+      //               if (curriculum.price > biggerPrice) {
+      //                 biggerPrice = curriculum.price;
+      //               } else {
+      //                 othersPricesSum = othersPricesSum + curriculum.price;
+      //               }
+      //             });
+      //             await updateDoc(doc(db, "students", familyToExclude.id), {
+      //               familyDiscount: otherFamilyApplyDiscount,
+      //               studentFamilyAtSchool: arrayRemove({
+      //                 applyDiscount: !familyToExclude.applyDiscount,
+      //                 id: data.id,
+      //               }),
+      //               appliedPrice:
+      //                 biggerPrice * secondCourseDiscountValue + othersPricesSum,
+      //               fullPrice: biggerPrice + othersPricesSum,
+      //             });
+      //           }
+      //         }
+      //       }
+      //     } else {
+      //       await updateDoc(doc(db, "students", familyToExclude.id), {
+      //         familyDiscount: haveFamily,
+      //         studentFamilyAtSchool: arrayRemove({
+      //           applyDiscount: !familyToExclude.applyDiscount,
+      //           id: data.id,
+      //         }),
+      //       });
+      //     }
+      //   }
+      // });
     }
 
     // CHECK IF SOME FAMILY WAS INCLUDED
     if (studentEditData.addFamily) {
+      //CHECK AND GETTING EXISTENT FAMILY
+      const familyArray: string[] = [];
+
+      familyArray.push(data.id);
+      familyArray.push(newStudentData.familyId);
+      const foundedStudentFamilyDetails = studentsDatabaseData.find(
+        (student) => student.id === newStudentData.familyId
+      );
+      if (foundedStudentFamilyDetails) {
+        foundedStudentFamilyDetails.studentFamilyAtSchool.map(
+          (otherStudentFamily) => familyArray.push(otherStudentFamily)
+        );
+      }
       const addNewFamily = async () => {
         // UPDATE STUDENT (INSERT FAMILY TO STUDENT DATABASE)
         await updateDoc(doc(db, "students", data.id), {
           familyDiscount: true,
-          studentFamilyAtSchool: arrayUnion({
-            applyDiscount: true,
-            id: newStudentData.familyId,
-          }),
+          studentFamilyAtSchool: familyArray.filter(
+            (student) => student !== data.id
+          ),
         });
 
         // IF YOU WANT CREATE FAMILY IN BOTH DIRECTIONS UNCOMMENT THIS SECTION FOR INSERT STUDENT TO FAMILY DATABASE
         // UPDATE FAMILY (INSERT STUDENT TO FAMILY DATABASE)
-        await updateDoc(doc(db, "students", newStudentData.familyId), {
-          studentFamilyAtSchool: arrayUnion({
-            applyDiscount: false,
-            id: data.id,
-          }),
+        familyArray.map(async (familyStudent) => {
+          await setDoc(
+            doc(db, "students", familyStudent),
+            {
+              studentFamilyAtSchool: familyArray.filter(
+                (student) => student !== familyStudent
+              ),
+            },
+            { merge: true }
+          );
         });
       };
       addNewFamily();
@@ -5966,64 +6029,72 @@ export function EditStudentForm({
 
           {/* EXISTENT FAMILY */}
           {haveFamily &&
-            excludeFamily.map((family, index) => (
-              <div className="flex gap-2 items-center" key={family.id}>
-                <label
-                  htmlFor="existentFamilyName"
-                  className="w-1/4 text-right"
-                >
-                  {index === 0 ? "Familiares: " : ""}
-                </label>
-                <div className="flex w-3/4 gap-2">
-                  <div className="w-10/12">
-                    <input
-                      type="text"
-                      name="existentFamilyName"
-                      disabled={
-                        isSubmitting ? true : onlyView ? true : family.exclude
-                      }
-                      className={
-                        family.exclude
-                          ? "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                          : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                      }
-                      value={handleOneStudentDetails(family.id)?.name ?? ""}
-                      readOnly
-                    />
+            excludeFamily
+              .sort((a, b) =>
+                handleOneStudentDetails(a.id)!.name.localeCompare(
+                  handleOneStudentDetails(b.id)!.name
+                )
+              )
+              .map((family, index) => (
+                <div className="flex gap-2 items-center" key={family.id}>
+                  <label
+                    htmlFor="existentFamilyName"
+                    className="w-1/4 text-right"
+                  >
+                    {index === 0 ? "Familiares: " : ""}
+                  </label>
+                  <div className="flex w-3/4 gap-2">
+                    <div className="w-10/12">
+                      <input
+                        type="text"
+                        name="existentFamilyName"
+                        disabled={
+                          isSubmitting ? true : onlyView ? true : family.exclude
+                        }
+                        className={
+                          family.exclude
+                            ? "w-full px-2 py-1 dark:bg-gray-800 border border-klOrange-500 dark:border-klOrange-500 dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                            : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        }
+                        value={handleOneStudentDetails(family.id)?.name ?? ""}
+                        readOnly
+                      />
+                    </div>
+                    {!onlyView && (
+                      <EditFamilyButton
+                        family={family}
+                        index={index}
+                        handleIncludeExcludeFunction={
+                          handleIncludeExcludeFamily
+                        }
+                      />
+                      // <button
+                      //   type="button"
+                      //   disabled={isSubmitting}
+                      //   className={
+                      //     family.exclude
+                      //       ? "border rounded-2xl border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-2/12"
+                      //       : "border rounded-2xl border-red-900 bg-red-600 disabled:bg-red-400 text-white w-2/12"
+                      //   }
+                      //   onClick={() => {
+                      //     const data: ExcludeFamilyProps = {
+                      //       exclude: !family.exclude,
+                      //       applyDiscount: family.applyDiscount,
+                      //       id: family.id,
+                      //     };
+                      //     handleIncludeExcludeFamily(index, data);
+                      //   }}
+                      // >
+                      //   {isSubmitting
+                      //     ? "Salvando..."
+                      //     : family.exclude
+                      //     ? "Cancelar Exclusão"
+                      //     : "Excluir"}
+                      // </button>
+                    )}
                   </div>
-                  {!onlyView && (
-                    <EditFamilyButton
-                      family={family}
-                      index={index}
-                      handleIncludeExcludeFunction={handleIncludeExcludeFamily}
-                    />
-                    // <button
-                    //   type="button"
-                    //   disabled={isSubmitting}
-                    //   className={
-                    //     family.exclude
-                    //       ? "border rounded-2xl border-orange-900 disabled:border-gray-800 bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-500 w-2/12"
-                    //       : "border rounded-2xl border-red-900 bg-red-600 disabled:bg-red-400 text-white w-2/12"
-                    //   }
-                    //   onClick={() => {
-                    //     const data: ExcludeFamilyProps = {
-                    //       exclude: !family.exclude,
-                    //       applyDiscount: family.applyDiscount,
-                    //       id: family.id,
-                    //     };
-                    //     handleIncludeExcludeFamily(index, data);
-                    //   }}
-                    // >
-                    //   {isSubmitting
-                    //     ? "Salvando..."
-                    //     : family.exclude
-                    //     ? "Cancelar Exclusão"
-                    //     : "Excluir"}
-                    // </button>
-                  )}
                 </div>
-              </div>
-            ))}
+              ))}
 
           {/** CHECKBOX ADD FAMILY */}
           {!onlyView &&
@@ -6274,24 +6345,31 @@ export function EditStudentForm({
             Financeiro:
           </h1>
 
-          {/** CHECKBOX ADD ENROLMENT EXEMPTION */}
-          <div className="flex gap-2 items-center py-2">
-            <label htmlFor="enrolmentExemption" className="w-1/4 text-right">
-              Ativar Isenção de Matrícula ?{" "}
-            </label>
-            <div className="w-3/4 flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="enrolmentExemption"
-                className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                checked={enrolmentExemption}
-                disabled={onlyView}
-                onChange={() => {
-                  setEnrolmentExemption(!enrolmentExemption);
-                }}
-              />
-            </div>
-          </div>
+          {userFullData && userFullData.role !== "user" && (
+            <>
+              {/** CHECKBOX ADD ENROLMENT EXEMPTION */}
+              <div className="flex gap-2 items-center py-2">
+                <label
+                  htmlFor="enrolmentExemption"
+                  className="w-1/4 text-right"
+                >
+                  Ativar Isenção de Matrícula ?{" "}
+                </label>
+                <div className="w-3/4 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="enrolmentExemption"
+                    className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                    checked={enrolmentExemption}
+                    disabled={onlyView}
+                    onChange={() => {
+                      setEnrolmentExemption(!enrolmentExemption);
+                    }}
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           {/* STUDENT ENROLMENT PRICE */}
           <div className="flex gap-2 items-center">
@@ -6311,84 +6389,93 @@ export function EditStudentForm({
             />
           </div>
 
-          {/** CHECKBOX ADD EMPLOYEE DISCOUNT */}
-          <div className="flex gap-2 items-center">
-            <label htmlFor="employeeDiscount" className="w-1/4 text-right">
-              Ativar Desconto de Funcionário ? (20%){" "}
-            </label>
-            <div className="w-3/4 flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="employeeDiscount"
-                className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                disabled={onlyView ? true : studentEditData.customDiscount}
-                checked={studentEditData.employeeDiscount}
-                onChange={() => {
-                  setStudentEditData({
-                    ...studentEditData,
-                    employeeDiscount: !studentEditData.employeeDiscount,
-                  });
-                }}
-              />
-            </div>
-          </div>
+          {userFullData && userFullData.role !== "user" && (
+            <>
+              {/** CHECKBOX ADD EMPLOYEE DISCOUNT */}
+              <div className="flex gap-2 items-center">
+                <label htmlFor="employeeDiscount" className="w-1/4 text-right">
+                  Ativar Desconto de Funcionário ? (20%){" "}
+                </label>
+                <div className="w-3/4 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="employeeDiscount"
+                    className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                    disabled={onlyView ? true : studentEditData.customDiscount}
+                    checked={studentEditData.employeeDiscount}
+                    onChange={() => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        employeeDiscount: !studentEditData.employeeDiscount,
+                      });
+                    }}
+                  />
+                </div>
+              </div>
 
-          {/** CHECKBOX ADD CUSTOM DISCOUNT */}
-          <div className="flex gap-2 items-center py-2">
-            <label htmlFor="customDiscount" className="w-1/4 text-right">
-              Ativar Desconto Personalizado ?{" "}
-            </label>
-            <div className="w-3/4 flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="customDiscount"
-                disabled={onlyView}
-                className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                checked={studentEditData.customDiscount}
-                onChange={() => {
-                  setStudentEditData({
-                    ...studentEditData,
-                    employeeDiscount: false,
-                    customDiscount: !studentEditData.customDiscount,
-                  });
-                }}
-              />
-              <label htmlFor="customDiscountValue" className="w-1/4 text-right">
-                Porcentagem de desconto:{" "}
-              </label>
-              <input
-                type="text"
-                name="customDiscountValue"
-                disabled={onlyView ? true : !studentEditData.customDiscount}
-                className={
-                  onlyView ?? studentEditData.customDiscount
-                    ? errors.customDiscountValue
-                      ? "w-1/12 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                }
-                pattern="^[+ 0-9]{5}$"
-                maxLength={2}
-                value={
-                  studentEditData.customDiscount
-                    ? studentEditData.customDiscountValue
-                    : "0"
-                }
-                onChange={(e) =>
-                  setStudentEditData({
-                    ...studentEditData,
-                    customDiscountValue: e.target.value
-                      .replace(/[^0-9.]/g, "")
-                      .replace(/(\..*?)\..*/g, "$1"),
-                  })
-                }
-              />
-              <label htmlFor="customDiscountValue" className="w-1/4 text-left">
-                %
-              </label>
-            </div>
-          </div>
-
+              {/** CHECKBOX ADD CUSTOM DISCOUNT */}
+              <div className="flex gap-2 items-center py-2">
+                <label htmlFor="customDiscount" className="w-1/4 text-right">
+                  Ativar Desconto Personalizado ?{" "}
+                </label>
+                <div className="w-3/4 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="customDiscount"
+                    disabled={onlyView}
+                    className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                    checked={studentEditData.customDiscount}
+                    onChange={() => {
+                      setStudentEditData({
+                        ...studentEditData,
+                        employeeDiscount: false,
+                        customDiscount: !studentEditData.customDiscount,
+                      });
+                    }}
+                  />
+                  <label
+                    htmlFor="customDiscountValue"
+                    className="w-1/4 text-right"
+                  >
+                    Porcentagem de desconto:{" "}
+                  </label>
+                  <input
+                    type="text"
+                    name="customDiscountValue"
+                    disabled={onlyView ? true : !studentEditData.customDiscount}
+                    className={
+                      onlyView ?? studentEditData.customDiscount
+                        ? errors.customDiscountValue
+                          ? "w-1/12 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                    }
+                    pattern="^[+ 0-9]{5}$"
+                    maxLength={2}
+                    value={
+                      studentEditData.customDiscount
+                        ? studentEditData.customDiscountValue
+                        : "0"
+                    }
+                    onChange={(e) =>
+                      setStudentEditData({
+                        ...studentEditData,
+                        customDiscountValue: e.target.value
+                          .replace(/[^0-9.]/g, "")
+                          .replace(/(\..*?)\..*/g, "$1"),
+                      })
+                    }
+                  />
+                  <label
+                    htmlFor="customDiscountValue"
+                    className="w-1/4 text-left"
+                  >
+                    %
+                  </label>
+                </div>
+              </div>
+            </>
+          )}
           {/* STUDENT CLASS DAYS MONTHLY PAYMENT PRICE */}
           <div className="flex gap-2 items-center">
             <label htmlFor="monthlyPayment" className="w-1/4 text-right">

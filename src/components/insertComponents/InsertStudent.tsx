@@ -1471,9 +1471,24 @@ export function InsertStudent() {
   ) => {
     setIsSubmitting(true);
 
+    //CHECK AND GETTING EXISTENT FAMILY
+    const newStudentId = uuidv4();
+    const familyArray: string[] = [];
+    if (data.familyDiscount && data.familyAtSchoolId) {
+      familyArray.push(newStudentId);
+      familyArray.push(data.familyAtSchoolId);
+      const foundedStudentFamilyDetails = studentsDatabaseData.find(
+        (student) => student.id === data.familyAtSchoolId
+      );
+      if (foundedStudentFamilyDetails) {
+        foundedStudentFamilyDetails.studentFamilyAtSchool.map(
+          (otherStudentFamily) => familyArray.push(otherStudentFamily)
+        );
+      }
+    }
+
     // ADD STUDENT FUNCTION
     const addStudent = async () => {
-      const newStudentId = uuidv4();
       const newStudentRef = doc(db, "students", newStudentId);
       try {
         // CREATE STUDENT
@@ -1526,10 +1541,7 @@ export function InsertStudent() {
               })
             : arrayUnion(),
           studentFamilyAtSchool: data.familyDiscount
-            ? arrayUnion({
-                id: data.familyAtSchoolId!,
-                applyDiscount: true,
-              })
+            ? familyArray.filter((student) => student !== newStudentId)
             : arrayUnion(),
           paymentRegister: paymentArray,
 
@@ -1571,7 +1583,6 @@ export function InsertStudent() {
             {
               experimentalStudents: arrayUnion({
                 id: newStudentId,
-                name: data.name,
                 date: Timestamp.fromDate(new Date(newClass.date)),
                 isExperimental: true,
                 indexDays: [],
@@ -1588,7 +1599,6 @@ export function InsertStudent() {
             {
               students: arrayUnion({
                 id: newStudentId,
-                name: data.name,
                 date: Timestamp.fromDate(new Date(newClass.date)),
                 isExperimental: false,
                 indexDays: newClass.enrolledDays,
@@ -1600,16 +1610,17 @@ export function InsertStudent() {
         }
         if (data.familyDiscount) {
           // IF YOU WANT TO CREATE STUDENT INSIDE FAMILY TABLE COLLECTION, UNCOMMENT THIS SECTION
-          await setDoc(
-            doc(db, "students", data.familyAtSchoolId!),
-            {
-              studentFamilyAtSchool: arrayUnion({
-                id: newStudentId,
-                applyDiscount: false,
-              }),
-            },
-            { merge: true }
-          );
+          familyArray.map(async (familyStudent) => {
+            await setDoc(
+              doc(db, "students", familyStudent),
+              {
+                studentFamilyAtSchool: familyArray.filter(
+                  (student) => student !== familyStudent
+                ),
+              },
+              { merge: true }
+            );
+          });
         }
         toast.success(`Aluno ${data.name} criado com sucesso! 👌`, {
           theme: "colored",
@@ -1670,24 +1681,6 @@ export function InsertStudent() {
       );
     }
 
-    // CHEKING VALID RESPONSIBLE DOCUMENT
-    // if (!testCPF) {
-    //   return (
-    //     setIsSubmitting(false),
-    //     setExperimentalClassError(true),
-    //     toast.error(
-    //       "CPF do responsável é inválido, por favor verifique... ❕",
-    //       {
-    //         theme: "colored",
-    //         closeOnClick: true,
-    //         pauseOnHover: true,
-    //         draggable: true,
-    //         autoClose: 3000,
-    //       }
-    //     )
-    //   );
-    // }
-
     // CHEKING VALID FINANCIAL RESPONSIBLE DOCUMENT
     if (!testFinancialCPF) {
       return (
@@ -1746,12 +1739,7 @@ export function InsertStudent() {
 
     // CHECK FAMILY AT SCHOOL DETAILS
     if (studentData.familyDiscount) {
-      if (
-        // familyStudentData.schoolId === "" ||
-        // familyStudentData.schoolClassId === "" ||
-        // familyStudentData.curriculumId === "" ||
-        familyStudentData.studentId === ""
-      ) {
+      if (familyStudentData.studentId === "") {
         setIsSubmitting(false);
         return toast.error(
           `Por favor, verifique os dados do parente que já estuda na escola... ☑️`,

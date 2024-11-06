@@ -330,7 +330,7 @@ export interface StudentSearchProps {
   paymentDay?: string;
   experimentalCurriculumIds: Array<CurriculumArrayProps>;
   curriculumIds: Array<CurriculumArrayProps>;
-  studentFamilyAtSchool: Array<StudentFamilyAtSchoolProps>;
+  studentFamilyAtSchool: Array<string>;
   paymentRegister: PaymentRegisterProps;
 
   // Section 3: Student Financial Responsible Data
@@ -360,12 +360,13 @@ export interface StudentSearchProps {
   updatedAt: Date;
 }
 
-export interface StudentFamilyAtSchoolProps {
-  id: string;
-  applyDiscount: boolean;
-}
-export interface ExcludeFamilyProps extends StudentFamilyAtSchoolProps {
+// export interface StudentFamilyAtSchoolProps {
+//   id: string;
+//   // applyDiscount: boolean;
+// }
+export interface ExcludeFamilyProps {
   exclude: boolean;
+  id: string;
 }
 
 export interface CurriculumArrayProps {

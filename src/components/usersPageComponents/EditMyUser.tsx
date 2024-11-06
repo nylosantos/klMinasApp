@@ -6,9 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
-
 import { editUserValidationSchema } from "../../@types/zodValidation";
-import { EditUserValidationZProps } from "../../@types";
+import { EditUserValidationZProps, UserFullDataProps } from "../../@types";
 import { app } from "../../db/Firebase";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
@@ -20,8 +19,16 @@ import { formataCPF, testaCPF } from "../../custom";
 
 export function EditMyUser() {
   // GET GLOBAL DATA
-  const { isSubmitting, page, userFullData, setIsSubmitting, setPage } =
-    useContext(GlobalDataContext) as GlobalDataContextType;
+  const {
+    appUsersDb,
+    appUsersDbError,
+    appUsersDbLoading,
+    isSubmitting,
+    page,
+    userFullData,
+    setIsSubmitting,
+    setPage,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // EDIT USER WITHOUT CHANGING PASSWORD CLOUD FUNCTION HOOK
   const [updateAppUserWithoutPassword] = useHttpsCallable(
@@ -75,23 +82,33 @@ export function EditMyUser() {
 
   // SET USER NAME TO USER EDIT NAME
   useEffect(() => {
-    if (userFullData) {
-      setUserEditData({
-        ...userEditData,
-        id: userFullData.id,
-        name: userFullData.name,
-        email: userFullData.email,
-        role: userFullData.role,
-        document: userFullData.document ?? "",
-      });
-      setPhoneFormatted({
-        ...phoneFormatted,
-        ddd: userFullData.phone ? userFullData.phone.slice(3, 5) : "DDD",
-        prefix: userFullData.phone ? userFullData.phone.slice(5, 10) : "",
-        suffix: userFullData.phone ? userFullData.phone.slice(-4) : "",
-      });
+    if (
+      appUsersDb &&
+      !appUsersDbLoading &&
+      appUsersDbError === undefined &&
+      userFullData
+    ) {
+      const foundedUser: UserFullDataProps = appUsersDb.find(
+        (user) => user.id === userFullData.id
+      ) as UserFullDataProps;
+      if (foundedUser) {
+        setUserEditData({
+          ...userEditData,
+          id: foundedUser.id,
+          name: foundedUser.name,
+          email: foundedUser.email,
+          role: foundedUser.role,
+          document: foundedUser.document ?? "",
+        });
+        setPhoneFormatted({
+          ...phoneFormatted,
+          ddd: foundedUser.phone ? foundedUser.phone.slice(3, 5) : "DDD",
+          prefix: foundedUser.phone ? foundedUser.phone.slice(5, 10) : "",
+          suffix: foundedUser.phone ? foundedUser.phone.slice(-4) : "",
+        });
+      }
     }
-  }, [userFullData]);
+  }, [appUsersDb]);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -117,24 +134,6 @@ export function EditMyUser() {
   // RESET FORM FUNCTION
   const resetForm = () => {
     reset();
-    setUserEditData({
-      id: "",
-      name: "",
-      email: "",
-      changePassword: false,
-      password: "",
-      confirmPassword: "",
-      phone: "",
-      photo: "",
-      document: "",
-      role: "user",
-    });
-    setPhoneFormatted({
-      ...phoneFormatted,
-      ddd: "DDD",
-      prefix: "",
-      suffix: "",
-    });
     setErrorPassword(false);
   };
 
@@ -421,9 +420,9 @@ export function EditMyUser() {
                   <select
                     id="phoneDDD"
                     disabled={isSubmitting}
-                    defaultValue={
-                      userFullData.phone
-                        ? userFullData.phone?.slice(3, 5)
+                    value={
+                      userEditData.phone
+                        ? userEditData.phone?.slice(3, 5)
                         : "DDD"
                     }
                     className={
@@ -447,7 +446,7 @@ export function EditMyUser() {
                     name="phoneInitial"
                     pattern="^[+ 0-9]{5}$"
                     maxLength={5}
-                    defaultValue={userFullData?.phone?.slice(5, 10)}
+                    defaultValue={userEditData.phone?.slice(5, 10)}
                     placeholder={errors.phone ? "É necessário um" : "99999"}
                     className={
                       errors.phone
@@ -468,7 +467,7 @@ export function EditMyUser() {
                     name="phoneFinal"
                     pattern="^[+ 0-9]{4}$"
                     maxLength={4}
-                    defaultValue={userFullData?.phone?.slice(-4)}
+                    defaultValue={userEditData.phone?.slice(-4)}
                     placeholder={errors.phone ? "telefone válido" : "9990"}
                     className={
                       errors.phone

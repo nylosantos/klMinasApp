@@ -6,6 +6,7 @@ import { Auth, getAuth, User } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
   ClassDaySearchProps,
+  CurriculumArrayProps,
   CurriculumSearchProps,
   CurriculumWithNamesProps,
   ScheduleSearchProps,
@@ -23,6 +24,8 @@ import {
   collection,
   deleteDoc,
   doc,
+  DocumentData,
+  FirestoreError,
   getDocs,
   getFirestore,
   onSnapshot,
@@ -37,6 +40,7 @@ import {
 } from "../custom";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import { useCollectionData } from "react-firebase-hooks/firestore";
 
 export type SetPageProps = {
   prev: "Dashboard" | "Settings" | "ManageSchools" | "ManageUsers";
@@ -61,6 +65,37 @@ export type GlobalDataContextType = {
   login: boolean;
   logged: boolean;
   page: SetPageProps;
+  // NEW DATABASE DATA
+  schoolsDb: DocumentData[] | undefined;
+  schoolsDbError: FirestoreError | undefined;
+  schoolsDbLoading: boolean;
+  schoolClassesDb: DocumentData[] | undefined;
+  schoolClassesDbError: FirestoreError | undefined;
+  schoolClassesDbLoading: boolean;
+  schoolCoursesDb: DocumentData[] | undefined;
+  schoolCoursesDbError: FirestoreError | undefined;
+  schoolCoursesDbLoading: boolean;
+  schedulesDb: DocumentData[] | undefined;
+  schedulesDbError: FirestoreError | undefined;
+  schedulesDbLoading: boolean;
+  teachersDb: DocumentData[] | undefined;
+  teachersDbError: FirestoreError | undefined;
+  teachersDbLoading: boolean;
+  curriculumDb: DocumentData[] | undefined;
+  curriculumDbError: FirestoreError | undefined;
+  curriculumDbLoading: boolean;
+  studentsDb: DocumentData[] | undefined;
+  studentsDbError: FirestoreError | undefined;
+  studentsDbLoading: boolean;
+  classDaysDb: DocumentData[] | undefined;
+  classDaysDbError: FirestoreError | undefined;
+  classDaysDbLoading: boolean;
+  appUsersDb: DocumentData[] | undefined;
+  appUsersDbError: FirestoreError | undefined;
+  appUsersDbLoading: boolean;
+  systemConstantsDb: DocumentData[] | undefined;
+  systemConstantsDbError: FirestoreError | undefined;
+  systemConstantsDbLoading: boolean;
   // DATABASE DATA
   appUsersDatabaseData: UserFullDataProps[];
   schoolDatabaseData: SchoolSearchProps[];
@@ -87,6 +122,7 @@ export type GlobalDataContextType = {
     schoolCourseId,
   }: HandleCurriculumDetailsWithScoolCourseProps) => CurriculumWithNamesProps[];
   calcStudentPrice: (studentId: string) => Promise<void>;
+  calcStudentPrice2: (studentId: string) => Promise<void>;
   formatCurriculumName: (id: string) => string;
   handleDeleteStudent: (studentId: string, resetForm: () => void) => void;
   handleOneCurriculumDetails: (id: string) => CurriculumWithNamesProps;
@@ -159,6 +195,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
 
   // HANDLE USER DATA FUNCTION
   const handleUserFullData = async (user: User | null | undefined) => {
+    console.log("to executando");
     if (user !== null && user !== undefined) {
       // CHECKING IF USER EXISTS ON DATABASE
       const userRef = collection(db, "appUsers");
@@ -535,6 +572,232 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     });
   }
 
+  async function calcStudentPrice2(studentId: string) {
+    const userRef = collection(db, "students");
+    const q = query(userRef, where("id", "==", studentId));
+    const querySnapshot = await getDocs(q);
+    const promises: StudentSearchProps[] = [];
+    querySnapshot.forEach((doc) => {
+      const promise = doc.data() as StudentSearchProps;
+      promises.push(promise);
+    });
+    Promise.all(promises).then((results) => {
+      const studentToCalcPrices = results.find(
+        (student) => student.id === studentId
+      );
+      if (studentToCalcPrices) {
+        // DISCOUNT VARIABLE
+        const customDiscountValueSum =
+          100 - +studentToCalcPrices.customDiscountValue;
+        const customDiscountFinalValue = +`0.${
+          customDiscountValueSum > 9
+            ? customDiscountValueSum
+            : `0${customDiscountValueSum}`
+        }`;
+        const curriculumOrderedByPrice = studentToCalcPrices.curriculumIds.sort(
+          (a, b) => b.price - a.price
+        );
+        // PRICE CALC IF HAVE FAMILY
+        if (employeeDiscountValue) {
+          // WITH EMPLOYEE DISCOUNT
+          let appliedPrice = 0;
+          studentToCalcPrices.curriculumIds.map((curriculum) => {
+            appliedPrice = appliedPrice + curriculum.price;
+          });
+          console.log(
+            "appliedPrice sem desconto: ",
+            appliedPrice,
+            " appliedPrice com desconto: ",
+            appliedPrice * employeeDiscountValue
+          );
+        } else if (studentToCalcPrices.studentFamilyAtSchool.length < 1) {
+          // WITHOUT FAMILY DISCOUNT
+          const studentCurriculums: CurriculumArrayProps[] = [];
+          curriculumDatabaseData.map((curriculum) => {
+            curriculum.students.map((student) => {
+              if (student.id === studentToCalcPrices.id) {
+                if (!studentCurriculums.includes(student)) {
+                  studentCurriculums.push(student);
+                }
+              }
+            });
+          });
+          let biggerPriceIndex = 0;
+          let biggerPrice = 0;
+          let otherSumPrices = 0;
+          let olderBiggerPrice = 0;
+          studentCurriculums.map(async (studentCurriculum, index) => {
+            if (studentCurriculum.price > biggerPrice) {
+              biggerPriceIndex = index;
+              olderBiggerPrice = biggerPrice;
+              biggerPrice = studentCurriculum.price;
+              otherSumPrices = olderBiggerPrice + otherSumPrices;
+            } else {
+              otherSumPrices = otherSumPrices + studentCurriculum.price;
+            }
+          });
+          console.log(
+            "todos os curriculum juntos, student",
+            studentCurriculums
+          );
+          console.log(
+            "Maior mensalidade: ",
+            biggerPrice,
+            " Soma das outras mensalidades: ",
+            otherSumPrices,
+            " Index da maior mensalidade: ",
+            biggerPriceIndex
+          );
+        } else {
+          // WITH FAMILY DISCOUNT
+          const studentFamilyCurriculums: CurriculumArrayProps[] = [];
+          studentToCalcPrices.studentFamilyAtSchool.map((familyId) => {
+            curriculumDatabaseData.map((curriculum) => {
+              curriculum.students.map((student) => {
+                if (
+                  student.id === familyId ||
+                  student.id === studentToCalcPrices.id
+                ) {
+                  if (!studentFamilyCurriculums.includes(student)) {
+                    studentFamilyCurriculums.push(student);
+                  }
+                }
+              });
+            });
+          });
+          let biggerPriceIndex = 0;
+          let biggerPrice = 0;
+          let otherSumPrices = 0;
+          let olderBiggerPrice = 0;
+          studentFamilyCurriculums.map(async (studentCurriculum, index) => {
+            if (studentCurriculum.price > biggerPrice) {
+              biggerPriceIndex = index;
+              olderBiggerPrice = biggerPrice;
+              biggerPrice = studentCurriculum.price;
+              otherSumPrices = olderBiggerPrice + otherSumPrices;
+            } else {
+              otherSumPrices = otherSumPrices + studentCurriculum.price;
+            }
+          });
+          console.log(
+            "todos os curriculum juntos, student and family",
+            studentFamilyCurriculums
+          );
+          console.log(
+            "Maior mensalidade: ",
+            biggerPrice,
+            " Soma das outras mensalidades: ",
+            otherSumPrices,
+            " Index da maior mensalidade: ",
+            biggerPriceIndex
+          );
+        }
+        // if (curriculumOrderedByPrice.length < 1) {
+        //   console.log(
+        //     "O preço total é: R$ ",
+        //     0,
+        //     " o desconto é de ",
+        //     0,
+        //     ", e o valor final é: R$ ",
+        //     0
+        //   );
+        // } else if (curriculumOrderedByPrice.length === 1) {
+        //   if (studentToCalcPrices.customDiscount) {
+        //     console.log(
+        //       "O preço total é: R$ ",
+        //       curriculumOrderedByPrice[0].price,
+        //       " o desconto é de ",
+        //       studentToCalcPrices.customDiscountValue,
+        //       "%, e o valor final é: R$ ",
+        //       curriculumOrderedByPrice[0].price * customDiscountFinalValue
+        //     );
+        //   } else if (studentToCalcPrices.employeeDiscount) {
+        //     console.log(
+        //       "O preço total é: R$ ",
+        //       curriculumOrderedByPrice[0].price,
+        //       " o desconto é de ",
+        //       employeeDiscountValue,
+        //       ", e o valor final é: R$ ",
+        //       curriculumOrderedByPrice[0].price * employeeDiscountValue
+        //     );
+        //   } else if (studentToCalcPrices.familyDiscount) {
+        //     console.log(
+        //       "O preço total é: R$ ",
+        //       curriculumOrderedByPrice[0].price,
+        //       " o desconto é de ",
+        //       familyDiscountValue,
+        //       ", e o valor final é: R$ ",
+        //       curriculumOrderedByPrice[0].price * familyDiscountValue
+        //     );
+        //   } else {
+        //     console.log(
+        //       "O preço total é: R$ ",
+        //       curriculumOrderedByPrice[0].price,
+        //       " o desconto é de ",
+        //       0,
+        //       ", e o valor final é: R$ ",
+        //       curriculumOrderedByPrice[0].price
+        //     );
+        //   }
+        // } else {
+        //   if (studentToCalcPrices.customDiscount) {
+        //     console.log(
+        //       "O preço total é: R$ ",
+        //       curriculumOrderedByPrice[0].price,
+        //       " o desconto é de ",
+        //       studentToCalcPrices.customDiscountValue,
+        //       "%, e o valor final é: R$ ",
+        //       curriculumOrderedByPrice[0].price * customDiscountFinalValue
+        //     );
+        //   }
+        // }
+      }
+      // studentToCalcPrices.map(async (student) => {
+      // DISCOUNT VARIABLE
+      // const customDiscountValueSum = 100 - +student.customDiscountValue;
+      // const customDiscountFinalValue = +`0.${
+      //   customDiscountValueSum > 9
+      //     ? customDiscountValueSum
+      //     : `0${customDiscountValueSum}`
+      // }`;
+
+      // const discountVariable = student.customDiscount
+      //   ? customDiscountFinalValue
+      //   : student.employeeDiscount
+      //   ? employeeDiscountValue
+      //   : student.familyDiscount
+      //   ? familyDiscountValue
+      //   : student.secondCourseDiscount
+      //   ? secondCourseDiscountValue
+      //   : 1; // WITHOUT DISCOUNT
+
+      // CALC OF FULL AND APPLY PRICE OF STUDENT
+      // let smallestPrice = 0;
+      // let otherSumPrices = 0;
+      // let olderSmallestPrice = 0;
+      // student.curriculumIds.map(async (studentCurriculum, index) => {
+      //   if (index === 0) {
+      //     smallestPrice = studentCurriculum.price;
+      //   } else {
+      //     if (studentCurriculum.price <= smallestPrice) {
+      //       olderSmallestPrice = smallestPrice;
+      //       smallestPrice = studentCurriculum.price;
+      //       otherSumPrices = olderSmallestPrice + otherSumPrices;
+      //     } else {
+      //       otherSumPrices = otherSumPrices + studentCurriculum.price;
+      //     }
+      //   }
+      // });
+      // await updateDoc(doc(db, "students", student.id), {
+      //   appliedPrice: +(
+      //     smallestPrice * discountVariable +
+      //     otherSumPrices
+      //   ).toFixed(2),
+      //   fullPrice: smallestPrice + otherSumPrices,
+      // });
+      // });
+    });
+  }
   // MONITORING USER LOGIN
   useEffect(() => {
     setIsSubmitting(true);
@@ -635,6 +898,43 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   }, []);
 
   // GET DATA
+  // LISTENER SCHOOLS DATA
+  const [schoolsDb, schoolsDbLoading, schoolsDbError] = useCollectionData(
+    collection(db, "schools")
+  );
+  // LISTENER SCHOOLCLASSES DATA
+  const [schoolClassesDb, schoolClassesDbLoading, schoolClassesDbError] =
+    useCollectionData(collection(db, "schoolClasses"));
+  // LISTENER SCHOOLCOURSES DATA
+  const [schoolCoursesDb, schoolCoursesDbLoading, schoolCoursesDbError] =
+    useCollectionData(collection(db, "schoolCourses"));
+  // LISTENER SCHEDULES DATA
+  const [schedulesDb, schedulesDbLoading, schedulesDbError] = useCollectionData(
+    collection(db, "schedules")
+  );
+  // LISTENER TEACHERS DATA
+  const [teachersDb, teachersDbLoading, teachersDbError] = useCollectionData(
+    collection(db, "teachers")
+  );
+  // LISTENER CURRICULUM DATA
+  const [curriculumDb, curriculumDbLoading, curriculumDbError] =
+    useCollectionData(collection(db, "curriculum"));
+  // LISTENER STUDENTS DATA
+  const [studentsDb, studentsDbLoading, studentsDbError] = useCollectionData(
+    collection(db, "students")
+  );
+  // LISTENER CLASSDAYS DATA
+  const [classDaysDb, classDaysDbLoading, classDaysDbError] = useCollectionData(
+    collection(db, "classDays")
+  );
+  // LISTENER APP USERS DATA
+  const [appUsersDb, appUsersDbLoading, appUsersDbError] = useCollectionData(
+    collection(db, "appUsers")
+  );
+  // LISTENER SYSTEMCONSTANTS DATA
+  const [systemConstantsDb, systemConstantsDbLoading, systemConstantsDbError] =
+    useCollectionData(collection(db, "systemConstants"));
+
   async function handleData() {
     // GET SCHOOL DATA
     const schoolQuery = query(collection(db, "schools"));
@@ -785,118 +1085,120 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           // TEST FOR BROTHERS REGISTERED
           if (studentToDelete.studentFamilyAtSchool.length > 0) {
             // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
-            studentToDelete.studentFamilyAtSchool.map(async (studentFamily) => {
-              const editingStudentFamily = studentsDatabaseData.find(
-                (student) => student.id === studentFamily.id
-              );
-              if (editingStudentFamily) {
-                const foundedStudentOnFamilyRecord =
-                  editingStudentFamily.studentFamilyAtSchool.find(
-                    (student) => student.id === studentId
-                  );
-                if (foundedStudentOnFamilyRecord) {
-                  // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
-                  if (
-                    editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
-                    editingStudentFamily.studentFamilyAtSchool.length === 1 &&
-                    !editingStudentFamily.secondCourseDiscount
-                  ) {
-                    await updateDoc(
-                      doc(db, "students", editingStudentFamily.id),
-                      {
-                        studentFamilyAtSchool: arrayRemove({
-                          applyDiscount:
-                            foundedStudentOnFamilyRecord.applyDiscount,
-                          id: foundedStudentOnFamilyRecord.id,
-                        }),
-                        familyDiscount: false,
-                        appliedPrice: editingStudentFamily.fullPrice,
-                      }
+            studentToDelete.studentFamilyAtSchool.map(
+              async (studentFamilyId) => {
+                const editingStudentFamily = studentsDatabaseData.find(
+                  (student) => student.id === studentFamilyId
+                );
+                if (editingStudentFamily) {
+                  const foundedStudentOnFamilyRecord =
+                    editingStudentFamily.studentFamilyAtSchool.find(
+                      (studentToEditId) => studentToEditId === studentId
                     );
-                    // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
-                  } else if (
-                    editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
-                    editingStudentFamily.studentFamilyAtSchool.length === 1
-                  ) {
-                    await updateDoc(
-                      doc(db, "students", editingStudentFamily.id),
-                      {
-                        studentFamilyAtSchool: arrayRemove({
-                          applyDiscount:
-                            foundedStudentOnFamilyRecord.applyDiscount,
-                          id: foundedStudentOnFamilyRecord.id,
-                        }),
-                        familyDiscount: false,
-                      }
-                    );
-                    // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
-                  } else if (
-                    editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
-                    editingStudentFamily.studentFamilyAtSchool.length > 1
-                  ) {
-                    await updateDoc(
-                      doc(db, "students", editingStudentFamily.id),
-                      {
-                        studentFamilyAtSchool: arrayRemove({
-                          applyDiscount:
-                            foundedStudentOnFamilyRecord.applyDiscount,
-                          id: foundedStudentOnFamilyRecord.id,
-                        }),
-                      }
-                    );
+                  if (foundedStudentOnFamilyRecord) {
                     // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
-                  } else if (
-                    !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
-                    editingStudentFamily.studentFamilyAtSchool.length === 1 &&
-                    !editingStudentFamily.secondCourseDiscount
-                  ) {
-                    await updateDoc(
-                      doc(db, "students", editingStudentFamily.id),
-                      {
-                        studentFamilyAtSchool: arrayRemove({
-                          applyDiscount:
-                            foundedStudentOnFamilyRecord.applyDiscount,
-                          id: foundedStudentOnFamilyRecord.id,
-                        }),
-                        familyDiscount: false,
-                        appliedPrice: editingStudentFamily.fullPrice,
-                      }
-                    );
-                    // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
-                  } else if (
-                    !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
-                    editingStudentFamily.studentFamilyAtSchool.length === 1
-                  ) {
-                    await updateDoc(
-                      doc(db, "students", editingStudentFamily.id),
-                      {
-                        studentFamilyAtSchool: arrayRemove({
-                          applyDiscount:
-                            foundedStudentOnFamilyRecord.applyDiscount,
-                          id: foundedStudentOnFamilyRecord.id,
-                        }),
-                        familyDiscount: false,
-                      }
-                    );
-                    // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
-                  } else if (
-                    !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
-                    editingStudentFamily.studentFamilyAtSchool.length > 1
-                  ) {
-                    await updateDoc(
-                      doc(db, "students", editingStudentFamily.id),
-                      {
-                        studentFamilyAtSchool: arrayRemove({
-                          applyDiscount:
-                            foundedStudentOnFamilyRecord.applyDiscount,
-                          id: foundedStudentOnFamilyRecord.id,
-                        }),
-                      }
-                    );
+                    if (
+                      editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+                      editingStudentFamily.studentFamilyAtSchool.length === 1 &&
+                      !editingStudentFamily.secondCourseDiscount
+                    ) {
+                      await updateDoc(
+                        doc(db, "students", editingStudentFamily.id),
+                        {
+                          studentFamilyAtSchool: arrayRemove({
+                            // applyDiscount:
+                            // foundedStudentOnFamilyRecord.applyDiscount,
+                            foundedStudentOnFamilyRecord,
+                          }),
+                          familyDiscount: false,
+                          appliedPrice: editingStudentFamily.fullPrice,
+                        }
+                      );
+                      // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
+                    } else if (
+                      editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+                      editingStudentFamily.studentFamilyAtSchool.length === 1
+                    ) {
+                      await updateDoc(
+                        doc(db, "students", editingStudentFamily.id),
+                        {
+                          studentFamilyAtSchool: arrayRemove({
+                            // applyDiscount:
+                            // foundedStudentOnFamilyRecord.applyDiscount,
+                            foundedStudentOnFamilyRecord,
+                          }),
+                          familyDiscount: false,
+                        }
+                      );
+                      // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
+                    } else if (
+                      editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+                      editingStudentFamily.studentFamilyAtSchool.length > 1
+                    ) {
+                      await updateDoc(
+                        doc(db, "students", editingStudentFamily.id),
+                        {
+                          studentFamilyAtSchool: arrayRemove({
+                            // applyDiscount:
+                            //   foundedStudentOnFamilyRecord.applyDiscount,
+                            foundedStudentOnFamilyRecord,
+                          }),
+                        }
+                      );
+                      // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
+                    } else if (
+                      !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+                      editingStudentFamily.studentFamilyAtSchool.length === 1 &&
+                      !editingStudentFamily.secondCourseDiscount
+                    ) {
+                      await updateDoc(
+                        doc(db, "students", editingStudentFamily.id),
+                        {
+                          studentFamilyAtSchool: arrayRemove({
+                            // applyDiscount:
+                            //   foundedStudentOnFamilyRecord.applyDiscount,
+                            foundedStudentOnFamilyRecord,
+                          }),
+                          familyDiscount: false,
+                          appliedPrice: editingStudentFamily.fullPrice,
+                        }
+                      );
+                      // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
+                    } else if (
+                      !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+                      editingStudentFamily.studentFamilyAtSchool.length === 1
+                    ) {
+                      await updateDoc(
+                        doc(db, "students", editingStudentFamily.id),
+                        {
+                          studentFamilyAtSchool: arrayRemove({
+                            // applyDiscount:
+                            //   foundedStudentOnFamilyRecord.applyDiscount,
+                            foundedStudentOnFamilyRecord,
+                          }),
+                          familyDiscount: false,
+                        }
+                      );
+                      // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
+                    } else if (
+                      !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+                      editingStudentFamily.studentFamilyAtSchool.length > 1
+                    ) {
+                      await updateDoc(
+                        doc(db, "students", editingStudentFamily.id),
+                        {
+                          studentFamilyAtSchool: arrayRemove({
+                            // applyDiscount:
+                            //   foundedStudentOnFamilyRecord.applyDiscount,
+                            foundedStudentOnFamilyRecord,
+                          }),
+                        }
+                      );
+                    }
                   }
                 }
               }
-            });
+            );
           }
 
           // DELETE STUDENT FROM EXPERIMENTAL CLASSES
@@ -1021,6 +1323,37 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         logged,
         login,
         page,
+        // NEW DATABASE DATA
+        schoolsDb,
+        schoolsDbError,
+        schoolsDbLoading,
+        schoolClassesDb,
+        schoolClassesDbError,
+        schoolClassesDbLoading,
+        schoolCoursesDb,
+        schoolCoursesDbError,
+        schoolCoursesDbLoading,
+        schedulesDb,
+        schedulesDbError,
+        schedulesDbLoading,
+        teachersDb,
+        teachersDbError,
+        teachersDbLoading,
+        curriculumDb,
+        curriculumDbError,
+        curriculumDbLoading,
+        studentsDb,
+        studentsDbError,
+        studentsDbLoading,
+        classDaysDb,
+        classDaysDbError,
+        classDaysDbLoading,
+        appUsersDb,
+        appUsersDbError,
+        appUsersDbLoading,
+        systemConstantsDb,
+        systemConstantsDbError,
+        systemConstantsDbLoading,
         // DATABASE DATA
         appUsersDatabaseData,
         schoolDatabaseData,
@@ -1038,6 +1371,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         userFullData,
         userLoading,
         calcStudentPrice,
+        calcStudentPrice2,
         formatCurriculumName,
         handleAllCurriculumDetails,
         handleCurriculumDetailsWithSchoolCourse,

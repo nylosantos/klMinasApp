@@ -247,12 +247,30 @@ export function DeleteUser() {
                     </label>
                     <input
                       type="text"
-                      name="e-mail"
+                      name="email"
                       disabled
                       className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                       value={userSelectedData?.email}
                     />
                   </div>
+
+                  {userSelectedData?.role === "user" && (
+                    <>
+                      {/* USER DOCUMENT */}
+                      <div className="flex gap-2 items-center">
+                        <label htmlFor="document" className="w-1/4 text-right">
+                          CPF:{" "}
+                        </label>
+                        <input
+                          type="text"
+                          name="document"
+                          disabled
+                          className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          value={userSelectedData?.document}
+                        />
+                      </div>
+                    </>
+                  )}
 
                   {/* PHONE */}
                   <div className="flex gap-2 items-center">
