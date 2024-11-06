@@ -255,7 +255,7 @@ export interface SchoolSearchProps {
 export interface SchoolClassSearchProps {
   id: string;
   name: string;
-  schoolId: string;
+  // schoolId: string;
   available: "open" | "closed" | "waitingList";
   updatedAt: Date;
 }

@@ -10,11 +10,8 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import DatePicker, { DateObject } from "react-multi-date-picker";
 import {
   arrayUnion,
-  collection,
   doc,
-  getDocs,
   getFirestore,
-  query,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -69,6 +66,7 @@ export function InsertStudent() {
     schoolDatabaseData,
     schoolClassDatabaseData,
     schoolCourseDatabaseData,
+    scheduleDatabaseData,
     studentsDatabaseData,
     setIsExperimentalClass,
     userFullData,
@@ -200,88 +198,6 @@ export function InsertStudent() {
   }, [familyStudentData.schoolClassId]);
   // -------------------------- END OF FAMILY SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
-  // -------------------------- FAMILY CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
-  // FAMILY STUDENT SELECTED STATE DATA
-  // const [familyStudentSelectedData, setFamilyStudentSelectedData] =
-  //   useState<StudentSearchProps>();
-
-  // SET FAMILY STUDENT SELECTED STATE WHEN SELECT FAMILY STUDENT
-  // useEffect(() => {
-  //   if (familyStudentData.studentId !== "") {
-  //     setFamilyStudentSelectedData(
-  //       studentsDatabaseData.find(
-  //         ({ id }) => id === familyStudentData.studentId
-  //       )
-  //     );
-  //   } else {
-  //     setFamilyStudentSelectedData(undefined);
-  //   }
-  // }, [familyStudentData.studentId]);
-
-  // -------------------------- RESET SELECTS -------------------------- //
-  // RESET ALL UNDER FAMILY SCHOOL SELECT WHEN CHANGE FAMILY SCHOOL
-  // useEffect(() => {
-  //   if (studentData.familyDiscount) {
-  //     // (
-  //     //   document.getElementById("familySchoolClassSelect") as HTMLSelectElement
-  //     // ).selectedIndex = 0;
-  //     // (
-  //     //   document.getElementById("familySchoolCourseSelect") as HTMLSelectElement
-  //     // ).selectedIndex = 0;
-  //     // (
-  //     //   document.getElementById("familyStudentSelect") as HTMLSelectElement
-  //     // ).selectedIndex = 0;
-  //     setFamilyStudentData({
-  //       ...familyStudentData,
-  //       schoolClassId: "",
-  //       curriculumId: "",
-  //       studentId: "",
-  //     });
-  //     setStudentData({
-  //       ...studentData,
-  //       confirmInsert: false,
-  //     });
-  //   }
-  // }, [familyStudentData.schoolId]);
-
-  // RESET ALL UNDER FAMILY SCHOOL CLASS SELECT WHEN CHANGE FAMILY SCHOOL CLASS
-  // useEffect(() => {
-  //   if (studentData.familyDiscount) {
-  //     // (
-  //     //   document.getElementById("familySchoolCourseSelect") as HTMLSelectElement
-  //     // ).selectedIndex = 0;
-  //     // (
-  //     //   document.getElementById("familyStudentSelect") as HTMLSelectElement
-  //     // ).selectedIndex = 0;
-  //     setFamilyStudentData({
-  //       ...familyStudentData,
-  //       curriculumId: "",
-  //       studentId: "",
-  //     });
-  //     setStudentData({
-  //       ...studentData,
-  //       confirmInsert: false,
-  //     });
-  //   }
-  // }, [familyStudentData.schoolClassId]);
-
-  // RESET ALL UNDER FAMILY CURRICULUM SELECT WHEN CHANGE FAMILY CURRICULUM
-  // useEffect(() => {
-  //   if (studentData.familyDiscount) {
-  //     // (
-  //     //   document.getElementById("familyStudentSelect") as HTMLSelectElement
-  //     // ).selectedIndex = 0;
-  //     setFamilyStudentData({
-  //       ...familyStudentData,
-  //       studentId: "",
-  //     });
-  //     setStudentData({
-  //       ...studentData,
-  //       confirmInsert: false,
-  //     });
-  //   }
-  // }, [familyStudentData.curriculumId]);
-
   // SET FAMILY STUDENT ID TO STUDENT DATA AND RESET CONFIRM INSERT WHEN CHANGE FAMILY STUDENT
   useEffect(() => {
     setStudentData({
@@ -320,15 +236,6 @@ export function InsertStudent() {
     }
   }, [curriculumData.schoolId]);
 
-  // // SET SCHOOL NAME WITH SCHOOL SELECTED DATA WHEN SELECT SCHOOL
-  // useEffect(() => {
-  //   if (schoolSelectedData !== undefined) {
-  //     setCurriculumData({
-  //       ...curriculumData,
-  //       schoolName: schoolSelectedData!.name,
-  //     });
-  //   }
-  // }, [schoolSelectedData]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
@@ -348,16 +255,6 @@ export function InsertStudent() {
       setSchoolClassSelectedData(undefined);
     }
   }, [curriculumData.schoolClassId]);
-
-  // // SET SCHOOL CLASS NAME WITH SCHOOL CLASS SELECTED DATA WHEN SELECT SCHOOL CLASS
-  // useEffect(() => {
-  //   if (schoolClassSelectedData !== undefined) {
-  //     setCurriculumData({
-  //       ...curriculumData,
-  //       schoolClassName: schoolClassSelectedData!.name,
-  //     });
-  //   }
-  // }, [schoolClassSelectedData]);
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
@@ -388,10 +285,6 @@ export function InsertStudent() {
   // SET SCHOOL COURSE NAME WITH SCHOOL COURSE SELECTED DATA WHEN SELECT SCHOOL COURSE
   useEffect(() => {
     if (schoolCourseSelectedData !== undefined) {
-      // setCurriculumData({
-      //   ...curriculumData,
-      //   schoolCourseName: schoolCourseSelectedData!.name,
-      // });
       setSchoolCourseSelectedPrice({
         bundleDays: schoolCourseSelectedData.bundleDays,
         priceBundle: schoolCourseSelectedData.priceBundle,
@@ -404,26 +297,26 @@ export function InsertStudent() {
 
   // -------------------------- SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHEDULE DATA ARRAY WITH ALL OPTIONS OF SCHEDULES
-  const [schedulesDetailsData, setSchedulesDetailsData] = useState<
-    ScheduleSearchProps[]
-  >([]);
+  // const [schedulesDetailsData, setSchedulesDetailsData] = useState<
+  //   ScheduleSearchProps[]
+  // >([]);
 
   // GETTING SCHEDULES DATA
-  const handleSchedulesDetails = async () => {
-    const q = query(collection(db, "schedules"));
-    const querySnapshot = await getDocs(q);
-    const promises: ScheduleSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as ScheduleSearchProps;
-      promises.push(promise);
-    });
-    setSchedulesDetailsData(promises);
-  };
+  // const handleSchedulesDetails = async () => {
+  //   const q = query(collection(db, "schedules"));
+  //   const querySnapshot = await getDocs(q);
+  //   const promises: ScheduleSearchProps[] = [];
+  //   querySnapshot.forEach((doc) => {
+  //     const promise = doc.data() as ScheduleSearchProps;
+  //     promises.push(promise);
+  //   });
+  //   setSchedulesDetailsData(promises);
+  // };
 
-  // GETTING SCHEDULES DETAILS
-  useEffect(() => {
-    handleSchedulesDetails();
-  }, []);
+  // // GETTING SCHEDULES DETAILS
+  // useEffect(() => {
+  //   handleSchedulesDetails();
+  // }, []);
   // -------------------------- END OF SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- EXPERIMENTAL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
@@ -836,25 +729,29 @@ export function InsertStudent() {
         ).selectedIndex = index;
       }
     });
-  }, [curriculumData.schoolCourseId]);
+  }, [
+    curriculumData.schoolCourseId,
+    curriculumData.schoolId,
+    curriculumData.schoolClassId,
+  ]);
   // -------------------------- END OF CURRICULUM STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- RESET SELECTS -------------------------- //
   // RESET ALL UNDER SCHOOL SELECT WHEN CHANGE SCHOOL
   useEffect(() => {
-    if (userFullData && userFullData.role !== "user") {
-      (
-        document.getElementById("schoolClassSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
-    }
-    (
-      document.getElementById("schoolCourseSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    setCurriculumData({
-      ...curriculumData,
-      schoolClassId: "",
-      schoolCourseId: "",
-    });
+    // if (userFullData && userFullData.role !== "user") {
+    //   (
+    //     document.getElementById("schoolClassSelect") as HTMLSelectElement
+    //   ).selectedIndex = 0;
+    // }
+    // (
+    //   document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    // ).selectedIndex = 0;
+    // setCurriculumData({
+    //   ...curriculumData,
+    //   schoolClassId: "",
+    //   schoolCourseId: "",
+    // });
     setStudentData({
       ...studentData,
       customDiscount: false,
@@ -878,17 +775,697 @@ export function InsertStudent() {
     });
   }, [curriculumData.schoolId]);
 
-  // RESET ALL UNDER SCHOOL CLASS SELECT WHEN CHANGE SCHOOL CLASS
+  // GET FINANCIAL RESPONSIBLE INFO WHEN FILL DOCUMENT
   useEffect(() => {
-    if (userFullData && userFullData.role !== "user") {
-      (
-        document.getElementById("schoolCourseSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
-      setCurriculumData({
-        ...curriculumData,
-        schoolCourseId: "",
+    if (studentData.financialResponsible.document.length === 14) {
+      const foundedResponsibleData = studentsDatabaseData.find(
+        (student) =>
+          student.financialResponsible.document ===
+          studentData.financialResponsible.document
+      );
+      if (foundedResponsibleData) {
+        setStudentData({
+          ...studentData,
+          financialResponsible: {
+            ...studentData.financialResponsible,
+            name: foundedResponsibleData.financialResponsible.name,
+            email: foundedResponsibleData.financialResponsible.email,
+            phone: {
+              ddd: foundedResponsibleData.financialResponsible.phone.slice(
+                3,
+                5
+              ),
+              prefix: foundedResponsibleData.financialResponsible.phone.slice(
+                5,
+                10
+              ),
+              suffix:
+                foundedResponsibleData.financialResponsible.phone.slice(-4),
+            },
+            activePhoneSecondary:
+              foundedResponsibleData.financialResponsible.phoneSecondary !== ""
+                ? true
+                : false,
+            phoneSecondary: {
+              ddd:
+                foundedResponsibleData.financialResponsible.phoneSecondary !==
+                ""
+                  ? foundedResponsibleData.financialResponsible.phoneSecondary.slice(
+                      3,
+                      5
+                    )
+                  : "DDD",
+              prefix:
+                foundedResponsibleData.financialResponsible.phoneSecondary !==
+                ""
+                  ? foundedResponsibleData.financialResponsible.phoneSecondary.slice(
+                      5,
+                      10
+                    )
+                  : "",
+              suffix:
+                foundedResponsibleData.financialResponsible.phoneSecondary !==
+                ""
+                  ? foundedResponsibleData.financialResponsible.phoneSecondary.slice(
+                      -4
+                    )
+                  : "",
+            },
+            activePhoneTertiary:
+              foundedResponsibleData.financialResponsible.phoneTertiary !== ""
+                ? true
+                : false,
+            phoneTertiary: {
+              ddd:
+                foundedResponsibleData.financialResponsible.phoneTertiary !== ""
+                  ? foundedResponsibleData.financialResponsible.phoneTertiary.slice(
+                      3,
+                      5
+                    )
+                  : "DDD",
+              prefix:
+                foundedResponsibleData.financialResponsible.phoneTertiary !== ""
+                  ? foundedResponsibleData.financialResponsible.phoneTertiary.slice(
+                      5,
+                      10
+                    )
+                  : "",
+              suffix:
+                foundedResponsibleData.financialResponsible.phoneTertiary !== ""
+                  ? foundedResponsibleData.financialResponsible.phoneTertiary.slice(
+                      -4
+                    )
+                  : "",
+            },
+            address: {
+              cep: foundedResponsibleData.financialResponsible.address.cep,
+              street:
+                foundedResponsibleData.financialResponsible.address.street,
+              number:
+                foundedResponsibleData.financialResponsible.address.number,
+              neighborhood:
+                foundedResponsibleData.financialResponsible.address
+                  .neighborhood,
+              complement:
+                foundedResponsibleData.financialResponsible.address.complement,
+              city: foundedResponsibleData.financialResponsible.address.city,
+              state: foundedResponsibleData.financialResponsible.address.state,
+            },
+          },
+        });
+      } else {
+        setStudentData({
+          ...studentData,
+          financialResponsible: {
+            name: "",
+            document: "",
+            email: "",
+            address: {
+              street: "",
+              number: "",
+              complement: "",
+              neighborhood: "",
+              city: "",
+              state: "",
+              cep: "",
+            },
+            phone: {
+              ddd: "",
+              prefix: "",
+              suffix: "",
+            },
+            activePhoneSecondary: false,
+            phoneSecondary: {
+              ddd: "",
+              prefix: "",
+              suffix: "",
+            },
+            activePhoneTertiary: false,
+            phoneTertiary: {
+              ddd: "",
+              prefix: "",
+              suffix: "",
+            },
+          },
+        });
+      }
+    } else {
+      setStudentData({
+        ...studentData,
+        financialResponsible: {
+          ...studentData.financialResponsible,
+          name: "",
+          email: "",
+          address: {
+            street: "",
+            number: "",
+            complement: "",
+            neighborhood: "",
+            city: "",
+            state: "",
+            cep: "",
+          },
+          phone: {
+            ddd: "",
+            prefix: "",
+            suffix: "",
+          },
+          activePhoneSecondary: false,
+          phoneSecondary: {
+            ddd: "",
+            prefix: "",
+            suffix: "",
+          },
+          activePhoneTertiary: false,
+          phoneTertiary: {
+            ddd: "",
+            prefix: "",
+            suffix: "",
+          },
+        },
       });
     }
+  }, [studentData.financialResponsible.document]);
+
+  function validateEmail(email: string) {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+  }
+
+  useEffect(() => {
+    if (
+      studentData.parentOne.email !== "" &&
+      validateEmail(studentData.parentOne.email)
+    ) {
+      const foundedParentData = studentsDatabaseData.find(
+        (student) =>
+          student.parentOne.email === studentData.parentOne.email ||
+          student.parentTwo.email === studentData.parentOne.email
+      );
+      if (foundedParentData) {
+        if (foundedParentData.parentOne.email === studentData.parentOne.email) {
+          setStudentData({
+            ...studentData,
+            parentOne: {
+              ...studentData.parentOne,
+              name: foundedParentData.parentOne.name,
+              phone: {
+                ddd: foundedParentData.parentOne.phone.slice(3, 5),
+                prefix: foundedParentData.parentOne.phone.slice(5, 10),
+                suffix: foundedParentData.parentOne.phone.slice(-4),
+              },
+            },
+          });
+        } else {
+          setStudentData({
+            ...studentData,
+            parentOne: {
+              ...studentData.parentOne,
+              name: foundedParentData.parentTwo.name,
+              phone: {
+                ddd: foundedParentData.parentTwo.phone.slice(3, 5),
+                prefix: foundedParentData.parentTwo.phone.slice(5, 10),
+                suffix: foundedParentData.parentTwo.phone.slice(-4),
+              },
+            },
+          });
+        }
+      } else {
+        setStudentData({
+          ...studentData,
+          parentOne: {
+            ...studentData.parentOne,
+            name: "",
+            phone: {
+              ddd: "",
+              prefix: "",
+              suffix: "",
+            },
+          },
+        });
+      }
+    }
+    if (
+      studentData.parentTwo.email &&
+      studentData.parentTwo.email !== "" &&
+      validateEmail(studentData.parentTwo.email)
+    ) {
+      const foundedParentData = studentsDatabaseData.find(
+        (student) =>
+          student.parentOne.email === studentData.parentOne.email ||
+          student.parentTwo.email === studentData.parentOne.email
+      );
+      if (foundedParentData) {
+        if (foundedParentData.parentOne.email === studentData.parentOne.email) {
+          setStudentData({
+            ...studentData,
+            parentTwo: {
+              ...studentData.parentTwo,
+              name: foundedParentData.parentOne.name,
+              phone: {
+                ddd: foundedParentData.parentOne.phone.slice(3, 5),
+                prefix: foundedParentData.parentOne.phone.slice(5, 10),
+                suffix: foundedParentData.parentOne.phone.slice(-4),
+              },
+            },
+          });
+        }
+        if (foundedParentData.parentTwo.email === studentData.parentOne.email) {
+          console.log("asasdas");
+          setStudentData({ ...studentData, name: "teste" });
+        }
+      } else {
+        setStudentData({
+          ...studentData,
+          parentTwo: {
+            ...studentData.parentTwo,
+            name: "",
+            phone: {
+              ddd: "",
+              prefix: "",
+              suffix: "",
+            },
+          },
+        });
+      }
+    }
+  }, [studentData.parentOne.email, studentData.parentTwo.email]);
+
+  // function handleParentInfoByEmail(parent: "one" | "two", email: string) {
+  //   if (parent === "one") {
+  //     const foundedParentData = studentsDatabaseData.find(
+  //       (student) =>
+  //         student.parentOne.email === email || student.parentTwo.email === email
+  //     );
+  //     if (foundedParentData) {
+  //       if (foundedParentData.parentOne.email === email) {
+  //         setStudentData({
+  //           ...studentData,
+  //           parentOne: {
+  //             ...studentData.parentOne,
+  //             name: foundedParentData.parentOne.name,
+  //             phone: {
+  //               ddd: foundedParentData.parentOne.phone.slice(3, 5),
+  //               prefix: foundedParentData.parentOne.phone.slice(5, 10),
+  //               suffix: foundedParentData.parentOne.phone.slice(-4),
+  //             },
+  //           },
+  //         });
+  //       } else {
+  //         setStudentData({
+  //           ...studentData,
+  //           parentOne: {
+  //             ...studentData.parentOne,
+  //             name: foundedParentData.parentTwo.name,
+  //             phone: {
+  //               ddd: foundedParentData.parentTwo.phone.slice(3, 5),
+  //               prefix: foundedParentData.parentTwo.phone.slice(5, 10),
+  //               suffix: foundedParentData.parentTwo.phone.slice(-4),
+  //             },
+  //           },
+  //         });
+  //       }
+  //     } else {
+  //       setStudentData({
+  //         ...studentData,
+  //         parentOne: {
+  //           ...studentData.parentOne,
+  //           name: "",
+  //           phone: {
+  //             ddd: "",
+  //             prefix: "",
+  //             suffix: "",
+  //           },
+  //         },
+  //       });
+  //     }
+  //   } else {
+  //     const foundedParentData = studentsDatabaseData.find(
+  //       (student) =>
+  //         student.parentOne.email === email || student.parentTwo.email === email
+  //     );
+  //     if (foundedParentData) {
+  //       if (foundedParentData.parentOne.email === email) {
+  //         setStudentData({
+  //           ...studentData,
+  //           parentTwo: {
+  //             ...studentData.parentTwo,
+  //             name: foundedParentData.parentOne.name,
+  //             phone: {
+  //               ddd: foundedParentData.parentOne.phone.slice(3, 5),
+  //               prefix: foundedParentData.parentOne.phone.slice(5, 10),
+  //               suffix: foundedParentData.parentOne.phone.slice(-4),
+  //             },
+  //           },
+  //         });
+  //       }
+  //       if (foundedParentData.parentTwo.email === email) {
+  //         console.log("asasdas");
+  //         setStudentData({...studentData, name: 'teste'})
+  //       }
+  //     } else {
+  //       setStudentData({
+  //         ...studentData,
+  //         parentTwo: {
+  //           ...studentData.parentTwo,
+  //           name: "",
+  //           phone: {
+  //             ddd: "",
+  //             prefix: "",
+  //             suffix: "",
+  //           },
+  //         },
+  //       });
+  //     }
+  //   }
+  // }
+
+  console.log(studentData.parentOne);
+  console.log(studentData.parentTwo);
+  // const parentOneInput = document.getElementById("parentOneEmail");
+  // const parentTwoInput = document.getElementById("parentTwoEmail");
+  // parentOneInput?.addEventListener("blur", function () {
+  //   // console.log("tentei")
+  //   const foundedParentData = studentsDatabaseData.find(
+  //     (student) =>
+  //       student.parentOne.email === studentData.parentOne.email ||
+  //       student.parentTwo.email === studentData.parentOne.email
+  //   );
+  //   if (foundedParentData) {
+  //     if (foundedParentData.parentOne.email === studentData.parentOne.email) {
+  //       setStudentData({
+  //         ...studentData,
+  //         parentOne: {
+  //           ...studentData.parentOne,
+  //           name: foundedParentData.parentOne.name,
+  //           phone: {
+  //             ddd: foundedParentData.parentOne.phone.slice(3, 5),
+  //             prefix: foundedParentData.parentOne.phone.slice(5, 10),
+  //             suffix: foundedParentData.parentOne.phone.slice(-4),
+  //           },
+  //         },
+  //       });
+  //     } else {
+  //       setStudentData({
+  //         ...studentData,
+  //         parentOne: {
+  //           ...studentData.parentOne,
+  //           name: foundedParentData.parentTwo.name,
+  //           phone: {
+  //             ddd: foundedParentData.parentTwo.phone.slice(3, 5),
+  //             prefix: foundedParentData.parentTwo.phone.slice(5, 10),
+  //             suffix: foundedParentData.parentTwo.phone.slice(-4),
+  //           },
+  //         },
+  //       });
+  //     }
+  //   } else {
+  //     setStudentData({
+  //       ...studentData,
+  //       parentOne: {
+  //         ...studentData.parentOne,
+  //         name: "",
+  //         phone: {
+  //           ddd: "",
+  //           prefix: "",
+  //           suffix: "",
+  //         },
+  //       },
+  //     });
+  //   }
+  // });
+  // parentOneInput?.addEventListener("keydown", function (e) {
+  //   const key = e.key;
+  //   if (
+  //     key === "Backspace" ||
+  //     (key === "Delete" && studentData.parentOne.email !== "")
+  //   ) {
+  //     setStudentData({
+  //       ...studentData,
+  //       parentOne: {
+  //         ...studentData.parentOne,
+  //         name: "",
+  //         phone: {
+  //           ddd: "",
+  //           prefix: "",
+  //           suffix: "",
+  //         },
+  //       },
+  //     });
+  //   }
+  // });
+  // parentTwoInput?.addEventListener("keydown", function (e) {
+  //   const key = e.key;
+  //   if (
+  //     key === "Backspace" ||
+  //     (key === "Delete" && studentData.parentTwo.email !== "")
+  //   ) {
+  //     setStudentData({
+  //       ...studentData,
+  //       parentTwo: {
+  //         ...studentData.parentTwo,
+  //         name: "",
+  //         phone: {
+  //           ddd: "",
+  //           prefix: "",
+  //           suffix: "",
+  //         },
+  //       },
+  //     });
+  //   }
+  // });
+  // parentTwoInput?.addEventListener("blur", function () {
+  //   const foundedParentData = studentsDatabaseData.find(
+  //     (student) =>
+  //       student.parentOne.email === studentData.parentTwo.email ||
+  //       student.parentTwo.email === studentData.parentTwo.email
+  //   );
+  //   if (foundedParentData) {
+  //     if (foundedParentData.parentOne.email === studentData.parentTwo.email) {
+  //       setStudentData({
+  //         ...studentData,
+  //         parentTwo: {
+  //           ...studentData.parentTwo,
+  //           name: foundedParentData.parentOne.name,
+  //           phone: {
+  //             ddd: foundedParentData.parentOne.phone.slice(3, 5),
+  //             prefix: foundedParentData.parentOne.phone.slice(5, 10),
+  //             suffix: foundedParentData.parentOne.phone.slice(-4),
+  //           },
+  //         },
+  //       });
+  //     } else {
+  //       setStudentData({
+  //         ...studentData,
+  //         parentTwo: {
+  //           ...studentData.parentTwo,
+  //           name: foundedParentData.parentTwo.name,
+  //           phone: {
+  //             ddd: foundedParentData.parentTwo.phone.slice(3, 5),
+  //             prefix: foundedParentData.parentTwo.phone.slice(5, 10),
+  //             suffix: foundedParentData.parentTwo.phone.slice(-4),
+  //           },
+  //         },
+  //       });
+  //     }
+  //   } else {
+  //     setStudentData({
+  //       ...studentData,
+  //       parentTwo: {
+  //         ...studentData.parentTwo,
+  //         name: "",
+  //         phone: {
+  //           ddd: "",
+  //           prefix: "",
+  //           suffix: "",
+  //         },
+  //       },
+  //     });
+  //   }
+  // });
+  // GET PARENT INFO WHEN FILL EMAIL
+  // useEffect(() => {
+  //   // if (studentData.financialResponsible.document.length === 14) {
+  //   //   const foundedResponsibleData = studentsDatabaseData.find(
+  //   //     (student) =>
+  //   //       student.financialResponsible.document ===
+  //   //       studentData.financialResponsible.document
+  //   //   );
+  //   //   if (foundedResponsibleData) {
+  //   //     setStudentData({
+  //   //       ...studentData,
+  //   //       financialResponsible: {
+  //   //         ...studentData.financialResponsible,
+  //   //         name: foundedResponsibleData.financialResponsible.name,
+  //   //         email: foundedResponsibleData.financialResponsible.email,
+  //   //         phone: {
+  //   //           ddd: foundedResponsibleData.financialResponsible.phone.slice(
+  //   //             3,
+  //   //             5
+  //   //           ),
+  //   //           prefix: foundedResponsibleData.financialResponsible.phone.slice(
+  //   //             5,
+  //   //             10
+  //   //           ),
+  //   //           suffix:
+  //   //             foundedResponsibleData.financialResponsible.phone.slice(-4),
+  //   //         },
+  //   //         activePhoneSecondary:
+  //   //           foundedResponsibleData.financialResponsible.phoneSecondary !== ""
+  //   //             ? true
+  //   //             : false,
+  //   //         phoneSecondary: {
+  //   //           ddd:
+  //   //             foundedResponsibleData.financialResponsible.phoneSecondary !==
+  //   //             ""
+  //   //               ? foundedResponsibleData.financialResponsible.phoneSecondary.slice(
+  //   //                   3,
+  //   //                   5
+  //   //                 )
+  //   //               : "DDD",
+  //   //           prefix:
+  //   //             foundedResponsibleData.financialResponsible.phoneSecondary !==
+  //   //             ""
+  //   //               ? foundedResponsibleData.financialResponsible.phoneSecondary.slice(
+  //   //                   5,
+  //   //                   10
+  //   //                 )
+  //   //               : "",
+  //   //           suffix:
+  //   //             foundedResponsibleData.financialResponsible.phoneSecondary !==
+  //   //             ""
+  //   //               ? foundedResponsibleData.financialResponsible.phoneSecondary.slice(
+  //   //                   -4
+  //   //                 )
+  //   //               : "",
+  //   //         },
+  //   //         activePhoneTertiary:
+  //   //           foundedResponsibleData.financialResponsible.phoneTertiary !== ""
+  //   //             ? true
+  //   //             : false,
+  //   //         phoneTertiary: {
+  //   //           ddd:
+  //   //             foundedResponsibleData.financialResponsible.phoneTertiary !== ""
+  //   //               ? foundedResponsibleData.financialResponsible.phoneTertiary.slice(
+  //   //                   3,
+  //   //                   5
+  //   //                 )
+  //   //               : "DDD",
+  //   //           prefix:
+  //   //             foundedResponsibleData.financialResponsible.phoneTertiary !== ""
+  //   //               ? foundedResponsibleData.financialResponsible.phoneTertiary.slice(
+  //   //                   5,
+  //   //                   10
+  //   //                 )
+  //   //               : "",
+  //   //           suffix:
+  //   //             foundedResponsibleData.financialResponsible.phoneTertiary !== ""
+  //   //               ? foundedResponsibleData.financialResponsible.phoneTertiary.slice(
+  //   //                   -4
+  //   //                 )
+  //   //               : "",
+  //   //         },
+  //   //         address: {
+  //   //           cep: foundedResponsibleData.financialResponsible.address.cep,
+  //   //           street:
+  //   //             foundedResponsibleData.financialResponsible.address.street,
+  //   //           number:
+  //   //             foundedResponsibleData.financialResponsible.address.number,
+  //   //           neighborhood:
+  //   //             foundedResponsibleData.financialResponsible.address
+  //   //               .neighborhood,
+  //   //           complement:
+  //   //             foundedResponsibleData.financialResponsible.address.complement,
+  //   //           city: foundedResponsibleData.financialResponsible.address.city,
+  //   //           state: foundedResponsibleData.financialResponsible.address.state,
+  //   //         },
+  //   //       },
+  //   //     });
+  //   //   } else {
+  //   //     setStudentData({
+  //   //       ...studentData,
+  //   //       financialResponsible: {
+  //   //         name: "",
+  //   //         document: "",
+  //   //         email: "",
+  //   //         address: {
+  //   //           street: "",
+  //   //           number: "",
+  //   //           complement: "",
+  //   //           neighborhood: "",
+  //   //           city: "",
+  //   //           state: "",
+  //   //           cep: "",
+  //   //         },
+  //   //         phone: {
+  //   //           ddd: "",
+  //   //           prefix: "",
+  //   //           suffix: "",
+  //   //         },
+  //   //         activePhoneSecondary: false,
+  //   //         phoneSecondary: {
+  //   //           ddd: "",
+  //   //           prefix: "",
+  //   //           suffix: "",
+  //   //         },
+  //   //         activePhoneTertiary: false,
+  //   //         phoneTertiary: {
+  //   //           ddd: "",
+  //   //           prefix: "",
+  //   //           suffix: "",
+  //   //         },
+  //   //       },
+  //   //     });
+  //   //   }
+  //   // } else {
+  //   //   setStudentData({
+  //   //     ...studentData,
+  //   //     financialResponsible: {
+  //   //       ...studentData.financialResponsible,
+  //   //       name: "",
+  //   //       email: "",
+  //   //       address: {
+  //   //         street: "",
+  //   //         number: "",
+  //   //         complement: "",
+  //   //         neighborhood: "",
+  //   //         city: "",
+  //   //         state: "",
+  //   //         cep: "",
+  //   //       },
+  //   //       phone: {
+  //   //         ddd: "",
+  //   //         prefix: "",
+  //   //         suffix: "",
+  //   //       },
+  //   //       activePhoneSecondary: false,
+  //   //       phoneSecondary: {
+  //   //         ddd: "",
+  //   //         prefix: "",
+  //   //         suffix: "",
+  //   //       },
+  //   //       activePhoneTertiary: false,
+  //   //       phoneTertiary: {
+  //   //         ddd: "",
+  //   //         prefix: "",
+  //   //         suffix: "",
+  //   //       },
+  //   //     },
+  //   //   });
+  //   // }
+  // }, [studentData.financialResponsible.document]);
+
+  // RESET ALL UNDER SCHOOL CLASS SELECT WHEN CHANGE SCHOOL CLASS
+  useEffect(() => {
+    // if (userFullData && userFullData.role !== "user") {
+    //   (
+    //     document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    //   ).selectedIndex = 0;
+    //   setCurriculumData({
+    //     ...curriculumData,
+    //     schoolCourseId: "",
+    //   });
+    // }
     setStudentData({
       ...studentData,
       customDiscount: false,
@@ -1922,6 +2499,60 @@ export function InsertStudent() {
           Filiação 1:
         </h3>
 
+        {/* PARENT ONE E-MAIL */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="parentOneEmail"
+            className={
+              errors.parentOne?.email
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right"
+            }
+          >
+            E-mail:{" "}
+          </label>
+          <input
+            type="text"
+            name="parentOneEmail"
+            id="parentOneEmail"
+            disabled={isSubmitting}
+            placeholder={
+              errors.parentOne?.email
+                ? "É necessário inserir o e-mail"
+                : "Insira o e-mail"
+            }
+            className={
+              errors.parentOne?.email
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            value={studentData.parentOne?.email}
+            onChange={(e) => {
+              // if (validateEmail(e.target.value)) {
+              //   handleParentInfoByEmail("one", e.target.value);
+              // } else {
+              //   console.log("nem passei");
+              //   setStudentData({
+              //     ...studentData,
+              //     parentOne: {
+              //       ...studentData.parentOne,
+              //       name: "",
+              //       phone: {
+              //         ddd: "",
+              //         prefix: "",
+              //         suffix: "",
+              //       },
+              //     },
+              //   });
+              // }
+              setStudentData({
+                ...studentData,
+                parentOne: { ...studentData.parentOne, email: e.target.value },
+              });
+            }}
+          />
+        </div>
+
         {/* PARENT ONE NAME */}
         <div className="flex gap-2 items-center">
           <label
@@ -1958,42 +2589,6 @@ export function InsertStudent() {
           />
         </div>
 
-        {/* PARENT ONE E-MAIL */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="parentOneEmail"
-            className={
-              errors.parentOne?.email
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            E-mail:{" "}
-          </label>
-          <input
-            type="text"
-            name="parentOneEmail"
-            disabled={isSubmitting}
-            placeholder={
-              errors.parentOne?.email
-                ? "É necessário inserir o e-mail"
-                : "Insira o e-mail"
-            }
-            className={
-              errors.parentOne?.email
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
-            value={studentData.parentOne?.email}
-            onChange={(e) => {
-              setStudentData({
-                ...studentData,
-                parentOne: { ...studentData.parentOne, email: e.target.value },
-              });
-            }}
-          />
-        </div>
-
         {/* PARENT ONE PHONE */}
         <div className="flex gap-2 items-center">
           <label
@@ -2010,7 +2605,11 @@ export function InsertStudent() {
             <div className="flex w-10/12 items-center gap-1">
               <select
                 id="parentOnePhoneDDD"
-                defaultValue={"DDD"}
+                value={
+                  studentData.parentOne.phone.ddd !== ""
+                    ? studentData.parentOne.phone.ddd
+                    : "DDD"
+                }
                 className={
                   errors.parentOne?.phone?.ddd
                     ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -2101,6 +2700,43 @@ export function InsertStudent() {
           Filiação 2:
         </h3>
 
+        {/* PARENT TWO E-MAIL */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="parentTwoEmail"
+            className={
+              errors.parentTwo?.email
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right"
+            }
+          >
+            E-mail:{" "}
+          </label>
+          <input
+            type="text"
+            name="parentTwoEmail"
+            id="parentTwoEmail"
+            disabled={isSubmitting}
+            placeholder={
+              errors.parentTwo?.email
+                ? "É necessário inserir o e-mail"
+                : "Insira o e-mail"
+            }
+            className={
+              errors.parentTwo?.email
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            value={studentData.parentTwo?.email}
+            onChange={(e) => {
+              setStudentData({
+                ...studentData,
+                parentTwo: { ...studentData.parentTwo, email: e.target.value },
+              });
+            }}
+          />
+        </div>
+
         {/* PARENT TWO NAME */}
         <div className="flex gap-2 items-center">
           <label
@@ -2137,42 +2773,6 @@ export function InsertStudent() {
           />
         </div>
 
-        {/* PARENT TWO E-MAIL */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="parentTwoEmail"
-            className={
-              errors.parentTwo?.email
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            E-mail:{" "}
-          </label>
-          <input
-            type="text"
-            name="parentTwoEmail"
-            disabled={isSubmitting}
-            placeholder={
-              errors.parentTwo?.email
-                ? "É necessário inserir o e-mail"
-                : "Insira o e-mail"
-            }
-            className={
-              errors.parentTwo?.email
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
-            value={studentData.parentTwo?.email}
-            onChange={(e) => {
-              setStudentData({
-                ...studentData,
-                parentTwo: { ...studentData.parentTwo, email: e.target.value },
-              });
-            }}
-          />
-        </div>
-
         {/* PARENT TWO PHONE */}
         <div className="flex gap-2 items-center">
           <label
@@ -2189,7 +2789,11 @@ export function InsertStudent() {
             <div className="flex w-10/12 items-center gap-1">
               <select
                 id="parentTwoPhoneDDD"
-                defaultValue={"DDD"}
+                value={
+                  studentData.parentTwo.phone.ddd !== ""
+                    ? studentData.parentTwo.phone.ddd
+                    : "DDD"
+                }
                 className={
                   errors.parentTwo?.phone?.ddd
                     ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -2329,14 +2933,11 @@ export function InsertStudent() {
           </label>
           <select
             id="schoolClassSelect"
-            disabled={curriculumData.schoolId ? false : true}
             defaultValue={" -- select an option -- "}
             className={
-              curriculumData.schoolId
-                ? errors.curriculum
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              errors.curriculum
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolClassSelect"
             onChange={(e) => {
@@ -2351,7 +2952,6 @@ export function InsertStudent() {
               returnId
               availableAndWaitingClasses
               dataType="schoolClasses"
-              schoolId={curriculumData.schoolId}
             />
           </select>
         </div>
@@ -2370,28 +2970,11 @@ export function InsertStudent() {
           </label>
           <select
             id="schoolCourseSelect"
-            disabled={
-              userFullData && userFullData.role !== "user"
-                ? curriculumData.schoolClassId
-                  ? false
-                  : true
-                : curriculumData.schoolId
-                ? false
-                : true
-            }
             defaultValue={" -- select an option -- "}
             className={
-              userFullData && userFullData.role !== "user"
-                ? curriculumData.schoolClassId
-                  ? errors.curriculum
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                : curriculumData.schoolId
-                ? errors.curriculum
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              errors.curriculum
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolCourseSelect"
             onChange={(e) => {
@@ -2491,7 +3074,7 @@ export function InsertStudent() {
                               {c.classDayName}
                             </span>
                           </p>
-                          {schedulesDetailsData.map(
+                          {scheduleDatabaseData!.map(
                             (details: ScheduleSearchProps) =>
                               details.id === c.scheduleId ? (
                                 <p>
@@ -3269,6 +3852,63 @@ export function InsertStudent() {
                     </div>
                   </div>
 
+                  {/* FINANCIAL RESPONSIBLE DOCUMENT*/}
+                  <div className="flex gap-2 items-center">
+                    <label
+                      htmlFor="financialResponsibleDocument"
+                      className={
+                        testFinancialCPF
+                          ? errors.financialResponsible?.document
+                            ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                            : "w-1/4 text-right"
+                          : "w-1/4 text-right text-red-500 dark:text-red-400"
+                      }
+                    >
+                      CPF
+                      {testFinancialCPF ? (
+                        ": "
+                      ) : (
+                        <span className="text-red-500 dark:text-red-400">
+                          {" "}
+                          Inválido, verifique:
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="text"
+                      name="financialResponsibleDocument"
+                      pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                      maxLength={11}
+                      placeholder={
+                        testFinancialCPF
+                          ? errors.financialResponsible?.document
+                            ? "É necessário inserir o CPF do Responsável Financeiro"
+                            : "Insira o CPF do Responsável Financeiro"
+                          : "CPF Inválido"
+                      }
+                      className={
+                        testFinancialCPF
+                          ? errors.financialResponsible?.document
+                            ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                            : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                      }
+                      value={studentData.financialResponsible?.document}
+                      onChange={(e) => {
+                        if (e.target.value.length === 11) {
+                          setTestFinancialCPF(testaCPF(e.target.value));
+                        }
+                        setStudentData({
+                          ...studentData,
+                          financialResponsible: {
+                            ...studentData.financialResponsible,
+                            document: formataCPF(e.target.value),
+                          },
+                        });
+                      }}
+                    />
+                  </div>
+
                   {/* FINANCIAL RESPONSIBLE NAME */}
                   <div className="flex gap-2 items-center">
                     <label
@@ -3346,63 +3986,6 @@ export function InsertStudent() {
                     />
                   </div>
 
-                  {/* FINANCIAL RESPONSIBLE DOCUMENT*/}
-                  <div className="flex gap-2 items-center">
-                    <label
-                      htmlFor="financialResponsibleDocument"
-                      className={
-                        testFinancialCPF
-                          ? errors.financialResponsible?.document
-                            ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                            : "w-1/4 text-right"
-                          : "w-1/4 text-right text-red-500 dark:text-red-400"
-                      }
-                    >
-                      CPF
-                      {testFinancialCPF ? (
-                        ": "
-                      ) : (
-                        <span className="text-red-500 dark:text-red-400">
-                          {" "}
-                          Inválido, verifique:
-                        </span>
-                      )}
-                    </label>
-                    <input
-                      type="text"
-                      name="financialResponsibleDocument"
-                      pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                      maxLength={11}
-                      placeholder={
-                        testFinancialCPF
-                          ? errors.financialResponsible?.document
-                            ? "É necessário inserir o CPF do Responsável Financeiro"
-                            : "Insira o CPF do Responsável Financeiro"
-                          : "CPF Inválido"
-                      }
-                      className={
-                        testFinancialCPF
-                          ? errors.financialResponsible?.document
-                            ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                            : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      }
-                      value={studentData.financialResponsible?.document}
-                      onChange={(e) => {
-                        if (e.target.value.length === 11) {
-                          setTestFinancialCPF(testaCPF(e.target.value));
-                        }
-                        setStudentData({
-                          ...studentData,
-                          financialResponsible: {
-                            ...studentData.financialResponsible,
-                            document: formataCPF(e.target.value),
-                          },
-                        });
-                      }}
-                    />
-                  </div>
-
                   {/* FINANCIAL RESPONSIBLE PHONE */}
                   <div className="flex gap-2 items-center">
                     <label
@@ -3419,7 +4002,7 @@ export function InsertStudent() {
                       <div className="flex w-10/12 items-center gap-1">
                         <select
                           id="financialResponsiblePhoneDDD"
-                          defaultValue={"DDD"}
+                          value={studentData.financialResponsible?.phone.ddd}
                           className={
                             errors.financialResponsible?.phone?.ddd
                               ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"

@@ -130,7 +130,7 @@ export const createSchoolValidationSchema = z.object ({
 export const createClassValidationSchema = z.object ({
   name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
   // schoolName: z.string().min(1, {message: `Por favor, preencha o campo "Colégio"`}),
-  schoolId: z.string().min(1, {message: `Por favor, preencha o campo "Colégio"`}),
+  // schoolId: z.string().min(1, {message: `Por favor, preencha o campo "Colégio"`}),
   confirmInsert: z.boolean()
 })
 
@@ -213,7 +213,7 @@ export const deleteSchoolValidationSchema = z.object ({
 
 export const deleteClassValidationSchema = z.object ({
   confirmDelete: z.boolean(),
-  schoolId: z.string().min(1, {message: `Por favor, selecione a Escola`}),
+  // schoolId: z.string().min(1, {message: `Por favor, selecione a Escola`}),
   schoolClassId: z.string().min(1, {message: `Por favor, selecione o Ano Escolar`}),
   schoolClassName: z.string().min(1, {message: `Por favor, selecione o Ano Escolar`}),
 })

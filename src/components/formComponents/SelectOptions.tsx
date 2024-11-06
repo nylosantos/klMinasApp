@@ -65,7 +65,16 @@ export function SelectOptions({
       }
     } else {
       if (schoolId) {
-        if (dataType === "schoolClasses") {
+        if (dataType === "schedules") {
+          const filterSchedules = scheduleDatabaseData.filter(
+            (schedule) => schedule.schoolId === schoolId
+          );
+          setData(filterSchedules);
+        }
+      }
+
+      if (dataType === "schoolClasses") {
+        if (schoolId !== undefined) {
           if (schoolId === "all") {
             const foundedStudentsArray: StudentSearchProps[] = [];
             studentsDatabaseData.map((student) => {
@@ -80,25 +89,15 @@ export function SelectOptions({
           } else {
             if (availableAndWaitingClasses) {
               const filterClasses = schoolClassDatabaseData.filter(
-                (schoolClass) =>
-                  schoolClass.schoolId === schoolId &&
-                  schoolClass.available !== "closed"
+                (schoolClass) => schoolClass.available !== "closed"
               );
               setData(filterClasses);
             } else {
-              const filterClasses = schoolClassDatabaseData.filter(
-                (schoolClass) => schoolClass.schoolId === schoolId
-              );
-              setData(filterClasses);
+              setData(schoolClassDatabaseData);
             }
           }
-        }
-
-        if (dataType === "schedules") {
-          const filterSchedules = scheduleDatabaseData.filter(
-            (schedule) => schedule.schoolId === schoolId
-          );
-          setData(filterSchedules);
+        } else {
+          setData(schoolClassDatabaseData);
         }
       }
     }

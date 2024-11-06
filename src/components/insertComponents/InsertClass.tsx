@@ -8,7 +8,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { createClassValidationSchema } from "../../@types/zodValidation";
 import { CreateClassValidationZProps } from "../../@types";
@@ -30,7 +29,7 @@ export function InsertClass() {
   const [schoolClassData, setSchoolClassData] =
     useState<CreateClassValidationZProps>({
       name: "",
-      schoolId: "",
+      // schoolId: "",
       confirmInsert: false,
     });
 
@@ -47,7 +46,7 @@ export function InsertClass() {
     resolver: zodResolver(createClassValidationSchema),
     defaultValues: {
       name: "",
-      schoolId: "",
+      // schoolId: "",
       confirmInsert: false,
     },
   });
@@ -56,25 +55,25 @@ export function InsertClass() {
   const resetForm = () => {
     setSchoolClassData({
       name: "",
-      schoolId: "",
+      // schoolId: "",
       confirmInsert: false,
     });
-    ((
-      document.getElementById("schoolSelect") as HTMLSelectElement
-    ).selectedIndex = 0),
+    // ((
+    //   document.getElementById("schoolSelect") as HTMLSelectElement
+    // ).selectedIndex = 0),
       reset();
   };
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("name", schoolClassData.name);
-    setValue("schoolId", schoolClassData.schoolId);
+    // setValue("schoolId", schoolClassData.schoolId);
     setValue("confirmInsert", schoolClassData.confirmInsert);
   }, [schoolClassData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [errors.name, errors.schoolId, errors.confirmInsert];
+    const fullErrors = [errors.name/*, errors.schoolId*/, errors.confirmInsert];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -114,7 +113,7 @@ export function InsertClass() {
         await setDoc(doc(db, "schoolClasses", commonId), {
           id: commonId,
           name: data.name,
-          schoolId: data.schoolId,
+          // schoolId: data.schoolId,
           updatedAt: serverTimestamp(),
         });
         resetForm();
@@ -215,7 +214,7 @@ export function InsertClass() {
         </div>
 
         {/* SCHOOL SELECT */}
-        <div className="flex gap-2 items-center">
+        {/* <div className="flex gap-2 items-center">
           <label
             htmlFor="schoolSelect"
             className={
@@ -245,7 +244,7 @@ export function InsertClass() {
           >
             <SelectOptions returnId dataType="schools" />
           </select>
-        </div>
+        </div> */}
 
         {/* SCHOOL CLASS AVAILABILITY */}
         {/* <div className="flex gap-2 items-center">

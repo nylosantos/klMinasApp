@@ -879,11 +879,7 @@ export function InsertCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schoolClasses"
-              schoolId={curriculumData.schoolId}
-            />
+            <SelectOptions returnId dataType="schoolClasses" />
           </select>
         </div>
 

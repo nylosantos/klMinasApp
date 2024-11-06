@@ -218,35 +218,39 @@ export function DeleteCurriculum() {
   // GET AVAILABLE COURSES DATA WHEN SCHOOL COURSE CHANGE
   useEffect(() => {
     handleAvailableCoursesData();
-  }, [curriculumData.schoolCourseId]);
+  }, [
+    curriculumData.schoolId,
+    curriculumData.schoolCourseId,
+    curriculumData.schoolClassId,
+  ]);
   // -------------------------- END OF CURRICULUM STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- RESET SELECTS -------------------------- //
   // RESET ALL UNDER SCHOOL SELECT WHEN CHANGE SCHOOL
-  useEffect(() => {
-    (
-      document.getElementById("schoolClassSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById("schoolCourseSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    setCurriculumData({
-      ...curriculumData,
-      schoolClassId: "",
-      schoolCourseId: "",
-    });
-  }, [curriculumData.schoolId]);
+  // useEffect(() => {
+  //   (
+  //     document.getElementById("schoolClassSelect") as HTMLSelectElement
+  //   ).selectedIndex = 0;
+  //   (
+  //     document.getElementById("schoolCourseSelect") as HTMLSelectElement
+  //   ).selectedIndex = 0;
+  //   setCurriculumData({
+  //     ...curriculumData,
+  //     schoolClassId: "",
+  //     schoolCourseId: "",
+  //   });
+  // }, [curriculumData.schoolId]);
 
   // RESET ALL UNDER SCHOOL CLASS SELECT WHEN CHANGE SCHOOL CLASS
-  useEffect(() => {
-    (
-      document.getElementById("schoolCourseSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    setCurriculumData({
-      ...curriculumData,
-      schoolCourseId: "",
-    });
-  }, [curriculumData.schoolClassId]);
+  // useEffect(() => {
+  //   (
+  //     document.getElementById("schoolCourseSelect") as HTMLSelectElement
+  //   ).selectedIndex = 0;
+  //   setCurriculumData({
+  //     ...curriculumData,
+  //     schoolCourseId: "",
+  //   });
+  // }, [curriculumData.schoolClassId]);
   // -------------------------- END OF RESET SELECTS -------------------------- //
 
   // SUBMITTING AND SELECTED STATE
@@ -482,14 +486,11 @@ export function DeleteCurriculum() {
           </label>
           <select
             id="schoolClassSelect"
-            disabled={curriculumData.schoolId ? false : true}
             defaultValue={" -- select an option -- "}
             className={
-              curriculumData.schoolId
-                ? errors.schoolClassId
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              errors.schoolClassId
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolClassSelect"
             onChange={(e) => {
@@ -499,11 +500,7 @@ export function DeleteCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schoolClasses"
-              schoolId={curriculumData.schoolId}
-            />
+            <SelectOptions returnId dataType="schoolClasses" />
           </select>
         </div>
 
@@ -521,14 +518,11 @@ export function DeleteCurriculum() {
           </label>
           <select
             id="schoolCourseSelect"
-            disabled={curriculumData.schoolClassId ? false : true}
             defaultValue={" -- select an option -- "}
             className={
-              curriculumData.schoolClassId
-                ? errors.schoolCourseId
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              errors.schoolCourseId
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolCourseSelect"
             onChange={(e) => {

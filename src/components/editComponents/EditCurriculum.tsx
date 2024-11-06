@@ -26,7 +26,7 @@ import {
   ClassDaySearchProps,
   TeacherSearchProps,
   EditClassDayValidationZProps,
-  ToggleClassDaysFunctionProps
+  ToggleClassDaysFunctionProps,
 } from "../../@types";
 import {
   GlobalDataContext,
@@ -86,15 +86,15 @@ export function EditCurriculum() {
 
   // SET SCHOOL SELECTED STATE AND RESET SELECTS ABOVE SELECT SCHOOL WHEN SELECT SCHOOL
   useEffect(() => {
-    (
-      document.getElementById("schoolClassSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    // (
+    //   document.getElementById("schoolClassSelect") as HTMLSelectElement
+    // ).selectedIndex = 0;
     (
       document.getElementById("curriculumSelect") as HTMLSelectElement
     ).selectedIndex = 0;
     setIsSelected(false);
     setIsEdit(false);
-    setSchoolClassSelectedData(undefined);
+    // setSchoolClassSelectedData(undefined);
     setCurriculumSelectedData(undefined);
     if (curriculumEditData.schoolId !== "") {
       setSchoolSelectedData(
@@ -604,6 +604,9 @@ export function EditCurriculum() {
     (
       document.getElementById("schoolSelect") as HTMLSelectElement
     ).selectedIndex = 0;
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
     setCurriculumEditData({
       // name: "",
       curriculumId: "",
@@ -963,14 +966,11 @@ export function EditCurriculum() {
           </label>
           <select
             id="schoolClassSelect"
-            disabled={curriculumEditData.schoolId ? false : true}
             defaultValue={" -- select an option -- "}
             className={
-              curriculumEditData.schoolId
-                ? errors.schoolClassId
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              errors.schoolClassId
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolClassSelect"
             onChange={(e) => {
@@ -980,7 +980,9 @@ export function EditCurriculum() {
               });
             }}
           >
-            {curriculumEditData.schoolId ? (
+            <SelectOptions returnId dataType="schoolClasses" />
+
+            {/* {curriculumEditData.schoolId ? (
               <SelectOptions
                 returnId
                 dataType="schoolClasses"
@@ -992,7 +994,7 @@ export function EditCurriculum() {
                 -- Selecione uma escola para ver os Anos Escolares disponíveis
                 --{" "}
               </option>
-            )}
+            )} */}
           </select>
         </div>
 
