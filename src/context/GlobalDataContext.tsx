@@ -586,19 +586,32 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         (student) => student.id === studentId
       );
       if (studentToCalcPrices) {
-        // DISCOUNT VARIABLE
-        const customDiscountValueSum =
-          100 - +studentToCalcPrices.customDiscountValue;
-        const customDiscountFinalValue = +`0.${
-          customDiscountValueSum > 9
-            ? customDiscountValueSum
-            : `0${customDiscountValueSum}`
-        }`;
-        const curriculumOrderedByPrice = studentToCalcPrices.curriculumIds.sort(
-          (a, b) => b.price - a.price
-        );
+        if (studentToCalcPrices.customDiscount) {
+          // DISCOUNT VARIABLE
+          const customDiscountValueSum =
+            100 - +studentToCalcPrices.customDiscountValue;
+          const customDiscountFinalValue = +`0.${
+            customDiscountValueSum > 9
+              ? customDiscountValueSum
+              : `0${customDiscountValueSum}`
+          }`;
+          // IF WE NEED GET THE CURRICULUM ORDERED UNCOMENT BELOW
+          // const curriculumOrderedByPrice =
+          //   studentToCalcPrices.curriculumIds.sort((a, b) => b.price - a.price);
+          // WITH CUSTOM DISCOUNT
+          let appliedPrice = 0;
+          studentToCalcPrices.curriculumIds.map((curriculum) => {
+            appliedPrice = appliedPrice + curriculum.price;
+          });
+          console.log(
+            "appliedPrice sem desconto: ",
+            appliedPrice,
+            " appliedPrice com desconto: ",
+            appliedPrice * customDiscountFinalValue
+          );
+        }
         // PRICE CALC IF HAVE FAMILY
-        if (employeeDiscountValue) {
+        else if (studentToCalcPrices.employeeDiscount) {
           // WITH EMPLOYEE DISCOUNT
           let appliedPrice = 0;
           studentToCalcPrices.curriculumIds.map((curriculum) => {

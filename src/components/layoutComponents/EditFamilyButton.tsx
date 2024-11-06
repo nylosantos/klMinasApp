@@ -37,7 +37,6 @@ export function EditFamilyButton({
             onClick={() => {
               const data: ExcludeFamilyProps = {
                 exclude: !family.exclude,
-                applyDiscount: family.applyDiscount,
                 id: family.id,
               };
               handleIncludeExcludeFunction(index, data);
