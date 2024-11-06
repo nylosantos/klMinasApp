@@ -13,6 +13,7 @@ import { deleteClassValidationSchema } from "../../@types/zodValidation";
 import {
   DeleteClassValidationZProps,
   SchoolClassSearchProps,
+  SchoolSearchProps,
   StudentSearchProps,
 } from "../../@types";
 import {
@@ -28,6 +29,7 @@ export function DeleteClass() {
   const {
     curriculumDatabaseData,
     schoolClassDatabaseData,
+    schoolDatabaseData,
     studentsDatabaseData,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
@@ -36,32 +38,32 @@ export function DeleteClass() {
     useState<DeleteClassValidationZProps>({
       schoolClassId: "",
       schoolClassName: "",
-      // schoolId: "",
+      schoolId: "",
       confirmDelete: false,
     });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL SELECTED STATE DATA
-  // const [, setSchoolSelectedData] = useState<SchoolSearchProps>();
+  const [, setSchoolSelectedData] = useState<SchoolSearchProps>();
 
   // SET SCHOOL SELECTED STATE AND RESET SCHOOL CLASS SELECT TO INDEX 0 WHEN SELECT SCHOOL
-  // useEffect(() => {
-  //   (
-  //     document.getElementById("schoolClassSelect") as HTMLSelectElement
-  //   ).selectedIndex = 0;
-  //   setIsSelected(false);
-  //   setSchoolClassData({
-  //     ...schoolClassData,
-  //     confirmDelete: false,
-  //   });
-  //   if (schoolClassData.schoolId !== "") {
-  //     setSchoolSelectedData(
-  //       schoolDatabaseData.find(({ id }) => id === schoolClassData.schoolId)
-  //     );
-  //   } else {
-  //     setSchoolSelectedData(undefined);
-  //   }
-  // }, [schoolClassData.schoolId]);
+  useEffect(() => {
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setIsSelected(false);
+    setSchoolClassData({
+      ...schoolClassData,
+      confirmDelete: false,
+    });
+    if (schoolClassData.schoolId !== "") {
+      setSchoolSelectedData(
+        schoolDatabaseData.find(({ id }) => id === schoolClassData.schoolId)
+      );
+    } else {
+      setSchoolSelectedData(undefined);
+    }
+  }, [schoolClassData.schoolId]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
@@ -113,16 +115,16 @@ export function DeleteClass() {
     defaultValues: {
       schoolClassId: "",
       schoolClassName: "",
-      // schoolId: "",
+      schoolId: "",
       confirmDelete: false,
     },
   });
 
   // RESET FORM FUNCTION
   const resetForm = () => {
-    // (
-    //   document.getElementById("schoolSelect") as HTMLSelectElement
-    // ).selectedIndex = 0;
+    (
+      document.getElementById("schoolSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
     (
       document.getElementById("schoolClassSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -130,7 +132,7 @@ export function DeleteClass() {
     setSchoolClassData({
       schoolClassId: "",
       schoolClassName: "",
-      // schoolId: "",
+      schoolId: "",
       confirmDelete: false,
     });
     reset();
@@ -138,7 +140,7 @@ export function DeleteClass() {
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
-    // setValue("schoolId", schoolClassData.schoolId);
+    setValue("schoolId", schoolClassData.schoolId);
     setValue("schoolClassId", schoolClassData.schoolClassId);
     setValue("schoolClassName", schoolClassData.schoolClassName);
     setValue("confirmDelete", schoolClassData.confirmDelete);
@@ -147,7 +149,7 @@ export function DeleteClass() {
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
     const fullErrors = [
-      // errors.schoolId,
+      errors.schoolId,
       errors.schoolClassId,
       errors.schoolClassName,
       errors.confirmDelete,
@@ -315,7 +317,7 @@ export function DeleteClass() {
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL SELECT */}
-        {/* <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="schoolSelect"
             className={
@@ -344,7 +346,7 @@ export function DeleteClass() {
           >
             <SelectOptions returnId dataType="schools" />
           </select>
-        </div> */}
+        </div>
 
         {/* SCHOOL CLASS SELECT */}
         <div className="flex gap-2 items-center">
@@ -361,10 +363,13 @@ export function DeleteClass() {
           <select
             id="schoolClassSelect"
             defaultValue={" -- select an option -- "}
+            disabled={schoolClassData.schoolId ? false : true}
             className={
-              errors.schoolClassId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              schoolClassData.schoolId
+                ? errors.schoolClassId
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             }
             name="schoolClassSelect"
             onChange={(e) => {
@@ -374,9 +379,7 @@ export function DeleteClass() {
               });
             }}
           >
-            <SelectOptions returnId dataType="schoolClasses" />
-
-            {/* {schoolClassData.schoolId ? (
+            {schoolClassData.schoolId ? (
               <SelectOptions
                 returnId
                 dataType="schoolClasses"
@@ -388,7 +391,7 @@ export function DeleteClass() {
                 -- Selecione uma escola para ver os anos escolares disponíveis
                 --{" "}
               </option>
-            )} */}
+            )}
           </select>
         </div>
 

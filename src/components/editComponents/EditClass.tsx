@@ -31,7 +31,7 @@ export function EditClass() {
   // SCHOOL CLASS DATA
   const [schoolClassData, setSchoolClassData] = useState({
     schoolClassId: "",
-    // schoolId: "",
+    schoolId: "",
   });
 
   // SCHOOL CLASS EDIT DATA
@@ -61,7 +61,7 @@ export function EditClass() {
     }
   }, [schoolClassSelectedData]);
 
-  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
+  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL
   useEffect(() => {
     if (schoolClassData.schoolClassId !== "") {
       setSchoolClassSelectedData(
@@ -76,12 +76,12 @@ export function EditClass() {
 
   // RESET SCHOOL CLASS SELECT TO INDEX 0 WHEN SCHOOL CHANGE
   useEffect(() => {
-    // (
-    //   document.getElementById("schoolClassSelect") as HTMLSelectElement
-    // ).selectedIndex = 0;
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
     setIsEdit(false);
     setIsSelected(false);
-  }, [schoolClassData.schoolClassId]);
+  }, [schoolClassData.schoolId]);
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // SUBMITTING STATE
@@ -102,9 +102,9 @@ export function EditClass() {
 
   // RESET FORM FUNCTION
   const resetForm = () => {
-    // (
-    //   document.getElementById("schoolSelect") as HTMLSelectElement
-    // ).selectedIndex = 0;
+    (
+      document.getElementById("schoolSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
     (
       document.getElementById("schoolClassSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -113,7 +113,7 @@ export function EditClass() {
     });
     setSchoolClassData({
       schoolClassId: "",
-      // schoolId: "",
+      schoolId: "",
     });
     reset();
   };
@@ -212,7 +212,7 @@ export function EditClass() {
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL SELECT */}
-        {/* <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center">
           <label
             htmlFor="schoolSelect"
             className={
@@ -241,7 +241,7 @@ export function EditClass() {
           >
             <SelectOptions returnId dataType="schools" />
           </select>
-        </div> */}
+        </div>
 
         {/* SCHOOL CLASS SELECT */}
         <div className="flex gap-2 items-center">
@@ -258,10 +258,13 @@ export function EditClass() {
           <select
             id="schoolClassSelect"
             defaultValue={" -- select an option -- "}
+            disabled={schoolClassData.schoolId ? false : true}
             className={
-              errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              schoolClassData.schoolId
+                ? errors.name
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             }
             name="schoolClassSelect"
             onChange={(e) => {
@@ -272,7 +275,11 @@ export function EditClass() {
               setIsSelected(true);
             }}
           >
-            <SelectOptions returnId dataType="schoolClasses" />
+            <SelectOptions
+              returnId
+              dataType="schoolClasses"
+              schoolId={schoolClassData.schoolId}
+            />
           </select>
         </div>
 

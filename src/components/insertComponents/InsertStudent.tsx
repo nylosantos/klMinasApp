@@ -10,8 +10,11 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import DatePicker, { DateObject } from "react-multi-date-picker";
 import {
   arrayUnion,
+  collection,
   doc,
+  getDocs,
   getFirestore,
+  query,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -28,6 +31,7 @@ import {
   formataCPF,
   months,
   paymentArray,
+  secondCourseDiscountValue,
   standardPaymentDay,
   testaCPF,
   weekDays,
@@ -66,7 +70,6 @@ export function InsertStudent() {
     schoolDatabaseData,
     schoolClassDatabaseData,
     schoolCourseDatabaseData,
-    scheduleDatabaseData,
     studentsDatabaseData,
     setIsExperimentalClass,
     userFullData,
@@ -80,7 +83,8 @@ export function InsertStudent() {
       // Section 1: Student Data
       name: "",
       birthDate: "",
-      classComplement: "",
+      schoolYears: "",
+      schoolYearsComplement: "",
       parentOne: {
         name: "",
         email: "",
@@ -236,6 +240,15 @@ export function InsertStudent() {
     }
   }, [curriculumData.schoolId]);
 
+  // // SET SCHOOL NAME WITH SCHOOL SELECTED DATA WHEN SELECT SCHOOL
+  // useEffect(() => {
+  //   if (schoolSelectedData !== undefined) {
+  //     setCurriculumData({
+  //       ...curriculumData,
+  //       schoolName: schoolSelectedData!.name,
+  //     });
+  //   }
+  // }, [schoolSelectedData]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
@@ -255,6 +268,16 @@ export function InsertStudent() {
       setSchoolClassSelectedData(undefined);
     }
   }, [curriculumData.schoolClassId]);
+
+  // // SET SCHOOL CLASS NAME WITH SCHOOL CLASS SELECTED DATA WHEN SELECT SCHOOL CLASS
+  // useEffect(() => {
+  //   if (schoolClassSelectedData !== undefined) {
+  //     setCurriculumData({
+  //       ...curriculumData,
+  //       schoolClassName: schoolClassSelectedData!.name,
+  //     });
+  //   }
+  // }, [schoolClassSelectedData]);
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
@@ -285,6 +308,10 @@ export function InsertStudent() {
   // SET SCHOOL COURSE NAME WITH SCHOOL COURSE SELECTED DATA WHEN SELECT SCHOOL COURSE
   useEffect(() => {
     if (schoolCourseSelectedData !== undefined) {
+      // setCurriculumData({
+      //   ...curriculumData,
+      //   schoolCourseName: schoolCourseSelectedData!.name,
+      // });
       setSchoolCourseSelectedPrice({
         bundleDays: schoolCourseSelectedData.bundleDays,
         priceBundle: schoolCourseSelectedData.priceBundle,
@@ -297,26 +324,26 @@ export function InsertStudent() {
 
   // -------------------------- SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHEDULE DATA ARRAY WITH ALL OPTIONS OF SCHEDULES
-  // const [schedulesDetailsData, setSchedulesDetailsData] = useState<
-  //   ScheduleSearchProps[]
-  // >([]);
+  const [schedulesDetailsData, setSchedulesDetailsData] = useState<
+    ScheduleSearchProps[]
+  >([]);
 
   // GETTING SCHEDULES DATA
-  // const handleSchedulesDetails = async () => {
-  //   const q = query(collection(db, "schedules"));
-  //   const querySnapshot = await getDocs(q);
-  //   const promises: ScheduleSearchProps[] = [];
-  //   querySnapshot.forEach((doc) => {
-  //     const promise = doc.data() as ScheduleSearchProps;
-  //     promises.push(promise);
-  //   });
-  //   setSchedulesDetailsData(promises);
-  // };
+  const handleSchedulesDetails = async () => {
+    const q = query(collection(db, "schedules"));
+    const querySnapshot = await getDocs(q);
+    const promises: ScheduleSearchProps[] = [];
+    querySnapshot.forEach((doc) => {
+      const promise = doc.data() as ScheduleSearchProps;
+      promises.push(promise);
+    });
+    setSchedulesDetailsData(promises);
+  };
 
-  // // GETTING SCHEDULES DETAILS
-  // useEffect(() => {
-  //   handleSchedulesDetails();
-  // }, []);
+  // GETTING SCHEDULES DETAILS
+  useEffect(() => {
+    handleSchedulesDetails();
+  }, []);
   // -------------------------- END OF SCHEDULES SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- EXPERIMENTAL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
@@ -409,7 +436,9 @@ export function InsertStudent() {
       setNewClass({
         ...newClass,
         appliedPrice:
-          (result * priceBundle + rest * priceUnit) * discountVariable,
+          (result * priceBundle +
+            rest * (priceUnit * secondCourseDiscountValue)) *
+          discountVariable,
         fullPrice: result * priceBundle + rest * priceUnit,
       });
     }
@@ -729,29 +758,25 @@ export function InsertStudent() {
         ).selectedIndex = index;
       }
     });
-  }, [
-    curriculumData.schoolCourseId,
-    curriculumData.schoolId,
-    curriculumData.schoolClassId,
-  ]);
+  }, [curriculumData.schoolCourseId]);
   // -------------------------- END OF CURRICULUM STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- RESET SELECTS -------------------------- //
   // RESET ALL UNDER SCHOOL SELECT WHEN CHANGE SCHOOL
   useEffect(() => {
-    // if (userFullData && userFullData.role !== "user") {
-    //   (
-    //     document.getElementById("schoolClassSelect") as HTMLSelectElement
-    //   ).selectedIndex = 0;
-    // }
-    // (
-    //   document.getElementById("schoolCourseSelect") as HTMLSelectElement
-    // ).selectedIndex = 0;
-    // setCurriculumData({
-    //   ...curriculumData,
-    //   schoolClassId: "",
-    //   schoolCourseId: "",
-    // });
+    if (userFullData && userFullData.role !== "user") {
+      (
+        document.getElementById("schoolClassSelect") as HTMLSelectElement
+      ).selectedIndex = 0;
+    }
+    (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setCurriculumData({
+      ...curriculumData,
+      schoolClassId: "",
+      schoolCourseId: "",
+    });
     setStudentData({
       ...studentData,
       customDiscount: false,
@@ -953,7 +978,63 @@ export function InsertStudent() {
     return emailPattern.test(email);
   }
 
-  // GET PARENT INFO WHEN FILL EMAIL
+  // GET PARENT ONE INFO WHEN FILL EMAIL
+  useEffect(() => {
+    if (
+      studentData.parentTwo.email !== "" &&
+      validateEmail(studentData.parentTwo.email)
+    ) {
+      const foundedParentData = studentsDatabaseData.find(
+        (student) =>
+          student.parentOne.email === studentData.parentTwo.email ||
+          student.parentTwo.email === studentData.parentTwo.email
+      );
+      if (foundedParentData) {
+        if (foundedParentData.parentOne.email === studentData.parentTwo.email) {
+          setStudentData({
+            ...studentData,
+            parentTwo: {
+              ...studentData.parentTwo,
+              name: foundedParentData.parentOne.name,
+              phone: {
+                ddd: foundedParentData.parentOne.phone.slice(3, 5),
+                prefix: foundedParentData.parentOne.phone.slice(5, 10),
+                suffix: foundedParentData.parentOne.phone.slice(-4),
+              },
+            },
+          });
+        } else {
+          setStudentData({
+            ...studentData,
+            parentTwo: {
+              ...studentData.parentTwo,
+              name: foundedParentData.parentTwo.name,
+              phone: {
+                ddd: foundedParentData.parentTwo.phone.slice(3, 5),
+                prefix: foundedParentData.parentTwo.phone.slice(5, 10),
+                suffix: foundedParentData.parentTwo.phone.slice(-4),
+              },
+            },
+          });
+        }
+      } else {
+        setStudentData({
+          ...studentData,
+          parentTwo: {
+            ...studentData.parentTwo,
+            name: "",
+            phone: {
+              ddd: "",
+              prefix: "",
+              suffix: "",
+            },
+          },
+        });
+      }
+    }
+  }, [studentData.parentTwo.email]);
+  
+  // GET PARENT TWO INFO WHEN FILL EMAIL
   useEffect(() => {
     if (
       studentData.parentOne.email !== "" &&
@@ -1007,54 +1088,19 @@ export function InsertStudent() {
         });
       }
     }
-    if (
-      studentData.parentTwo.email &&
-      studentData.parentTwo.email !== "" &&
-      validateEmail(studentData.parentTwo.email)
-    ) {
-      const foundedParentData = studentsDatabaseData.find(
-        (student) =>
-          student.parentOne.email === studentData.parentOne.email ||
-          student.parentTwo.email === studentData.parentOne.email
-      );
-      if (foundedParentData) {
-        if (foundedParentData.parentOne.email === studentData.parentOne.email) {
-          setStudentData({
-            ...studentData,
-            parentTwo: {
-              ...studentData.parentTwo,
-              name: foundedParentData.parentOne.name,
-              phone: {
-                ddd: foundedParentData.parentOne.phone.slice(3, 5),
-                prefix: foundedParentData.parentOne.phone.slice(5, 10),
-                suffix: foundedParentData.parentOne.phone.slice(-4),
-              },
-            },
-          });
-        }
-        if (foundedParentData.parentTwo.email === studentData.parentOne.email) {
-          console.log("asasdas");
-          setStudentData({ ...studentData, name: "teste" });
-        }
-      } else {
-        setStudentData({
-          ...studentData,
-          parentTwo: {
-            ...studentData.parentTwo,
-            name: "",
-            phone: {
-              ddd: "",
-              prefix: "",
-              suffix: "",
-            },
-          },
-        });
-      }
-    }
-  }, [studentData.parentOne.email, studentData.parentTwo.email]);
+  }, [studentData.parentOne.email]);
 
   // RESET ALL UNDER SCHOOL CLASS SELECT WHEN CHANGE SCHOOL CLASS
   useEffect(() => {
+    if (userFullData && userFullData.role !== "user") {
+      (
+        document.getElementById("schoolCourseSelect") as HTMLSelectElement
+      ).selectedIndex = 0;
+      setCurriculumData({
+        ...curriculumData,
+        schoolCourseId: "",
+      });
+    }
     setStudentData({
       ...studentData,
       customDiscount: false,
@@ -1235,7 +1281,8 @@ export function InsertStudent() {
       // Section 1: Student Data
       name: "",
       birthDate: "",
-      classComplement: "",
+      schoolYears: "",
+      schoolYearsComplement: "",
       parentOne: {
         name: "",
         email: "",
@@ -1314,7 +1361,8 @@ export function InsertStudent() {
       // Section 1: Student Data
       name: "",
       birthDate: "",
-      classComplement: "",
+      schoolYears: "",
+      schoolYearsComplement: "",
       parentOne: {
         name: "",
         email: "",
@@ -1451,7 +1499,8 @@ export function InsertStudent() {
     // Section 1: Student Data
     setValue("name", studentData.name);
     setValue("birthDate", studentData.birthDate);
-    setValue("classComplement", studentData.classComplement);
+    setValue("schoolYears", studentData.schoolYears);
+    setValue("schoolYearsComplement", studentData.schoolYearsComplement);
     setValue("parentOne.name", studentData.parentOne.name);
     setValue("parentOne.phone.ddd", studentData.parentOne.phone.ddd);
     setValue("parentOne.phone.prefix", studentData.parentOne.phone.prefix);
@@ -1577,7 +1626,8 @@ export function InsertStudent() {
       // Section 1: Student Data
       errors.name,
       errors.birthDate,
-      errors.classComplement,
+      errors.schoolYears,
+      errors.schoolYearsComplement,
 
       // Section 2: Student Course and Family Data | Prices
       errors.familyAtSchoolId,
@@ -1663,7 +1713,8 @@ export function InsertStudent() {
           id: newStudentId,
           name: data.name,
           birthDate: Timestamp.fromDate(new Date(data.birthDate)),
-          classComplement: data.classComplement,
+          schoolYears: data.schoolYears,
+          schoolYearsComplement: data.schoolYearsComplement,
           parentOne: {
             name: data.parentOne.name,
             email: data.parentOne.email,
@@ -2083,6 +2134,67 @@ export function InsertStudent() {
           </div>
         </div>
 
+        {/* SCHOOL YEARS SELECT */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="schoolYearsSelect"
+            className={
+              errors.schoolYears
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right"
+            }
+          >
+            Ano escolar:{" "}
+          </label>
+          <select
+            id="schoolYearsSelect"
+            defaultValue={" -- select an option -- "}
+            className={
+              errors.schoolYears
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            name="schoolYearsSelect"
+            onChange={(e) => {
+              setStudentData({ ...studentData, schoolYears: e.target.value });
+            }}
+          >
+            <SelectOptions returnId dataType="schoolYears" />
+          </select>
+        </div>
+
+        {/* SCHOOL YEARS COMPLEMENT SELECT */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="schoolYearsSelectComplement"
+            className={
+              errors.schoolYears
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right"
+            }
+          >
+            Turma:{" "}
+          </label>
+          <select
+            id="schoolYearsSelectComplement"
+            defaultValue={" -- select an option -- "}
+            className={
+              errors.schoolYears
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            name="schoolYearsSelectComplement"
+            onChange={(e) => {
+              setStudentData({
+                ...studentData,
+                schoolYearsComplement: e.target.value,
+              });
+            }}
+          >
+            <SelectOptions returnId dataType="schoolYearsComplement" />
+          </select>
+        </div>
+
         {/** PARENT ONE SECTION TITLE */}
         <h3 className="text-lg py-2 text-klGreen-600 dark:text-gray-100">
           Filiação 1:
@@ -2103,7 +2215,6 @@ export function InsertStudent() {
           <input
             type="text"
             name="parentOneEmail"
-            id="parentOneEmail"
             disabled={isSubmitting}
             placeholder={
               errors.parentOne?.email
@@ -2117,23 +2228,6 @@ export function InsertStudent() {
             }
             value={studentData.parentOne?.email}
             onChange={(e) => {
-              // if (validateEmail(e.target.value)) {
-              //   handleParentInfoByEmail("one", e.target.value);
-              // } else {
-              //   console.log("nem passei");
-              //   setStudentData({
-              //     ...studentData,
-              //     parentOne: {
-              //       ...studentData.parentOne,
-              //       name: "",
-              //       phone: {
-              //         ddd: "",
-              //         prefix: "",
-              //         suffix: "",
-              //       },
-              //     },
-              //   });
-              // }
               setStudentData({
                 ...studentData,
                 parentOne: { ...studentData.parentOne, email: e.target.value },
@@ -2304,7 +2398,6 @@ export function InsertStudent() {
           <input
             type="text"
             name="parentTwoEmail"
-            id="parentTwoEmail"
             disabled={isSubmitting}
             placeholder={
               errors.parentTwo?.email
@@ -2522,11 +2615,14 @@ export function InsertStudent() {
           </label>
           <select
             id="schoolClassSelect"
+            disabled={curriculumData.schoolId ? false : true}
             defaultValue={" -- select an option -- "}
             className={
-              errors.curriculum
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              curriculumData.schoolId
+                ? errors.curriculum
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             }
             name="schoolClassSelect"
             onChange={(e) => {
@@ -2541,6 +2637,7 @@ export function InsertStudent() {
               returnId
               availableAndWaitingClasses
               dataType="schoolClasses"
+              schoolId={curriculumData.schoolId}
             />
           </select>
         </div>
@@ -2559,11 +2656,28 @@ export function InsertStudent() {
           </label>
           <select
             id="schoolCourseSelect"
+            disabled={
+              userFullData && userFullData.role !== "user"
+                ? curriculumData.schoolClassId
+                  ? false
+                  : true
+                : curriculumData.schoolId
+                ? false
+                : true
+            }
             defaultValue={" -- select an option -- "}
             className={
-              errors.curriculum
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              userFullData && userFullData.role !== "user"
+                ? curriculumData.schoolClassId
+                  ? errors.curriculum
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                : curriculumData.schoolId
+                ? errors.curriculum
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             }
             name="schoolCourseSelect"
             onChange={(e) => {
@@ -2663,7 +2777,7 @@ export function InsertStudent() {
                               {c.classDayName}
                             </span>
                           </p>
-                          {scheduleDatabaseData!.map(
+                          {schedulesDetailsData.map(
                             (details: ScheduleSearchProps) =>
                               details.id === c.scheduleId ? (
                                 <p>
@@ -3084,160 +3198,6 @@ export function InsertStudent() {
                               </div>
                             </div>
 
-                            {/* FAMILY SCHOOL SELECT */}
-                            {/* <div className="flex gap-2 items-center">
-                              <label
-                                htmlFor="familySchoolSelect"
-                                className={
-                                  errors.familyAtSchoolId
-                                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                                    : "w-1/4 text-right"
-                                }
-                              >
-                                Selecione a Escola do Parente:{" "}
-                              </label>
-                              <select
-                                id="familySchoolSelect"
-                                defaultValue={" -- select an option -- "}
-                                disabled={isSubmitting}
-                                className={
-                                  errors.familyAtSchoolId
-                                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                                }
-                                name="familySchoolSelect"
-                                onChange={(e) => {
-                                  setFamilyStudentData({
-                                    ...familyStudentData,
-                                    schoolId: e.target.value,
-                                  });
-                                  setStudentData({
-                                    ...studentData,
-                                    confirmInsert: false,
-                                  });
-                                }}
-                              >
-                                <SelectOptions returnId dataType="schools" />
-                              </select>
-                            </div> */}
-
-                            {/* FAMILY SCHOOL CLASS SELECT */}
-                            {/* <div className="flex gap-2 items-center">
-                              <label
-                                htmlFor="familySchoolClassSelect"
-                                className={
-                                  errors.familyAtSchoolId
-                                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                                    : "w-1/4 text-right"
-                                }
-                              >
-                                Selecione o Ano Escolar do Parente:{" "}
-                              </label>
-                              <select
-                                id="familySchoolClassSelect"
-                                defaultValue={" -- select an option -- "}
-                                disabled={
-                                  !familyStudentData.schoolId
-                                    ? true
-                                    : isSubmitting
-                                }
-                                className={
-                                  familyStudentData.schoolId
-                                    ? errors.familyAtSchoolId
-                                      ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                                }
-                                name="familySchoolClassSelect"
-                                onChange={(e) => {
-                                  setFamilyStudentData({
-                                    ...familyStudentData,
-                                    schoolClassId: e.target.value,
-                                  });
-                                  setStudentData({
-                                    ...studentData,
-                                    confirmInsert: false,
-                                  });
-                                }}
-                              >
-                                {familyStudentData.schoolId ? (
-                                  <SelectOptions
-                                    returnId
-                                    dataType="schoolClasses"
-                                    schoolId={familyStudentData.schoolId}
-                                  />
-                                ) : (
-                                  <option
-                                    disabled
-                                    value={" -- select an option -- "}
-                                  >
-                                    {" "}
-                                    -- Selecione uma escola para ver os Anos
-                                    Escolares disponíveis --{" "}
-                                  </option>
-                                )}
-                              </select>
-                            </div> */}
-
-                            {/* FAMILY SCHOOL COURSE SELECT */}
-                            {/* <div className="flex gap-2 items-center">
-                              <label
-                                htmlFor="familySchoolCourseSelect"
-                                className={
-                                  errors.familyAtSchoolId
-                                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                                    : "w-1/4 text-right"
-                                }
-                              >
-                                Selecione a Modalidade do Parente:{" "}
-                              </label>
-                              <select
-                                id="familySchoolCourseSelect"
-                                defaultValue={" -- select an option -- "}
-                                disabled={
-                                  !familyStudentData.schoolClassId
-                                    ? true
-                                    : isSubmitting
-                                }
-                                className={
-                                  familyStudentData.schoolClassId
-                                    ? errors.familyAtSchoolId
-                                      ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                                }
-                                name="familySchoolCourseSelect"
-                                onChange={(e) => {
-                                  setFamilyStudentData({
-                                    ...familyStudentData,
-                                    curriculumId: e.target.value,
-                                  });
-                                  setStudentData({
-                                    ...studentData,
-                                    confirmInsert: false,
-                                  });
-                                }}
-                              >
-                                {familyStudentData.schoolClassId ? (
-                                  <SelectOptions
-                                    returnId
-                                    dataType="curriculum"
-                                    displaySchoolCourseAndSchedule
-                                    schoolId={familyStudentData.schoolId}
-                                    schoolClassId={
-                                      familyStudentData.schoolClassId
-                                    }
-                                  />
-                                ) : (
-                                  <option value={" -- select an option -- "}>
-                                    {" "}
-                                    -- Selecione umo Ano Escolar para ver as
-                                    modalidades disponíveis --{" "}
-                                  </option>
-                                )}
-                              </select>
-                            </div> */}
-
                             {/* STUDENT SELECT */}
                             <div className="flex gap-2 items-center pb-2">
                               <label
@@ -3591,7 +3551,11 @@ export function InsertStudent() {
                       <div className="flex w-10/12 items-center gap-1">
                         <select
                           id="financialResponsiblePhoneDDD"
-                          value={studentData.financialResponsible?.phone.ddd}
+                          value={
+                            studentData.financialResponsible?.phone.ddd !== ""
+                              ? studentData.financialResponsible?.phone.ddd
+                              : "DDD"
+                          }
                           className={
                             errors.financialResponsible?.phone?.ddd
                               ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -3702,7 +3666,13 @@ export function InsertStudent() {
                             !studentData.financialResponsible
                               .activePhoneSecondary
                           }
-                          defaultValue={"DDD"}
+                          value={
+                            studentData.financialResponsible?.phoneSecondary
+                              .ddd !== ""
+                              ? studentData.financialResponsible?.phoneSecondary
+                                  .ddd
+                              : "DDD"
+                          }
                           className={
                             errors.financialResponsible?.phoneSecondary?.ddd
                               ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -3868,7 +3838,13 @@ export function InsertStudent() {
                             !studentData.financialResponsible
                               ?.activePhoneTertiary
                           }
-                          defaultValue={"DDD"}
+                          value={
+                            studentData.financialResponsible?.phoneTertiary
+                              .ddd !== ""
+                              ? studentData.financialResponsible?.phoneTertiary
+                                  .ddd
+                              : "DDD"
+                          }
                           className={
                             errors.financialResponsible?.phoneTertiary?.ddd
                               ? "pr-8 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"

@@ -186,6 +186,8 @@ export interface SelectProps {
     | "enrolledCurriculum"
     | "appUsers"
     | "searchEnrolledStudent"
+    | "schoolYears"
+    | "schoolYearsComplement"
     | "searchStudent";
   schoolId?: string;
   schoolClassId?: string;
@@ -255,7 +257,7 @@ export interface SchoolSearchProps {
 export interface SchoolClassSearchProps {
   id: string;
   name: string;
-  // schoolId: string;
+  schoolId: string;
   available: "open" | "closed" | "waitingList";
   updatedAt: Date;
 }
@@ -304,7 +306,8 @@ export interface StudentSearchProps {
   id: string;
   name: string;
   birthDate: string;
-  classComplement: string;
+  schoolYears: string,
+  schoolYearsComplement: string,
   parentOne: {
     name: string;
     email: string;

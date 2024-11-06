@@ -50,7 +50,8 @@ export const createStudentValidationSchema = z.object ({
   // Section 1: Student Data
   name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
   birthDate: z.string().min(1, {message: `Por favor, selecione a Data de Nascimento`}),
-  classComplement: z.string().optional().or(z.literal('')),
+  schoolYears: z.string().min(1, {message: `Por favor, selecione o Ano Escolar`}),
+  schoolYearsComplement: z.string().min(1, {message: `Por favor, selecione a Turma`}),
   parentOne: z.object({
     name: z.string().min(1, {message: `Por favor, preencha o campo "Nome Filiação 1"`}),
     phone: z.object({
@@ -67,7 +68,7 @@ export const createStudentValidationSchema = z.object ({
       prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
       suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
     }),
-    email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail Filiação 2"`}).email({message: "E-mail Filiação 2 inválido"}).optional().or(z.literal('')),
+    email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail Filiação 2"`}).email({message: "E-mail Filiação 2 inválido"}),
   }),
 
   // Section 2: Student Course and Family Data | Prices
@@ -130,7 +131,7 @@ export const createSchoolValidationSchema = z.object ({
 export const createClassValidationSchema = z.object ({
   name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
   // schoolName: z.string().min(1, {message: `Por favor, preencha o campo "Colégio"`}),
-  // schoolId: z.string().min(1, {message: `Por favor, preencha o campo "Colégio"`}),
+  schoolId: z.string().min(1, {message: `Por favor, preencha o campo "Colégio"`}),
   confirmInsert: z.boolean()
 })
 
@@ -179,30 +180,13 @@ export const createTeacherValidationSchema = z.object ({
 
 export const createCurriculumValidationSchema = z.object ({
   schoolId: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
-  schoolClassId: z.string().min(1, {message: `Por favor, escolha o Ano Escolar`}),
+  schoolClassId: z.string().min(1, {message: `Por favor, escolha a Faixa Escolar`}),
   schoolCourseId: z.string().min(1, {message: `Por favor, escolha a Modalade`}),
   scheduleId: z.string().min(1, {message: `Por favor, escolha o Horário`}),
   classDayId: z.string().min(1, {message: `Por favor, escolha os Dias de Aula`}),
   teacherId: z.string().min(1, {message: `Por favor, escolha o Professor`}),
   confirmInsert: z.boolean()
 })
-
-// export const createCurriculumValidationSchema = z.object ({
-//   classDays: createClassDaysValidationSchema,
-//   schoolId: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
-//   schoolName: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
-//   schoolClassId: z.string().min(1, {message: `Por favor, escolha o Ano Escolar`}),
-//   schoolClassName: z.string().min(1, {message: `Por favor, escolha o Ano Escolar`}),
-//   schoolCourseId: z.string().min(1, {message: `Por favor, escolha a Modalade`}),
-//   schoolCourseName: z.string().min(1, {message: `Por favor, escolha a Modalade`}),
-//   scheduleId: z.string().min(1, {message: `Por favor, escolha o Horário`}),
-//   scheduleName: z.string().min(1, {message: `Por favor, escolha o Horário`}),
-//   classDayId: z.string().min(1, {message: `Por favor, escolha os Dias de Aula`}),
-//   classDayName: z.string().min(1, {message: `Por favor, escolha os Dias de Aula`}),
-//   teacherId: z.string().min(1, {message: `Por favor, escolha o Professor`}),
-//   teacherName: z.string().min(1, {message: `Por favor, escolha o Professor`}),
-//   confirmInsert: z.boolean()
-// })
 
 // DELETE VALIDATION SCHEMA SCHOOLS
 export const deleteSchoolValidationSchema = z.object ({
@@ -213,15 +197,15 @@ export const deleteSchoolValidationSchema = z.object ({
 
 export const deleteClassValidationSchema = z.object ({
   confirmDelete: z.boolean(),
-  // schoolId: z.string().min(1, {message: `Por favor, selecione a Escola`}),
-  schoolClassId: z.string().min(1, {message: `Por favor, selecione o Ano Escolar`}),
-  schoolClassName: z.string().min(1, {message: `Por favor, selecione o Ano Escolar`}),
+  schoolId: z.string().min(1, {message: `Por favor, selecione a Escola`}),
+  schoolClassId: z.string().min(1, {message: `Por favor, selecione a Faixa Escolar`}),
+  schoolClassName: z.string().min(1, {message: `Por favor, selecione a Faixa Escolar`}),
 })
 
 export const deleteStudentValidationSchema = z.object ({
   confirmDelete: z.boolean(),
   schoolId: z.string().min(1, {message: `Por favor, selecione a Escola`}),
-  schoolClassId: z.string().min(1, {message: `Por favor, selecione o Ano Escolar`}),
+  schoolClassId: z.string().min(1, {message: `Por favor, selecione a Faixa Escolar`}),
   curriculumId: z.string().min(1, {message: `Por favor, selecione a Modalidade`}),
   studentId: z.string().min(1, {message: `Por favor, selecione o Aluno`}),
   studentName: z.string().min(1, {message: `Por favor, selecione o Aluno`}),
@@ -256,7 +240,7 @@ export const deleteTeacherValidationSchema = z.object ({
 export const deleteCurriculumValidationSchema = z.object ({
   confirmDelete: z.boolean(),
   schoolId: z.string().min(1, {message: `Por favor, selecione a Escola`}),
-  schoolClassId: z.string().min(1, {message: `Por favor, selecione o Ano Escolar`}),
+  schoolClassId: z.string().min(1, {message: `Por favor, selecione a Faixa Escolar`}),
   schoolCourseId: z.string().optional(),
   curriculumId: z.string().min(1, {message: `Por favor, selecione a Turma`}),
 })
@@ -267,7 +251,7 @@ export const editSchoolValidationSchema = z.object ({
 })
 
 export const editSchoolClassValidationSchema = z.object ({
-  name: z.string().min(1, {message: `Por favor, digite o nome do Ano Escolar`}),
+  name: z.string().min(1, {message: `Por favor, digite o nome da Faixa Escolar`}),
 })
 
 export const editSchoolCourseValidationSchema = z.object ({
@@ -306,7 +290,7 @@ export const editTeacherValidationSchema = z.object ({
 export const editCurriculumValidationSchema = z.object ({
   curriculumId: z.string().min(1, {message: `Por favor, escolha a Turma`}),
   schoolId: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
-  schoolClassId: z.string().min(1, {message: `Por favor, escolha o Ano Escolar`}),
+  schoolClassId: z.string().min(1, {message: `Por favor, escolha a Faixa Escolar`}),
   schoolCourseId: z.string().min(1, {message: `Por favor, escolha a Modalidade`}),
   scheduleId: z.string().min(1, {message: `Por favor, escolha o horário`}),
   classDayId: z.string().min(1, {message: `Por favor, escolha os dias de aula`}),
@@ -318,7 +302,8 @@ export const editStudentValidationSchema = z.object ({
   id: z.string().min(1, {message: `Por favor, selecione o Aluno`}),
   name: z.string().min(1, {message: `Por favor, preencha o campo "Nome"`}),
   birthDate: z.string().min(1, {message: `Por favor, selecione a Data de Nascimento`}),
-  classComplement: z.string().optional().or(z.literal('')),
+  schoolYears: z.string().min(1, {message: `Por favor, selecione o Ano Escolar`}),
+  schoolYearsComplement: z.string().min(1, {message: `Por favor, selecione a Turma`}),
   parentOne: z.object({
     name: z.string().min(1, {message: `Por favor, preencha o campo "Nome Filiação 1"`}),
     phone: z.object({
@@ -335,7 +320,7 @@ export const editStudentValidationSchema = z.object ({
       prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
       suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
     }),
-    email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail Filiação 2"`}).email({message: "E-mail Filiação 2 inválido"}).optional().or(z.literal('')),
+    email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail Filiação 2"`}).email({message: "E-mail Filiação 2 inválido"}),
   }),
 
   // Section 2: Student Course and Family Data | Prices
@@ -406,6 +391,6 @@ export const editSystemConstantsValidationSchema = z.object ({
 // SEARCH VALIDATION SCHEMA SCHOOLS
 export const searchCurriculumValidationSchema = z.object ({
   schoolId: z.string().min(1, {message: `Por favor, escolha o Colégio`}),
-  schoolClassId: z.string().min(1, {message: `Por favor, escolha o Ano Escolar`}),
+  schoolClassId: z.string().min(1, {message: `Por favor, escolha a Faixa Escolar`}),
   schoolCourseId: z.string().min(1, {message: `Por favor, escolha a Modalidade`}),
 })

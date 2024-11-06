@@ -246,7 +246,7 @@ export function InsertCourse() {
                 : "w-1/4 text-right"
             }
           >
-            Valor da Aula Avulsa:{" "}
+            Mensalidade 1x por semana:{" "}
           </label>
           <NumericFormat
             placeholder={
@@ -285,7 +285,7 @@ export function InsertCourse() {
                 : "w-1/4 text-right"
             }
           >
-            Valor do Pacote de Aulas:{" "}
+            Mensalidade do pacote de aulas:{" "}
           </label>
 
           <NumericFormat
@@ -325,7 +325,7 @@ export function InsertCourse() {
                 : "w-1/4 text-right"
             }
           >
-            Número de aulas no pacote:{" "}
+            Número de aulas por semana no pacote:{" "}
           </label>
           <input
             type="text"

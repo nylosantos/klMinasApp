@@ -133,7 +133,8 @@ export function EditStudentForm({
       id: "",
       name: "",
       birthDate: "",
-      classComplement: "",
+      schoolYears: "",
+      schoolYearsComplement: "",
       parentOne: {
         name: "",
         email: "",
@@ -652,7 +653,9 @@ export function EditStudentForm({
               indexDays: indexDaysToUpdate,
               price:
                 result * foundedSchoolCourseDetails.priceBundle +
-                rest * foundedSchoolCourseDetails.priceUnit,
+                rest *
+                  (foundedSchoolCourseDetails.priceUnit *
+                    secondCourseDiscountValue),
             };
           } else {
             // THE REST HAVEN'T CHANGED
@@ -974,7 +977,8 @@ export function EditStudentForm({
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-expect-error
         birthDate: studentSelectedData.birthDate.toDate().toLocaleDateString(),
-        classComplement: studentSelectedData.classComplement,
+        schoolYears: studentSelectedData.schoolYears,
+        schoolYearsComplement: studentSelectedData.schoolYearsComplement,
         parentOne: {
           name: studentSelectedData.parentOne.name,
           email: studentSelectedData.parentOne.email,
@@ -2002,7 +2006,9 @@ export function EditStudentForm({
         } else {
           newCoursePrice =
             result * newStudentData.curriculumCoursePriceBundle +
-            rest * newStudentData.curriculumCoursePriceUnit;
+            rest *
+              (newStudentData.curriculumCoursePriceUnit *
+                secondCourseDiscountValue);
         }
         if (newCoursePrice !== 0) {
           if (newSmallestPrice >= newCoursePrice) {
@@ -2091,7 +2097,8 @@ export function EditStudentForm({
       id: "",
       name: "",
       birthDate: "",
-      classComplement: "",
+      schoolYears: "",
+      schoolYearsComplement: "",
       parentOne: {
         name: "",
         email: "",
@@ -2173,7 +2180,8 @@ export function EditStudentForm({
       id: "",
       name: "",
       birthDate: "",
-      classComplement: "",
+      schoolYears: "",
+      schoolYearsComplement: "",
       parentOne: {
         name: "",
         email: "",
@@ -2305,7 +2313,8 @@ export function EditStudentForm({
     setValue("id", studentEditData.id);
     setValue("name", studentEditData.name);
     setValue("birthDate", studentEditData.birthDate);
-    setValue("classComplement", studentEditData.classComplement);
+    setValue("schoolYears", studentEditData.schoolYears);
+    setValue("schoolYearsComplement", studentEditData.schoolYearsComplement);
     setValue("parentOne.name", studentEditData.parentOne.name);
     setValue("parentOne.phone.ddd", studentEditData.parentOne.phone.ddd);
     setValue("parentOne.phone.prefix", studentEditData.parentOne.phone.prefix);
@@ -2440,7 +2449,8 @@ export function EditStudentForm({
       errors.id,
       errors.name,
       errors.birthDate,
-      errors.classComplement,
+      errors.schoolYears,
+      errors.schoolYearsComplement,
       errors.parentOne?.name,
       errors.parentOne?.email,
       errors.parentOne?.phone?.ddd,
@@ -3387,7 +3397,8 @@ export function EditStudentForm({
         // Section 1: Student Data
         name: data.name,
         birthDate: Timestamp.fromDate(new Date(dateToString)),
-        classComplement: data.classComplement,
+        schoolYears: data.schoolYears,
+        schoolYearsComplement: data.schoolYearsComplement,
         "parentOne.name": data.parentOne.name,
         "parentOne.email": data.parentOne.email,
         "parentOne.phone": `+55${data.parentOne.phone.ddd}${data.parentOne.phone.prefix}${data.parentOne.phone.suffix}`,
@@ -3595,49 +3606,76 @@ export function EditStudentForm({
             </div>
           </div>
 
-          {/** PARENT ONE SECTION TITLE */}
-          <h3 className="text-lg py-2 text-klGreen-600 dark:text-gray-100">
-            Filiação 1:
-          </h3>
-
-          {/* PARENT ONE NAME */}
+          {/* SCHOOL YEARS SELECT */}
           <div className="flex gap-2 items-center">
             <label
-              htmlFor="parentOneName"
+              htmlFor="schoolYearsSelect"
               className={
-                errors.parentOne?.name
+                errors.schoolYears
                   ? "w-1/4 text-right text-red-500 dark:text-red-400"
                   : "w-1/4 text-right"
               }
             >
-              Nome:{" "}
+              Ano escolar:{" "}
             </label>
-            <input
-              type="text"
-              name="parentOneName"
+            <select
+              id="schoolYearsSelect"
               disabled={onlyView}
-              placeholder={
-                errors.parentOne?.name
-                  ? "É necessário inserir o Nome completo do Responsável"
-                  : "Insira o nome completo do Responsável"
-              }
+              value={studentEditData.schoolYears}
               className={
-                errors.parentOne?.name
+                errors.schoolYears
                   ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                   : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
               }
-              value={studentEditData.parentOne.name}
-              onChange={(e) =>
+              name="schoolYearsSelect"
+              onChange={(e) => {
                 setStudentEditData({
                   ...studentEditData,
-                  parentOne: {
-                    ...studentEditData.parentOne,
-                    name: e.target.value,
-                  },
-                })
-              }
-            />
+                  schoolYears: e.target.value,
+                });
+              }}
+            >
+              <SelectOptions returnId dataType="schoolYears" />
+            </select>
           </div>
+
+          {/* SCHOOL YEARS COMPLEMENT SELECT */}
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="schoolYearsSelectComplement"
+              className={
+                errors.schoolYears
+                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                  : "w-1/4 text-right"
+              }
+            >
+              Turma:{" "}
+            </label>
+            <select
+              id="schoolYearsSelectComplement"
+              disabled={onlyView}
+              value={studentEditData.schoolYearsComplement}
+              className={
+                errors.schoolYears
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              }
+              name="schoolYearsSelectComplement"
+              onChange={(e) => {
+                setStudentEditData({
+                  ...studentEditData,
+                  schoolYearsComplement: e.target.value,
+                });
+              }}
+            >
+              <SelectOptions returnId dataType="schoolYearsComplement" />
+            </select>
+          </div>
+
+          {/** PARENT ONE SECTION TITLE */}
+          <h3 className="text-lg py-2 text-klGreen-600 dark:text-gray-100">
+            Filiação 1:
+          </h3>
 
           {/* PARENT ONE E-MAIL */}
           <div className="flex gap-2 items-center">
@@ -3675,6 +3713,45 @@ export function EditStudentForm({
                   },
                 });
               }}
+            />
+          </div>
+
+          {/* PARENT ONE NAME */}
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="parentOneName"
+              className={
+                errors.parentOne?.name
+                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                  : "w-1/4 text-right"
+              }
+            >
+              Nome:{" "}
+            </label>
+            <input
+              type="text"
+              name="parentOneName"
+              disabled={onlyView}
+              placeholder={
+                errors.parentOne?.name
+                  ? "É necessário inserir o Nome completo do Responsável"
+                  : "Insira o nome completo do Responsável"
+              }
+              className={
+                errors.parentOne?.name
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              }
+              value={studentEditData.parentOne.name}
+              onChange={(e) =>
+                setStudentEditData({
+                  ...studentEditData,
+                  parentOne: {
+                    ...studentEditData.parentOne,
+                    name: e.target.value,
+                  },
+                })
+              }
             />
           </div>
 
@@ -3790,45 +3867,6 @@ export function EditStudentForm({
             Filiação 2:
           </h3>
 
-          {/* PARENT TWO NAME */}
-          <div className="flex gap-2 items-center">
-            <label
-              htmlFor="parentTwoName"
-              className={
-                errors.parentTwo?.name
-                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                  : "w-1/4 text-right"
-              }
-            >
-              Nome:{" "}
-            </label>
-            <input
-              type="text"
-              name="parentTwoName"
-              disabled={onlyView ?? isSubmitting}
-              placeholder={
-                errors.parentTwo?.name
-                  ? "É necessário inserir o nome completo do aluno"
-                  : "Insira o nome completo do aluno"
-              }
-              className={
-                errors.parentTwo?.name
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-              }
-              value={studentEditData.parentTwo?.name}
-              onChange={(e) => {
-                setStudentEditData({
-                  ...studentEditData,
-                  parentTwo: {
-                    ...studentEditData.parentTwo,
-                    name: e.target.value,
-                  },
-                });
-              }}
-            />
-          </div>
-
           {/* PARENT TWO E-MAIL */}
           <div className="flex gap-2 items-center">
             <label
@@ -3862,6 +3900,45 @@ export function EditStudentForm({
                   parentTwo: {
                     ...studentEditData.parentTwo,
                     email: e.target.value,
+                  },
+                });
+              }}
+            />
+          </div>
+
+          {/* PARENT TWO NAME */}
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="parentTwoName"
+              className={
+                errors.parentTwo?.name
+                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                  : "w-1/4 text-right"
+              }
+            >
+              Nome:{" "}
+            </label>
+            <input
+              type="text"
+              name="parentTwoName"
+              disabled={onlyView ?? isSubmitting}
+              placeholder={
+                errors.parentTwo?.name
+                  ? "É necessário inserir o nome completo do aluno"
+                  : "Insira o nome completo do aluno"
+              }
+              className={
+                errors.parentTwo?.name
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              }
+              value={studentEditData.parentTwo?.name}
+              onChange={(e) => {
+                setStudentEditData({
+                  ...studentEditData,
+                  parentTwo: {
+                    ...studentEditData.parentTwo,
+                    name: e.target.value,
                   },
                 });
               }}
@@ -4003,6 +4080,61 @@ export function EditStudentForm({
             </div>
           )}
 
+          {/* FINANCIAL RESPONSIBLE DOCUMENT*/}
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="financialResponsibleDocument"
+              className={
+                testFinancialCPF
+                  ? errors.financialResponsible?.document
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                  : "w-1/4 text-right text-red-500 dark:text-red-400"
+              }
+            >
+              CPF
+              {testFinancialCPF ? (
+                ": "
+              ) : (
+                <span className="text-red-500 dark:text-red-400">
+                  {" "}
+                  Inválido, verifique:
+                </span>
+              )}
+            </label>
+            <input
+              type="text"
+              name="financialResponsibleDocument"
+              disabled={onlyView}
+              pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+              placeholder={
+                errors.financialResponsible?.document
+                  ? "É necessário inserir o CPF do Responsável Financeiro"
+                  : "Insira o CPF do Responsável Financeiro"
+              }
+              className={
+                testFinancialCPF
+                  ? errors.financialResponsible?.document
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+              }
+              value={studentEditData.financialResponsible?.document}
+              onChange={(e) => {
+                if (e.target.value.length === 11) {
+                  setTestFinancialCPF(testaCPF(e.target.value));
+                }
+                setStudentEditData({
+                  ...studentEditData,
+                  financialResponsible: {
+                    ...studentEditData.financialResponsible,
+                    document: formataCPF(e.target.value),
+                  },
+                });
+              }}
+            />
+          </div>
+
           {/* FINANCIAL RESPONSIBLE NAME */}
           <div className="flex gap-2 items-center">
             <label
@@ -4075,61 +4207,6 @@ export function EditStudentForm({
                   financialResponsible: {
                     ...studentEditData.financialResponsible,
                     email: e.target.value,
-                  },
-                });
-              }}
-            />
-          </div>
-
-          {/* FINANCIAL RESPONSIBLE DOCUMENT*/}
-          <div className="flex gap-2 items-center">
-            <label
-              htmlFor="financialResponsibleDocument"
-              className={
-                testFinancialCPF
-                  ? errors.financialResponsible?.document
-                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                    : "w-1/4 text-right"
-                  : "w-1/4 text-right text-red-500 dark:text-red-400"
-              }
-            >
-              CPF
-              {testFinancialCPF ? (
-                ": "
-              ) : (
-                <span className="text-red-500 dark:text-red-400">
-                  {" "}
-                  Inválido, verifique:
-                </span>
-              )}
-            </label>
-            <input
-              type="text"
-              name="financialResponsibleDocument"
-              disabled={onlyView}
-              pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-              placeholder={
-                errors.financialResponsible?.document
-                  ? "É necessário inserir o CPF do Responsável Financeiro"
-                  : "Insira o CPF do Responsável Financeiro"
-              }
-              className={
-                testFinancialCPF
-                  ? errors.financialResponsible?.document
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-              }
-              value={studentEditData.financialResponsible?.document}
-              onChange={(e) => {
-                if (e.target.value.length === 11) {
-                  setTestFinancialCPF(testaCPF(e.target.value));
-                }
-                setStudentEditData({
-                  ...studentEditData,
-                  financialResponsible: {
-                    ...studentEditData.financialResponsible,
-                    document: formataCPF(e.target.value),
                   },
                 });
               }}
@@ -6345,31 +6422,24 @@ export function EditStudentForm({
             Financeiro:
           </h1>
 
-          {userFullData && userFullData.role !== "user" && (
-            <>
-              {/** CHECKBOX ADD ENROLMENT EXEMPTION */}
-              <div className="flex gap-2 items-center py-2">
-                <label
-                  htmlFor="enrolmentExemption"
-                  className="w-1/4 text-right"
-                >
-                  Ativar Isenção de Matrícula ?{" "}
-                </label>
-                <div className="w-3/4 flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="enrolmentExemption"
-                    className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                    checked={enrolmentExemption}
-                    disabled={onlyView}
-                    onChange={() => {
-                      setEnrolmentExemption(!enrolmentExemption);
-                    }}
-                  />
-                </div>
-              </div>
-            </>
-          )}
+          {/** CHECKBOX ADD ENROLMENT EXEMPTION */}
+          <div className="flex gap-2 items-center py-2">
+            <label htmlFor="enrolmentExemption" className="w-1/4 text-right">
+              Ativar Isenção de Matrícula ?{" "}
+            </label>
+            <div className="w-3/4 flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="enrolmentExemption"
+                className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                checked={enrolmentExemption}
+                disabled={onlyView}
+                onChange={() => {
+                  setEnrolmentExemption(!enrolmentExemption);
+                }}
+              />
+            </div>
+          </div>
 
           {/* STUDENT ENROLMENT PRICE */}
           <div className="flex gap-2 items-center">
@@ -6389,93 +6459,84 @@ export function EditStudentForm({
             />
           </div>
 
-          {userFullData && userFullData.role !== "user" && (
-            <>
-              {/** CHECKBOX ADD EMPLOYEE DISCOUNT */}
-              <div className="flex gap-2 items-center">
-                <label htmlFor="employeeDiscount" className="w-1/4 text-right">
-                  Ativar Desconto de Funcionário ? (20%){" "}
-                </label>
-                <div className="w-3/4 flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="employeeDiscount"
-                    className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                    disabled={onlyView ? true : studentEditData.customDiscount}
-                    checked={studentEditData.employeeDiscount}
-                    onChange={() => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        employeeDiscount: !studentEditData.employeeDiscount,
-                      });
-                    }}
-                  />
-                </div>
-              </div>
+          {/** CHECKBOX ADD EMPLOYEE DISCOUNT */}
+          <div className="flex gap-2 items-center">
+            <label htmlFor="employeeDiscount" className="w-1/4 text-right">
+              Ativar Desconto de Funcionário ? (20%){" "}
+            </label>
+            <div className="w-3/4 flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="employeeDiscount"
+                className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                disabled={onlyView ? true : studentEditData.customDiscount}
+                checked={studentEditData.employeeDiscount}
+                onChange={() => {
+                  setStudentEditData({
+                    ...studentEditData,
+                    employeeDiscount: !studentEditData.employeeDiscount,
+                  });
+                }}
+              />
+            </div>
+          </div>
 
-              {/** CHECKBOX ADD CUSTOM DISCOUNT */}
-              <div className="flex gap-2 items-center py-2">
-                <label htmlFor="customDiscount" className="w-1/4 text-right">
-                  Ativar Desconto Personalizado ?{" "}
-                </label>
-                <div className="w-3/4 flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="customDiscount"
-                    disabled={onlyView}
-                    className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                    checked={studentEditData.customDiscount}
-                    onChange={() => {
-                      setStudentEditData({
-                        ...studentEditData,
-                        employeeDiscount: false,
-                        customDiscount: !studentEditData.customDiscount,
-                      });
-                    }}
-                  />
-                  <label
-                    htmlFor="customDiscountValue"
-                    className="w-1/4 text-right"
-                  >
-                    Porcentagem de desconto:{" "}
-                  </label>
-                  <input
-                    type="text"
-                    name="customDiscountValue"
-                    disabled={onlyView ? true : !studentEditData.customDiscount}
-                    className={
-                      onlyView ?? studentEditData.customDiscount
-                        ? errors.customDiscountValue
-                          ? "w-1/12 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                    }
-                    pattern="^[+ 0-9]{5}$"
-                    maxLength={2}
-                    value={
-                      studentEditData.customDiscount
-                        ? studentEditData.customDiscountValue
-                        : "0"
-                    }
-                    onChange={(e) =>
-                      setStudentEditData({
-                        ...studentEditData,
-                        customDiscountValue: e.target.value
-                          .replace(/[^0-9.]/g, "")
-                          .replace(/(\..*?)\..*/g, "$1"),
-                      })
-                    }
-                  />
-                  <label
-                    htmlFor="customDiscountValue"
-                    className="w-1/4 text-left"
-                  >
-                    %
-                  </label>
-                </div>
-              </div>
-            </>
-          )}
+          {/** CHECKBOX ADD CUSTOM DISCOUNT */}
+          <div className="flex gap-2 items-center py-2">
+            <label htmlFor="customDiscount" className="w-1/4 text-right">
+              Ativar Desconto Personalizado ?{" "}
+            </label>
+            <div className="w-3/4 flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="customDiscount"
+                disabled={onlyView}
+                className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                checked={studentEditData.customDiscount}
+                onChange={() => {
+                  setStudentEditData({
+                    ...studentEditData,
+                    employeeDiscount: false,
+                    customDiscount: !studentEditData.customDiscount,
+                  });
+                }}
+              />
+              <label htmlFor="customDiscountValue" className="w-1/4 text-right">
+                Porcentagem de desconto:{" "}
+              </label>
+              <input
+                type="text"
+                name="customDiscountValue"
+                disabled={onlyView ? true : !studentEditData.customDiscount}
+                className={
+                  onlyView ?? studentEditData.customDiscount
+                    ? errors.customDiscountValue
+                      ? "w-1/12 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                      : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                }
+                pattern="^[+ 0-9]{5}$"
+                maxLength={2}
+                value={
+                  studentEditData.customDiscount
+                    ? studentEditData.customDiscountValue
+                    : "0"
+                }
+                onChange={(e) =>
+                  setStudentEditData({
+                    ...studentEditData,
+                    customDiscountValue: e.target.value
+                      .replace(/[^0-9.]/g, "")
+                      .replace(/(\..*?)\..*/g, "$1"),
+                  })
+                }
+              />
+              <label htmlFor="customDiscountValue" className="w-1/4 text-left">
+                %
+              </label>
+            </div>
+          </div>
+
           {/* STUDENT CLASS DAYS MONTHLY PAYMENT PRICE */}
           <div className="flex gap-2 items-center">
             <label htmlFor="monthlyPayment" className="w-1/4 text-right">

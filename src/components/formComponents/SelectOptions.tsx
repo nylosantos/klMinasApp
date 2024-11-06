@@ -52,6 +52,33 @@ export function SelectOptions({
   // DATA STATE
   const [data, setData] = useState<any[]>([]);
 
+  const schoolYears = [
+    {id: "1p", name: "1° PERÍODO"},
+    {id: "2p", name: "2° PERÍODO"},
+    {id: "1a", name: "1° ANO"},
+    {id: "2a", name: "2° ANO"},
+    {id: "3a", name: "3° ANO"},
+    {id: "4a", name: "4° ANO"},
+    {id: "5a", name: "5° ANO"},
+    {id: "6a", name: "6° ANO"},
+    {id: "7a", name: "7° ANO"},
+    {id: "8a", name: "8° ANO"},
+    {id: "9a", name: "9° ANO"},
+    {id: "1s", name: "1ª SÉRIE - Ensino Médio"},
+    {id: "2s", name: "2ª SÉRIE - Ensino Médio"},
+    {id: "3s", name: "3ª SÉRIE - Ensino Médio"},
+  ];
+
+
+const schoolYearsComplement = [
+    {id: "unknown", name: "Não definida"},
+    {id: "classA", name: "A"},
+    {id: "classB", name: "B"},
+    {id: "classC", name: "C"},
+    {id: "classD", name: "D"},
+    {id: "classE", name: "E"},
+  ];
+
   async function handleDataOptions() {
     // QUERY TO SEARCH ALL STUDENTS EXCLUDING THE SELECTED STUDENT ITSELF
     if (schoolId && schoolClassId) {
@@ -65,16 +92,7 @@ export function SelectOptions({
       }
     } else {
       if (schoolId) {
-        if (dataType === "schedules") {
-          const filterSchedules = scheduleDatabaseData.filter(
-            (schedule) => schedule.schoolId === schoolId
-          );
-          setData(filterSchedules);
-        }
-      }
-
-      if (dataType === "schoolClasses") {
-        if (schoolId !== undefined) {
+        if (dataType === "schoolClasses") {
           if (schoolId === "all") {
             const foundedStudentsArray: StudentSearchProps[] = [];
             studentsDatabaseData.map((student) => {
@@ -89,17 +107,34 @@ export function SelectOptions({
           } else {
             if (availableAndWaitingClasses) {
               const filterClasses = schoolClassDatabaseData.filter(
-                (schoolClass) => schoolClass.available !== "closed"
+                (schoolClass) =>
+                  schoolClass.schoolId === schoolId &&
+                  schoolClass.available !== "closed"
               );
               setData(filterClasses);
             } else {
-              setData(schoolClassDatabaseData);
+              const filterClasses = schoolClassDatabaseData.filter(
+                (schoolClass) => schoolClass.schoolId === schoolId
+              );
+              setData(filterClasses);
             }
           }
-        } else {
-          setData(schoolClassDatabaseData);
+        }
+
+        if (dataType === "schedules") {
+          const filterSchedules = scheduleDatabaseData.filter(
+            (schedule) => schedule.schoolId === schoolId
+          );
+          setData(filterSchedules);
         }
       }
+    }
+
+    if (dataType === 'schoolYears'){
+      setData(schoolYears)
+    }
+    if (dataType === 'schoolYearsComplement'){
+      setData(schoolYearsComplement)
     }
 
     if (dataType === "searchStudent" && curriculumId) {
@@ -168,6 +203,23 @@ export function SelectOptions({
         }
       });
       setData(studentsToShow);
+      // const foundedStudentsArray: StudentSearchProps[] = [];
+      // studentsDatabaseData.map((student) => {
+      //   // EXCLUDE STUDENTS THAT ALREADY HAVE FAMILY DISCOUNT
+      //   if (student.curriculumIds && !student.familyDiscount) {
+      //     const foundedFamilyStudent = student.curriculumIds.find(
+      //       (curriculum) => curriculum.id === curriculumId
+      //     );
+      //     if (foundedFamilyStudent) {
+      //       if (dontShowMyself && studentId !== student.id) {
+      //         foundedStudentsArray.push(student);
+      //       } else {
+      //         foundedStudentsArray.push(student);
+      //       }
+      //     }
+      //   }
+      // });
+      // setData(foundedStudentsArray);
     }
 
     if (dataType === "appUsers") {

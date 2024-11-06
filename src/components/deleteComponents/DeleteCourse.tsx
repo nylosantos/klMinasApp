@@ -363,7 +363,7 @@ export function DeleteCourse() {
                       : "w-1/4 text-right"
                   }
                 >
-                  Valor da aula avulsa:{" "}
+                  Mensalidade 1x por semana:{" "}
                 </label>
                 <NumericFormat
                   disabled
@@ -388,7 +388,7 @@ export function DeleteCourse() {
                       : "w-1/4 text-right"
                   }
                 >
-                  Valor do pacote de aulas:{" "}
+                  Mensalidade do pacote de aulas:{" "}
                 </label>
                 <NumericFormat
                   disabled
@@ -413,7 +413,7 @@ export function DeleteCourse() {
                       : "w-1/4 text-right"
                   }
                 >
-                  Quantidade de aulas p/ semana no pacote:{" "}
+                  Número de aulas por semana no pacote:{" "}
                 </label>
                 <NumericFormat
                   disabled

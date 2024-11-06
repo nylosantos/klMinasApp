@@ -478,7 +478,7 @@ export function EditCourse() {
                     : "w-1/4 text-right"
                 }
               >
-                Valor da aula avulsa:{" "}
+                Mensalidade 1x por semana:{" "}
               </label>
               <NumericFormat
                 value={schoolCourseEditData.priceUnit}
@@ -512,7 +512,7 @@ export function EditCourse() {
                     : "w-1/4 text-right"
                 }
               >
-                Valor do pacote de aulas:{" "}
+                Mensalidade do pacote de aulas:{" "}
               </label>
               <NumericFormat
                 value={schoolCourseEditData.priceBundle}
@@ -546,7 +546,7 @@ export function EditCourse() {
                     : "w-1/4 text-right"
                 }
               >
-                Quantidade de aulas p/ semana no pacote:{" "}
+                Número de aulas por semana no pacote:{" "}
               </label>
               <NumericFormat
                 value={schoolCourseEditData.bundleDays}

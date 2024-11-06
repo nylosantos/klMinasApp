@@ -28,6 +28,7 @@ export function DeleteSchool() {
   const {
     curriculumDatabaseData,
     scheduleDatabaseData,
+    schoolClassDatabaseData,
     schoolDatabaseData,
     studentsDatabaseData,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
@@ -210,6 +211,11 @@ export function DeleteSchool() {
       }
     });
 
+    // SEARCH CLASS WITH THIS SCHOOL
+    const schoolExistsOnClass = schoolClassDatabaseData.filter(
+      (schoolClass) => schoolClass.schoolId === schoolData.schoolId
+    );
+
     // SEARCH SCHEDULE WITH THIS SCHOOL
     const schoolExistsOnSchedule = scheduleDatabaseData.filter(
       (schedule) => schedule.schoolId === schoolData.schoolId
@@ -263,6 +269,26 @@ export function DeleteSchool() {
             schoolExistsOnSchedule.length === 1 ? "Horário" : "Horários"
           }, exclua ou altere primeiramente ${
             schoolExistsOnSchedule.length === 1 ? "o Horário" : "os Horários"
+          } e depois exclua o ${data.schoolName}... ❕`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        )
+      );
+    } else if (schoolExistsOnClass.length !== 0) {
+      return (
+        setIsSubmitting(false),
+        toast.error(
+          `Colégio incluído em ${schoolExistsOnClass.length} ${
+            schoolExistsOnClass.length === 1 ? "Ano Escolar" : "Anos Escolares"
+          }, exclua ou altere primeiramente ${
+            schoolExistsOnClass.length === 1
+              ? "o Ano Escolar"
+              : "os Anos Escolares"
           } e depois exclua o ${data.schoolName}... ❕`,
           {
             theme: "colored",
