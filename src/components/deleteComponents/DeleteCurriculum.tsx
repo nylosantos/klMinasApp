@@ -500,7 +500,7 @@ export function DeleteCurriculum() {
               });
             }}
           >
-            <SelectOptions returnId dataType="schoolClasses" />
+            <SelectOptions returnId dataType="schoolClasses" schoolId={curriculumData.schoolId} />
           </select>
         </div>
 

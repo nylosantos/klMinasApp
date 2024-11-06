@@ -980,9 +980,7 @@ export function EditCurriculum() {
               });
             }}
           >
-            <SelectOptions returnId dataType="schoolClasses" />
-
-            {/* {curriculumEditData.schoolId ? (
+            {curriculumEditData.schoolId ? (
               <SelectOptions
                 returnId
                 dataType="schoolClasses"
@@ -994,7 +992,7 @@ export function EditCurriculum() {
                 -- Selecione uma escola para ver os Anos Escolares disponíveis
                 --{" "}
               </option>
-            )} */}
+            )}
           </select>
         </div>
 
