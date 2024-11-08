@@ -902,8 +902,8 @@ export function InsertStudent() {
         setStudentData({
           ...studentData,
           financialResponsible: {
+            ...studentData.financialResponsible,
             name: "",
-            document: "",
             email: "",
             address: {
               street: "",
