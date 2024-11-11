@@ -966,7 +966,8 @@ export function EditStudentForm({
       setDateToString(
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-expect-error
-        studentSelectedData.birthDate.toDate().toLocaleDateString()
+        studentSelectedData.birthDate.toDate()
+        // studentSelectedData.birthDate.toDate().toLocaleDateString()
       );
       // SET STUDENT EDIT ALL DATA
       setStudentEditData({
@@ -1707,19 +1708,6 @@ export function EditStudentForm({
         newFamilyCurriculumId: "",
       });
       if (studentEditData.addFamily) {
-        // (
-        //   document.getElementById("newFamilySchoolSelect") as HTMLSelectElement
-        // ).selectedIndex = 0;
-        // (
-        //   document.getElementById(
-        //     "newFamilySchoolClassSelect"
-        //   ) as HTMLSelectElement
-        // ).selectedIndex = 0;
-        // (
-        //   document.getElementById(
-        //     "newFamilyCurriculumSelect"
-        //   ) as HTMLSelectElement
-        // ).selectedIndex = 0;
         (
           document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
         ).selectedIndex = 0;
@@ -1783,74 +1771,6 @@ export function EditStudentForm({
     }
   }, [studentEditData.addExperimentalCurriculum]);
 
-  // WHEN NEW FAMILY CURRICULUM SCHOOL ID CHANGE
-  // useEffect(() => {
-  //   if (studentSelectedData) {
-  //     if (studentEditData.addFamily) {
-  //       // (
-  //       //   document.getElementById(
-  //       //     "newFamilySchoolClassSelect"
-  //       //   ) as HTMLSelectElement
-  //       // ).selectedIndex = 0;
-  //       // (
-  //       //   document.getElementById(
-  //       //     "newFamilyCurriculumSelect"
-  //       //   ) as HTMLSelectElement
-  //       // ).selectedIndex = 0;
-  //       // (
-  //       //   document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-  //       // ).selectedIndex = 0;
-  //     }
-  //   }
-  // }, [newStudentData.newFamilySchoolId]);
-
-  // WHEN NEW FAMILY SCHOOL ID CHANGE
-  // useEffect(() => {
-  //   if (studentSelectedData) {
-  //     if (studentEditData.addFamily) {
-  //       (
-  //         document.getElementById(
-  //           "newFamilySchoolClassSelect"
-  //         ) as HTMLSelectElement
-  //       ).selectedIndex = 0;
-  //       (
-  //         document.getElementById(
-  //           "newFamilyCurriculumSelect"
-  //         ) as HTMLSelectElement
-  //       ).selectedIndex = 0;
-  //       (
-  //         document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-  //       ).selectedIndex = 0;
-  //     }
-  //   }
-  // }, [newStudentData.newFamilySchoolId]);
-
-  // WHEN NEW FAMILY SCHOOL CLASS ID CHANGE
-  // useEffect(() => {
-  //   if (studentSelectedData) {
-  //     if (studentEditData.addFamily) {
-  //       (
-  //         document.getElementById(
-  //           "newFamilyCurriculumSelect"
-  //         ) as HTMLSelectElement
-  //       ).selectedIndex = 0;
-  //       (
-  //         document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-  //       ).selectedIndex = 0;
-  //     }
-  //   }
-  // }, [newStudentData.newFamilySchoolClassId]);
-
-  // WHEN NEW FAMILY CURRICULUM ID CHANGE
-  // useEffect(() => {
-  //   if (studentSelectedData) {
-  //     if (studentEditData.addFamily) {
-  //       (
-  //         document.getElementById("newFamilyStudentSelect") as HTMLSelectElement
-  //       ).selectedIndex = 0;
-  //     }
-  //   }
-  // }, [newStudentData.newFamilyCurriculumId]);
   // ---------------------------------------- END OF ADD NEW CURRICULUM STATES AND FUNCTIONS ---------------------------------------- //
 
   // CHANGE MONTHLY PAYMENT WHEN ADD SCHOOL CLASS
@@ -2512,222 +2432,6 @@ export function EditStudentForm({
     });
   }, [errors]);
 
-  // CONFIRM ALERT MODAL
-  // const ConfirmationAlert = withReactContent(Swal);
-
-  // function deleteStudent(studentId: string) {
-  //   ConfirmationAlert.fire({
-  //     title: "Você tem certeza?",
-  //     text: "Não vai ser possível modificar o palpite!",
-  //     icon: "warning",
-  //     showCancelButton: true,
-  //     cancelButtonColor: "#d33",
-  //     confirmButtonColor: "#0d9488",
-  //     confirmButtonText: "Sim, confirmar!",
-  //   }).then(async (result) => {
-  //     if (result.isConfirmed) {
-  //       const studentToDelete = studentsDatabaseData.find(
-  //         (student) => student.id === studentId
-  //       );
-  //       if (studentToDelete) {
-  //         // TEST FOR BROTHERS REGISTERED
-  //         if (studentToDelete.studentFamilyAtSchool.length > 0) {
-  //           // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
-  //           studentToDelete.studentFamilyAtSchool.map(async (studentFamily) => {
-  //             const editingStudentFamily = studentsDatabaseData.find(
-  //               (student) => student.id === studentFamily.id
-  //             );
-  //             if (editingStudentFamily) {
-  //               const foundedStudentOnFamilyRecord =
-  //                 editingStudentFamily.studentFamilyAtSchool.find(
-  //                   (student) => student.id === studentId
-  //                 );
-  //               if (foundedStudentOnFamilyRecord) {
-  //                 // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
-  //                 if (
-  //                   editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
-  //                   editingStudentFamily.studentFamilyAtSchool.length === 1 &&
-  //                   !editingStudentFamily.secondCourseDiscount
-  //                 ) {
-  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
-  //                     studentFamilyAtSchool: arrayRemove({
-  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
-  //                       id: foundedStudentOnFamilyRecord.id,
-  //                     }),
-  //                     familyDiscount: false,
-  //                     appliedPrice: editingStudentFamily.fullPrice,
-  //                   });
-  //                   // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
-  //                 } else if (
-  //                   editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
-  //                   editingStudentFamily.studentFamilyAtSchool.length === 1
-  //                 ) {
-  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
-  //                     studentFamilyAtSchool: arrayRemove({
-  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
-  //                       id: foundedStudentOnFamilyRecord.id,
-  //                     }),
-  //                     familyDiscount: false,
-  //                   });
-  //                   // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
-  //                 } else if (
-  //                   editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
-  //                   editingStudentFamily.studentFamilyAtSchool.length > 1
-  //                 ) {
-  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
-  //                     studentFamilyAtSchool: arrayRemove({
-  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
-  //                       id: foundedStudentOnFamilyRecord.id,
-  //                     }),
-  //                   });
-  //                   // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
-  //                 } else if (
-  //                   !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
-  //                   editingStudentFamily.studentFamilyAtSchool.length === 1 &&
-  //                   !editingStudentFamily.secondCourseDiscount
-  //                 ) {
-  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
-  //                     studentFamilyAtSchool: arrayRemove({
-  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
-  //                       id: foundedStudentOnFamilyRecord.id,
-  //                     }),
-  //                     familyDiscount: false,
-  //                     appliedPrice: editingStudentFamily.fullPrice,
-  //                   });
-  //                   // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
-  //                 } else if (
-  //                   !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
-  //                   editingStudentFamily.studentFamilyAtSchool.length === 1
-  //                 ) {
-  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
-  //                     studentFamilyAtSchool: arrayRemove({
-  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
-  //                       id: foundedStudentOnFamilyRecord.id,
-  //                     }),
-  //                     familyDiscount: false,
-  //                   });
-  //                   // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
-  //                 } else if (
-  //                   !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
-  //                   editingStudentFamily.studentFamilyAtSchool.length > 1
-  //                 ) {
-  //                   await updateDoc(doc(db, "students", editingStudentFamily.id), {
-  //                     studentFamilyAtSchool: arrayRemove({
-  //                       applyDiscount: foundedStudentOnFamilyRecord.applyDiscount,
-  //                       id: foundedStudentOnFamilyRecord.id,
-  //                     }),
-  //                   });
-  //                 }
-  //               }
-  //             }
-  //           });
-  //         }
-
-  //         // DELETE STUDENT FROM EXPERIMENTAL CLASSES
-  //         if (studentToDelete.experimentalCurriculumIds.length > 0) {
-  //           studentToDelete.experimentalCurriculumIds.map(
-  //             async (experimentalStudentCurriculum) => {
-  //               const editingExperimentalCurriculum = curriculumDatabaseData.find(
-  //                 (experimentalCurriculum) =>
-  //                   experimentalCurriculum.id === experimentalStudentCurriculum.id
-  //               );
-  //               if (editingExperimentalCurriculum) {
-  //                 const foundedStudentOnExperimentalCurriculum =
-  //                   editingExperimentalCurriculum.experimentalStudents.find(
-  //                     (student) => student.id === studentId
-  //                   );
-
-  //                 if (foundedStudentOnExperimentalCurriculum) {
-  //                   await updateDoc(
-  //                     doc(db, "curriculum", editingExperimentalCurriculum.id),
-  //                     {
-  //                       experimentalStudents: arrayRemove({
-  //                         date: foundedStudentOnExperimentalCurriculum.date,
-  //                         id: foundedStudentOnExperimentalCurriculum.id,
-  //                         indexDays:
-  //                           foundedStudentOnExperimentalCurriculum.indexDays,
-  //                         isExperimental:
-  //                           foundedStudentOnExperimentalCurriculum.isExperimental,
-  //                         price: foundedStudentOnExperimentalCurriculum.price,
-  //                       }),
-  //                     }
-  //                   );
-  //                 }
-  //               }
-  //             }
-  //           );
-  //         }
-
-  //         // DELETE STUDENT FROM CURRICULUM
-  //         if (studentToDelete.curriculumIds.length > 0) {
-  //           studentToDelete.curriculumIds.map(async (studentCurriculum) => {
-  //             const editingCurriculum = curriculumDatabaseData.find(
-  //               (curriculum) => curriculum.id === studentCurriculum.id
-  //             );
-  //             if (editingCurriculum) {
-  //               const foundedStudentOnCurriculum = editingCurriculum.students.find(
-  //                 (student) => student.id === studentId
-  //               );
-
-  //               if (foundedStudentOnCurriculum) {
-  //                 await updateDoc(doc(db, "curriculum", editingCurriculum.id), {
-  //                   students: arrayRemove({
-  //                     date: foundedStudentOnCurriculum.date,
-  //                     id: foundedStudentOnCurriculum.id,
-  //                     indexDays: foundedStudentOnCurriculum.indexDays,
-  //                     isExperimental: foundedStudentOnCurriculum.isExperimental,
-  //                     price: foundedStudentOnCurriculum.price,
-  //                   }),
-  //                 });
-  //               }
-  //             }
-  //           });
-  //         }
-
-  //         // DELETE STUDENT
-  //         const deleteStudent = async () => {
-  //           try {
-  //             await deleteDoc(doc(db, "students", studentId));
-  //             resetForm();
-  //             toast.success(`Aluno excluído com sucesso! 👌`, {
-  //               theme: "colored",
-  //               closeOnClick: true,
-  //               pauseOnHover: true,
-  //               draggable: true,
-  //               autoClose: 3000,
-  //             });
-  //             setIsSubmitting(false);
-  //           } catch (error) {
-  //             console.log("ESSE É O ERROR", error);
-  //             toast.error(`Ocorreu um erro... 🤯`, {
-  //               theme: "colored",
-  //               closeOnClick: true,
-  //               pauseOnHover: true,
-  //               draggable: true,
-  //               autoClose: 3000,
-  //             });
-  //             setIsSubmitting(false);
-  //           }
-  //         };
-  //         deleteStudent();
-  //       } else {
-  //         toast.error(
-  //           `Ocorreu um erro, aluno não encontrado no banco de dados... 🤯`,
-  //           {
-  //             theme: "colored",
-  //             closeOnClick: true,
-  //             pauseOnHover: true,
-  //             draggable: true,
-  //             autoClose: 3000,
-  //           }
-  //         );
-  //         setIsSubmitting(false);
-  //       }
-  //     } else {
-  //     }
-  //   });
-  // }
-
   // SUBMIT DATA FUNCTION
   const handleEditStudent: SubmitHandler<EditStudentValidationZProps> = async (
     data
@@ -3216,82 +2920,6 @@ export function EditStudentForm({
           }
         }
       });
-      // excludeFamily.map(async (familyToExclude) => {
-      //   if (familyToExclude.exclude) {
-      //     // UPDATE STUDENT (DELETE FAMILY FROM STUDENT DATABASE)
-      //     await updateDoc(doc(db, "students", data.id), {
-      //       familyDiscount: haveFamily,
-      //       studentFamilyAtSchool: arrayRemove({
-      //         // applyDiscount: familyToExclude.applyDiscount,
-      //         id: familyToExclude.id,
-      //       }),
-      //     });
-      //     // IF YOU ADDED FAMILY IN BOTH DIRECTIONS UNCOMMENT THIS SECTION FOR DELETE STUDENT FROM FAMILY DATABASE
-      //     // UPDATE FAMILY (DELETE STUDENT FROM FAMILY DATABASE)
-      //     // IF APPLY DISCOUNT OF ACCOUNT TO EDIT IS FALSE THEN GO TO FAMILY (WHICH IS REQUIRED TO BE TRUE ON APPLY DISCOUNT), EXCLUDE FAMILY AND RECALCULATE DISCOUNT
-      //     if (!familyToExclude.applyDiscount) {
-      //       const familyData = studentsDatabaseData.find(
-      //         (student) => student.id === familyToExclude.id
-      //       );
-      //       if (familyData) {
-      //         let otherFamilyApplyDiscount = false;
-      //         familyData.studentFamilyAtSchool.map((family) => {
-      //           if (family.applyDiscount) {
-      //             otherFamilyApplyDiscount = true;
-      //           }
-      //         });
-      //         if (!otherFamilyApplyDiscount) {
-      //           await updateDoc(doc(db, "students", familyToExclude.id), {
-      //             familyDiscount: otherFamilyApplyDiscount,
-      //             studentFamilyAtSchool: arrayRemove({
-      //               applyDiscount: !familyToExclude.applyDiscount,
-      //               id: data.id,
-      //             }),
-      //           });
-      //         } else {
-      //           if (familyData.curriculumIds.length <= 1) {
-      //             await updateDoc(doc(db, "students", familyToExclude.id), {
-      //               familyDiscount: otherFamilyApplyDiscount,
-      //               studentFamilyAtSchool: arrayRemove({
-      //                 applyDiscount: !familyToExclude.applyDiscount,
-      //                 id: data.id,
-      //               }),
-      //               appliedPrice: familyData.fullPrice,
-      //             });
-      //           } else {
-      //             let biggerPrice = 0;
-      //             let othersPricesSum = 0;
-      //             familyData.curriculumIds.map((curriculum) => {
-      //               if (curriculum.price > biggerPrice) {
-      //                 biggerPrice = curriculum.price;
-      //               } else {
-      //                 othersPricesSum = othersPricesSum + curriculum.price;
-      //               }
-      //             });
-      //             await updateDoc(doc(db, "students", familyToExclude.id), {
-      //               familyDiscount: otherFamilyApplyDiscount,
-      //               studentFamilyAtSchool: arrayRemove({
-      //                 applyDiscount: !familyToExclude.applyDiscount,
-      //                 id: data.id,
-      //               }),
-      //               appliedPrice:
-      //                 biggerPrice * secondCourseDiscountValue + othersPricesSum,
-      //               fullPrice: biggerPrice + othersPricesSum,
-      //             });
-      //           }
-      //         }
-      //       }
-      //     } else {
-      //       await updateDoc(doc(db, "students", familyToExclude.id), {
-      //         familyDiscount: haveFamily,
-      //         studentFamilyAtSchool: arrayRemove({
-      //           applyDiscount: !familyToExclude.applyDiscount,
-      //           id: data.id,
-      //         }),
-      //       });
-      //     }
-      //   }
-      // });
     }
 
     // CHECK IF SOME FAMILY WAS INCLUDED
@@ -3590,16 +3218,18 @@ export function EditStudentForm({
                     : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 maxDate={new DateObject().subtract(3, "years")}
+                value={new Date(dateToString)}
                 editable={false}
                 format="DD/MM/YYYY"
-                value={new Date(dateToString)}
                 onChange={(e: DateObject) => {
                   if (e instanceof DateObject) {
                     setStudentEditData({
                       ...studentEditData,
-                      birthDate: e.toDate().toLocaleString(),
+                      birthDate: `${e.month}/${e.day}/${e.year}`,
+                      // birthDate: e.toDate().toLocaleString(),
                     }),
-                      setDateToString(e.toDate().toLocaleString());
+                      setDateToString(`${e.month}/${e.day}/${e.year}`);
+                    // setDateToString(e.toDate().toLocaleString());
                   }
                 }}
               />

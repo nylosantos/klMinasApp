@@ -1033,7 +1033,7 @@ export function InsertStudent() {
       }
     }
   }, [studentData.parentTwo.email]);
-  
+
   // GET PARENT TWO INFO WHEN FILL EMAIL
   useEffect(() => {
     if (
@@ -1455,6 +1455,14 @@ export function InsertStudent() {
     setActivePhoneTertiary(false);
     setExperimentalClassError(false);
     setEditAddress(false);
+    (
+      document.getElementById("schoolYearsSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById(
+        "schoolYearsSelectComplement"
+      ) as HTMLSelectElement
+    ).selectedIndex = 0;
     (
       document.getElementById("parentOnePhoneDDD") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -2120,6 +2128,7 @@ export function InsertStudent() {
                   : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
               }
               maxDate={new DateObject().subtract(3, "years")}
+              value={new Date(studentData.birthDate) || ""}
               editable={false}
               format="DD/MM/YYYY"
               onChange={(e: DateObject) => {
