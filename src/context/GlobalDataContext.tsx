@@ -1118,11 +1118,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
                       await updateDoc(
                         doc(db, "students", editingStudentFamily.id),
                         {
-                          studentFamilyAtSchool: arrayRemove({
-                            // applyDiscount:
-                            // foundedStudentOnFamilyRecord.applyDiscount,
-                            foundedStudentOnFamilyRecord,
-                          }),
+                          studentFamilyAtSchool: arrayRemove(studentId),
                           familyDiscount: false,
                           appliedPrice: editingStudentFamily.fullPrice,
                         }
@@ -1135,11 +1131,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
                       await updateDoc(
                         doc(db, "students", editingStudentFamily.id),
                         {
-                          studentFamilyAtSchool: arrayRemove({
-                            // applyDiscount:
-                            // foundedStudentOnFamilyRecord.applyDiscount,
-                            foundedStudentOnFamilyRecord,
-                          }),
+                          studentFamilyAtSchool: arrayRemove(studentId),
                           familyDiscount: false,
                         }
                       );
@@ -1151,11 +1143,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
                       await updateDoc(
                         doc(db, "students", editingStudentFamily.id),
                         {
-                          studentFamilyAtSchool: arrayRemove({
-                            // applyDiscount:
-                            //   foundedStudentOnFamilyRecord.applyDiscount,
-                            foundedStudentOnFamilyRecord,
-                          }),
+                          studentFamilyAtSchool: arrayRemove(studentId),
                         }
                       );
                       // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
@@ -1167,11 +1155,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
                       await updateDoc(
                         doc(db, "students", editingStudentFamily.id),
                         {
-                          studentFamilyAtSchool: arrayRemove({
-                            // applyDiscount:
-                            //   foundedStudentOnFamilyRecord.applyDiscount,
-                            foundedStudentOnFamilyRecord,
-                          }),
+                          studentFamilyAtSchool: arrayRemove(studentId),
                           familyDiscount: false,
                           appliedPrice: editingStudentFamily.fullPrice,
                         }
@@ -1184,11 +1168,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
                       await updateDoc(
                         doc(db, "students", editingStudentFamily.id),
                         {
-                          studentFamilyAtSchool: arrayRemove({
-                            // applyDiscount:
-                            //   foundedStudentOnFamilyRecord.applyDiscount,
-                            foundedStudentOnFamilyRecord,
-                          }),
+                          studentFamilyAtSchool: arrayRemove(studentId),
                           familyDiscount: false,
                         }
                       );
@@ -1200,11 +1180,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
                       await updateDoc(
                         doc(db, "students", editingStudentFamily.id),
                         {
-                          studentFamilyAtSchool: arrayRemove({
-                            // applyDiscount:
-                            //   foundedStudentOnFamilyRecord.applyDiscount,
-                            foundedStudentOnFamilyRecord,
-                          }),
+                          studentFamilyAtSchool: arrayRemove(studentId)
                         }
                       );
                     }

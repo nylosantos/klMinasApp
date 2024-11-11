@@ -2117,7 +2117,7 @@ export function InsertStudent() {
               placeholder={
                 errors.birthDate
                   ? "É necessário selecionar uma Data"
-                  : "Selecione uma Data"
+                  : "DD/MM/AAAA"
               }
               currentDate={new DateObject().subtract(3, "years")}
               containerClassName="w-full"
@@ -2129,7 +2129,7 @@ export function InsertStudent() {
               }
               maxDate={new DateObject().subtract(3, "years")}
               value={new Date(studentData.birthDate) || ""}
-              editable={false}
+              editable={true}
               format="DD/MM/YYYY"
               onChange={(e: DateObject) => {
                 e !== null
