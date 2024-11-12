@@ -386,7 +386,7 @@ export default function Dashboard() {
   useEffect(() => {
     userFullData && userFullData.role === "user"
       ? setShowDashboardPage({ page: "student" })
-      : setShowDashboardPage({ page: "curriculum" });
+      : setShowDashboardPage({ page: "school" });
   }, [userFullData]);
 
   interface DashboardMenuArrayProps extends DashBoardPageProps {
