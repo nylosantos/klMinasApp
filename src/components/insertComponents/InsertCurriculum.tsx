@@ -1013,7 +1013,7 @@ export function InsertCurriculum() {
           <input
             type="text"
             name="placesAvailable"
-            pattern="^[+ 0-9]{5}$"
+            pattern="^(0?[0-9]|[1-9][0-9])$"
             maxLength={2}
             value={curriculumData.placesAvailable}
             placeholder={errors.placesAvailable ? "É necessário um" : "99999"}

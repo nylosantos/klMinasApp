@@ -236,6 +236,7 @@ export default function Dashboard() {
   // FILTER STUDENTS IF USER.ROLE IS 'USER'
   function filterStudents() {
     if (userFullData) {
+      setIsSubmitting(true)
       if (userFullData.role === "user") {
         const studentsToShow: FilteredStudentsProps[] = [];
         studentsDatabaseData.map((student) => {
@@ -256,6 +257,9 @@ export default function Dashboard() {
         });
         setFilteredStudents(studentsToShow);
       }
+      setIsSubmitting(false)
+    } else {
+      console.log(`é porque não tem`)
     }
   }
 
