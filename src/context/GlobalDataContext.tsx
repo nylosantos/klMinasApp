@@ -195,7 +195,6 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
 
   // HANDLE USER DATA FUNCTION
   const handleUserFullData = async (user: User | null | undefined) => {
-    console.log("to executando");
     if (user !== null && user !== undefined) {
       // CHECKING IF USER EXISTS ON DATABASE
       const userRef = collection(db, "appUsers");
@@ -248,6 +247,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       teacherName: "",
       students: [],
       experimentalStudents: [],
+      waitingList: [],
+      placesAvailable: 0,
       updatedAt: new Date(),
     };
 
@@ -267,6 +268,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           teacherId: curriculum.teacherId,
           students: curriculum.students,
           experimentalStudents: curriculum.experimentalStudents,
+          placesAvailable: curriculum.placesAvailable,
+          waitingList: curriculum.waitingList,
           updatedAt: curriculum.updatedAt,
         };
         schoolDatabaseData.map((school) => {
@@ -346,6 +349,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       teacherName: "",
       students: [],
       experimentalStudents: [],
+      waitingList: [],
+      placesAvailable: 0,
       updatedAt: new Date(),
     };
 
@@ -366,6 +371,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           teacherId: curriculum.teacherId,
           students: curriculum.students,
           experimentalStudents: curriculum.experimentalStudents,
+          placesAvailable: curriculum.placesAvailable,
+          waitingList: curriculum.waitingList,
           updatedAt: curriculum.updatedAt,
         };
         schoolDatabaseData.map((school) => {
@@ -438,8 +445,10 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       scheduleName: "",
       teacherId: "",
       teacherName: "",
+      placesAvailable: 0,
       students: [],
       experimentalStudents: [],
+      waitingList: [],
       updatedAt: new Date(),
     };
 
@@ -447,6 +456,12 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       curriculumDatabaseData.find((curriculum) => curriculum.id === id);
 
     if (foundedCurriculum) {
+      curriculumToShow = {
+        ...curriculumToShow,
+        placesAvailable: foundedCurriculum.placesAvailable,
+        students: foundedCurriculum.students,
+        waitingList: foundedCurriculum.waitingList,
+      };
       schoolDatabaseData.map((school) => {
         if (school.id === foundedCurriculum.schoolId) {
           curriculumToShow = {
@@ -1180,7 +1195,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
                       await updateDoc(
                         doc(db, "students", editingStudentFamily.id),
                         {
-                          studentFamilyAtSchool: arrayRemove(studentId)
+                          studentFamilyAtSchool: arrayRemove(studentId),
                         }
                       );
                     }

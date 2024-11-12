@@ -54,6 +54,7 @@ import { HandleClickOpenFunctionProps } from "../../pages/Dashboard";
 import EditDashboardHeader from "../layoutComponents/EditDashboardHeader";
 import { EditCurriculumButton } from "../layoutComponents/EditCurriculumButton";
 import { EditFamilyButton } from "../layoutComponents/EditFamilyButton";
+import BirthDaySelect from "./BirthDaySelect";
 
 export type NewPricesProps = {
   appliedPrice: number;
@@ -966,8 +967,8 @@ export function EditStudentForm({
       setDateToString(
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-expect-error
-        studentSelectedData.birthDate.toDate()
-        // studentSelectedData.birthDate.toDate().toLocaleDateString()
+        // studentSelectedData.birthDate.toDate()
+        studentSelectedData.birthDate.toDate().toLocaleDateString()
       );
       // SET STUDENT EDIT ALL DATA
       setStudentEditData({
@@ -2089,8 +2090,11 @@ export function EditStudentForm({
     },
   });
 
+  const [renewBirthDayValue, setRenewBirthDayValue] = useState(false);
+
   // RESET FORM FUNCTION
   const resetForm = () => {
+    setRenewBirthDayValue(!renewBirthDayValue);
     setNewPrices({
       appliedPrice: 0,
       fullPrice: 0,
@@ -2421,7 +2425,7 @@ export function EditStudentForm({
       errors.financialResponsible?.phoneTertiary?.prefix,
       errors.financialResponsible?.phoneTertiary?.suffix,
     ];
-    console.log(studentEditData)
+
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -2438,7 +2442,7 @@ export function EditStudentForm({
     data
   ) => {
     setIsSubmitting(true);
-
+    console.log(data);
     // CHECKING VALID FINANCIAL RESPONSIBLE DOCUMENT
     if (!testFinancialCPF) {
       return (
@@ -3025,7 +3029,7 @@ export function EditStudentForm({
       const updateData = {
         // Section 1: Student Data
         name: data.name,
-        birthDate: Timestamp.fromDate(new Date(dateToString)),
+        birthDate: Timestamp.fromDate(new Date(data.birthDate)),
         schoolYears: data.schoolYears,
         schoolYearsComplement: data.schoolYearsComplement,
         "parentOne.name": data.parentOne.name,
@@ -3201,38 +3205,12 @@ export function EditStudentForm({
               Data de Nascimento:{" "}
             </label>
             <div className="flex w-3/4">
-              <DatePicker
-                months={months}
-                weekDays={weekDays}
-                disabled={onlyView}
-                placeholder={
-                  errors.birthDate
-                    ? "É necessário selecionar uma Data"
-                    : "Selecione uma Data"
-                }
-                currentDate={new DateObject().subtract(3, "years")}
-                containerClassName="w-full"
-                style={{ width: "100%" }}
-                inputClass={
-                  errors.birthDate
-                    ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                maxDate={new DateObject().subtract(3, "years")}
-                value={new Date(dateToString)}
-                editable={true}
-                format="DD/MM/YYYY"
-                onChange={(e: DateObject) => {
-                  if (e instanceof DateObject) {
-                    setStudentEditData({
-                      ...studentEditData,
-                      birthDate: `${e.month}/${e.day}/${e.year}`,
-                      // birthDate: e.toDate().toLocaleString(),
-                    }),
-                      setDateToString(`${e.month}/${e.day}/${e.year}`);
-                    // setDateToString(e.toDate().toLocaleString());
-                  }
-                }}
+              <BirthDaySelect
+                setStudentData={setStudentEditData}
+                errors={errors}
+                renewBirthDayValue={renewBirthDayValue}
+                birthDateValue={dateToString}
+                isDisabled={onlyView}
               />
             </div>
           </div>
@@ -3275,7 +3253,7 @@ export function EditStudentForm({
             <label
               htmlFor="schoolYearsSelectComplement"
               className={
-                errors.schoolYears
+                errors.schoolYearsComplement
                   ? "w-1/4 text-right text-red-500 dark:text-red-400"
                   : "w-1/4 text-right"
               }
@@ -3287,7 +3265,7 @@ export function EditStudentForm({
               disabled={onlyView}
               value={studentEditData.schoolYearsComplement}
               className={
-                errors.schoolYears
+                errors.schoolYearsComplement
                   ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                   : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
               }
@@ -3686,7 +3664,7 @@ export function EditStudentForm({
           {/* // --------------------------------------------- SECTION 2: STUDENT FINANCIAL RESPONSIBLE DATA --------------------------------------------- // */}
 
           {/** STUDENT FINANCIAL RESPONSIBLE SECTION TITLE */}
-          <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
+          <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
             Dados do Responsável Financeiro:
           </h1>
 
@@ -4846,8 +4824,13 @@ export function EditStudentForm({
                     });
                   }}
                 >
-                  <SelectOptions returnId dataType="schoolCourses" />
-                  <option value={"all"}>Todas as Modalidades</option>
+                  <SelectOptions
+                    returnId
+                    schoolId={experimentalCurriculumData.schoolId}
+                    schoolClassId={experimentalCurriculumData.schoolClassId}
+                    dataType="schoolCourses"
+                  />
+                  {/* <option value={"all"}>Todas as Modalidades</option> */}
                 </select>
               </div>
 
@@ -4860,9 +4843,10 @@ export function EditStudentForm({
                   <h1 className="font-bold text-2xl py-4">
                     {newExperimentalSchoolSelectedData?.name} -{" "}
                     {newExperimentalSchoolClassSelectedData?.name} -{" "}
-                    {experimentalCurriculumData.schoolCourseId === "all"
+                    {newExperimentalSchoolCourseSelectedData?.name}
+                    {/* {experimentalCurriculumData.schoolCourseId === "all"
                       ? "Todas as Modalidades"
-                      : newExperimentalSchoolCourseSelectedData?.name}
+                      : newExperimentalSchoolCourseSelectedData?.name} */}
                     :
                   </h1>
 
@@ -5409,8 +5393,13 @@ export function EditStudentForm({
                     });
                   }}
                 >
-                  <SelectOptions returnId dataType="schoolCourses" />
-                  <option value={"all"}>Todas as Modalidades</option>
+                  <SelectOptions
+                    returnId
+                    schoolId={curriculumData.schoolId}
+                    schoolClassId={curriculumData.schoolClassId}
+                    dataType="schoolCourses"
+                  />
+                  {/* <option value={"all"}>Todas as Modalidades</option> */}
                 </select>
               </div>
 
@@ -5423,9 +5412,10 @@ export function EditStudentForm({
                   <h1 className="font-bold text-2xl py-4">
                     {newSchoolSelectedData?.name} -{" "}
                     {newSchoolClassSelectedData?.name} -{" "}
-                    {curriculumData.schoolCourseId === "all"
+                    {newSchoolCourseSelectedData?.name}
+                    {/* {curriculumData.schoolCourseId === "all"
                       ? "Todas as Modalidades"
-                      : newSchoolCourseSelectedData?.name}
+                      : newSchoolCourseSelectedData?.name} */}
                     :
                   </h1>
 

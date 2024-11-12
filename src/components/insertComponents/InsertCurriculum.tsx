@@ -53,6 +53,7 @@ export function InsertCurriculum() {
       scheduleId: "",
       classDayId: "",
       teacherId: "",
+      placesAvailable: 0,
       confirmInsert: false,
     });
 
@@ -607,6 +608,7 @@ export function InsertCurriculum() {
       scheduleId: "",
       classDayId: "",
       teacherId: "",
+      placesAvailable: 0,
       confirmInsert: false,
     });
     reset();
@@ -621,6 +623,7 @@ export function InsertCurriculum() {
     setValue("classDayId", classDaysCommonId);
     // setValue("classDayName", classDayName.join(" - "));
     setValue("teacherId", curriculumData.teacherId);
+    setValue("placesAvailable", curriculumData.placesAvailable);
     setValue("confirmInsert", curriculumData.confirmInsert);
   }, [curriculumData, classDaysData, classDayName]);
 
@@ -633,6 +636,7 @@ export function InsertCurriculum() {
       errors.scheduleId,
       errors.classDayId,
       errors.teacherId,
+      errors.placesAvailable,
       errors.confirmInsert,
     ];
     fullErrors.map((fieldError) => {
@@ -750,6 +754,8 @@ export function InsertCurriculum() {
           teacherId: data.teacherId,
           students: [],
           experimentalStudents: [],
+          waitingList: [],
+          placesAvailable: data.placesAvailable,
           updatedAt: serverTimestamp(),
         });
         resetForm();
@@ -879,7 +885,11 @@ export function InsertCurriculum() {
               });
             }}
           >
-            <SelectOptions returnId dataType="schoolClasses" schoolId={curriculumData.schoolId} />
+            <SelectOptions
+              returnId
+              dataType="schoolClasses"
+              schoolId={curriculumData.schoolId}
+            />
           </select>
         </div>
 
@@ -911,7 +921,12 @@ export function InsertCurriculum() {
               });
             }}
           >
-            <SelectOptions returnId dataType="schoolCourses" />
+            <SelectOptions
+              returnId
+              schoolId={curriculumData.schoolId}
+              schoolClassId={curriculumData.schoolClassId}
+              dataType="schoolCourses"
+            />
           </select>
         </div>
 
@@ -981,6 +996,41 @@ export function InsertCurriculum() {
           >
             <SelectOptions returnId dataType="teachers" />
           </select>
+        </div>
+
+        {/* PLACES AVAILABLE INPUT */}
+        <div className="flex gap-2 items-center">
+          <label
+            htmlFor="placesAvailable"
+            className={
+              errors.placesAvailable
+                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                : "w-1/4 text-right"
+            }
+          >
+            Número máximo de alunos:{" "}
+          </label>
+          <input
+            type="text"
+            name="placesAvailable"
+            pattern="^[+ 0-9]{5}$"
+            maxLength={2}
+            value={curriculumData.placesAvailable}
+            placeholder={errors.placesAvailable ? "É necessário um" : "99999"}
+            className={
+              errors.placesAvailable
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            }
+            onChange={(e) => {
+              setCurriculumData({
+                ...curriculumData,
+                placesAvailable: +e.target.value
+                  .replace(/[^0-9.]/g, "")
+                  .replace(/(\..*?)\..*/g, "$1"),
+              });
+            }}
+          />
         </div>
 
         {/* CLASS DAYS SELECT */}

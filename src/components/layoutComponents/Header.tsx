@@ -99,7 +99,7 @@ export function Header() {
                       : "text-klGreen-500 dark:text-klOrange-500"
                   }
                 >
-                  Dashboard
+                  Início
                 </button>
               </div>
               {(userFullData.role === "root" ||

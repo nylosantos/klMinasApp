@@ -11,6 +11,8 @@ import { EditStudentForm } from "../components/formComponents/EditStudentForm";
 import { StudentButtonDetails } from "../components/layoutComponents/StudentButtonDetails";
 import { FinanceStudentModal } from "../components/modalComponents/FinanceStudentModal";
 import { FilteredStudentsProps } from "../@types";
+import { StudentSearchButton } from "../components/layoutComponents/StudentSearchButton";
+import { IoMdClose } from "react-icons/io";
 
 export interface HandleClickOpenFunctionProps {
   id: string;
@@ -257,18 +259,107 @@ export default function Dashboard() {
     }
   }
 
+  // FILTER STUDENTS WHEN USER CHANGE
   useEffect(() => {
     filterStudents();
-  }, [studentsDatabaseData, userFullData]);
+  }, [userFullData]);
+
+  // FILTER STUDENTS BY SEARCH STATES
+  // STATE FOR THE SEARCH TERM
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [financialResponsibleName, setFinancialResponsibleName] =
+    useState<string>("");
+  const [financialResponsibleDocument, setFinancialResponsibleDocument] =
+    useState<string>("");
+
+  // STATE TO CONTROL IF THE SEARCH IS ADVANCED OR NOT
+  const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
+
+  // STATE FOR THE FILTERED STUDENTS
+  const [filteredSearchStudents, setFilteredSearchStudents] =
+    useState(studentsDatabaseData);
+
+  // FUNCTION TO TOGGLE THE ADVANCED SEARCH MODE
+  const toggleAdvancedSearch = () => {
+    if (isAdvancedSearch) {
+      // CLEARING THE ADVANCED SEARCH FIELDS WHEN CLOSING ADVANCED SEARCH
+      setFinancialResponsibleName("");
+      setFinancialResponsibleDocument("");
+    }
+    setIsAdvancedSearch(!isAdvancedSearch);
+  };
+
+  // FUNCTION TO CLEAR THE ADVANCED SEARCH FIELDS
+  const clearAdvancedSearch = () => {
+    setSearchTerm("");
+    setFinancialResponsibleName("");
+    setFinancialResponsibleDocument("");
+  };
+
+  // EFFECT TO FILTER STUDENTS BASED ON SEARCH TERMS
+  useEffect(() => {
+    if (!isAdvancedSearch) {
+      // SIMPLE SEARCH ONLY BASED ON STUDENT NAME
+      setFilteredSearchStudents(
+        filteredStudents.filter((student) =>
+          student.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    } else {
+      // ADVANCED SEARCH CONSIDERING STUDENT NAME, RESPONSIBLE NAME, AND CPF
+      setFilteredSearchStudents(
+        filteredStudents.filter((student) => {
+          const matchesName = student.name
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase());
+          const matchesResponsibleName = student.financialResponsible.name
+            .toLowerCase()
+            .includes(financialResponsibleName.toLowerCase());
+          const matchesResponsibleDocument =
+            student.financialResponsible.document.includes(
+              financialResponsibleDocument
+            );
+
+          // APPLY FILTER ONLY FOR FIELDS THAT HAVE BEEN FILLED
+          return (
+            (matchesName || !searchTerm) &&
+            (matchesResponsibleName || !financialResponsibleName) &&
+            (matchesResponsibleDocument || !financialResponsibleDocument)
+          );
+        })
+      );
+    }
+  }, [
+    searchTerm,
+    financialResponsibleName,
+    financialResponsibleDocument,
+    filteredStudents,
+    isAdvancedSearch,
+  ]);
+
+  // HANDLER FOR CHANGES IN THE STUDENT NAME SEARCH FIELD
+  const handleSearchTermChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSearchTerm(event.target.value);
+  };
+
+  // HANDLER FOR CHANGES IN THE RESPONSIBLE NAME SEARCH FIELD
+  const handleFinancialResponsibleNameChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFinancialResponsibleName(event.target.value);
+  };
+
+  // HANDLER FOR CHANGES IN THE RESPONSIBLE CPF SEARCH FIELD
+  const handleFinancialResponsibleDocumentChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFinancialResponsibleDocument(event.target.value);
+  };
 
   function handleDeleteUser() {
     if (studentSelected) {
-      // console.log(
-      //   "Deletando usuário: ",
-      //   studentSelected.name,
-      //   " - ID: ",
-      //   studentSelected.id
-      // );
       handleDeleteStudent(studentSelected.id, handleClose);
     } else {
       console.log("Nenhum usuário selecionado.");
@@ -295,20 +386,12 @@ export default function Dashboard() {
   useEffect(() => {
     userFullData && userFullData.role === "user"
       ? setShowDashboardPage({ page: "student" })
-      : setShowDashboardPage({ page: "school" });
+      : setShowDashboardPage({ page: "curriculum" });
   }, [userFullData]);
 
   interface DashboardMenuArrayProps extends DashBoardPageProps {
     title: string;
     array: unknown[];
-  }
-
-  function StudentsToShowOnDashboardMenu() {
-    if (userFullData && userFullData.role !== "user") {
-      return studentsDatabaseData;
-    } else {
-      return filteredStudents;
-    }
   }
 
   const dashboardMenuArray: DashboardMenuArrayProps[] = [
@@ -341,7 +424,7 @@ export default function Dashboard() {
     {
       title: "Alunos Cadastrados",
       page: "student",
-      array: StudentsToShowOnDashboardMenu(),
+      array: filteredSearchStudents,
     },
     { title: "Adicionar Aluno", page: "addStudent", array: [] },
   ];
@@ -642,6 +725,42 @@ export default function Dashboard() {
                               }
                             </span>
                           </p>
+                          <p>
+                            Total de vagas:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {
+                                handleOneCurriculumDetails(curriculum.id)
+                                  .placesAvailable
+                              }
+                            </span>
+                          </p>
+                          <p>
+                            Alunos Matriculados:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {
+                                handleOneCurriculumDetails(curriculum.id)
+                                  .students.length
+                              }
+                            </span>
+                          </p>
+                          <p>
+                            Vagas Disponíveis:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {handleOneCurriculumDetails(curriculum.id)
+                                .placesAvailable -
+                                handleOneCurriculumDetails(curriculum.id)
+                                  .students.length}
+                            </span>
+                          </p>
+                          <p>
+                            Alunos na lista de espera:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              {
+                                handleOneCurriculumDetails(curriculum.id)
+                                  .waitingList.length
+                              }
+                            </span>
+                          </p>
                         </div>
                       );
                     })
@@ -661,8 +780,54 @@ export default function Dashboard() {
                   open && studentSelected ? "w-2/6" : "w-full"
                 } ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container [&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl transition-all duration-1000`}
               >
-                {filteredStudents.length !== 0 ? (
-                  filteredStudents
+                <div className="flex w-full flex-col px-4 py-3 gap-2">
+                  <div className="flex w-full gap-2 justify-start">
+                    <input
+                      type="text"
+                      id="searchStudent"
+                      value={searchTerm}
+                      onChange={handleSearchTermChange}
+                      placeholder="Procurar"
+                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    />
+                    <StudentSearchButton
+                      isAdvancedSearch={isAdvancedSearch}
+                      toggleAdvancedSearch={toggleAdvancedSearch}
+                    />
+                  </div>
+                  {isAdvancedSearch && (
+                    <div className="flex gap-2">
+                      <div className="flex w-full gap-2">
+                        <input
+                          type="text"
+                          placeholder="Nome do Responsável Financeiro"
+                          value={financialResponsibleName}
+                          onChange={handleFinancialResponsibleNameChange}
+                          className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        />
+                        <input
+                          type="text"
+                          name="financialResponsibleDocument"
+                          pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                          placeholder="Nome do Responsável Financeiro"
+                          value={financialResponsibleDocument}
+                          onChange={handleFinancialResponsibleDocumentChange}
+                          className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        />
+                      </div>
+                      <div className="w-[4.65vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
+                        <button
+                          className="flex w-full items-center justify-between"
+                          onClick={clearAdvancedSearch}
+                        >
+                          Limpar <IoMdClose size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {filteredSearchStudents.length !== 0 ? (
+                  filteredSearchStudents
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((student) => {
                       return (

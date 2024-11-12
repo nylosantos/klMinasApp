@@ -185,7 +185,8 @@ export const createCurriculumValidationSchema = z.object ({
   scheduleId: z.string().min(1, {message: `Por favor, escolha o Horário`}),
   classDayId: z.string().min(1, {message: `Por favor, escolha os Dias de Aula`}),
   teacherId: z.string().min(1, {message: `Por favor, escolha o Professor`}),
-  confirmInsert: z.boolean()
+  placesAvailable: z.number().nonnegative({message: 'Não é possível escolher um número negativo de vagas'}),
+  confirmInsert: z.boolean(),
 })
 
 // DELETE VALIDATION SCHEMA SCHOOLS
@@ -295,6 +296,7 @@ export const editCurriculumValidationSchema = z.object ({
   scheduleId: z.string().min(1, {message: `Por favor, escolha o horário`}),
   classDayId: z.string().min(1, {message: `Por favor, escolha os dias de aula`}),
   teacherId: z.string().min(1, {message: `Por favor, escolha o professor`}),
+  placesAvailable: z.number(),
 })
 
 export const editStudentValidationSchema = z.object ({

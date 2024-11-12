@@ -62,6 +62,7 @@ export function EditCurriculum() {
       scheduleId: "",
       classDayId: "",
       teacherId: "",
+      placesAvailable: 0,
     });
 
   // CURRICULUM NAME FORMATTED STATE
@@ -86,9 +87,9 @@ export function EditCurriculum() {
 
   // SET SCHOOL SELECTED STATE AND RESET SELECTS ABOVE SELECT SCHOOL WHEN SELECT SCHOOL
   useEffect(() => {
-    // (
-    //   document.getElementById("schoolClassSelect") as HTMLSelectElement
-    // ).selectedIndex = 0;
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
     (
       document.getElementById("curriculumSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -188,6 +189,7 @@ export function EditCurriculum() {
         scheduleId: curriculumSelectedData.scheduleId,
         classDayId: curriculumSelectedData.classDayId,
         teacherId: curriculumSelectedData.teacherId,
+        placesAvailable: curriculumSelectedData.placesAvailable,
       });
     }
   }, [curriculumSelectedData]);
@@ -616,6 +618,7 @@ export function EditCurriculum() {
       scheduleId: "",
       classDayId: "",
       teacherId: "",
+      placesAvailable: 0,
     });
     // setClassDayData({
     //   classDayId: "",
@@ -646,6 +649,7 @@ export function EditCurriculum() {
     setValue("scheduleId", curriculumEditData.scheduleId);
     setValue("classDayId", curriculumEditData.classDayId);
     setValue("teacherId", curriculumEditData.teacherId);
+    setValue("placesAvailable", curriculumEditData.placesAvailable);
   }, [curriculumEditData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -659,6 +663,7 @@ export function EditCurriculum() {
       errors.scheduleId,
       errors.classDayId,
       errors.teacherId,
+      errors.placesAvailable,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -689,6 +694,7 @@ export function EditCurriculum() {
         await updateDoc(doc(db, "curriculum", data.curriculumId), {
           scheduleId: data.scheduleId,
           teacherId: data.teacherId,
+          placesAvailable: data.placesAvailable,
         });
         resetForm();
         toast.success(`Turma alterada com sucesso! 👌`, {
@@ -1119,6 +1125,53 @@ export function EditCurriculum() {
                 disabled
                 className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={curriculumFormattedName.schoolCourseName}
+              />
+            </div>
+
+            {/* EDIT PLACES AVAILABLE TITLE */}
+            <div className="flex gap-2 items-center">
+              <div className="w-1/4"></div>
+              <div className="w-3/4">
+                <h1 className="text-start font-bold text-lg py-2 text-red-600 dark:text-yellow-500">
+                  Altere o número máximo de vagas:
+                </h1>
+              </div>
+            </div>
+
+            {/* PLACES AVAILABLE INPUT */}
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="placesAvailable"
+                className={
+                  errors.placesAvailable
+                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                    : "w-1/4 text-right"
+                }
+              >
+                Número máximo de alunos:{" "}
+              </label>
+              <input
+                type="text"
+                name="placesAvailable"
+                pattern="^(0?[0-9]|[1-9][0-9])$"
+                maxLength={2}
+                value={curriculumEditData.placesAvailable}
+                placeholder={
+                  errors.placesAvailable ? "É necessário um" : "0 a 99"
+                }
+                className={
+                  errors.placesAvailable
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                }
+                onChange={(e) => {
+                  setCurriculumEditData({
+                    ...curriculumEditData,
+                    placesAvailable: +e.target.value
+                      .replace(/[^0-9.]/g, "")
+                      .replace(/(\..*?)\..*/g, "$1"),
+                  });
+                }}
               />
             </div>
 

@@ -3,7 +3,9 @@
 import { useContext, useEffect, useState } from "react";
 
 import {
+  CurriculumSearchProps,
   FilteredStudentsProps,
+  SchoolCourseSearchProps,
   SelectProps,
   StudentSearchProps,
 } from "../../@types";
@@ -53,30 +55,29 @@ export function SelectOptions({
   const [data, setData] = useState<any[]>([]);
 
   const schoolYears = [
-    {id: "1p", name: "1° PERÍODO"},
-    {id: "2p", name: "2° PERÍODO"},
-    {id: "1a", name: "1° ANO"},
-    {id: "2a", name: "2° ANO"},
-    {id: "3a", name: "3° ANO"},
-    {id: "4a", name: "4° ANO"},
-    {id: "5a", name: "5° ANO"},
-    {id: "6a", name: "6° ANO"},
-    {id: "7a", name: "7° ANO"},
-    {id: "8a", name: "8° ANO"},
-    {id: "9a", name: "9° ANO"},
-    {id: "1s", name: "1ª SÉRIE - Ensino Médio"},
-    {id: "2s", name: "2ª SÉRIE - Ensino Médio"},
-    {id: "3s", name: "3ª SÉRIE - Ensino Médio"},
+    { id: "1p", name: "1° PERÍODO" },
+    { id: "2p", name: "2° PERÍODO" },
+    { id: "1a", name: "1° ANO" },
+    { id: "2a", name: "2° ANO" },
+    { id: "3a", name: "3° ANO" },
+    { id: "4a", name: "4° ANO" },
+    { id: "5a", name: "5° ANO" },
+    { id: "6a", name: "6° ANO" },
+    { id: "7a", name: "7° ANO" },
+    { id: "8a", name: "8° ANO" },
+    { id: "9a", name: "9° ANO" },
+    { id: "1s", name: "1ª SÉRIE - Ensino Médio" },
+    { id: "2s", name: "2ª SÉRIE - Ensino Médio" },
+    { id: "3s", name: "3ª SÉRIE - Ensino Médio" },
   ];
 
-
-const schoolYearsComplement = [
-    {id: "unknown", name: "Não definida"},
-    {id: "classA", name: "A"},
-    {id: "classB", name: "B"},
-    {id: "classC", name: "C"},
-    {id: "classD", name: "D"},
-    {id: "classE", name: "E"},
+  const schoolYearsComplement = [
+    { id: "unknown", name: "Não definida" },
+    { id: "classA", name: "A" },
+    { id: "classB", name: "B" },
+    { id: "classC", name: "C" },
+    { id: "classD", name: "D" },
+    { id: "classE", name: "E" },
   ];
 
   async function handleDataOptions() {
@@ -130,11 +131,11 @@ const schoolYearsComplement = [
       }
     }
 
-    if (dataType === 'schoolYears'){
-      setData(schoolYears)
+    if (dataType === "schoolYears") {
+      setData(schoolYears);
     }
-    if (dataType === 'schoolYearsComplement'){
-      setData(schoolYearsComplement)
+    if (dataType === "schoolYearsComplement") {
+      setData(schoolYearsComplement);
     }
 
     if (dataType === "searchStudent" && curriculumId) {
@@ -203,23 +204,6 @@ const schoolYearsComplement = [
         }
       });
       setData(studentsToShow);
-      // const foundedStudentsArray: StudentSearchProps[] = [];
-      // studentsDatabaseData.map((student) => {
-      //   // EXCLUDE STUDENTS THAT ALREADY HAVE FAMILY DISCOUNT
-      //   if (student.curriculumIds && !student.familyDiscount) {
-      //     const foundedFamilyStudent = student.curriculumIds.find(
-      //       (curriculum) => curriculum.id === curriculumId
-      //     );
-      //     if (foundedFamilyStudent) {
-      //       if (dontShowMyself && studentId !== student.id) {
-      //         foundedStudentsArray.push(student);
-      //       } else {
-      //         foundedStudentsArray.push(student);
-      //       }
-      //     }
-      //   }
-      // });
-      // setData(foundedStudentsArray);
     }
 
     if (dataType === "appUsers") {
@@ -241,7 +225,40 @@ const schoolYearsComplement = [
     }
 
     if (dataType === "schoolCourses") {
-      setData(schoolCourseDatabaseData);
+      if (schoolId && schoolClassId) {
+        const foundedCurriculums: CurriculumSearchProps[] = [];
+        curriculumDatabaseData.map((curriculum) => {
+          if (
+            curriculum.schoolId === schoolId &&
+            curriculum.schoolClassId === schoolClassId
+          ) {
+            foundedCurriculums.push(curriculum);
+          }
+        });
+        if (foundedCurriculums.length > 0) {
+          const foundedSchoolCourses: string[] = [];
+          foundedCurriculums.map((curriculum) => {
+            foundedSchoolCourses.push(curriculum.schoolCourseId);
+          });
+          if (foundedSchoolCourses.length > 0) {
+            const schoolCoursesToShow: SchoolCourseSearchProps[] = [];
+            schoolCourseDatabaseData.map((schoolCourse) => {
+              foundedSchoolCourses.map((foundedSchoolCourse) => {
+                if (schoolCourse.id === foundedSchoolCourse) {
+                  schoolCoursesToShow.push(schoolCourse);
+                }
+              });
+            });
+            setData(schoolCoursesToShow);
+          } else {
+            setData([]);
+          }
+        } else {
+          setData([]);
+        }
+      } else {
+        setData([]);
+      }
     }
 
     if (dataType === "classDays") {

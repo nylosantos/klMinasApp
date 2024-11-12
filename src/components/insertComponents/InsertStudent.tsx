@@ -56,6 +56,7 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import BirthDaySelect from "../formComponents/BirthDaySelect";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -240,15 +241,6 @@ export function InsertStudent() {
     }
   }, [curriculumData.schoolId]);
 
-  // // SET SCHOOL NAME WITH SCHOOL SELECTED DATA WHEN SELECT SCHOOL
-  // useEffect(() => {
-  //   if (schoolSelectedData !== undefined) {
-  //     setCurriculumData({
-  //       ...curriculumData,
-  //       schoolName: schoolSelectedData!.name,
-  //     });
-  //   }
-  // }, [schoolSelectedData]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
@@ -269,15 +261,6 @@ export function InsertStudent() {
     }
   }, [curriculumData.schoolClassId]);
 
-  // // SET SCHOOL CLASS NAME WITH SCHOOL CLASS SELECTED DATA WHEN SELECT SCHOOL CLASS
-  // useEffect(() => {
-  //   if (schoolClassSelectedData !== undefined) {
-  //     setCurriculumData({
-  //       ...curriculumData,
-  //       schoolClassName: schoolClassSelectedData!.name,
-  //     });
-  //   }
-  // }, [schoolClassSelectedData]);
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
@@ -308,10 +291,6 @@ export function InsertStudent() {
   // SET SCHOOL COURSE NAME WITH SCHOOL COURSE SELECTED DATA WHEN SELECT SCHOOL COURSE
   useEffect(() => {
     if (schoolCourseSelectedData !== undefined) {
-      // setCurriculumData({
-      //   ...curriculumData,
-      //   schoolCourseName: schoolCourseSelectedData!.name,
-      // });
       setSchoolCourseSelectedPrice({
         bundleDays: schoolCourseSelectedData.bundleDays,
         priceBundle: schoolCourseSelectedData.priceBundle,
@@ -707,11 +686,6 @@ export function InsertStudent() {
   const handleAvailableCoursesData = async () => {
     if (userFullData) {
       if (curriculumData.schoolCourseId === "all") {
-        // const filterCurriculum = curriculumDatabaseData.filter(
-        //   (curriculum) =>
-        //     curriculum.schoolId === curriculumData.schoolId &&
-        //     curriculum.schoolClassId === curriculumData.schoolClassId
-        // );
         setCurriculumCoursesData(
           handleAllCurriculumDetails({
             schoolId: curriculumData.schoolId,
@@ -1355,8 +1329,11 @@ export function InsertStudent() {
     },
   });
 
+  const [renewBirthDayValue, setRenewBirthDayValue] = useState(false);
+
   // RESET FORM FUNCTION
   const resetForm = () => {
+    setRenewBirthDayValue(!renewBirthDayValue);
     setStudentData({
       // Section 1: Student Data
       name: "",
@@ -2109,36 +2086,12 @@ export function InsertStudent() {
             Data de Nascimento:{" "}
           </label>
           <div className="flex w-3/4">
-            <DatePicker
-              name="birthDate"
-              id="birthDate"
-              months={months}
-              weekDays={weekDays}
-              placeholder={
-                errors.birthDate
-                  ? "É necessário selecionar uma Data"
-                  : "DD/MM/AAAA"
-              }
-              currentDate={new DateObject().subtract(3, "years")}
-              containerClassName="w-full"
-              style={{ width: "100%" }}
-              inputClass={
-                errors.birthDate
-                  ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-              }
-              maxDate={new DateObject().subtract(3, "years")}
-              value={new Date(studentData.birthDate) || ""}
-              editable={true}
-              format="DD/MM/YYYY"
-              onChange={(e: DateObject) => {
-                e !== null
-                  ? setStudentData({
-                      ...studentData,
-                      birthDate: `${e.month}/${e.day}/${e.year}`,
-                    })
-                  : null;
-              }}
+            <BirthDaySelect
+              setStudentData={setStudentData}
+              errors={errors}
+              renewBirthDayValue={renewBirthDayValue}
+              isDisabled={false}
+              birthDateValue=""
             />
           </div>
         </div>
@@ -2177,7 +2130,7 @@ export function InsertStudent() {
           <label
             htmlFor="schoolYearsSelectComplement"
             className={
-              errors.schoolYears
+              errors.schoolYearsComplement
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right"
             }
@@ -2188,7 +2141,7 @@ export function InsertStudent() {
             id="schoolYearsSelectComplement"
             defaultValue={" -- select an option -- "}
             className={
-              errors.schoolYears
+              errors.schoolYearsComplement
                 ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                 : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
@@ -2433,7 +2386,7 @@ export function InsertStudent() {
           <label
             htmlFor="parentTwoName"
             className={
-              errors.name
+              errors.parentTwo?.name
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right"
             }
@@ -2446,8 +2399,8 @@ export function InsertStudent() {
             disabled={isSubmitting}
             placeholder={
               errors.parentTwo?.name
-                ? "É necessário inserir o nome completo do aluno"
-                : "Insira o nome completo do aluno"
+                ? "É necessário inserir o nome completo"
+                : "Insira o nome completo"
             }
             className={
               errors.parentTwo?.name
@@ -2697,8 +2650,13 @@ export function InsertStudent() {
               setStudentData({ ...studentData, curriculum: "" });
             }}
           >
-            <SelectOptions returnId dataType="schoolCourses" />
-            <option value={"all"}>Todas as Modalidades</option>
+            <SelectOptions
+              returnId
+              schoolId={curriculumData.schoolId}
+              schoolClassId={curriculumData.schoolClassId}
+              dataType="schoolCourses"
+            />
+            {/* <option value={"all"}>Todas as Modalidades</option> */}
           </select>
         </div>
 
@@ -2711,9 +2669,10 @@ export function InsertStudent() {
               {/* CURRICULUM SELECT SECTION TITLE */}
               <h1 className="font-bold text-2xl my-4">
                 {schoolSelectedData?.name} - {schoolClassSelectedData?.name} -{" "}
-                {curriculumData.schoolCourseId === "all"
+                {schoolCourseSelectedData?.name}
+                {/* {curriculumData.schoolCourseId === "all"
                   ? "Todas as Modalidades"
-                  : schoolCourseSelectedData?.name}
+                  : schoolCourseSelectedData?.name} */}
               </h1>
 
               {/** SEPARATOR */}
@@ -3396,11 +3355,10 @@ export function InsertStudent() {
                     <div className="flex flex-col gap-2 w-3/4 items-start text-left pb-2">
                       {newClass.isExperimental && (
                         <p className="text-sm text-red-600 dark:text-yellow-500">
-                          Após 5 dias da data escolhida para a aula
-                          experimental, os dados abaixo serão utilizados para
-                          efetuar a matrícula do aluno. <br /> Em caso de
-                          cancelamento dentro do prazo de 5 dias, os dados serão
-                          descartados.
+                          Em caso de desistência dos serviços, o responsável tem
+                          o prazo de até 5 dias (ÚTEIS?) para entrar no cadastro
+                          e realizar o cancelamento. Os dados serão descartados
+                          sem ônus de matrícula.
                         </p>
                       )}
                       <p className="text-sm font-bold text-red-600 dark:text-yellow-500">

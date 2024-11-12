@@ -306,8 +306,8 @@ export interface StudentSearchProps {
   id: string;
   name: string;
   birthDate: string;
-  schoolYears: string,
-  schoolYearsComplement: string,
+  schoolYears: string;
+  schoolYearsComplement: string;
   parentOne: {
     name: string;
     email: string;
@@ -393,6 +393,11 @@ export interface CurriculumWithNamesProps extends CurriculumSearchProps {
   teacherName: string;
 }
 
+export interface WaitingListProps {
+  id: string;
+  date: string;
+}
+
 export interface CurriculumSearchProps {
   id: string;
   schoolId: string;
@@ -403,6 +408,8 @@ export interface CurriculumSearchProps {
   teacherId: string;
   students: Array<CurriculumArrayProps>;
   experimentalStudents: Array<CurriculumArrayProps>;
+  waitingList: Array<WaitingListProps>;
+  placesAvailable: number;
   updatedAt: Date;
 }
 

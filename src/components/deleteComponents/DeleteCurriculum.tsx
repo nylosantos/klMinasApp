@@ -500,7 +500,11 @@ export function DeleteCurriculum() {
               });
             }}
           >
-            <SelectOptions returnId dataType="schoolClasses" schoolId={curriculumData.schoolId} />
+            <SelectOptions
+              returnId
+              dataType="schoolClasses"
+              schoolId={curriculumData.schoolId}
+            />
           </select>
         </div>
 
@@ -532,8 +536,13 @@ export function DeleteCurriculum() {
               });
             }}
           >
-            <SelectOptions returnId dataType="schoolCourses" />
-            <option value={"all"}>Todas as Modalidades</option>
+            <SelectOptions
+              returnId
+              schoolId={curriculumData.schoolId}
+              schoolClassId={curriculumData.schoolClassId}
+              dataType="schoolCourses"
+            />
+            {/* <option value={"all"}>Todas as Modalidades</option> */}
           </select>
         </div>
 
@@ -546,9 +555,10 @@ export function DeleteCurriculum() {
               <h1 className="font-bold text-2xl my-4">
                 {curriculumFormattedName.schoolName} -{" "}
                 {curriculumFormattedName.schoolClassName} -{" "}
-                {curriculumData.schoolCourseId === "all"
+                {curriculumFormattedName.schoolCourseName}
+                {/* {curriculumData.schoolCourseId === "all"
                   ? "Todas as Modalidades"
-                  : curriculumFormattedName.schoolCourseName}
+                  : curriculumFormattedName.schoolCourseName} */}
                 :
               </h1>
 
