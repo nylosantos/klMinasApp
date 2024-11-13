@@ -460,7 +460,15 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         ...curriculumToShow,
         placesAvailable: foundedCurriculum.placesAvailable,
         students: foundedCurriculum.students,
+        experimentalStudents: foundedCurriculum.experimentalStudents,
         waitingList: foundedCurriculum.waitingList,
+        id: foundedCurriculum.id,
+        schoolId: foundedCurriculum.schoolId,
+        schoolClassId: foundedCurriculum.schoolClassId,
+        schoolCourseId: foundedCurriculum.schoolCourseId,
+        classDayId: foundedCurriculum.classDayId,
+        scheduleId: foundedCurriculum.scheduleId,
+        teacherId: foundedCurriculum.teacherId,
       };
       schoolDatabaseData.map((school) => {
         if (school.id === foundedCurriculum.schoolId) {

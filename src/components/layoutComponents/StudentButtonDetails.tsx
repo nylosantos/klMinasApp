@@ -3,12 +3,12 @@ import { useContext } from "react";
 import { IoIosArrowDown, IoMdClose } from "react-icons/io";
 import { IoPencil } from "react-icons/io5";
 import { MdDelete, MdOutlinePreview } from "react-icons/md";
-import { TbCurrencyReal } from "react-icons/tb";
+// import { TbCurrencyReal } from "react-icons/tb";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import { HandleClickOpenFunctionProps } from "../../pages/Dashboard";
+import { HandleClickOpenFunctionProps } from "../../@types";
 
 type StudentButtonDetailsProps = {
   id: string;
@@ -29,7 +29,7 @@ type StudentButtonDetailsProps = {
 export function StudentButtonDetails({
   id,
   isEdit,
-  isFinance,
+  // isFinance,
   isDetailsViewing,
   isFinancialResponsible,
   open,
@@ -47,7 +47,7 @@ export function StudentButtonDetails({
 
   return (
     <Menu>
-      <MenuButton className="inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
+      <MenuButton className="w-[5.65vw] inline-flex items-center justify-evenly rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-0 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
         Opções <IoIosArrowDown size={10} />
       </MenuButton>
       <MenuItems
@@ -95,7 +95,8 @@ export function StudentButtonDetails({
           </MenuItem>
         )}
 
-        {!isFinance && (
+        {/* BOTÃO PARA ACESSAR PARTE FINANCEIRA - DESATIVADO ATÉ IMPLANTAÇÃO */}
+        {/* {!isFinance && (
           <MenuItem>
             <button
               className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
@@ -108,12 +109,12 @@ export function StudentButtonDetails({
             >
               <TbCurrencyReal />
               Financeiro
-              {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
+              <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
                                         ⌘D
-                                      </kbd> */}
+                                      </kbd>
             </button>
           </MenuItem>
-        )}
+        )} */}
 
         {open && id !== "" && (
           <MenuItem>

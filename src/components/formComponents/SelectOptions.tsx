@@ -33,6 +33,7 @@ export function SelectOptions({
   displayAdmins = false,
   availableAndWaitingClasses = false,
   dontShowMyself = false,
+  showAllCourses = false,
   parentOneEmail,
   parentTwoEmail,
   financialResponsibleDocument,
@@ -256,6 +257,8 @@ export function SelectOptions({
         } else {
           setData([]);
         }
+      } else if (showAllCourses) {
+        setData(schoolCourseDatabaseData);
       } else {
         setData([]);
       }

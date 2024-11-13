@@ -921,12 +921,7 @@ export function InsertCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              schoolId={curriculumData.schoolId}
-              schoolClassId={curriculumData.schoolClassId}
-              dataType="schoolCourses"
-            />
+            <SelectOptions returnId showAllCourses dataType="schoolCourses" />
           </select>
         </div>
 
@@ -1123,6 +1118,12 @@ export function InsertCurriculum() {
                   Professor:{" "}
                   <span className="text-red-600 dark:text-yellow-500">
                     {curriculumFormattedName.teacherName}
+                  </span>
+                </p>
+                <p>
+                  Total de vagas:{" "}
+                  <span className="text-red-600 dark:text-yellow-500">
+                    {curriculumData.placesAvailable}
                   </span>
                 </p>
               </div>

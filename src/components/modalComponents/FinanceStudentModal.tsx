@@ -1,14 +1,12 @@
 import { v4 as uuidv4 } from "uuid";
-import {
-  HandleClickOpenFunctionProps,
-  PaymentArrayProps,
-} from "../../pages/Dashboard";
 import EditDashboardHeader from "../layoutComponents/EditDashboardHeader";
 import { useContext } from "react";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { HandleClickOpenFunctionProps } from "../../@types";
+import { PaymentArrayProps } from "../dashboardComponents/DashboardStudents";
 
 type FinanceStudentModalProps = {
   studentId: string;

@@ -29,12 +29,15 @@ import {
   EditStudentValidationZProps,
   ExcludeCurriculumProps,
   ExcludeFamilyProps,
+  ExcludeWaitingListProps,
+  HandleClickOpenFunctionProps,
   SchoolClassSearchProps,
   SchoolCourseSearchProps,
   SchoolSearchProps,
   SearchCurriculumValidationZProps,
   StudentSearchProps,
   ToggleClassDaysFunctionProps,
+  WaitingListProps,
 } from "../../@types";
 import {
   classDayIndex,
@@ -50,11 +53,11 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import { HandleClickOpenFunctionProps } from "../../pages/Dashboard";
 import EditDashboardHeader from "../layoutComponents/EditDashboardHeader";
 import { EditCurriculumButton } from "../layoutComponents/EditCurriculumButton";
 import { EditFamilyButton } from "../layoutComponents/EditFamilyButton";
 import BirthDaySelect from "./BirthDaySelect";
+import { EditWaitingListButton } from "../layoutComponents/EditWaitingListButton";
 
 export type NewPricesProps = {
   appliedPrice: number;
@@ -723,6 +726,11 @@ export function EditStudentForm({
   const [haveCurriculum, setHaveCurriculum] = useState(false);
 
   // INCLUDE / EXLUDE CURRICULUM STATES
+  const [excludeWaitingList, setExcludeWaitingList] = useState<
+    ExcludeWaitingListProps[]
+  >([]);
+
+  // INCLUDE / EXLUDE CURRICULUM STATES
   const [excludeCurriculum, setExcludeCurriculum] = useState<
     ExcludeCurriculumProps[]
   >([]);
@@ -732,7 +740,7 @@ export function EditStudentForm({
     (string | undefined)[]
   >([]);
 
-  // INCLUDE / EXLUDE CURRICULUM STATES
+  // INCLUDE / EXLUDE EXPERIMENTAL CURRICULUM STATES
   const [excludeExperimentalCurriculum, setExcludeExperimentalCurriculum] =
     useState<ExcludeCurriculumProps[]>([]);
 
@@ -811,6 +819,26 @@ export function EditStudentForm({
       }
     );
     setExcludeExperimentalCurriculum(newExcludeExperimentalCurriculum);
+  }
+
+  // CHANGE STUDENT WAITING LIST CURRICULUM (INCLUDE / EXCLUDE) FUNCTION
+  function handleIncludeExcludeWaitingCurriculum(
+    index: number,
+    data: ExcludeWaitingListProps
+  ) {
+    const newExcludeWaitingList = excludeWaitingList.map((curriculum, i) => {
+      if (i === index) {
+        return {
+          exclude: data.exclude,
+          id: data.id,
+          date: data.date,
+        };
+      } else {
+        // THE REST HAVEN'T CHANGED
+        return curriculum;
+      }
+    });
+    setExcludeWaitingList(newExcludeWaitingList);
   }
 
   // SET PHONE FORMATTED
@@ -948,16 +976,48 @@ export function EditStudentForm({
     }
   };
 
+  // SET STUDENT WAITING LISTS CURRICULUM DETAILS
+  const handleStudentWaitingListCurriculumDetails = async () => {
+    const curriculumsWaiting: WaitingListProps[] = [];
+    curriculumDatabaseData.map((curriculum) => {
+      curriculum.waitingList.map((studentWaiting) => {
+        if (studentWaiting.id === studentId) {
+          curriculumsWaiting.push({
+            date: studentWaiting.date,
+            id: curriculum.id,
+          });
+        }
+      });
+    });
+
+    if (curriculumsWaiting.length > 0) {
+      curriculumsWaiting.map((waitingCurriculumDetail) => {
+        setExcludeWaitingList((excludeWaitingList) => [
+          ...excludeWaitingList,
+          {
+            exclude: false,
+            date: waitingCurriculumDetail.date,
+            id: waitingCurriculumDetail.id,
+          },
+        ]);
+      });
+    } else {
+      setExcludeWaitingList([]);
+    }
+  };
+
   // SET STUDENT FAMILY ARRAY DETAILS WHEN STUDENT IS SELECTED
   useEffect(() => {
     setExcludeExperimentalCurriculum([]);
     setExcludeFamily([]);
     setStudentCurriculumDetails([]);
     setStudentFamilyDetails([]);
+    setExcludeWaitingList([]);
     if (studentId !== "") {
       handleStudentFamilyDetails();
       handleStudentCurriculumDetails();
       handleStudentExperimentalCurriculumDetails();
+      handleStudentWaitingListCurriculumDetails();
     }
   }, [studentId]);
 
@@ -1095,29 +1155,18 @@ export function EditStudentForm({
   useEffect(() => {
     setExcludeCurriculum([]);
     setExcludeExperimentalCurriculum([]);
-    if (studentCurriculumDetails !== undefined) {
-      if (studentCurriculumDetails.length > 0) {
-        setHaveCurriculum(true);
-        for (let index = 0; index < studentCurriculumDetails.length; index++) {
-          if (studentCurriculumDetails[index]! !== undefined) {
-            if (studentCurriculumDetails[index]!.isExperimental) {
-              setExcludeExperimentalCurriculum(
-                (excludeExperimentalCurriculum) => [
-                  ...excludeExperimentalCurriculum,
-                  {
-                    exclude: false,
-                    id: studentCurriculumDetails![index]!.id,
-                    isExperimental:
-                      studentCurriculumDetails![index]!.isExperimental,
-                    date: studentCurriculumDetails![index]!.date,
-                    indexDays: studentCurriculumDetails![index]!.indexDays,
-                    price: studentCurriculumDetails![index]!.price,
-                  },
-                ]
-              );
-            } else {
-              setExcludeCurriculum((excludeCurriculum) => [
-                ...excludeCurriculum,
+    // if (studentCurriculumDetails !== undefined) {
+    if (
+      studentCurriculumDetails !== undefined &&
+      studentCurriculumDetails.length > 0
+    ) {
+      setHaveCurriculum(true);
+      for (let index = 0; index < studentCurriculumDetails.length; index++) {
+        if (studentCurriculumDetails[index]! !== undefined) {
+          if (studentCurriculumDetails[index]!.isExperimental) {
+            setExcludeExperimentalCurriculum(
+              (excludeExperimentalCurriculum) => [
+                ...excludeExperimentalCurriculum,
                 {
                   exclude: false,
                   id: studentCurriculumDetails![index]!.id,
@@ -1127,14 +1176,28 @@ export function EditStudentForm({
                   indexDays: studentCurriculumDetails![index]!.indexDays,
                   price: studentCurriculumDetails![index]!.price,
                 },
-              ]);
-            }
+              ]
+            );
+          } else {
+            setExcludeCurriculum((excludeCurriculum) => [
+              ...excludeCurriculum,
+              {
+                exclude: false,
+                id: studentCurriculumDetails![index]!.id,
+                isExperimental:
+                  studentCurriculumDetails![index]!.isExperimental,
+                date: studentCurriculumDetails![index]!.date,
+                indexDays: studentCurriculumDetails![index]!.indexDays,
+                price: studentCurriculumDetails![index]!.price,
+              },
+            ]);
           }
         }
-      } else {
-        setHaveCurriculum(false);
       }
+    } else {
+      setHaveCurriculum(false);
     }
+    // }
   }, [studentCurriculumDetails]);
   // -------------------------- END OF STUDENT SELECT STATES AND FUNCTIONS -------------------------- //
 
@@ -1838,6 +1901,75 @@ export function EditStudentForm({
     }
   }, [willHaveFamily]);
 
+  // MONITORING IF WAITING LIST IS ENROLLING
+  const [
+    showEnrollWaitingCurriculumDetails,
+    setShowEnrollWaitingCurriculumDetails,
+  ] = useState(false);
+
+  const [addEnrollWaitingCurriculum, setAddEnrollWaitingCurriculum] =
+    useState(false);
+
+  // WAITING LIST ENROLLMENT HANDLING FUNCTION
+  const handleEnrollWithCurriculum = (curriculumId: string) => {
+    // SEARCHING CURRICULUM IN THE DATABASE
+    const foundedCurriculum = curriculumDatabaseData.find(
+      (curriculum) => curriculum.id === curriculumId
+    );
+
+    // UNCHECKING ADD CURRICULUM CHECKBOX
+    setStudentEditData((prevData) => ({
+      ...prevData,
+      addCurriculum: false,
+    }));
+
+    // CHECKING ALL CLASSDAYSDATA DAYS
+    setClassDaysData((prevData) => ({
+      ...prevData,
+      Domingo: true,
+      Segunda: true,
+      Terça: true,
+      Quarta: true,
+      Quinta: true,
+      Sexta: true,
+      Sábado: true,
+    }));
+
+    setNewClass({
+      ...newClass,
+      enrolledDays: [],
+    });
+
+    if (foundedCurriculum) {
+      setAddEnrollWaitingCurriculum(true);
+      setCurriculumData({
+        schoolId: foundedCurriculum.schoolId,
+        schoolClassId: foundedCurriculum.schoolClassId,
+        schoolCourseId: foundedCurriculum.schoolCourseId,
+      });
+      setNewStudentData({
+        ...newStudentData,
+        curriculum: foundedCurriculum.id,
+        curriculumClassDayId: foundedCurriculum.classDayId,
+        confirmAddCurriculum: false,
+      });
+      setNewClass({
+        ...newClass,
+        date: "",
+      });
+      setClassDaysData({
+        Domingo: true,
+        Segunda: true,
+        Terça: true,
+        Quarta: true,
+        Quinta: true,
+        Sexta: true,
+        Sábado: true,
+      });
+      setShowEnrollWaitingCurriculumDetails(true);
+    }
+  };
+
   // SET MONTHLY PAYMENT WHEN SCHOOL COURSE PRICE, OR ADD FAMILY, OR EMPLOYEE DISCOUNT CHANGE
   useEffect(() => {
     let haveFamilyWill = false;
@@ -1922,7 +2054,13 @@ export function EditStudentForm({
           newClass.enrolledDays.length %
           newStudentData.curriculumCourseBundleDays;
         let newCoursePrice;
-        if (isNaN(result) || isNaN(rest)) {
+        if (
+          handleOneCurriculumDetails(newStudentData.curriculum).waitingList
+            .length > 0 &&
+          !showEnrollWaitingCurriculumDetails
+        ) {
+          newCoursePrice = 0;
+        } else if (isNaN(result) || isNaN(rest)) {
           newCoursePrice = 0;
         } else {
           newCoursePrice =
@@ -1951,21 +2089,31 @@ export function EditStudentForm({
             fullPrice: smallestPrice + otherSumPrices,
           });
         }
-      } else if (studentEditData.addCurriculum) {
+      } else if (
+        studentEditData.addCurriculum ||
+        showEnrollWaitingCurriculumDetails
+      ) {
         // ----------- CALC ALSO PRESENT IN INSERT STUDENT ----------- //
-        if (newClass.enrolledDays.length === 0) {
+        if (
+          handleOneCurriculumDetails(newStudentData.curriculum).waitingList
+            .length > 0 &&
+          !showEnrollWaitingCurriculumDetails
+        ) {
           setNewPrices({
             appliedPrice: 0,
             fullPrice: 0,
           });
-        }
-        if (newClass.enrolledDays.length === 1) {
+        } else if (newClass.enrolledDays.length === 0) {
+          setNewPrices({
+            appliedPrice: 0,
+            fullPrice: 0,
+          });
+        } else if (newClass.enrolledDays.length === 1) {
           setNewPrices({
             appliedPrice: newStudentData.curriculumCoursePriceUnit,
             fullPrice: newStudentData.curriculumCoursePriceUnit,
           });
-        }
-        if (newClass.enrolledDays.length > 1) {
+        } else if (newClass.enrolledDays.length > 1) {
           const result = Math.floor(
             newClass.enrolledDays.length /
               newStudentData.curriculumCourseBundleDays
@@ -2003,6 +2151,7 @@ export function EditStudentForm({
     excludeFamily,
     newStudentData.curriculum,
     newClass.enrolledDays,
+    showEnrollWaitingCurriculumDetails,
   ]);
 
   // REACT HOOK FORM SETTINGS
@@ -2442,7 +2591,14 @@ export function EditStudentForm({
     data
   ) => {
     setIsSubmitting(true);
-    console.log(data);
+    console.log(newStudentData);
+    const waitingListPosition =
+      handleOneCurriculumDetails(newStudentData.curriculum)
+        .waitingList.sort(
+          (a, b) => Number(a.date.toDate()) - Number(b.date.toDate())
+        )
+        .findIndex((student) => student.id === data.id) + 1;
+
     // CHECKING VALID FINANCIAL RESPONSIBLE DOCUMENT
     if (!testFinancialCPF) {
       return (
@@ -2459,6 +2615,36 @@ export function EditStudentForm({
           }
         )
       );
+    }
+
+    // CHECKING IF WAITING CURRICULUM WAS DELETED
+    const waitingCurriculumsToDelete: ExcludeWaitingListProps[] = [];
+    excludeWaitingList.map(async (waitingCurriculum) => {
+      if (waitingCurriculum.exclude) {
+        waitingCurriculumsToDelete.push(waitingCurriculum);
+      }
+    });
+    if (waitingCurriculumsToDelete.length > 0) {
+      waitingCurriculumsToDelete.map(async (waitingCurriculums) => {
+        const foundedCurriculum = curriculumDatabaseData.find(
+          (curriculum) => curriculum.id === waitingCurriculums.id
+        );
+        if (foundedCurriculum) {
+          const foundedStudentOnCurriculumWaitingList =
+            foundedCurriculum.waitingList.find(
+              (student) => student.id === data.id
+            );
+          if (foundedStudentOnCurriculumWaitingList) {
+            // UPDATE CURRICULUM (DELETE STUDENT FROM CURRICULUM WAITING LIST)
+            await updateDoc(doc(db, "curriculum", foundedCurriculum.id), {
+              waitingList: arrayRemove({
+                date: foundedStudentOnCurriculumWaitingList.date,
+                id: foundedStudentOnCurriculumWaitingList.id,
+              }),
+            });
+          }
+        }
+      });
     }
 
     // CHECKING IF CURRICULUM WAS EDITED
@@ -2539,24 +2725,38 @@ export function EditStudentForm({
       setExperimentalClassError(false);
     }
 
+    console.log(
+      handleOneCurriculumDetails(newStudentData.curriculum).placesAvailable -
+        handleOneCurriculumDetails(newStudentData.curriculum).students.length >
+        0
+    );
+    console.log(waitingListPosition === 1);
+
     // CHECKING IF CURRICULUM INITIAL CLASS DATE WAS PICKED
     if (
-      newStudentData.confirmAddCurriculum &&
-      newStudentData.curriculumInitialDate === ""
+      handleOneCurriculumDetails(newStudentData.curriculum).placesAvailable -
+        handleOneCurriculumDetails(newStudentData.curriculum).students.length >
+        0 &&
+      waitingListPosition === 1
     ) {
-      return (
-        setIsSubmitting(false),
-        setNewClassError(true),
-        toast.error("Escolha a data de início na nova modalidade... ❕", {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        })
-      );
-    } else {
-      setNewClassError(false);
+      if (
+        newStudentData.confirmAddCurriculum &&
+        newStudentData.curriculumInitialDate === ""
+      ) {
+        return (
+          setIsSubmitting(false),
+          setNewClassError(true),
+          toast.error("Escolha a data de início na nova modalidade... ❕", {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
+        );
+      } else {
+        setNewClassError(false);
+      }
     }
 
     // CHECK IF ADD EXPERIMENTAL CURRICULUM
@@ -2703,20 +2903,39 @@ export function EditStudentForm({
     }
 
     // CHECK IF ADD CURRICULUM AND CONFIRM ADD
-    if (studentEditData.addCurriculum && !newStudentData.confirmAddCurriculum) {
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `Selecione uma nova modalidade para incluir ou desmarque a opção "Adicionar Modalidade"...... ❕`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
-      );
+    if (
+      (studentEditData.addCurriculum || addEnrollWaitingCurriculum) &&
+      !newStudentData.confirmAddCurriculum
+    ) {
+      if (studentEditData.addCurriculum) {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Selecione uma nova modalidade para incluir ou desmarque a opção "Adicionar Modalidade"...... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      } else {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Selecione a data de início para a sair da lista de espera...... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      }
     } else {
       // CHECK IF CURRICULUM ALREADY EXISTS ON STUDENT DATABASE
       const checkExistentCurriculum = [];
@@ -2784,43 +3003,77 @@ export function EditStudentForm({
     }
 
     // CHECK IF SOME CURRICULUM WAS INCLUDED
-    if (studentEditData.addCurriculum) {
-      const result = Math.floor(
-        newClass.enrolledDays.length / newStudentData.curriculumCourseBundleDays
-      );
-      const rest =
-        newClass.enrolledDays.length %
-        newStudentData.curriculumCourseBundleDays;
+    if (
+      handleOneCurriculumDetails(newStudentData.curriculum).placesAvailable -
+        handleOneCurriculumDetails(newStudentData.curriculum).students.length >
+        0 &&
+      waitingListPosition === 1
+    ) {
+      if (studentEditData.addCurriculum || addEnrollWaitingCurriculum) {
+        const waitingCurriculumToExcludeStudent = excludeWaitingList.find(
+          (waitingCurriculum) =>
+            waitingCurriculum.id === newStudentData.curriculum
+        );
+        if (waitingCurriculumToExcludeStudent) {
+          const result = Math.floor(
+            newClass.enrolledDays.length /
+              newStudentData.curriculumCourseBundleDays
+          );
+          const rest =
+            newClass.enrolledDays.length %
+            newStudentData.curriculumCourseBundleDays;
 
-      // UPDATE STUDENT (INSERT CURRICULUM)
-      await updateDoc(doc(db, "students", data.id), {
-        curriculumIds: arrayUnion({
-          date: Timestamp.fromDate(
-            new Date(newStudentData.curriculumInitialDate)
-          ),
-          id: newStudentData.curriculum,
-          isExperimental: false,
-          indexDays: newClass.enrolledDays,
-          price:
-            result * newStudentData.curriculumCoursePriceBundle +
-            rest * newStudentData.curriculumCoursePriceUnit,
-        }),
-      });
+          // UPDATE STUDENT (INSERT CURRICULUM)
+          await updateDoc(doc(db, "students", data.id), {
+            curriculumIds: arrayUnion({
+              date: Timestamp.fromDate(
+                new Date(newStudentData.curriculumInitialDate)
+              ),
+              id: newStudentData.curriculum,
+              isExperimental: false,
+              indexDays: newClass.enrolledDays,
+              price:
+                result * newStudentData.curriculumCoursePriceBundle +
+                rest * newStudentData.curriculumCoursePriceUnit,
+            }),
+          });
 
-      // UPDATE CURRICULUM (INSERT STUDENT)
-      await updateDoc(doc(db, "curriculum", newStudentData.curriculum), {
-        students: arrayUnion({
-          date: Timestamp.fromDate(
-            new Date(newStudentData.curriculumInitialDate)
-          ),
-          id: data.id,
-          indexDays: newClass.enrolledDays,
-          isExperimental: false,
-          price:
-            result * newStudentData.curriculumCoursePriceBundle +
-            rest * newStudentData.curriculumCoursePriceUnit,
-        }),
-      });
+          // UPDATE CURRICULUM (INSERT STUDENT IN ENROLLED STUDENTS AND REMOVE FROM WAITING LIST)
+          await updateDoc(doc(db, "curriculum", newStudentData.curriculum), {
+            students: arrayUnion({
+              date: Timestamp.fromDate(
+                new Date(newStudentData.curriculumInitialDate)
+              ),
+              id: data.id,
+              indexDays: newClass.enrolledDays,
+              isExperimental: false,
+              price:
+                result * newStudentData.curriculumCoursePriceBundle +
+                rest * newStudentData.curriculumCoursePriceUnit,
+            }),
+            waitingList: arrayRemove({
+              id: data.id,
+              date: waitingCurriculumToExcludeStudent.date,
+            }),
+          });
+        } else {
+          console.log('não achei o aluno...')
+        }
+      }
+    } else {
+      if (newStudentData.curriculum) {
+        // ADD STUDENT TO WAITING LIST ARRAY OF CURRICULUM TABLE
+        await setDoc(
+          doc(db, "curriculum", newStudentData.curriculum),
+          {
+            waitingList: arrayUnion({
+              id: data.id,
+              date: Timestamp.now(),
+            }),
+          },
+          { merge: true }
+        );
+      }
     }
 
     // CHECK IF ADD FAMILY
@@ -4962,64 +5215,84 @@ export function EditStudentForm({
               )}
 
               {newStudentData.experimentalCurriculum &&
-              classDayExperimentalCurriculumSelectedData !== undefined ? (
-                <>
-                  {/* EXPERIMENTAL/INITIAL DAY */}
-                  <div className="flex gap-2 items-center">
-                    <label
-                      htmlFor="experimentalClassPick"
-                      className={
-                        experimentalClassError
-                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                          : "w-1/4 text-right"
-                      }
-                    >
-                      Escolha o dia da aula experimental:
-                    </label>
-                    <div className="flex w-3/4">
-                      <DatePicker
-                        months={months}
-                        weekDays={weekDays}
-                        placeholder={
-                          experimentalClassError
-                            ? "É necessário selecionar uma Data"
-                            : "Selecione uma Data"
-                        }
-                        currentDate={new DateObject()}
-                        inputClass={
-                          experimentalClassError
-                            ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                            : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        }
-                        minDate={new DateObject().add(1, "day")}
-                        mapDays={({ date }) => {
-                          const isWeekend =
-                            classDayExperimentalCurriculumSelectedData.indexDays.includes(
-                              date.weekDay.index
-                            );
+                classDayExperimentalCurriculumSelectedData !== undefined && (
+                  <>
+                    {handleOneCurriculumDetails(newStudentData.curriculum)
+                      .placesAvailable > 0 &&
+                    handleOneCurriculumDetails(newStudentData.curriculum)
+                      .waitingList.length === 0 ? (
+                      <>
+                        {/* EXPERIMENTAL/INITIAL DAY */}
+                        <div className="flex gap-2 items-center">
+                          <label
+                            htmlFor="experimentalClassPick"
+                            className={
+                              experimentalClassError
+                                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                                : "w-1/4 text-right"
+                            }
+                          >
+                            Escolha o dia da aula experimental:
+                          </label>
+                          <div className="flex w-3/4">
+                            <DatePicker
+                              months={months}
+                              weekDays={weekDays}
+                              placeholder={
+                                experimentalClassError
+                                  ? "É necessário selecionar uma Data"
+                                  : "Selecione uma Data"
+                              }
+                              currentDate={new DateObject()}
+                              inputClass={
+                                experimentalClassError
+                                  ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                  : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                              }
+                              minDate={new DateObject().add(1, "day")}
+                              mapDays={({ date }) => {
+                                const isWeekend =
+                                  classDayExperimentalCurriculumSelectedData.indexDays.includes(
+                                    date.weekDay.index
+                                  );
 
-                          if (!isWeekend)
-                            return {
-                              disabled: true,
-                              style: { color: "#ccc" },
-                              title: "Aula não disponível neste dia",
-                            };
-                        }}
-                        editable={false}
-                        format="DD/MM/YYYY"
-                        onChange={(e: DateObject) => {
-                          e !== null
-                            ? setNewStudentData({
-                                ...newStudentData,
-                                experimentalCurriculumInitialDate: `${e.month}/${e.day}/${e.year}`,
-                              })
-                            : null;
-                        }}
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : null}
+                                if (!isWeekend)
+                                  return {
+                                    disabled: true,
+                                    style: { color: "#ccc" },
+                                    title: "Aula não disponível neste dia",
+                                  };
+                              }}
+                              editable={false}
+                              format="DD/MM/YYYY"
+                              onChange={(e: DateObject) => {
+                                e !== null
+                                  ? setNewStudentData({
+                                      ...newStudentData,
+                                      experimentalCurriculumInitialDate: `${e.month}/${e.day}/${e.year}`,
+                                    })
+                                  : null;
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col w-full items-center justify-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent rounded-2xl text-center text-lg text-red-600 dark:text-yellow-500">
+                        {/* CLASS WAITING LIST DISCLAIMER */}
+                        <h1 className="font-bold">FILA DE ESPERA</h1>
+                        <p className="flex items-center">
+                          A turma selecionada está sem vaga disponível para
+                          matrícula, confirme a inclusão abaixo e salve o
+                          cadastro para entrar na fila de espera.
+                          <br /> Seguimos uma ordem nesta fila por data de
+                          cadastro, sendo assim, à medida que as vagas forem
+                          disponibilizadas, entraremos em contato.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
 
               {/** CHECKBOX CONFIRM INSERT NEW EXPERIMENTAL CURRICULUM */}
               <div className="flex justify-center items-center gap-2 mt-6">
@@ -5045,6 +5318,347 @@ export function EditStudentForm({
               </div>
             </div>
           )}
+
+          {/** WAITING LIST SECTION TITLE */}
+          {!(onlyView && excludeWaitingList.length < 1) && (
+            <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+              Lista de espera:
+            </h1>
+          )}
+
+          {/* EXISTENT WAITING LIST CURRICULUM */}
+          {!(onlyView && excludeWaitingList.length < 1) &&
+            excludeWaitingList.map((curriculum, index) => (
+              <div className="flex gap-2 items-center" key={curriculum.id}>
+                <label
+                  htmlFor="existentCurriculumName"
+                  className="w-1/4 text-right"
+                >
+                  Aula {index + 1}
+                  {curriculum.exclude && (
+                    <span className="text-xs">
+                      {" "}
+                      (selecionada para exclusão)
+                    </span>
+                  )}
+                  :{" "}
+                </label>
+                <div className="flex w-3/4 gap-2">
+                  <div className="w-11/12">
+                    <input
+                      type="text"
+                      name="existentCurriculumName"
+                      disabled={
+                        isSubmitting
+                          ? true
+                          : onlyView
+                          ? true
+                          : curriculum.exclude
+                      }
+                      className={
+                        curriculum.exclude
+                          ? "w-full px-2 py-1 dark:bg-gray-800 border border-klOrange-500 dark:border-klOrange-500 dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      }
+                      value={formatCurriculumName(curriculum.id)}
+                      readOnly
+                    />
+                  </div>
+                  {!onlyView && (
+                    <EditWaitingListButton
+                      studentId={studentId}
+                      curriculum={curriculum}
+                      index={index}
+                      handleIncludeExcludeFunction={
+                        handleIncludeExcludeWaitingCurriculum
+                      }
+                      handleEnrollClick={handleEnrollWithCurriculum}
+                      showEnrollWaitingCurriculumDetails={
+                        showEnrollWaitingCurriculumDetails
+                      }
+                      setShowEnrollWaitingCurriculumDetails={
+                        setShowEnrollWaitingCurriculumDetails
+                      }
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
+
+          {showEnrollWaitingCurriculumDetails &&
+            newStudentData.curriculum &&
+            classDayCurriculumSelectedData &&
+            classDayCurriculumSelectedData.indexDays.length !== undefined && (
+              <div className="flex flex-col w-full items-center justify-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent rounded-2xl">
+                <div className="w-full p-4 mb-4 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left">
+                  <div className="grid grid-cols-2 gap-6">
+                    <p>
+                      Escola:{" "}
+                      <span className="text-red-600 dark:text-yellow-500">
+                        {
+                          handleOneCurriculumDetails(newStudentData.curriculum)
+                            .schoolName
+                        }
+                      </span>
+                    </p>
+                    <p>
+                      Ano Escolar:{" "}
+                      <span className="text-red-600 dark:text-yellow-500">
+                        {
+                          handleOneCurriculumDetails(newStudentData.curriculum)
+                            .schoolClassName
+                        }
+                      </span>
+                    </p>
+                    <p>
+                      Modalidade:{" "}
+                      <span className="text-red-600 dark:text-yellow-500">
+                        {
+                          handleOneCurriculumDetails(newStudentData.curriculum)
+                            .schoolCourseName
+                        }
+                      </span>
+                    </p>
+                    {scheduleDatabaseData.map(
+                      (details) =>
+                        details.id ===
+                          handleOneCurriculumDetails(newStudentData.curriculum)
+                            .scheduleId && (
+                          <p>
+                            Horário:{" "}
+                            <span className="text-red-600 dark:text-yellow-500">
+                              De{" "}
+                              {`${details.classStart.slice(0, 2)}h${
+                                details.classStart.slice(3, 5) === "00"
+                                  ? ""
+                                  : details.classStart.slice(3, 5) + "min"
+                              } a ${details.classEnd.slice(0, 2)}h${
+                                details.classEnd.slice(3, 5) === "00"
+                                  ? ""
+                                  : details.classEnd.slice(3, 5) + "min"
+                              }`}
+                            </span>
+                          </p>
+                        )
+                    )}
+                    <p>
+                      Dias:{" "}
+                      <span className="text-red-600 dark:text-yellow-500">
+                        {
+                          handleOneCurriculumDetails(newStudentData.curriculum)
+                            .classDayName
+                        }
+                      </span>
+                    </p>
+                    <p>
+                      Professor:{" "}
+                      <span className="text-red-600 dark:text-yellow-500">
+                        {
+                          handleOneCurriculumDetails(newStudentData.curriculum)
+                            .teacherName
+                        }
+                      </span>
+                    </p>
+                    {userFullData && userFullData.role !== "user" && (
+                      <p>
+                        Vagas Disponíveis:{" "}
+                        <span className="text-red-600 dark:text-yellow-500">
+                          {handleOneCurriculumDetails(newStudentData.curriculum)
+                            .placesAvailable -
+                            handleOneCurriculumDetails(
+                              newStudentData.curriculum
+                            ).students.length}
+                        </span>
+                      </p>
+                    )}
+                    {handleOneCurriculumDetails(newStudentData.curriculum)
+                      .waitingList.length > 0 && (
+                      <p>
+                        Alunos na lista de espera:{" "}
+                        <span className="text-red-600 dark:text-yellow-500">
+                          {
+                            handleOneCurriculumDetails(
+                              newStudentData.curriculum
+                            ).waitingList.length
+                          }
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* STUDENT CLASS DAYS */}
+                <div className="flex w-full gap-2 items-center py-2">
+                  <label
+                    htmlFor="experimentalClassPick"
+                    className={
+                      experimentalClassError
+                        ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                        : "w-1/4 text-right"
+                    }
+                  >
+                    Escolha os dias de Aula:
+                  </label>
+                  <div className="flex w-3/4">
+                    <div className="flex w-full items-center">
+                      {classDayCurriculumSelectedData.indexDays.map(
+                        (classDayIndexNumber) =>
+                          classDayIndex.map(
+                            (day) =>
+                              day.id === classDayIndexNumber &&
+                              (newStudentData.indexDays.includes(day.id) ? (
+                                <>
+                                  <div
+                                    key={uuidv4()}
+                                    className="flex w-full items-center gap-2"
+                                  >
+                                    <input
+                                      key={uuidv4()}
+                                      type="checkbox"
+                                      className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none opacity-70"
+                                      id={day.name}
+                                      name={day.name}
+                                      checked={false}
+                                      disabled
+                                    />
+                                    <label
+                                      key={uuidv4()}
+                                      htmlFor={day.name}
+                                      className="opacity-70"
+                                    >
+                                      {" "}
+                                      {day.name}{" "}
+                                      <span className="text-xs">
+                                        (aluno já faz aula neste dia)
+                                      </span>
+                                    </label>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div
+                                    key={uuidv4()}
+                                    className="flex w-full items-center gap-2"
+                                  >
+                                    <input
+                                      key={uuidv4()}
+                                      type="checkbox"
+                                      className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
+                                      id={day.name}
+                                      name={day.name}
+                                      checked={
+                                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                        //@ts-ignore
+                                        classDaysData[day.name]
+                                      }
+                                      onChange={() =>
+                                        toggleClassDays({
+                                          day: day.name,
+                                          value:
+                                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                            //@ts-ignore
+                                            !classDaysData[day.name],
+                                        })
+                                      }
+                                    />
+                                    <label key={uuidv4()} htmlFor={day.name}>
+                                      {" "}
+                                      {day.name}
+                                    </label>
+                                  </div>
+                                </>
+                              ))
+                          )
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* NEW CURRICULUM/INITIAL DAY */}
+                <div className="flex w-full gap-2 items-center">
+                  <label
+                    htmlFor="newCurriculumClassPick"
+                    className={
+                      newClassError
+                        ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                        : "w-1/4 text-right"
+                    }
+                  >
+                    Escolha o dia de início da nova modalidade:
+                  </label>
+                  <div className="flex w-3/4">
+                    <DatePicker
+                      months={months}
+                      weekDays={weekDays}
+                      placeholder={
+                        newClassError
+                          ? "É necessário selecionar uma Data"
+                          : "Selecione uma Data"
+                      }
+                      currentDate={new DateObject()}
+                      inputClass={
+                        newClassError
+                          ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      }
+                      minDate={new DateObject().add(1, "day")}
+                      mapDays={({ date }) => {
+                        const isWeekend = newClass.enrolledDays.includes(
+                          date.weekDay.index
+                        );
+
+                        if (!isWeekend)
+                          return {
+                            disabled: true,
+                            style: { color: "#ccc" },
+                            title: "Aula não disponível neste dia",
+                          };
+                      }}
+                      editable={false}
+                      format="DD/MM/YYYY"
+                      onChange={(e: DateObject) => {
+                        e !== null
+                          ? setNewStudentData({
+                              ...newStudentData,
+                              curriculumInitialDate: `${e.month}/${e.day}/${e.year}`,
+                            })
+                          : null;
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {dayIsAlreadyWithClass && (
+                  <>
+                    {/* DAY WITH OTHER CLASS ALREADY PICKED ALERT */}
+                    <h1 className="font-bold py-4 text-red-600 dark:text-yellow-500">
+                      Atenção: alguns dias não estão disponíveis pois o Aluno já
+                      está matriculado em outra modalidade neste mesmo dia, após
+                      excluir e salvar os dias estarão disponíveis.
+                    </h1>
+                  </>
+                )}
+                {/** CHECKBOX CONFIRM INSERT NEW CURRICULUM */}
+                <div className="flex justify-center items-center gap-2 mt-6">
+                  <input
+                    type="checkbox"
+                    name="confirmAddCurriculum"
+                    className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                    checked={newStudentData.confirmAddCurriculum}
+                    onChange={() => {
+                      setNewStudentData({
+                        ...newStudentData,
+                        confirmAddCurriculum:
+                          !newStudentData.confirmAddCurriculum,
+                      });
+                    }}
+                  />
+                  <label htmlFor="confirmAddCurriculum" className="text-sm">
+                    Confirmar inclusão da Aula
+                  </label>
+                </div>
+              </div>
+            )}
 
           {/** CURRICULUM SECTION TITLE */}
           {!(onlyView && excludeCurriculum.length < 1) && (
@@ -5412,11 +6026,7 @@ export function EditStudentForm({
                   <h1 className="font-bold text-2xl py-4">
                     {newSchoolSelectedData?.name} -{" "}
                     {newSchoolClassSelectedData?.name} -{" "}
-                    {newSchoolCourseSelectedData?.name}
-                    {/* {curriculumData.schoolCourseId === "all"
-                      ? "Todas as Modalidades"
-                      : newSchoolCourseSelectedData?.name} */}
-                    :
+                    {newSchoolCourseSelectedData?.name}:
                   </h1>
 
                   {/* SEPARATOR */}
@@ -5468,51 +6078,98 @@ export function EditStudentForm({
                               className="flex flex-col gap-4"
                             >
                               <p>
+                                Escola:{" "}
+                                <span className="text-red-600 dark:text-yellow-500">
+                                  {
+                                    handleOneCurriculumDetails(curriculum.id)
+                                      .schoolName
+                                  }
+                                </span>
+                              </p>
+                              <p>
                                 Ano Escolar:{" "}
-                                {
-                                  handleOneCurriculumDetails(curriculum.id)
-                                    .schoolClassName
-                                }
+                                <span className="text-red-600 dark:text-yellow-500">
+                                  {
+                                    handleOneCurriculumDetails(curriculum.id)
+                                      .schoolClassName
+                                  }
+                                </span>
                               </p>
                               <p>
                                 Modalidade:{" "}
-                                {
-                                  handleOneCurriculumDetails(curriculum.id)
-                                    .schoolCourseName
-                                }
+                                <span className="text-red-600 dark:text-yellow-500">
+                                  {
+                                    handleOneCurriculumDetails(curriculum.id)
+                                      .schoolCourseName
+                                  }
+                                </span>
                               </p>
-                              {scheduleDatabaseData.map((details) =>
-                                details.name ===
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .scheduleName
-                                  ? `Horário: De ${details.classStart.slice(
-                                      0,
-                                      2
-                                    )}h${
-                                      details.classStart.slice(3, 5) === "00"
-                                        ? ""
-                                        : details.classStart.slice(3, 5) + "min"
-                                    } a ${details.classEnd.slice(0, 2)}h${
-                                      details.classEnd.slice(3, 5) === "00"
-                                        ? ""
-                                        : details.classEnd.slice(3, 5) + "min"
-                                    }`
-                                  : null
+                              {scheduleDatabaseData.map(
+                                (details) =>
+                                  details.id ===
+                                    handleOneCurriculumDetails(curriculum.id)
+                                      .scheduleId && (
+                                    <p>
+                                      Horário:{" "}
+                                      <span className="text-red-600 dark:text-yellow-500">
+                                        De{" "}
+                                        {`${details.classStart.slice(0, 2)}h${
+                                          details.classStart.slice(3, 5) ===
+                                          "00"
+                                            ? ""
+                                            : details.classStart.slice(3, 5) +
+                                              "min"
+                                        } a ${details.classEnd.slice(0, 2)}h${
+                                          details.classEnd.slice(3, 5) === "00"
+                                            ? ""
+                                            : details.classEnd.slice(3, 5) +
+                                              "min"
+                                        }`}
+                                      </span>
+                                    </p>
+                                  )
                               )}
                               <p>
                                 Dias:{" "}
-                                {
-                                  handleOneCurriculumDetails(curriculum.id)
-                                    .classDayName
-                                }
+                                <span className="text-red-600 dark:text-yellow-500">
+                                  {
+                                    handleOneCurriculumDetails(curriculum.id)
+                                      .classDayName
+                                  }
+                                </span>
                               </p>
                               <p>
                                 Professor:{" "}
-                                {
-                                  handleOneCurriculumDetails(curriculum.id)
-                                    .teacherName
-                                }
+                                <span className="text-red-600 dark:text-yellow-500">
+                                  {
+                                    handleOneCurriculumDetails(curriculum.id)
+                                      .teacherName
+                                  }
+                                </span>
                               </p>
+                              {userFullData && userFullData.role !== "user" && (
+                                <p>
+                                  Vagas Disponíveis:{" "}
+                                  <span className="text-red-600 dark:text-yellow-500">
+                                    {handleOneCurriculumDetails(curriculum.id)
+                                      .placesAvailable -
+                                      handleOneCurriculumDetails(curriculum.id)
+                                        .students.length}
+                                  </span>
+                                </p>
+                              )}
+                              {handleOneCurriculumDetails(curriculum.id)
+                                .waitingList.length > 0 && (
+                                <p>
+                                  Alunos na lista de espera:{" "}
+                                  <span className="text-red-600 dark:text-yellow-500">
+                                    {
+                                      handleOneCurriculumDetails(curriculum.id)
+                                        .waitingList.length
+                                    }
+                                  </span>
+                                </p>
+                              )}
                             </label>
                           </div>
                         ))}
@@ -5539,162 +6196,190 @@ export function EditStudentForm({
               )}
 
               {newStudentData.curriculum &&
-              classDayCurriculumSelectedData &&
-              classDayCurriculumSelectedData.indexDays.length !== undefined ? (
-                <>
-                  {/* STUDENT CLASS DAYS */}
-                  <div className="flex gap-2 items-center py-2">
-                    <label
-                      htmlFor="experimentalClassPick"
-                      className={
-                        experimentalClassError
-                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                          : "w-1/4 text-right"
-                      }
-                    >
-                      Escolha os dias de Aula:
-                    </label>
-                    <div className="flex w-3/4">
-                      <div className="flex w-full items-center">
-                        {classDayCurriculumSelectedData.indexDays.map(
-                          (classDayIndexNumber) =>
-                            classDayIndex.map(
-                              (day) =>
-                                day.id === classDayIndexNumber &&
-                                (newStudentData.indexDays.includes(day.id) ? (
-                                  <>
-                                    <div
-                                      key={uuidv4()}
-                                      className="flex w-full items-center gap-2"
-                                    >
-                                      <input
-                                        key={uuidv4()}
-                                        type="checkbox"
-                                        className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none opacity-70"
-                                        id={day.name}
-                                        name={day.name}
-                                        checked={false}
-                                        disabled
-                                      />
-                                      <label
-                                        key={uuidv4()}
-                                        htmlFor={day.name}
-                                        className="opacity-70"
-                                      >
-                                        {" "}
-                                        {day.name}{" "}
-                                        <span className="text-xs">
-                                          (aluno já faz aula neste dia)
-                                        </span>
-                                      </label>
-                                    </div>
-                                  </>
-                                ) : (
-                                  <>
-                                    <div
-                                      key={uuidv4()}
-                                      className="flex w-full items-center gap-2"
-                                    >
-                                      <input
-                                        key={uuidv4()}
-                                        type="checkbox"
-                                        className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
-                                        id={day.name}
-                                        name={day.name}
-                                        checked={
-                                          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                                          //@ts-ignore
-                                          classDaysData[day.name]
-                                        }
-                                        onChange={() =>
-                                          toggleClassDays({
-                                            day: day.name,
-                                            value:
-                                              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                                              //@ts-ignore
-                                              !classDaysData[day.name],
-                                          })
-                                        }
-                                      />
-                                      <label key={uuidv4()} htmlFor={day.name}>
-                                        {" "}
-                                        {day.name}
-                                      </label>
-                                    </div>
-                                  </>
-                                ))
-                            )
+                classDayCurriculumSelectedData &&
+                classDayCurriculumSelectedData.indexDays.length !==
+                  undefined && (
+                  <>
+                    {handleOneCurriculumDetails(newStudentData.curriculum)
+                      .placesAvailable > 0 &&
+                    handleOneCurriculumDetails(newStudentData.curriculum)
+                      .waitingList.length === 0 ? (
+                      <div>
+                        {/* STUDENT CLASS DAYS */}
+                        <div className="flex gap-2 items-center py-2">
+                          <label
+                            htmlFor="experimentalClassPick"
+                            className={
+                              experimentalClassError
+                                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                                : "w-1/4 text-right"
+                            }
+                          >
+                            Escolha os dias de Aula:
+                          </label>
+                          <div className="flex w-3/4">
+                            <div className="flex w-full items-center">
+                              {classDayCurriculumSelectedData.indexDays.map(
+                                (classDayIndexNumber) =>
+                                  classDayIndex.map(
+                                    (day) =>
+                                      day.id === classDayIndexNumber &&
+                                      (newStudentData.indexDays.includes(
+                                        day.id
+                                      ) ? (
+                                        <>
+                                          <div
+                                            key={uuidv4()}
+                                            className="flex w-full items-center gap-2"
+                                          >
+                                            <input
+                                              key={uuidv4()}
+                                              type="checkbox"
+                                              className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none opacity-70"
+                                              id={day.name}
+                                              name={day.name}
+                                              checked={false}
+                                              disabled
+                                            />
+                                            <label
+                                              key={uuidv4()}
+                                              htmlFor={day.name}
+                                              className="opacity-70"
+                                            >
+                                              {" "}
+                                              {day.name}{" "}
+                                              <span className="text-xs">
+                                                (aluno já faz aula neste dia)
+                                              </span>
+                                            </label>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <div
+                                            key={uuidv4()}
+                                            className="flex w-full items-center gap-2"
+                                          >
+                                            <input
+                                              key={uuidv4()}
+                                              type="checkbox"
+                                              className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
+                                              id={day.name}
+                                              name={day.name}
+                                              checked={
+                                                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                                //@ts-ignore
+                                                classDaysData[day.name]
+                                              }
+                                              onChange={() =>
+                                                toggleClassDays({
+                                                  day: day.name,
+                                                  value:
+                                                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                                    //@ts-ignore
+                                                    !classDaysData[day.name],
+                                                })
+                                              }
+                                            />
+                                            <label
+                                              key={uuidv4()}
+                                              htmlFor={day.name}
+                                            >
+                                              {" "}
+                                              {day.name}
+                                            </label>
+                                          </div>
+                                        </>
+                                      ))
+                                  )
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* NEW CURRICULUM/INITIAL DAY */}
+                        <div className="flex gap-2 items-center">
+                          <label
+                            htmlFor="newCurriculumClassPick"
+                            className={
+                              newClassError
+                                ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                                : "w-1/4 text-right"
+                            }
+                          >
+                            Escolha o dia de início da nova modalidade:
+                          </label>
+                          <div className="flex w-3/4">
+                            <DatePicker
+                              months={months}
+                              weekDays={weekDays}
+                              placeholder={
+                                newClassError
+                                  ? "É necessário selecionar uma Data"
+                                  : "Selecione uma Data"
+                              }
+                              currentDate={new DateObject()}
+                              inputClass={
+                                newClassError
+                                  ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                  : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                              }
+                              minDate={new DateObject().add(1, "day")}
+                              mapDays={({ date }) => {
+                                const isWeekend =
+                                  newClass.enrolledDays.includes(
+                                    date.weekDay.index
+                                  );
+
+                                if (!isWeekend)
+                                  return {
+                                    disabled: true,
+                                    style: { color: "#ccc" },
+                                    title: "Aula não disponível neste dia",
+                                  };
+                              }}
+                              editable={false}
+                              format="DD/MM/YYYY"
+                              onChange={(e: DateObject) => {
+                                e !== null
+                                  ? setNewStudentData({
+                                      ...newStudentData,
+                                      curriculumInitialDate: `${e.month}/${e.day}/${e.year}`,
+                                    })
+                                  : null;
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {dayIsAlreadyWithClass && (
+                          <>
+                            {/* DAY WITH OTHER CLASS ALREADY PICKED ALERT */}
+                            <h1 className="font-bold py-4 text-red-600 dark:text-yellow-500">
+                              Atenção: alguns dias não estão disponíveis pois o
+                              Aluno já está matriculado em outra modalidade
+                              neste mesmo dia, após excluir e salvar os dias
+                              estarão disponíveis.
+                            </h1>
+                          </>
                         )}
                       </div>
-                    </div>
-                  </div>
-
-                  {/* NEW CURRICULUM/INITIAL DAY */}
-                  <div className="flex gap-2 items-center">
-                    <label
-                      htmlFor="newCurriculumClassPick"
-                      className={
-                        newClassError
-                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                          : "w-1/4 text-right"
-                      }
-                    >
-                      Escolha o dia de início da nova modalidade:
-                    </label>
-                    <div className="flex w-3/4">
-                      <DatePicker
-                        months={months}
-                        weekDays={weekDays}
-                        placeholder={
-                          newClassError
-                            ? "É necessário selecionar uma Data"
-                            : "Selecione uma Data"
-                        }
-                        currentDate={new DateObject()}
-                        inputClass={
-                          newClassError
-                            ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                            : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        }
-                        minDate={new DateObject().add(1, "day")}
-                        mapDays={({ date }) => {
-                          const isWeekend = newClass.enrolledDays.includes(
-                            date.weekDay.index
-                          );
-
-                          if (!isWeekend)
-                            return {
-                              disabled: true,
-                              style: { color: "#ccc" },
-                              title: "Aula não disponível neste dia",
-                            };
-                        }}
-                        editable={false}
-                        format="DD/MM/YYYY"
-                        onChange={(e: DateObject) => {
-                          e !== null
-                            ? setNewStudentData({
-                                ...newStudentData,
-                                curriculumInitialDate: `${e.month}/${e.day}/${e.year}`,
-                              })
-                            : null;
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {dayIsAlreadyWithClass ? (
-                    <>
-                      {/* DAY WITH OTHER CLASS ALREADY PICKED ALERT */}
-                      <h1 className="font-bold py-4 text-red-600 dark:text-yellow-500">
-                        Atenção: alguns dias não estão disponíveis pois o Aluno
-                        já está matriculado em outra modalidade neste mesmo dia,
-                        após excluir e salvar os dias estarão disponíveis.
-                      </h1>
-                    </>
-                  ) : null}
-                </>
-              ) : null}
+                    ) : (
+                      <div className="flex flex-col w-full items-center justify-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent rounded-2xl text-center text-lg text-red-600 dark:text-yellow-500">
+                        {/* CLASS WAITING LIST DISCLAIMER */}
+                        <h1 className="font-bold">FILA DE ESPERA</h1>
+                        <p className="flex items-center">
+                          A turma selecionada está sem vaga disponível para
+                          matrícula, confirme a inclusão abaixo e salve o
+                          cadastro para entrar na fila de espera.
+                          <br /> Seguimos uma ordem nesta fila por data de
+                          cadastro, sendo assim, à medida que as vagas forem
+                          disponibilizadas, entraremos em contato.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
 
               {/** CHECKBOX CONFIRM INSERT NEW CURRICULUM */}
               <div className="flex justify-center items-center gap-2 mt-6">
@@ -5890,7 +6575,7 @@ export function EditStudentForm({
             Financeiro:
           </h1>
 
-          {!onlyView && (
+          {!onlyView && userFullData && userFullData.role !== "user" && (
             <>
               {/** CHECKBOX ADD ENROLMENT EXEMPTION */}
               <div className="flex gap-2 items-center py-2">
@@ -5934,7 +6619,7 @@ export function EditStudentForm({
             />
           </div>
 
-          {!onlyView && (
+          {!onlyView && userFullData && userFullData.role !== "user" && (
             <>
               {/** CHECKBOX ADD EMPLOYEE DISCOUNT */}
               <div className="flex gap-2 items-center">
@@ -6038,6 +6723,83 @@ export function EditStudentForm({
               })}
             />
           </div>
+
+          {/* STUDENT PAYMENT DAY */}
+          {!onlyView && (
+            <div className="flex gap-2 items-center">
+              {userFullData && userFullData.role !== "user" ? (
+                <>
+                  <label htmlFor="dayPayment" className="w-1/4 text-right">
+                    Melhor dia para pagamento:
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                      value="5"
+                      name="gender"
+                      checked={
+                        studentEditData.paymentDay === "5" ? true : false
+                      }
+                      onChange={(e) =>
+                        setStudentEditData({
+                          ...studentEditData,
+                          paymentDay: e.target.value,
+                        })
+                      }
+                    />{" "}
+                    5
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                      value="10"
+                      name="gender"
+                      checked={
+                        studentEditData.paymentDay === "10" ? true : false
+                      }
+                      onChange={(e) =>
+                        setStudentEditData({
+                          ...studentEditData,
+                          paymentDay: e.target.value,
+                        })
+                      }
+                    />{" "}
+                    10
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                      value="15"
+                      name="gender"
+                      checked={
+                        studentEditData.paymentDay === "15" ? true : false
+                      }
+                      onChange={(e) =>
+                        setStudentEditData({
+                          ...studentEditData,
+                          paymentDay: e.target.value,
+                        })
+                      }
+                    />{" "}
+                    15
+                  </label>
+                </>
+              ) : (
+                <>
+                  <div className="flex w-1/4" />
+                  <div className="flex w-3/4 px-2 py-1 gap-10 justify-start items-center">
+                    <p className="text-sm text-red-600 dark:text-yellow-500">
+                      Data de vencimento dia 05 do mês a cursar, pagamento
+                      antecipado
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* SUBMIT AND RESET BUTTONS */}
           <div className="flex gap-2 my-4 justify-center">

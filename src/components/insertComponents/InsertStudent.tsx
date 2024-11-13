@@ -68,14 +68,16 @@ export function InsertStudent() {
     curriculumDatabaseData,
     isExperimentalClass,
     login,
+    page,
     schoolDatabaseData,
     schoolClassDatabaseData,
     schoolCourseDatabaseData,
     studentsDatabaseData,
-    setIsExperimentalClass,
     userFullData,
     handleAllCurriculumDetails,
     handleCurriculumDetailsWithSchoolCourse,
+    handleOneCurriculumDetails,
+    setIsExperimentalClass,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // STUDENT DATA
@@ -1133,7 +1135,12 @@ export function InsertStudent() {
         enrolledDays: [],
       });
     }
-    if (studentData.curriculum !== "") {
+    if (
+      studentData.curriculum !== "" &&
+      handleOneCurriculumDetails(studentData.curriculum).placesAvailable > 0 &&
+      handleOneCurriculumDetails(studentData.curriculum).waitingList.length ===
+        0
+    ) {
       setNewClass({
         ...newClass,
         isExperimental: true,
@@ -1472,10 +1479,6 @@ export function InsertStudent() {
     (
       document.getElementById("schoolCourseSelect") as HTMLSelectElement
     ).selectedIndex = 0;
-    const birthDateInput = document.getElementById(
-      "birthDate"
-    ) as HTMLInputElement;
-    birthDateInput.value = "";
     reset();
   };
 
@@ -1665,7 +1668,7 @@ export function InsertStudent() {
       });
     });
   }, [errors]);
-
+  console.log(studentData.birthDate);
   // SUBMIT DATA FUNCTION
   const handleAddStudent: SubmitHandler<CreateStudentValidationZProps> = async (
     data
@@ -1723,25 +1726,29 @@ export function InsertStudent() {
           familyDiscount: data.familyDiscount,
           secondCourseDiscount: data.secondCourseDiscount,
           paymentDay:
-            /*data.paymentDay === "" ? */ standardPaymentDay /* : data.paymentDay*/, // UNCOMMENT TO MAKE POSSIBLE TO SELECT PAYMENT DAY
-          experimentalCurriculumIds: newClass.isExperimental
-            ? arrayUnion({
-                id: data.curriculum,
-                date: Timestamp.fromDate(new Date(newClass.date)),
-                isExperimental: true,
-                indexDays: [],
-                price: newClass.fullPrice,
-              })
-            : arrayUnion(),
-          curriculumIds: !newClass.isExperimental
-            ? arrayUnion({
-                id: data.curriculum,
-                date: Timestamp.fromDate(new Date(newClass.date)),
-                isExperimental: false,
-                indexDays: newClass.enrolledDays,
-                price: newClass.fullPrice,
-              })
-            : arrayUnion(),
+            data.paymentDay === "" ? standardPaymentDay : data.paymentDay,
+          experimentalCurriculumIds:
+            handleOneCurriculumDetails(studentData.curriculum).placesAvailable >
+              0 && newClass.isExperimental
+              ? arrayUnion({
+                  id: data.curriculum,
+                  date: Timestamp.fromDate(new Date(newClass.date)),
+                  isExperimental: true,
+                  indexDays: [],
+                  price: newClass.fullPrice,
+                })
+              : arrayUnion(),
+          curriculumIds:
+            handleOneCurriculumDetails(studentData.curriculum).placesAvailable >
+              0 && !newClass.isExperimental
+              ? arrayUnion({
+                  id: data.curriculum,
+                  date: Timestamp.fromDate(new Date(newClass.date)),
+                  isExperimental: false,
+                  indexDays: newClass.enrolledDays,
+                  price: newClass.fullPrice,
+                })
+              : arrayUnion(),
           studentFamilyAtSchool: data.familyDiscount
             ? familyArray.filter((student) => student !== newStudentId)
             : arrayUnion(),
@@ -1777,52 +1784,68 @@ export function InsertStudent() {
           // Section 5: Last Updated Time
           updatedAt: serverTimestamp(),
         });
-        if (newClass.isExperimental) {
-          // CREATING AN EXPERIMENTAL CURRICULUM
-          // ADD STUDENT TO CURRICULUM TABLE ON EXPERIMENTAL STUDENTS COLLECTION
-          await setDoc(
-            doc(db, "curriculum", data.curriculum),
-            {
-              experimentalStudents: arrayUnion({
-                id: newStudentId,
-                date: Timestamp.fromDate(new Date(newClass.date)),
-                isExperimental: true,
-                indexDays: [],
-                price: newClass.fullPrice,
-              }),
-            },
-            { merge: true }
-          );
-        } else {
-          // CREATING AN ENROLLED CURRICULUM
-          // ADD STUDENT TO CURRICULUM TABLE ON STUDENT COLLECTION
-          await setDoc(
-            doc(db, "curriculum", data.curriculum),
-            {
-              students: arrayUnion({
-                id: newStudentId,
-                date: Timestamp.fromDate(new Date(newClass.date)),
-                isExperimental: false,
-                indexDays: newClass.enrolledDays,
-                price: newClass.fullPrice,
-              }),
-            },
-            { merge: true }
-          );
-        }
-        if (data.familyDiscount) {
-          // IF YOU WANT TO CREATE STUDENT INSIDE FAMILY TABLE COLLECTION, UNCOMMENT THIS SECTION
-          familyArray.map(async (familyStudent) => {
+        if (
+          handleOneCurriculumDetails(studentData.curriculum).placesAvailable > 0
+        ) {
+          if (newClass.isExperimental) {
+            // CREATING AN EXPERIMENTAL CURRICULUM
+            // ADD STUDENT TO CURRICULUM TABLE ON EXPERIMENTAL STUDENTS COLLECTION
             await setDoc(
-              doc(db, "students", familyStudent),
+              doc(db, "curriculum", data.curriculum),
               {
-                studentFamilyAtSchool: familyArray.filter(
-                  (student) => student !== familyStudent
-                ),
+                experimentalStudents: arrayUnion({
+                  id: newStudentId,
+                  date: Timestamp.fromDate(new Date(newClass.date)),
+                  isExperimental: true,
+                  indexDays: [],
+                  price: newClass.fullPrice,
+                }),
               },
               { merge: true }
             );
-          });
+          } else {
+            // CREATING AN ENROLLED CURRICULUM
+            // ADD STUDENT TO CURRICULUM TABLE ON STUDENT COLLECTION
+            await setDoc(
+              doc(db, "curriculum", data.curriculum),
+              {
+                students: arrayUnion({
+                  id: newStudentId,
+                  date: Timestamp.fromDate(new Date(newClass.date)),
+                  isExperimental: false,
+                  indexDays: newClass.enrolledDays,
+                  price: newClass.fullPrice,
+                }),
+              },
+              { merge: true }
+            );
+          }
+          if (data.familyDiscount) {
+            // IF YOU WANT TO CREATE STUDENT INSIDE FAMILY TABLE COLLECTION, UNCOMMENT THIS SECTION
+            familyArray.map(async (familyStudent) => {
+              await setDoc(
+                doc(db, "students", familyStudent),
+                {
+                  studentFamilyAtSchool: familyArray.filter(
+                    (student) => student !== familyStudent
+                  ),
+                },
+                { merge: true }
+              );
+            });
+          }
+        } else {
+          // ADD STUDENT TO WAITING LIST ARRAY OF CURRICULUM TABLE
+          await setDoc(
+            doc(db, "curriculum", data.curriculum),
+            {
+              waitingList: arrayUnion({
+                id: newStudentId,
+                date: Timestamp.now(),
+              }),
+            },
+            { merge: true }
+          );
         }
         toast.success(`Aluno ${data.name} criado com sucesso! 👌`, {
           theme: "colored",
@@ -1846,41 +1869,47 @@ export function InsertStudent() {
       }
     };
 
-    // CHEKING IF INITIAL CLASS DATE AND/OR EXPERIMENTAL CLASS DATE WAS PICKED
-    if (newClass.date === "") {
-      return (
-        setIsSubmitting(false),
-        setExperimentalClassError(true),
-        toast.error(
-          newClass.isExperimental
-            ? "Escolha a data da Aula Experimental... ❕"
-            : "Escolha a data da aula inicial... ❕",
-          {
+    if (
+      handleOneCurriculumDetails(studentData.curriculum).placesAvailable -
+        handleOneCurriculumDetails(studentData.curriculum).students.length >
+      0
+    ) {
+      // CHEKING IF INITIAL CLASS DATE AND/OR EXPERIMENTAL CLASS DATE WAS PICKED
+      if (newClass.date === "") {
+        return (
+          setIsSubmitting(false),
+          setExperimentalClassError(true),
+          toast.error(
+            newClass.isExperimental
+              ? "Escolha a data da Aula Experimental... ❕"
+              : "Escolha a data da aula inicial... ❕",
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      } else {
+        setExperimentalClassError(false);
+      }
+
+      // CHEKING IF CLASS DAY WAS PICKED
+      if (!newClass.isExperimental && newClass.enrolledDays.length < 1) {
+        return (
+          setIsSubmitting(false),
+          setExperimentalClassError(true),
+          toast.error("Escolha pelo menos um dia de aula... ❕", {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
             autoClose: 3000,
-          }
-        )
-      );
-    } else {
-      setExperimentalClassError(false);
-    }
-
-    // CHEKING IF CLASS DAY WAS PICKED
-    if (!newClass.isExperimental && newClass.enrolledDays.length < 1) {
-      return (
-        setIsSubmitting(false),
-        setExperimentalClassError(true),
-        toast.error("Escolha pelo menos um dia de aula... ❕", {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        })
-      );
+          })
+        );
+      }
     }
 
     // CHEKING VALID FINANCIAL RESPONSIBLE DOCUMENT
@@ -2015,20 +2044,31 @@ export function InsertStudent() {
   };
 
   return (
-    <div className="flex h-full flex-col container text-center overflow-scroll no-scrollbar rounded-xl">
+    <div
+      className={`flex h-full flex-col container text-center overflow-scroll no-scrollbar ${
+        page.show !== "Dashboard" &&
+        userFullData &&
+        userFullData.role !== "user" &&
+        "rounded-xl"
+      } `}
+    >
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
       {/* PAGE TITLE */}
-      {userFullData && userFullData.role !== "user" && (
-        <h1 className="font-bold text-2xl my-4">Adicionar Aluno</h1>
-      )}
+      {page.show !== "Dashboard" &&
+        userFullData &&
+        userFullData.role !== "user" && (
+          <h1 className="font-bold text-2xl my-4">Adicionar Aluno</h1>
+        )}
 
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddStudent)}
         className={`flex flex-col w-full gap-2 rounded-xl ${
-          userFullData && userFullData.role !== "user"
+          page.show !== "Dashboard" &&
+          userFullData &&
+          userFullData.role !== "user"
             ? "bg-klGreen-500/20 dark:bg-klGreen-500/30 p-4"
             : "pb-4 px-4 pt-2"
         }`}
@@ -2685,614 +2725,680 @@ export function InsertStudent() {
                     a.schoolClassName.localeCompare(b.schoolClassName)
                   )
                   .map((c) => (
-                    <>
-                      <div
-                        className={
-                          errors.curriculum
-                            ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                            : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                        }
-                        key={c.id}
+                    <div
+                      className={
+                        errors.curriculum
+                          ? "flex flex-col items-center p-4 mb-4 gap-6 bg-red-500/50 dark:bg-red-800/70 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                          : "flex flex-col items-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
+                      }
+                      key={c.id}
+                    >
+                      <input
+                        type="radio"
+                        checked={studentData.curriculum === c.id ? true : false}
+                        id={c.id}
+                        name="curriculumRadio"
+                        className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                        value={c.id}
+                        onChange={(e) => {
+                          setCurriculumData({
+                            ...curriculumData,
+                            schoolCourseId: c.schoolCourseId,
+                          });
+
+                          setStudentData({
+                            ...studentData,
+                            curriculum: e.target.value,
+                          });
+                        }}
+                      />
+                      <label
+                        htmlFor="curriculumRadio"
+                        className="flex flex-col gap-4"
                       >
-                        <input
-                          type="radio"
-                          checked={
-                            studentData.curriculum === c.id ? true : false
-                          }
-                          id={c.id}
-                          name="curriculumRadio"
-                          className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                          value={c.id}
-                          onChange={(e) => {
-                            setCurriculumData({
-                              ...curriculumData,
-                              schoolCourseId: c.schoolCourseId,
-                            });
+                        <p>
+                          Escola:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.schoolName}
+                          </span>
+                        </p>
 
-                            setStudentData({
-                              ...studentData,
-                              curriculum: e.target.value,
-                            });
-                          }}
-                        />
-                        <label
-                          htmlFor="curriculumRadio"
-                          className="flex flex-col gap-4"
-                        >
-                          <p>
-                            Escola:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {c.schoolName}
-                            </span>
-                          </p>
+                        <p>
+                          Ano Escolar:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.schoolClassName}
+                          </span>
+                        </p>
 
+                        <p>
+                          Modalidade:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.schoolCourseName}
+                          </span>
+                        </p>
+                        <p>
+                          Dias:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.classDayName}
+                          </span>
+                        </p>
+                        {schedulesDetailsData.map(
+                          (details: ScheduleSearchProps) =>
+                            details.id === c.scheduleId ? (
+                              <p>
+                                Horário:{" "}
+                                <span className="text-red-600 dark:text-yellow-500">
+                                  De {details.classStart.slice(0, 2)}h
+                                  {details.classStart.slice(3, 5) === "00"
+                                    ? ""
+                                    : details.classStart.slice(3, 5) +
+                                      "min"}{" "}
+                                  a {details.classEnd.slice(0, 2)}h
+                                  {details.classEnd.slice(3, 5) === "00"
+                                    ? ""
+                                    : details.classEnd.slice(3, 5) + "min"}{" "}
+                                  ({details.name})
+                                </span>
+                              </p>
+                            ) : null
+                        )}
+                        <p>
+                          Professor:{" "}
+                          <span className="text-red-600 dark:text-yellow-500">
+                            {c.teacherName}
+                          </span>
+                        </p>
+                        {userFullData && userFullData.role !== "user" && (
                           <p>
-                            Ano Escolar:{" "}
+                            Vagas Disponíveis:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {c.schoolClassName}
+                              {handleOneCurriculumDetails(c.id)
+                                .placesAvailable -
+                                handleOneCurriculumDetails(c.id).students
+                                  .length}
                             </span>
                           </p>
-
+                        )}
+                        {handleOneCurriculumDetails(c.id).waitingList.length >
+                          0 && (
                           <p>
-                            Modalidade:{" "}
+                            Alunos na lista de espera:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {c.schoolCourseName}
+                              {
+                                handleOneCurriculumDetails(c.id).waitingList
+                                  .length
+                              }
                             </span>
                           </p>
-                          <p>
-                            Dias:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {c.classDayName}
-                            </span>
-                          </p>
-                          {schedulesDetailsData.map(
-                            (details: ScheduleSearchProps) =>
-                              details.id === c.scheduleId ? (
-                                <p>
-                                  Horário:{" "}
-                                  <span className="text-red-600 dark:text-yellow-500">
-                                    De {details.classStart.slice(0, 2)}h
-                                    {details.classStart.slice(3, 5) === "00"
-                                      ? ""
-                                      : details.classStart.slice(3, 5) +
-                                        "min"}{" "}
-                                    a {details.classEnd.slice(0, 2)}h
-                                    {details.classEnd.slice(3, 5) === "00"
-                                      ? ""
-                                      : details.classEnd.slice(3, 5) +
-                                        "min"}{" "}
-                                    ({details.name})
-                                  </span>
-                                </p>
-                              ) : null
-                          )}
-                          <p>
-                            Professor:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {c.teacherName}
-                            </span>
-                          </p>
-                        </label>
-                      </div>
-                    </>
+                        )}
+                      </label>
+                    </div>
                   ))}
               </div>
 
-              {/* IS EXPERIMENTAL CLASS ? */}
               {studentData.curriculum && (
                 <>
-                  {/* EXPERIMENTAL CLASS QUESTION */}
-                  <div className="flex gap-2 items-center">
-                    <label
-                      htmlFor="experimentalClassSelectQuestion"
-                      className={
-                        experimentalClassError
-                          ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                          : "w-1/4 text-right"
-                      }
-                    >
-                      Aula Experimental?:{" "}
-                    </label>
-                    <select
-                      id="experimentalClassSelectQuestion"
-                      defaultValue={"true"}
-                      disabled={curriculumData.schoolCourseId ? false : true}
-                      className={
-                        curriculumData.schoolCourseId
-                          ? experimentalClassError
-                            ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                            : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                      }
-                      name="experimentalClassSelectQuestion"
-                      onChange={(e) => {
-                        setNewClass({
-                          ...newClass,
-                          isExperimental:
-                            e.target.value === "true" ? true : false,
-                          date: "",
-                        });
-                        setClassDaysData({
-                          Domingo: true,
-                          Segunda: true,
-                          Terça: true,
-                          Quarta: true,
-                          Quinta: true,
-                          Sexta: true,
-                          Sábado: true,
-                        });
-                      }}
-                    >
-                      <option value={"true"}>Sim</option>
-                      <option value={"false"}>Não</option>
-                    </select>
-                  </div>
-
-                  {classDaySelectedData &&
-                    newClass &&
-                    classDaySelectedData?.indexDays.length > 0 && (
-                      <>
-                        {/* EXPERIMENTAL/INITIAL DAY */}
-                        <div className="flex gap-2 items-center">
-                          <label
-                            htmlFor="experimentalClassPick"
-                            className={
-                              experimentalClassError
-                                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                                : "w-1/4 text-right"
-                            }
-                          >
-                            {newClass.isExperimental
-                              ? "Escolha o dia da aula experimental: "
-                              : "Escolha a data de início: "}
-                          </label>
-                          <div className="flex w-3/4">
-                            <DatePicker
-                              months={months}
-                              weekDays={weekDays}
-                              placeholder={
-                                experimentalClassError
-                                  ? "É necessário selecionar uma Data"
-                                  : "Selecione uma Data"
-                              }
-                              currentDate={new DateObject()}
-                              containerClassName="w-full"
-                              style={{ width: "100%" }}
-                              inputClass={
-                                experimentalClassError
-                                  ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                                  : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                              }
-                              minDate={new DateObject().add(1, "day")}
-                              mapDays={({ date }) => {
-                                if (!newClass.isExperimental) {
-                                  const isWeekend =
-                                    newClass.enrolledDays.includes(
-                                      date.weekDay.index
-                                    );
-                                  if (!isWeekend)
-                                    return {
-                                      disabled: true,
-                                      style: { color: "#ccc" },
-                                      title: "Aula não disponível neste dia",
-                                    };
-                                } else {
-                                  const isWeekend =
-                                    classDaySelectedData.indexDays.includes(
-                                      date.weekDay.index
-                                    );
-                                  if (!isWeekend)
-                                    return {
-                                      disabled: true,
-                                      style: { color: "#ccc" },
-                                      title: "Aula não disponível neste dia",
-                                    };
-                                }
-                              }}
-                              editable={false}
-                              format="DD/MM/YYYY"
-                              onChange={(e: DateObject) => {
-                                e !== null &&
-                                  setNewClass({
-                                    ...newClass,
-                                    date: `${e.month}/${e.day}/${e.year}`,
-                                  });
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                  {classDaySelectedData &&
-                    !newClass.isExperimental &&
-                    classDaySelectedData.indexNames.length > 0 && (
-                      <>
-                        {/* STUDENT CLASS DAYS */}
-                        <div className="flex gap-2 items-center py-2">
-                          <label
-                            htmlFor="experimentalClassPick"
-                            className={
-                              experimentalClassError
-                                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                                : "w-1/4 text-right"
-                            }
-                          >
-                            Escolha os dias de Aula:
-                          </label>
-                          <div className="flex w-3/4">
-                            <>
-                              {classDaySelectedData.indexNames.map(
-                                (classDayName) => (
-                                  <div
-                                    key={uuidv4()}
-                                    className="flex w-24 items-center gap-2"
-                                  >
-                                    <input
-                                      key={uuidv4()}
-                                      type="checkbox"
-                                      className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
-                                      id={classDayName}
-                                      name={classDayName}
-                                      //@ts-ignore
-                                      checked={classDaysData[classDayName]}
-                                      onChange={() =>
-                                        toggleClassDays({
-                                          day: classDayName,
-                                          //@ts-ignore
-                                          value: !classDaysData[classDayName],
-                                        })
-                                      }
-                                    />
-                                    <label
-                                      key={uuidv4()}
-                                      htmlFor={classDayName}
-                                    >
-                                      {" "}
-                                      {classDayName}
-                                    </label>
-                                  </div>
-                                )
-                              )}
-                            </>
-                          </div>
-                        </div>
-
-                        {/** DISCOUNTS SECTION TITLE */}
-                        <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
-                          Aplicar Descontos:
-                        </h1>
-
-                        {/** DISCOUNTS SECTION SUBTITLE */}
-                        <div className="flex gap-2 items-center py-2">
-                          <div className="w-1/4" />
-                          <div className="flex gap-2 w-3/4 items-start text-left py-2">
-                            <p className="text-sm text-red-600 dark:text-yellow-500">
-                              Desconto Familiar: Informando um parente que já é
-                              matriculado na {customerFullName}, você obterá 10%
-                              de desconto no curso com mensalidade de menor
-                              valor. <br /> Desconto de Segundo Curso: Ao se
-                              matricular em um segundo curso na{" "}
-                              {customerFullName}, você obterá 10% de desconto no
-                              curso com mensalidade de menor valor. <br />{" "}
-                              ATENÇÃO: Os descontos não são cumulativos.
-                            </p>
-                          </div>
-                        </div>
-
-                        {userFullData && userFullData.role !== "user" && (
-                          <>
-                            {/** CHECKBOX ADD ENROLLMENT EXEMPTION */}
-                            <div className="flex gap-2 items-center py-2">
-                              <label
-                                htmlFor="enrolmentExemption"
-                                className="w-1/4 text-right"
-                              >
-                                Ativar Isenção de Matrícula ?{" "}
-                              </label>
-                              <div className="w-3/4 flex items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  name="enrolmentExemption"
-                                  className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                                  checked={studentData.enrolmentExemption}
-                                  onChange={() => {
-                                    setStudentData({
-                                      ...studentData,
-                                      enrolmentExemption:
-                                        !studentData.enrolmentExemption,
-                                    });
-                                  }}
-                                />
-                              </div>
-                            </div>
-
-                            {/** CHECKBOX ADD EMPLOYEE DISCOUNT */}
-                            <div className="flex gap-2 items-center py-2">
-                              <label
-                                htmlFor="employeeDiscount"
-                                className="w-1/4 text-right"
-                              >
-                                Ativar Desconto de Funcionário ? (20%){" "}
-                              </label>
-                              <div className="w-3/4 flex items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  name="employeeDiscount"
-                                  className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                                  disabled={studentData.customDiscount}
-                                  checked={studentData.employeeDiscount}
-                                  onChange={() => {
-                                    setStudentData({
-                                      ...studentData,
-                                      employeeDiscount:
-                                        !studentData.employeeDiscount,
-                                    });
-                                  }}
-                                />
-                              </div>
-                            </div>
-
-                            {/** CHECKBOX ADD CUSTOM DISCOUNT */}
-                            <div className="flex gap-2 items-center py-2">
-                              <label
-                                htmlFor="customDiscount"
-                                className="w-1/4 text-right"
-                              >
-                                Ativar Desconto Personalizado ?{" "}
-                              </label>
-                              <div className="w-3/4 flex items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  name="customDiscount"
-                                  className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
-                                  checked={studentData.customDiscount}
-                                  onChange={() => {
-                                    setStudentData({
-                                      ...studentData,
-                                      employeeDiscount: false,
-                                      customDiscount:
-                                        !studentData.customDiscount,
-                                    });
-                                  }}
-                                />
-                                <label
-                                  htmlFor="customDiscountValue"
-                                  className="w-1/4 text-right"
-                                >
-                                  Porcentagem de desconto:{" "}
-                                </label>
-                                <input
-                                  type="text"
-                                  name="customDiscountValue"
-                                  disabled={!studentData.customDiscount}
-                                  className={
-                                    studentData.customDiscount
-                                      ? errors.customDiscountValue
-                                        ? "w-1/12 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                                        : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                                      : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                                  }
-                                  pattern="^[+ 0-9]{5}$"
-                                  maxLength={2}
-                                  value={
-                                    studentData.customDiscount
-                                      ? studentData.customDiscountValue
-                                      : "0"
-                                  }
-                                  onChange={(e) =>
-                                    setStudentData({
-                                      ...studentData,
-                                      customDiscountValue: e.target.value
-                                        .replace(/[^0-9.]/g, "")
-                                        .replace(/(\..*?)\..*/g, "$1"),
-                                    })
-                                  }
-                                />
-                                <label
-                                  htmlFor="customDiscountValue"
-                                  className="w-1/4 text-left"
-                                >
-                                  %
-                                </label>
-                              </div>
-                            </div>
-                          </>
-                        )}
-
-                        {/* HAVE FAMILY AT SCHOOL QUESTION */}
-                        <div className="flex gap-2 items-center">
-                          <label
-                            htmlFor="familySchoolSelectQuestion"
-                            className={
-                              errors.familyDiscount
-                                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                                : "w-1/4 text-right"
-                            }
-                          >
-                            Algum parente estuda na escola?:{" "}
-                          </label>
-                          <select
-                            id="familySchoolSelectQuestion"
-                            defaultValue={"Não"}
-                            className={
-                              errors.familyDiscount
+                  {handleOneCurriculumDetails(studentData.curriculum)
+                    .placesAvailable > 0 &&
+                  handleOneCurriculumDetails(studentData.curriculum).waitingList
+                    .length === 0 ? (
+                    <>
+                      {/* IS EXPERIMENTAL CLASS ? */}
+                      {/* EXPERIMENTAL CLASS QUESTION */}
+                      <div className="flex gap-2 items-center">
+                        <label
+                          htmlFor="experimentalClassSelectQuestion"
+                          className={
+                            experimentalClassError
+                              ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                              : "w-1/4 text-right"
+                          }
+                        >
+                          Aula Experimental?:{" "}
+                        </label>
+                        <select
+                          id="experimentalClassSelectQuestion"
+                          defaultValue={"true"}
+                          disabled={
+                            curriculumData.schoolCourseId ? false : true
+                          }
+                          className={
+                            curriculumData.schoolCourseId
+                              ? experimentalClassError
                                 ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                                 : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                            }
-                            name="familySchoolSelectQuestion"
-                            onChange={() => {
-                              setStudentData({
-                                ...studentData,
-                                familyDiscount: !studentData.familyDiscount,
-                                confirmInsert: false,
-                              });
-                              setFamilyStudentData({
-                                ...familyStudentData,
-                                schoolId: "",
-                                schoolClassId: "",
-                                curriculumId: "",
-                                studentId: "",
-                              });
-                            }}
-                          >
-                            <option value={"Não"}>Não</option>
-                            <option value={"Sim"}>Sim</option>
-                          </select>
-                        </div>
+                              : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          }
+                          name="experimentalClassSelectQuestion"
+                          onChange={(e) => {
+                            setNewClass({
+                              ...newClass,
+                              isExperimental:
+                                e.target.value === "true" ? true : false,
+                              date: "",
+                            });
+                            setClassDaysData({
+                              Domingo: true,
+                              Segunda: true,
+                              Terça: true,
+                              Quarta: true,
+                              Quinta: true,
+                              Sexta: true,
+                              Sábado: true,
+                            });
+                          }}
+                        >
+                          <option value={"true"}>Sim</option>
+                          <option value={"false"}>Não</option>
+                        </select>
+                      </div>
 
-                        {/* SELECT FAMILY AT SCHOOL SECTION */}
-                        {studentData.familyDiscount && (
-                          <div className="flex flex-col py-2 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
-                            {/* FAMILY AT SCHOOL TITLE */}
-                            <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
-                              Atenção: a seguir selecione o aluno que já é
-                              matriculado na {customerFullName}, e é parente de{" "}
-                              {studentData.name}:
-                            </h1>
-
-                            {/** FAMILY AT SCHOOL SUBTITLE */}
-                            <div className="flex gap-2 items-center py-2">
-                              <div className="w-1/4" />
-                              <div className="flex gap-2 w-3/4 items-start text-left py-2">
-                                <p className="text-sm text-red-600 dark:text-yellow-500">
-                                  Não encontrou o parente? Verifique os dados de
-                                  Filiação e/ou Responsável financeiro.
-                                  <br />
-                                  Apenas alunos com a mesma filiação e/ou
-                                  Responsáveis Financeiros podem ser
-                                  selecionados como "parentes".
-                                </p>
-                              </div>
+                      {/* EXPERIMENTAL/INITIAL DAY */}
+                      {classDaySelectedData &&
+                        newClass &&
+                        classDaySelectedData?.indexDays.length > 0 && (
+                          <div className="flex gap-2 items-center">
+                            <label
+                              htmlFor="experimentalClassPick"
+                              className={
+                                experimentalClassError
+                                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                                  : "w-1/4 text-right"
+                              }
+                            >
+                              {newClass.isExperimental
+                                ? "Escolha o dia da aula experimental: "
+                                : "Escolha a data de início: "}
+                            </label>
+                            <div className="flex w-3/4">
+                              <DatePicker
+                                months={months}
+                                weekDays={weekDays}
+                                placeholder={
+                                  experimentalClassError
+                                    ? "É necessário selecionar uma Data"
+                                    : "Selecione uma Data"
+                                }
+                                currentDate={new DateObject()}
+                                containerClassName="w-full"
+                                style={{ width: "100%" }}
+                                inputClass={
+                                  experimentalClassError
+                                    ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                    : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                                }
+                                minDate={new DateObject().add(1, "day")}
+                                mapDays={({ date }) => {
+                                  if (!newClass.isExperimental) {
+                                    const isWeekend =
+                                      newClass.enrolledDays.includes(
+                                        date.weekDay.index
+                                      );
+                                    if (!isWeekend)
+                                      return {
+                                        disabled: true,
+                                        style: { color: "#ccc" },
+                                        title: "Aula não disponível neste dia",
+                                      };
+                                  } else {
+                                    const isWeekend =
+                                      classDaySelectedData.indexDays.includes(
+                                        date.weekDay.index
+                                      );
+                                    if (!isWeekend)
+                                      return {
+                                        disabled: true,
+                                        style: { color: "#ccc" },
+                                        title: "Aula não disponível neste dia",
+                                      };
+                                  }
+                                }}
+                                editable={false}
+                                format="DD/MM/YYYY"
+                                onChange={(e: DateObject) => {
+                                  e !== null &&
+                                    setNewClass({
+                                      ...newClass,
+                                      date: `${e.month}/${e.day}/${e.year}`,
+                                    });
+                                }}
+                              />
                             </div>
+                          </div>
+                        )}
 
-                            {/* STUDENT SELECT */}
-                            <div className="flex gap-2 items-center pb-2">
+                      {classDaySelectedData &&
+                        !newClass.isExperimental &&
+                        classDaySelectedData.indexNames.length > 0 && (
+                          <>
+                            {/* STUDENT CLASS DAYS */}
+                            <div className="flex gap-2 items-center py-2">
                               <label
-                                htmlFor="familyStudentSelect"
+                                htmlFor="experimentalClassPick"
                                 className={
-                                  errors.familyAtSchoolId
+                                  experimentalClassError
                                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
                                     : "w-1/4 text-right"
                                 }
                               >
-                                Selecione o Parente:{" "}
+                                Escolha os dias de Aula:
+                              </label>
+                              <div className="flex w-3/4">
+                                <>
+                                  {classDaySelectedData.indexNames.map(
+                                    (classDayName) => (
+                                      <div
+                                        key={uuidv4()}
+                                        className="flex w-24 items-center gap-2"
+                                      >
+                                        <input
+                                          key={uuidv4()}
+                                          type="checkbox"
+                                          className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
+                                          id={classDayName}
+                                          name={classDayName}
+                                          //@ts-ignore
+                                          checked={classDaysData[classDayName]}
+                                          onChange={() =>
+                                            toggleClassDays({
+                                              day: classDayName,
+                                              value:
+                                                //@ts-ignore
+                                                !classDaysData[classDayName],
+                                            })
+                                          }
+                                        />
+                                        <label
+                                          key={uuidv4()}
+                                          htmlFor={classDayName}
+                                        >
+                                          {" "}
+                                          {classDayName}
+                                        </label>
+                                      </div>
+                                    )
+                                  )}
+                                </>
+                              </div>
+                            </div>
+
+                            {/** DISCOUNTS SECTION TITLE */}
+                            <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
+                              Aplicar Descontos:
+                            </h1>
+
+                            {/** DISCOUNTS SECTION SUBTITLE */}
+                            <div className="flex gap-2 items-center py-2">
+                              <div className="w-1/4" />
+                              <div className="flex gap-2 w-3/4 items-start text-left py-2">
+                                <p className="text-sm text-red-600 dark:text-yellow-500">
+                                  Desconto Familiar: Informando um parente que
+                                  já é matriculado na {customerFullName}, você
+                                  obterá 10% de desconto no curso com
+                                  mensalidade de menor valor. <br /> Desconto de
+                                  Segundo Curso: Ao se matricular em um segundo
+                                  curso na {customerFullName}, você obterá 10%
+                                  de desconto no curso com mensalidade de menor
+                                  valor. <br /> ATENÇÃO: Os descontos não são
+                                  cumulativos.
+                                </p>
+                              </div>
+                            </div>
+
+                            {userFullData && userFullData.role !== "user" && (
+                              <>
+                                {/** CHECKBOX ADD ENROLLMENT EXEMPTION */}
+                                <div className="flex gap-2 items-center py-2">
+                                  <label
+                                    htmlFor="enrolmentExemption"
+                                    className="w-1/4 text-right"
+                                  >
+                                    Ativar Isenção de Matrícula ?{" "}
+                                  </label>
+                                  <div className="w-3/4 flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      name="enrolmentExemption"
+                                      className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                                      checked={studentData.enrolmentExemption}
+                                      onChange={() => {
+                                        setStudentData({
+                                          ...studentData,
+                                          enrolmentExemption:
+                                            !studentData.enrolmentExemption,
+                                        });
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+
+                                {/** CHECKBOX ADD EMPLOYEE DISCOUNT */}
+                                <div className="flex gap-2 items-center py-2">
+                                  <label
+                                    htmlFor="employeeDiscount"
+                                    className="w-1/4 text-right"
+                                  >
+                                    Ativar Desconto de Funcionário ? (20%){" "}
+                                  </label>
+                                  <div className="w-3/4 flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      name="employeeDiscount"
+                                      className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                                      disabled={studentData.customDiscount}
+                                      checked={studentData.employeeDiscount}
+                                      onChange={() => {
+                                        setStudentData({
+                                          ...studentData,
+                                          employeeDiscount:
+                                            !studentData.employeeDiscount,
+                                        });
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+
+                                {/** CHECKBOX ADD CUSTOM DISCOUNT */}
+                                <div className="flex gap-2 items-center py-2">
+                                  <label
+                                    htmlFor="customDiscount"
+                                    className="w-1/4 text-right"
+                                  >
+                                    Ativar Desconto Personalizado ?{" "}
+                                  </label>
+                                  <div className="w-3/4 flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      name="customDiscount"
+                                      className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none"
+                                      checked={studentData.customDiscount}
+                                      onChange={() => {
+                                        setStudentData({
+                                          ...studentData,
+                                          employeeDiscount: false,
+                                          customDiscount:
+                                            !studentData.customDiscount,
+                                        });
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor="customDiscountValue"
+                                      className="w-1/4 text-right"
+                                    >
+                                      Porcentagem de desconto:{" "}
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name="customDiscountValue"
+                                      disabled={!studentData.customDiscount}
+                                      className={
+                                        studentData.customDiscount
+                                          ? errors.customDiscountValue
+                                            ? "w-1/12 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                            : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                                          : "w-1/12 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                                      }
+                                      pattern="^[+ 0-9]{5}$"
+                                      maxLength={2}
+                                      value={
+                                        studentData.customDiscount
+                                          ? studentData.customDiscountValue
+                                          : "0"
+                                      }
+                                      onChange={(e) =>
+                                        setStudentData({
+                                          ...studentData,
+                                          customDiscountValue: e.target.value
+                                            .replace(/[^0-9.]/g, "")
+                                            .replace(/(\..*?)\..*/g, "$1"),
+                                        })
+                                      }
+                                    />
+                                    <label
+                                      htmlFor="customDiscountValue"
+                                      className="w-1/4 text-left"
+                                    >
+                                      %
+                                    </label>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            {/* HAVE FAMILY AT SCHOOL QUESTION */}
+                            <div className="flex gap-2 items-center">
+                              <label
+                                htmlFor="familySchoolSelectQuestion"
+                                className={
+                                  errors.familyDiscount
+                                    ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                                    : "w-1/4 text-right"
+                                }
+                              >
+                                Algum parente estuda na escola?:{" "}
                               </label>
                               <select
-                                id="familyStudentSelect"
-                                defaultValue={" -- select an option -- "}
+                                id="familySchoolSelectQuestion"
+                                defaultValue={"Não"}
                                 className={
-                                  errors.familyAtSchoolId
+                                  errors.familyDiscount
                                     ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                                     : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                                 }
-                                name="familyStudentSelect"
-                                onChange={(e) => {
+                                name="familySchoolSelectQuestion"
+                                onChange={() => {
+                                  setStudentData({
+                                    ...studentData,
+                                    familyDiscount: !studentData.familyDiscount,
+                                    confirmInsert: false,
+                                  });
                                   setFamilyStudentData({
                                     ...familyStudentData,
-                                    studentId: e.target.value,
-                                    confirmDelete: false,
+                                    schoolId: "",
+                                    schoolClassId: "",
+                                    curriculumId: "",
+                                    studentId: "",
                                   });
                                 }}
                               >
-                                {/* {familyStudentData.curriculumId ? ( */}
-                                <SelectOptions
-                                  returnId
-                                  dataType="searchEnrolledStudent"
-                                  // dontShowMyself
-                                  // curriculumId={newStudentData.newFamilyCurriculumId}
-                                  parentOneEmail={studentData.parentOne.email}
-                                  parentTwoEmail={studentData.parentTwo.email}
-                                  financialResponsibleDocument={
-                                    studentData.financialResponsible.document
-                                  }
-                                />
-                                {/* <SelectOptions
-                                  returnId
-                                  dataType="searchEnrolledStudent"
-                                  curriculumId={familyStudentData.curriculumId}
-                                /> */}
-                                {/* ) : (
-                                  <option
-                                    disabled
-                                    value={" -- select an option -- "}
-                                  >
-                                    {" "}
-                                    -- Selecione Colégio, Ano Escolar e
-                                    Modalidade para ver os alunos disponíveis --{" "}
-                                  </option>
-                                )} */}
+                                <option value={"Não"}>Não</option>
+                                <option value={"Sim"}>Sim</option>
                               </select>
                             </div>
-                          </div>
-                        )}
 
-                        {/** PAYMENT DETAILS SECTION TITLE */}
-                        <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
-                          Detalhes de Pagamento:
-                        </h1>
+                            {/* SELECT FAMILY AT SCHOOL SECTION */}
+                            {studentData.familyDiscount && (
+                              <div className="flex flex-col py-2 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
+                                {/* FAMILY AT SCHOOL TITLE */}
+                                <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+                                  Atenção: a seguir selecione o aluno que já é
+                                  matriculado na {customerFullName}, e é parente
+                                  de {studentData.name}:
+                                </h1>
 
-                        {/* STUDENT REGISTRATION PRICE */}
-                        <div className="flex gap-2 items-center">
-                          <label
-                            htmlFor="enrolmentFee"
-                            className="w-1/4 text-right"
-                          >
-                            Matrícula:
-                          </label>
-                          <input
-                            type="text"
-                            name="enrolmentFee"
-                            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                            disabled
-                            value={newClass.enrolmentFee.toLocaleString(
-                              "pt-BR",
-                              {
-                                style: "currency",
-                                currency: "BRL",
-                              }
+                                {/** FAMILY AT SCHOOL SUBTITLE */}
+                                <div className="flex gap-2 items-center py-2">
+                                  <div className="w-1/4" />
+                                  <div className="flex gap-2 w-3/4 items-start text-left py-2">
+                                    <p className="text-sm text-red-600 dark:text-yellow-500">
+                                      Não encontrou o parente? Verifique os
+                                      dados de Filiação e/ou Responsável
+                                      financeiro.
+                                      <br />
+                                      Apenas alunos com a mesma filiação e/ou
+                                      Responsáveis Financeiros podem ser
+                                      selecionados como "parentes".
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* STUDENT SELECT */}
+                                <div className="flex gap-2 items-center pb-2">
+                                  <label
+                                    htmlFor="familyStudentSelect"
+                                    className={
+                                      errors.familyAtSchoolId
+                                        ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                                        : "w-1/4 text-right"
+                                    }
+                                  >
+                                    Selecione o Parente:{" "}
+                                  </label>
+                                  <select
+                                    id="familyStudentSelect"
+                                    defaultValue={" -- select an option -- "}
+                                    className={
+                                      errors.familyAtSchoolId
+                                        ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                                    }
+                                    name="familyStudentSelect"
+                                    onChange={(e) => {
+                                      setFamilyStudentData({
+                                        ...familyStudentData,
+                                        studentId: e.target.value,
+                                        confirmDelete: false,
+                                      });
+                                    }}
+                                  >
+                                    <SelectOptions
+                                      returnId
+                                      dataType="searchEnrolledStudent"
+                                      parentOneEmail={
+                                        studentData.parentOne.email
+                                      }
+                                      parentTwoEmail={
+                                        studentData.parentTwo.email
+                                      }
+                                      financialResponsibleDocument={
+                                        studentData.financialResponsible
+                                          .document
+                                      }
+                                    />
+                                  </select>
+                                </div>
+                              </div>
                             )}
-                          />
-                        </div>
 
-                        {/* STUDENT MONTHLY PRICE */}
-                        <div className="flex gap-2 items-center">
-                          <label
-                            htmlFor="monthlyPayment"
-                            className="w-1/4 text-right"
-                          >
-                            Mensalidade:
-                          </label>
-                          <input
-                            type="text"
-                            name="monthlyPayment"
-                            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                            disabled
-                            value={newClass.appliedPrice.toLocaleString(
-                              "pt-BR",
-                              {
-                                style: "currency",
-                                currency: "BRL",
-                              }
-                            )}
-                          />
-                        </div>
+                            {/** PAYMENT DETAILS SECTION TITLE */}
+                            <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
+                              Detalhes de Pagamento:
+                            </h1>
 
-                        {/* STUDENT PAYMENT DAY */}
-                        <div className="flex gap-2 items-center">
-                          {/* <label
-                            htmlFor="dayPayment"
-                            className="w-1/4 text-right"
-                          >
-                            Melhor dia para pagamento:
-                          </label> */}
-                          <div className="flex w-1/4" />
-                          <div className="flex w-3/4 px-2 py-1 gap-10 justify-start items-center">
-                            <p className="text-sm text-red-600 dark:text-yellow-500">
-                              Data de vencimento dia 05 do mês a cursar,
-                              pagamento antecipado
-                            </p>
-                            {/* <label className="flex items-center gap-2">
+                            {/* STUDENT REGISTRATION PRICE */}
+                            <div className="flex gap-2 items-center">
+                              <label
+                                htmlFor="enrolmentFee"
+                                className="w-1/4 text-right"
+                              >
+                                Matrícula:
+                              </label>
+                              <input
+                                type="text"
+                                name="enrolmentFee"
+                                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                                disabled
+                                value={newClass.enrolmentFee.toLocaleString(
+                                  "pt-BR",
+                                  {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  }
+                                )}
+                              />
+                            </div>
+
+                            {/* STUDENT MONTHLY PRICE */}
+                            <div className="flex gap-2 items-center">
+                              <label
+                                htmlFor="monthlyPayment"
+                                className="w-1/4 text-right"
+                              >
+                                Mensalidade:
+                              </label>
+                              <input
+                                type="text"
+                                name="monthlyPayment"
+                                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                                disabled
+                                value={newClass.appliedPrice.toLocaleString(
+                                  "pt-BR",
+                                  {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  }
+                                )}
+                              />
+                            </div>
+
+                            {/* STUDENT PAYMENT DAY */}
+                            <div className="flex gap-2 items-center">
+                              {userFullData && userFullData.role !== "user" ? (
+                                <>
+                                  <label
+                                    htmlFor="dayPayment"
+                                    className="w-1/4 text-right"
+                                  >
+                                    Melhor dia para pagamento:
+                                  </label>
+                                  <label className="flex items-center gap-2">
+                                    <input
+                                      type="radio"
+                                      className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                                      value="5"
+                                      name="gender"
+                                      onChange={(e) =>
+                                        setStudentData({
+                                          ...studentData,
+                                          paymentDay: e.target.value,
+                                        })
+                                      }
+                                    />{" "}
+                                    5
+                                  </label>
+                                  <label className="flex items-center gap-2">
+                                    <input
+                                      type="radio"
+                                      className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                                      value="10"
+                                      name="gender"
+                                      onChange={(e) =>
+                                        setStudentData({
+                                          ...studentData,
+                                          paymentDay: e.target.value,
+                                        })
+                                      }
+                                    />{" "}
+                                    10
+                                  </label>
+                                  <label className="flex items-center gap-2">
+                                    <input
+                                      type="radio"
+                                      className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                                      value="15"
+                                      name="gender"
+                                      onChange={(e) =>
+                                        setStudentData({
+                                          ...studentData,
+                                          paymentDay: e.target.value,
+                                        })
+                                      }
+                                    />{" "}
+                                    15
+                                  </label>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="flex w-1/4" />
+                                  <div className="flex w-3/4 px-2 py-1 gap-10 justify-start items-center">
+                                    <p className="text-sm text-red-600 dark:text-yellow-500">
+                                      Data de vencimento dia 05 do mês a cursar,
+                                      pagamento antecipado
+                                    </p>
+                                  </div>
+                                </>
+                              )}
+                              {/* <label className="flex items-center gap-2">
                               <input
                                 type="radio"
                                 className="text-klGreen-500 dark:text-klGreen-500 border-none"
@@ -3337,11 +3443,24 @@ export function InsertStudent() {
                               />{" "}
                               15
                             </label> */}
-                          </div>
-                        </div>
-                      </>
-                    )}
-
+                            </div>
+                          </>
+                        )}
+                    </>
+                  ) : (
+                    <div className="flex flex-col w-full items-center justify-center p-4 mb-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent rounded-2xl text-center text-lg text-red-600 dark:text-yellow-500">
+                      {/* CLASS WAITING LIST DISCLAIMER */}
+                      <h1 className="font-bold">FILA DE ESPERA</h1>
+                      <p className="flex items-center">
+                        A turma selecionada está sem vaga disponível para
+                        matrícula, preencha os dados abaixo para entrar na fila
+                        de espera.
+                        <br /> Seguimos uma ordem nesta fila por data de
+                        cadastro, sendo assim, à medida que as vagas forem
+                        disponibilizadas, entraremos em contato.
+                      </p>
+                    </div>
+                  )}
                   {/* // --------------------------------------------- SECTION 3: STUDENT FINANCIAL RESPONSIBLE DATA --------------------------------------------- // */}
 
                   {/** STUDENT FINANCIAL RESPONSIBLE SECTION TITLE */}
@@ -3353,14 +3472,19 @@ export function InsertStudent() {
                   <div className="flex gap-2 items-center py-2">
                     <div className="w-1/4" />
                     <div className="flex flex-col gap-2 w-3/4 items-start text-left pb-2">
-                      {newClass.isExperimental && (
-                        <p className="text-sm text-red-600 dark:text-yellow-500">
-                          Em caso de desistência dos serviços, o responsável tem
-                          o prazo de até 5 dias (ÚTEIS?) para entrar no cadastro
-                          e realizar o cancelamento. Os dados serão descartados
-                          sem ônus de matrícula.
-                        </p>
-                      )}
+                      {/* EXPERIMENTAL CLASS DISCLAIMER */}
+                      {newClass.isExperimental &&
+                        handleOneCurriculumDetails(studentData.curriculum)
+                          .placesAvailable > 0 &&
+                        handleOneCurriculumDetails(studentData.curriculum)
+                          .waitingList.length === 0 && (
+                          <p className="text-sm text-red-600 dark:text-yellow-500">
+                            Em caso de desistência dos serviços, o responsável
+                            tem o prazo de até 5 dias para entrar no cadastro e
+                            realizar o cancelamento. Os dados serão descartados
+                            sem ônus de matrícula.
+                          </p>
+                        )}
                       <p className="text-sm font-bold text-red-600 dark:text-yellow-500">
                         ATENÇÃO: A VERACIDADE DOS DADOS É DE SUA
                         RESPONSABILIDADE AO PREENCHER O CADASTRO

@@ -7,27 +7,8 @@ import {
 } from "../context/GlobalDataContext";
 import { InsertStudent } from "../components/insertComponents/InsertStudent";
 import { SubmitLoading } from "../components/layoutComponents/SubmitLoading";
-import { EditStudentForm } from "../components/formComponents/EditStudentForm";
-import { StudentButtonDetails } from "../components/layoutComponents/StudentButtonDetails";
-import { FinanceStudentModal } from "../components/modalComponents/FinanceStudentModal";
-import { FilteredStudentsProps } from "../@types";
-import { StudentSearchButton } from "../components/layoutComponents/StudentSearchButton";
-import { IoMdClose } from "react-icons/io";
-
-export interface HandleClickOpenFunctionProps {
-  id: string;
-  option: "edit" | "finance" | "details";
-}
-
-export type PaymentArrayProps = {
-  type: "enrolledFee" | "montlyPayment";
-  dueDate: Date;
-  paymentDate: Date | string;
-  creationDate: Date;
-  description: string;
-  invoiceId: number;
-  value: number;
-};
+import DashboardStudents from "../components/dashboardComponents/DashboardStudents";
+import DefaultListComponent from "../components/dashboardComponents/DefaultListComponent";
 
 export default function Dashboard() {
   // GET GLOBAL DATA
@@ -41,178 +22,11 @@ export default function Dashboard() {
     curriculumDatabaseData,
     studentsDatabaseData,
     userFullData,
-    calcStudentPrice2,
-    handleDeleteStudent,
     handleOneCurriculumDetails,
-    setIsSubmitting,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
+  // DETAILS STATES
   const [open, setOpen] = useState(false);
-
-  const [studentSelected, setStudentSelected] =
-    useState<FilteredStudentsProps>();
-
-  const handleClickOpen = ({ id, option }: HandleClickOpenFunctionProps) => {
-    const studentToShow = filteredStudents.find((student) => student.id === id);
-    if (studentToShow) {
-      setStudentSelected(studentToShow);
-      setOpen(true);
-      if (option === "details") {
-        setIsDetailsViewing(true);
-        setIsEdit(false);
-        setIsFinance(false);
-      } else if (option === "edit") {
-        setIsDetailsViewing(false);
-        setIsEdit(true);
-        setIsFinance(false);
-      } else {
-        setIsDetailsViewing(false);
-        setIsEdit(false);
-        setIsFinance(true);
-      }
-    }
-  };
-
-  const handleClose = () => {
-    setStudentSelected(undefined);
-    setOpen(false);
-    setIsEdit(false);
-    setIsFinance(false);
-    setIsDetailsViewing(false);
-  };
-
-  const paymentArray: PaymentArrayProps[] = [
-    {
-      type: "enrolledFee",
-      dueDate: new Date("01/31/2024"),
-      paymentDate: new Date("01/10/2024"),
-      creationDate: new Date("01/5/2024"),
-      description: "Matrícula 2024",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("01/15/2024"),
-      paymentDate: new Date("01/10/2024"),
-      creationDate: new Date("01/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("02/15/2024"),
-      paymentDate: new Date("02/6/2024"),
-      creationDate: new Date("02/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("03/15/2024"),
-      paymentDate: new Date("03/5/2024"),
-      creationDate: new Date("03/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("04/15/2024"),
-      paymentDate: new Date("04/11/2024"),
-      creationDate: new Date("04/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("05/15/2024"),
-      paymentDate: new Date("05/17/2024"),
-      creationDate: new Date("05/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("06/15/2024"),
-      paymentDate: new Date("06/20/2024"),
-      creationDate: new Date("06/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("07/15/2024"),
-      paymentDate: new Date("07/22/2024"),
-      creationDate: new Date("07/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("08/15/2024"),
-      paymentDate: new Date("08/8/2024"),
-      creationDate: new Date("08/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("09/15/2024"),
-      paymentDate: new Date("09/9/2024"),
-      creationDate: new Date("09/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("10/15/2024"),
-      paymentDate: "   ",
-      creationDate: new Date("10/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("11/15/2024"),
-      paymentDate: "   ",
-      creationDate: new Date("11/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-    {
-      type: "montlyPayment",
-      dueDate: new Date("12/15/2024"),
-      paymentDate: "   ",
-      creationDate: new Date("12/5/2024"),
-      description:
-        "BERNOULLI GO | INICIAÇÃO ESPORTIVA | MATUTINO 1º E 2º PERÍODO | Terça - Quinta | TURMA 14 B.GO | Professor: MARCELO HENRIQUE DOS SANTOS",
-      invoiceId: Math.floor(Math.random() * 20 * 100000000),
-      value: Math.floor(Math.random() * 20 * 100),
-    },
-  ];
-
   const [isEdit, setIsEdit] = useState(false);
   const [isFinance, setIsFinance] = useState(false);
   const [isDetailsViewing, setIsDetailsViewing] = useState(false);
@@ -228,147 +42,9 @@ export default function Dashboard() {
     }
   }
 
-  // FILTER STUDENTS STATE
-  const [filteredStudents, setFilteredStudents] = useState<
-    FilteredStudentsProps[]
-  >([]);
-
-  // FILTER STUDENTS IF USER.ROLE IS 'USER'
-  function filterStudents() {
-    if (userFullData) {
-      setIsSubmitting(true)
-      if (userFullData.role === "user") {
-        const studentsToShow: FilteredStudentsProps[] = [];
-        studentsDatabaseData.map((student) => {
-          if (student.financialResponsible.document === userFullData.document) {
-            studentsToShow.push({ ...student, isFinancialResponsible: true });
-          } else if (
-            student.parentOne?.email === userFullData.email ||
-            student.parentTwo?.email === userFullData.email
-          ) {
-            studentsToShow.push({ ...student, isFinancialResponsible: false });
-          }
-        });
-        setFilteredStudents(studentsToShow);
-      } else {
-        const studentsToShow: FilteredStudentsProps[] = [];
-        studentsDatabaseData.map((student) => {
-          studentsToShow.push({ ...student, isFinancialResponsible: true });
-        });
-        setFilteredStudents(studentsToShow);
-      }
-      setIsSubmitting(false)
-    } else {
-      console.log(`é porque não tem`)
-    }
-  }
-
-  // FILTER STUDENTS WHEN USER CHANGE
-  useEffect(() => {
-    filterStudents();
-  }, [userFullData]);
-
-  // FILTER STUDENTS BY SEARCH STATES
-  // STATE FOR THE SEARCH TERM
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [financialResponsibleName, setFinancialResponsibleName] =
-    useState<string>("");
-  const [financialResponsibleDocument, setFinancialResponsibleDocument] =
-    useState<string>("");
-
-  // STATE TO CONTROL IF THE SEARCH IS ADVANCED OR NOT
-  const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
-
   // STATE FOR THE FILTERED STUDENTS
   const [filteredSearchStudents, setFilteredSearchStudents] =
     useState(studentsDatabaseData);
-
-  // FUNCTION TO TOGGLE THE ADVANCED SEARCH MODE
-  const toggleAdvancedSearch = () => {
-    if (isAdvancedSearch) {
-      // CLEARING THE ADVANCED SEARCH FIELDS WHEN CLOSING ADVANCED SEARCH
-      setFinancialResponsibleName("");
-      setFinancialResponsibleDocument("");
-    }
-    setIsAdvancedSearch(!isAdvancedSearch);
-  };
-
-  // FUNCTION TO CLEAR THE ADVANCED SEARCH FIELDS
-  const clearAdvancedSearch = () => {
-    setSearchTerm("");
-    setFinancialResponsibleName("");
-    setFinancialResponsibleDocument("");
-  };
-
-  // EFFECT TO FILTER STUDENTS BASED ON SEARCH TERMS
-  useEffect(() => {
-    if (!isAdvancedSearch) {
-      // SIMPLE SEARCH ONLY BASED ON STUDENT NAME
-      setFilteredSearchStudents(
-        filteredStudents.filter((student) =>
-          student.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    } else {
-      // ADVANCED SEARCH CONSIDERING STUDENT NAME, RESPONSIBLE NAME, AND CPF
-      setFilteredSearchStudents(
-        filteredStudents.filter((student) => {
-          const matchesName = student.name
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase());
-          const matchesResponsibleName = student.financialResponsible.name
-            .toLowerCase()
-            .includes(financialResponsibleName.toLowerCase());
-          const matchesResponsibleDocument =
-            student.financialResponsible.document.includes(
-              financialResponsibleDocument
-            );
-
-          // APPLY FILTER ONLY FOR FIELDS THAT HAVE BEEN FILLED
-          return (
-            (matchesName || !searchTerm) &&
-            (matchesResponsibleName || !financialResponsibleName) &&
-            (matchesResponsibleDocument || !financialResponsibleDocument)
-          );
-        })
-      );
-    }
-  }, [
-    searchTerm,
-    financialResponsibleName,
-    financialResponsibleDocument,
-    filteredStudents,
-    isAdvancedSearch,
-  ]);
-
-  // HANDLER FOR CHANGES IN THE STUDENT NAME SEARCH FIELD
-  const handleSearchTermChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setSearchTerm(event.target.value);
-  };
-
-  // HANDLER FOR CHANGES IN THE RESPONSIBLE NAME SEARCH FIELD
-  const handleFinancialResponsibleNameChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFinancialResponsibleName(event.target.value);
-  };
-
-  // HANDLER FOR CHANGES IN THE RESPONSIBLE CPF SEARCH FIELD
-  const handleFinancialResponsibleDocumentChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFinancialResponsibleDocument(event.target.value);
-  };
-
-  function handleDeleteUser() {
-    if (studentSelected) {
-      handleDeleteStudent(studentSelected.id, handleClose);
-    } else {
-      console.log("Nenhum usuário selecionado.");
-    }
-  }
 
   type DashBoardPageProps = {
     page:
@@ -497,121 +173,36 @@ export default function Dashboard() {
         >
           {userFullData.role !== "user" && (
             <>
-              {showDashboardPage.page === "school" &&
-                (schoolDatabaseData.length !== 0 ? (
-                  schoolDatabaseData
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((school) => {
-                      return (
-                        <div
-                          className="flex justify-center p-4"
-                          key={school.id}
-                        >
-                          <p className="text-klGreen-500 dark:text-white">
-                            {school.name}
-                          </p>
-                        </div>
-                      );
-                    })
-                ) : (
-                  <div className="flex justify-center p-4 ">
-                    <p className="text-klGreen-500 dark:text-white">
-                      Nenhuma escola cadastrada.
-                    </p>
-                  </div>
-                ))}
-              {showDashboardPage.page === "schoolClass" &&
-                (schoolClassDatabaseData.length !== 0 ? (
-                  schoolClassDatabaseData
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((schoolClass) => {
-                      return (
-                        <div
-                          className="flex justify-center p-4 "
-                          key={schoolClass.id}
-                        >
-                          <p className="text-klGreen-500 dark:text-white">
-                            {schoolClass.name}
-                          </p>
-                        </div>
-                      );
-                    })
-                ) : (
-                  <div className="flex justify-center p-4 ">
-                    <p className="text-klGreen-500 dark:text-white">
-                      Nenhum Ano Escolar cadastrado.
-                    </p>
-                  </div>
-                ))}
-              {showDashboardPage.page === "schoolCourse" &&
-                (schoolCourseDatabaseData.length !== 0 ? (
-                  schoolCourseDatabaseData
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((schoolCourse) => {
-                      return (
-                        <div
-                          className="flex justify-center p-4 "
-                          key={schoolCourse.id}
-                        >
-                          <p className="text-klGreen-500 dark:text-white">
-                            {schoolCourse.name}
-                          </p>
-                        </div>
-                      );
-                    })
-                ) : (
-                  <div className="flex justify-center p-4 ">
-                    <p className="text-klGreen-500 dark:text-white">
-                      Nenhuma modalidade cadastrada.
-                    </p>
-                  </div>
-                ))}
-              {showDashboardPage.page === "schedule" &&
-                (scheduleDatabaseData.length !== 0 ? (
-                  scheduleDatabaseData
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((schedule) => {
-                      return (
-                        <div
-                          className="flex justify-center p-4 "
-                          key={schedule.id}
-                        >
-                          <p className="text-klGreen-500 dark:text-white">
-                            {schedule.name}
-                          </p>
-                        </div>
-                      );
-                    })
-                ) : (
-                  <div className="flex justify-center p-4 ">
-                    <p className="text-klGreen-500 dark:text-white">
-                      Nenhum horário cadastrado.
-                    </p>
-                  </div>
-                ))}
-              {showDashboardPage.page === "teacher" &&
-                (teacherDatabaseData.length !== 0 ? (
-                  teacherDatabaseData
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((teacher) => {
-                      return (
-                        <div
-                          className="flex justify-center p-4"
-                          key={teacher.id}
-                        >
-                          <p className="text-klGreen-500 dark:text-white">
-                            {teacher.name}
-                          </p>
-                        </div>
-                      );
-                    })
-                ) : (
-                  <div className="flex justify-center p-4 ">
-                    <p className="text-klGreen-500 dark:text-white">
-                      Nenhum professor cadastrado.
-                    </p>
-                  </div>
-                ))}
+              {showDashboardPage.page === "school" && (
+                <DefaultListComponent
+                  database={schoolDatabaseData}
+                  emptyMessage="Nenhuma escola encontrada."
+                />
+              )}
+              {showDashboardPage.page === "schoolClass" && (
+                <DefaultListComponent
+                  database={schoolClassDatabaseData}
+                  emptyMessage="Nenhuma turma encontrada."
+                />
+              )}
+              {showDashboardPage.page === "schoolCourse" && (
+                <DefaultListComponent
+                  database={schoolCourseDatabaseData}
+                  emptyMessage="Nenhuma modalidade encontrada."
+                />
+              )}
+              {showDashboardPage.page === "schedule" && (
+                <DefaultListComponent
+                  database={scheduleDatabaseData}
+                  emptyMessage="Nenhum horário encontrado."
+                />
+              )}
+              {showDashboardPage.page === "teacher" && (
+                <DefaultListComponent
+                  database={teacherDatabaseData}
+                  emptyMessage="Nenhum professor encontrado."
+                />
+              )}
               {showDashboardPage.page === "curriculum" &&
                 (curriculumDatabaseData.length !== 0 ? (
                   curriculumDatabaseData
@@ -756,15 +347,18 @@ export default function Dashboard() {
                                   .students.length}
                             </span>
                           </p>
-                          <p>
-                            Alunos na lista de espera:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .waitingList.length
-                              }
-                            </span>
-                          </p>
+                          {handleOneCurriculumDetails(curriculum.id).waitingList
+                            .length > 0 && (
+                            <p>
+                              Alunos na lista de espera:{" "}
+                              <span className="text-red-600 dark:text-yellow-500">
+                                {
+                                  handleOneCurriculumDetails(curriculum.id)
+                                    .waitingList.length
+                                }
+                              </span>
+                            </p>
+                          )}
                         </div>
                       );
                     })
@@ -778,164 +372,18 @@ export default function Dashboard() {
             </>
           )}
           {showDashboardPage.page === "student" && (
-            <div className="flex w-full h-full justify-start container no-scrollbar rounded-xl pt-4 gap-4">
-              <div
-                className={`${
-                  open && studentSelected ? "w-2/6" : "w-full"
-                } ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container [&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl transition-all duration-1000`}
-              >
-                <div className="flex w-full flex-col px-4 py-3 gap-2">
-                  <div className="flex w-full gap-2 justify-start">
-                    <input
-                      type="text"
-                      id="searchStudent"
-                      value={searchTerm}
-                      onChange={handleSearchTermChange}
-                      placeholder="Procurar"
-                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    />
-                    <StudentSearchButton
-                      isAdvancedSearch={isAdvancedSearch}
-                      toggleAdvancedSearch={toggleAdvancedSearch}
-                    />
-                  </div>
-                  {isAdvancedSearch && (
-                    <div className="flex gap-2">
-                      <div className="flex w-full gap-2">
-                        <input
-                          type="text"
-                          placeholder="Nome do Responsável Financeiro"
-                          value={financialResponsibleName}
-                          onChange={handleFinancialResponsibleNameChange}
-                          className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        />
-                        <input
-                          type="text"
-                          name="financialResponsibleDocument"
-                          pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                          placeholder="Nome do Responsável Financeiro"
-                          value={financialResponsibleDocument}
-                          onChange={handleFinancialResponsibleDocumentChange}
-                          className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        />
-                      </div>
-                      <div className="w-[4.65vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
-                        <button
-                          className="flex w-full items-center justify-between"
-                          onClick={clearAdvancedSearch}
-                        >
-                          Limpar <IoMdClose size={10} />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {filteredSearchStudents.length !== 0 ? (
-                  filteredSearchStudents
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((student) => {
-                      return (
-                        <div
-                          className="flex flex-col px-4 py-3"
-                          key={student.id}
-                        >
-                          <div className="flex items-center w-full">
-                            <div className="w-1/6" />
-                            <div className="flex w-4/6">
-                              <p
-                                className="text-klGreen-500 dark:text-white hover:text-klOrange-500 hover:dark:text-klOrange-500 cursor-pointer"
-                                onClick={() => {
-                                  handleClickOpen({
-                                    id: student.id,
-                                    option: "details",
-                                  }),
-                                    calcStudentPrice2(student.id);
-                                }}
-                              >
-                                {student.name}
-                              </p>
-                            </div>
-                            {!open && student.id !== "" && (
-                              <StudentButtonDetails
-                                id={student.id}
-                                isEdit={isEdit}
-                                isFinance={isFinance}
-                                isDetailsViewing={isDetailsViewing}
-                                isFinancialResponsible={
-                                  student.isFinancialResponsible
-                                }
-                                open={open}
-                                handleClickOpen={handleClickOpen}
-                                handleClose={handleClose}
-                                handleDeleteUser={handleDeleteUser}
-                                setIsEdit={setIsEdit}
-                                setIsFinance={setIsFinance}
-                                setIsDetailsViewing={setIsDetailsViewing}
-                              />
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
-                ) : (
-                  <div className="flex justify-center p-4 ">
-                    <p className="text-klGreen-500 dark:text-white">
-                      Nenhum aluno cadastrado.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* STUDENT FORM FOR VIEW DETAILS OR EDIT STUDENT */}
-              {open && (isEdit || isDetailsViewing) && (
-                <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 overflow-scroll no-scrollbar">
-                  <EditStudentForm
-                    isSubmitting={isSubmitting}
-                    setIsSubmitting={setIsSubmitting}
-                    studentId={studentSelected!.id}
-                    key={studentSelected!.id}
-                    onClose={handleClose}
-                    isEdit={isEdit}
-                    isFinance={isFinance}
-                    isFinancialResponsible={
-                      studentSelected && studentSelected.isFinancialResponsible
-                    }
-                    open={open}
-                    handleClickOpen={handleClickOpen}
-                    handleDeleteUser={handleDeleteUser}
-                    setIsEdit={setIsEdit}
-                    setIsFinance={setIsFinance}
-                    setIsDetailsViewing={setIsDetailsViewing}
-                    onlyView={isDetailsViewing}
-                  />
-                </div>
-              )}
-
-              {/* FINANCE REGISTER STUDENT */}
-              {open && isFinance && studentSelected && (
-                <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-white dark:bg-gray-800 overflow-scroll no-scrollbar">
-                  <FinanceStudentModal
-                    studentId={studentSelected!.id}
-                    key={studentSelected!.id}
-                    onClose={handleClose}
-                    isEdit={isEdit}
-                    isFinance={isFinance}
-                    isFinancialResponsible={
-                      studentSelected.isFinancialResponsible
-                    }
-                    open={open}
-                    paymentArray={paymentArray}
-                    studentName={studentSelected.name}
-                    handleClickOpen={handleClickOpen}
-                    handleDeleteUser={handleDeleteUser}
-                    setIsEdit={setIsEdit}
-                    setIsFinance={setIsFinance}
-                    setIsDetailsViewing={setIsDetailsViewing}
-                    onlyView={isDetailsViewing}
-                  />
-                </div>
-              )}
-            </div>
+            <DashboardStudents
+              filteredSearchStudents={filteredSearchStudents}
+              isDetailsViewing={isDetailsViewing}
+              isEdit={isEdit}
+              isFinance={isFinance}
+              open={open}
+              setFilteredSearchStudents={setFilteredSearchStudents}
+              setIsDetailsViewing={setIsDetailsViewing}
+              setIsEdit={setIsEdit}
+              setIsFinance={setIsFinance}
+              setOpen={setOpen}
+            />
           )}
           {userFullData.role === "user" &&
             showDashboardPage.page === "addStudent" && <InsertStudent />}

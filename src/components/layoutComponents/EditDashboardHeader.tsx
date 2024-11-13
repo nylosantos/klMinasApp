@@ -1,5 +1,5 @@
+import { HandleClickOpenFunctionProps } from "../../@types";
 import { StudentButtonDetails } from "./StudentButtonDetails";
-import { HandleClickOpenFunctionProps } from "../../pages/Dashboard";
 
 interface EditDashboardHeaderProps {
   isEdit?: boolean;

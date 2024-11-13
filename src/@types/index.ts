@@ -34,6 +34,7 @@ import {
   searchCurriculumValidationSchema,
   signUpEmailAndPasswordValidationSchema,
 } from "./zodValidation";
+import { Timestamp } from "firebase/firestore";
 
 // LOGIN VALIDATIONS
 export type LoginWithEmailAndPasswordZProps = z.infer<
@@ -210,6 +211,7 @@ export interface SelectProps {
   availableAndWaitingClasses?: boolean;
   onlyEnrolledStudents?: boolean;
   dontShowMyself?: boolean;
+  showAllCourses?: boolean;
   parentOneEmail?: string;
   parentTwoEmail?: string;
   financialResponsibleDocument?: string;
@@ -395,7 +397,10 @@ export interface CurriculumWithNamesProps extends CurriculumSearchProps {
 
 export interface WaitingListProps {
   id: string;
-  date: string;
+  date: Timestamp;
+}
+export interface ExcludeWaitingListProps extends WaitingListProps {
+  exclude: boolean;
 }
 
 export interface CurriculumSearchProps {
@@ -444,4 +449,8 @@ export interface PaymentRegisterProps {
   note: string;
   value: number;
   year: string;
+}
+export interface HandleClickOpenFunctionProps {
+  id: string;
+  option: "edit" | "finance" | "details";
 }
