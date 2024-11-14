@@ -2927,7 +2927,7 @@ export function InsertStudent() {
                                     ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                                     : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                                 }
-                                minDate={new DateObject().add(1, "day")}
+                                minDate={new DateObject()}
                                 mapDays={({ date }) => {
                                   if (!newClass.isExperimental) {
                                     const isWeekend =
