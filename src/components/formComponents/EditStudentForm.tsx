@@ -235,6 +235,71 @@ export function EditStudentForm({
     indexDays: [] as number[],
   });
 
+  // CURRICULUM PLACES AVAILABLE STATE
+  const [curriculumPlacesAvailable, setCurriculumPlacesAvailable] =
+    useState(true);
+
+  // CHANGE CURRICULUM PLACES AVAILABLE STATE
+  useEffect(() => {
+    if (newStudentData.curriculum) {
+      setCurriculumPlacesAvailable(
+        handleOneCurriculumDetails(newStudentData.curriculum).placesAvailable -
+          handleOneCurriculumDetails(newStudentData.curriculum).students
+            .length >
+          0
+      );
+    }
+  }, [newStudentData.curriculum]);
+
+  // CURRICULUM EMPTY WAITING LIST STATE
+  const [curriculumEmptyWaitingList, setCurriculumEmptyWaitingList] =
+    useState(true);
+
+  // CHANGE CURRICULUM EMPTY WAITING LIST STATE
+  useEffect(() => {
+    if (newStudentData.curriculum) {
+      setCurriculumEmptyWaitingList(
+        handleOneCurriculumDetails(newStudentData.curriculum).waitingList
+          .length === 0
+      );
+    }
+  }, [newStudentData.curriculum]);
+
+  // EXPERIMENTAL CURRICULUM PLACES AVAILABLE STATE
+  const [
+    experimentalCurriculumPlacesAvailable,
+    setExperimentalCurriculumPlacesAvailable,
+  ] = useState(true);
+
+  // CHANGE EXPERIMENTAL CURRICULUM PLACES AVAILABLE STATE
+  useEffect(() => {
+    if (newStudentData.experimentalCurriculum) {
+      setExperimentalCurriculumPlacesAvailable(
+        handleOneCurriculumDetails(newStudentData.experimentalCurriculum)
+          .placesAvailable -
+          handleOneCurriculumDetails(newStudentData.experimentalCurriculum)
+            .students.length >
+          0
+      );
+    }
+  }, [newStudentData.experimentalCurriculum]);
+
+  // EXPERIMENTAL CURRICULUM PLACES AVAILABLE STATE
+  const [
+    experimentalCurriculumEmptyWaitingList,
+    setExperimentalCurriculumEmptyWaitingList,
+  ] = useState(true);
+
+  // CHANGE EXPERIMENTAL CURRICULUM PLACES AVAILABLE
+  useEffect(() => {
+    if (newStudentData.experimentalCurriculum) {
+      setExperimentalCurriculumEmptyWaitingList(
+        handleOneCurriculumDetails(newStudentData.experimentalCurriculum)
+          .waitingList.length === 0
+      );
+    }
+  }, [newStudentData.experimentalCurriculum]);
+
   type NewPricesProps = {
     appliedPrice: number;
     fullPrice: number;
@@ -2055,8 +2120,7 @@ export function EditStudentForm({
           newStudentData.curriculumCourseBundleDays;
         let newCoursePrice;
         if (
-          handleOneCurriculumDetails(newStudentData.curriculum).waitingList
-            .length > 0 &&
+          !curriculumEmptyWaitingList &&
           !showEnrollWaitingCurriculumDetails
         ) {
           newCoursePrice = 0;
@@ -2095,8 +2159,7 @@ export function EditStudentForm({
       ) {
         // ----------- CALC ALSO PRESENT IN INSERT STUDENT ----------- //
         if (
-          handleOneCurriculumDetails(newStudentData.curriculum).waitingList
-            .length > 0 &&
+          !curriculumEmptyWaitingList &&
           !showEnrollWaitingCurriculumDetails
         ) {
           setNewPrices({
@@ -2591,7 +2654,7 @@ export function EditStudentForm({
     data
   ) => {
     setIsSubmitting(true);
-    console.log(newStudentData);
+
     const waitingListPosition =
       handleOneCurriculumDetails(newStudentData.curriculum)
         .waitingList.sort(
@@ -2706,38 +2769,33 @@ export function EditStudentForm({
     }
 
     // CHECKING IF EXPERIMENTAL CLASS DATE WAS PICKED
-    if (
-      newStudentData.confirmAddExperimentalCurriculum &&
-      newStudentData.experimentalCurriculumInitialDate === ""
-    ) {
-      return (
-        setIsSubmitting(false),
-        setExperimentalClassError(true),
-        toast.error("Escolha a data da Aula Experimental... ❕", {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        })
-      );
-    } else {
-      setExperimentalClassError(false);
+    if (experimentalCurriculumPlacesAvailable) {
+      if (
+        newStudentData.confirmAddExperimentalCurriculum &&
+        newStudentData.experimentalCurriculumInitialDate === ""
+      ) {
+        return (
+          setIsSubmitting(false),
+          setExperimentalClassError(true),
+          toast.error("Escolha a data da Aula Experimental... ❕", {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
+        );
+      } else {
+        setExperimentalClassError(false);
+      }
     }
-
-    console.log(
-      handleOneCurriculumDetails(newStudentData.curriculum).placesAvailable -
-        handleOneCurriculumDetails(newStudentData.curriculum).students.length >
-        0
-    );
-    console.log(waitingListPosition === 1);
 
     // CHECKING IF CURRICULUM INITIAL CLASS DATE WAS PICKED
     if (
-      handleOneCurriculumDetails(newStudentData.curriculum).placesAvailable -
-        handleOneCurriculumDetails(newStudentData.curriculum).students.length >
-        0 &&
-      waitingListPosition === 1
+      curriculumPlacesAvailable &&
+      waitingListPosition <=
+        handleOneCurriculumDetails(newStudentData.curriculum).placesAvailable -
+          handleOneCurriculumDetails(newStudentData.curriculum).students.length
     ) {
       if (
         newStudentData.confirmAddCurriculum &&
@@ -2871,35 +2929,51 @@ export function EditStudentForm({
     }
 
     // CHECK IF SOME EXPERIMENTAL CURRICULUM WAS INCLUDED
-    if (studentEditData.addExperimentalCurriculum) {
-      // UPDATE STUDENT (INSERT EXPERIMENTAL CURRICULUM)
-      await updateDoc(doc(db, "students", data.id), {
-        experimentalCurriculumIds: arrayUnion({
-          date: Timestamp.fromDate(
-            new Date(newStudentData.experimentalCurriculumInitialDate)
-          ),
-          id: newStudentData.experimentalCurriculum,
-          indexDays: [],
-          isExperimental: true,
-          price: newStudentData.curriculumCoursePriceBundle,
-        }),
-      });
-
-      // UPDATE CURRICULUM (INSERT EXPERIMENTAL STUDENT)
-      await updateDoc(
-        doc(db, "curriculum", newStudentData.experimentalCurriculum),
-        {
-          experimentalStudents: arrayUnion({
+    if (experimentalCurriculumPlacesAvailable) {
+      if (studentEditData.addExperimentalCurriculum) {
+        // UPDATE STUDENT (INSERT EXPERIMENTAL CURRICULUM)
+        await updateDoc(doc(db, "students", data.id), {
+          experimentalCurriculumIds: arrayUnion({
             date: Timestamp.fromDate(
               new Date(newStudentData.experimentalCurriculumInitialDate)
             ),
-            id: data.id,
+            id: newStudentData.experimentalCurriculum,
             indexDays: [],
             isExperimental: true,
             price: newStudentData.curriculumCoursePriceBundle,
           }),
-        }
-      );
+        });
+
+        // UPDATE CURRICULUM (INSERT EXPERIMENTAL STUDENT)
+        await updateDoc(
+          doc(db, "curriculum", newStudentData.experimentalCurriculum),
+          {
+            experimentalStudents: arrayUnion({
+              date: Timestamp.fromDate(
+                new Date(newStudentData.experimentalCurriculumInitialDate)
+              ),
+              id: data.id,
+              indexDays: [],
+              isExperimental: true,
+              price: newStudentData.curriculumCoursePriceBundle,
+            }),
+          }
+        );
+      }
+    } else {
+      if (newStudentData.experimentalCurriculum) {
+        // ADD STUDENT TO WAITING LIST ARRAY OF CURRICULUM TABLE
+        await setDoc(
+          doc(db, "curriculum", newStudentData.experimentalCurriculum),
+          {
+            waitingList: arrayUnion({
+              id: data.id,
+              date: Timestamp.now(),
+            }),
+          },
+          { merge: true }
+        );
+      }
     }
 
     // CHECK IF ADD CURRICULUM AND CONFIRM ADD
@@ -3004,10 +3078,10 @@ export function EditStudentForm({
 
     // CHECK IF SOME CURRICULUM WAS INCLUDED
     if (
-      handleOneCurriculumDetails(newStudentData.curriculum).placesAvailable -
-        handleOneCurriculumDetails(newStudentData.curriculum).students.length >
-        0 &&
-      waitingListPosition === 1
+      curriculumPlacesAvailable &&
+      waitingListPosition <=
+        handleOneCurriculumDetails(newStudentData.curriculum).placesAvailable -
+          handleOneCurriculumDetails(newStudentData.curriculum).students.length
     ) {
       if (studentEditData.addCurriculum || addEnrollWaitingCurriculum) {
         const waitingCurriculumToExcludeStudent = excludeWaitingList.find(
@@ -5217,12 +5291,8 @@ export function EditStudentForm({
               {newStudentData.experimentalCurriculum &&
                 classDayExperimentalCurriculumSelectedData !== undefined && (
                   <>
-                    {handleOneCurriculumDetails(
-                      newStudentData.experimentalCurriculum
-                    ).placesAvailable > 0 &&
-                    handleOneCurriculumDetails(
-                      newStudentData.experimentalCurriculum
-                    ).waitingList.length === 0 ? (
+                    {experimentalCurriculumPlacesAvailable &&
+                    experimentalCurriculumEmptyWaitingList ? (
                       <>
                         {/* EXPERIMENTAL/INITIAL DAY */}
                         <div className="flex gap-2 items-center">
@@ -5473,8 +5543,7 @@ export function EditStudentForm({
                         </span>
                       </p>
                     )}
-                    {handleOneCurriculumDetails(newStudentData.curriculum)
-                      .waitingList.length > 0 && (
+                    {!curriculumEmptyWaitingList && (
                       <p>
                         Alunos na lista de espera:{" "}
                         <span className="text-red-600 dark:text-yellow-500">
@@ -6160,8 +6229,7 @@ export function EditStudentForm({
                                   </span>
                                 </p>
                               )}
-                              {handleOneCurriculumDetails(curriculum.id)
-                                .waitingList.length > 0 && (
+                              {!curriculumEmptyWaitingList && (
                                 <p>
                                   Alunos na lista de espera:{" "}
                                   <span className="text-red-600 dark:text-yellow-500">
@@ -6202,10 +6270,7 @@ export function EditStudentForm({
                 classDayCurriculumSelectedData.indexDays.length !==
                   undefined && (
                   <>
-                    {handleOneCurriculumDetails(newStudentData.curriculum)
-                      .placesAvailable > 0 &&
-                    handleOneCurriculumDetails(newStudentData.curriculum)
-                      .waitingList.length === 0 ? (
+                    {curriculumPlacesAvailable && curriculumEmptyWaitingList ? (
                       <div>
                         {/* STUDENT CLASS DAYS */}
                         <div className="flex gap-2 items-center py-2">

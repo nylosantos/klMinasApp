@@ -160,6 +160,20 @@ export function InsertStudent() {
     }
   );
 
+  // CURRICULUM PLACES AVAILABLE STATE
+  const [placesAvailable, setPlacesAvailable] = useState(true);
+
+  // CHANGE PLACES AVAILABLE
+  useEffect(() => {
+    if (studentData.curriculum) {
+      setPlacesAvailable(
+        handleOneCurriculumDetails(studentData.curriculum).placesAvailable -
+          handleOneCurriculumDetails(studentData.curriculum).students.length >
+          0
+      );
+    }
+  }, [studentData.curriculum]);
+
   // ---------------------------- FAMILY SCHOOL, CLASS, CURRICULUM AND STUDENT VARIABLES, STATES AND FUNCTIONS ---------------------------- //
   // STUDENT DATA
   const [familyStudentData, setFamilyStudentData] = useState({
@@ -740,11 +754,9 @@ export function InsertStudent() {
   // -------------------------- RESET SELECTS -------------------------- //
   // RESET ALL UNDER SCHOOL SELECT WHEN CHANGE SCHOOL
   useEffect(() => {
-    if (userFullData && userFullData.role !== "user") {
-      (
-        document.getElementById("schoolClassSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
-    }
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
     (
       document.getElementById("schoolCourseSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -1068,15 +1080,13 @@ export function InsertStudent() {
 
   // RESET ALL UNDER SCHOOL CLASS SELECT WHEN CHANGE SCHOOL CLASS
   useEffect(() => {
-    if (userFullData && userFullData.role !== "user") {
-      (
-        document.getElementById("schoolCourseSelect") as HTMLSelectElement
-      ).selectedIndex = 0;
-      setCurriculumData({
-        ...curriculumData,
-        schoolCourseId: "",
-      });
-    }
+    (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setCurriculumData({
+      ...curriculumData,
+      schoolCourseId: "",
+    });
     setStudentData({
       ...studentData,
       customDiscount: false,
@@ -1137,7 +1147,7 @@ export function InsertStudent() {
     }
     if (
       studentData.curriculum !== "" &&
-      handleOneCurriculumDetails(studentData.curriculum).placesAvailable > 0 &&
+      placesAvailable &&
       handleOneCurriculumDetails(studentData.curriculum).waitingList.length ===
         0
     ) {
@@ -1668,7 +1678,7 @@ export function InsertStudent() {
       });
     });
   }, [errors]);
-  console.log(studentData.birthDate);
+
   // SUBMIT DATA FUNCTION
   const handleAddStudent: SubmitHandler<CreateStudentValidationZProps> = async (
     data
@@ -1728,8 +1738,7 @@ export function InsertStudent() {
           paymentDay:
             data.paymentDay === "" ? standardPaymentDay : data.paymentDay,
           experimentalCurriculumIds:
-            handleOneCurriculumDetails(studentData.curriculum).placesAvailable >
-              0 && newClass.isExperimental
+            placesAvailable && newClass.isExperimental
               ? arrayUnion({
                   id: data.curriculum,
                   date: Timestamp.fromDate(new Date(newClass.date)),
@@ -1739,8 +1748,7 @@ export function InsertStudent() {
                 })
               : arrayUnion(),
           curriculumIds:
-            handleOneCurriculumDetails(studentData.curriculum).placesAvailable >
-              0 && !newClass.isExperimental
+            placesAvailable && !newClass.isExperimental
               ? arrayUnion({
                   id: data.curriculum,
                   date: Timestamp.fromDate(new Date(newClass.date)),
@@ -1784,9 +1792,7 @@ export function InsertStudent() {
           // Section 5: Last Updated Time
           updatedAt: serverTimestamp(),
         });
-        if (
-          handleOneCurriculumDetails(studentData.curriculum).placesAvailable > 0
-        ) {
+        if (placesAvailable) {
           if (newClass.isExperimental) {
             // CREATING AN EXPERIMENTAL CURRICULUM
             // ADD STUDENT TO CURRICULUM TABLE ON EXPERIMENTAL STUDENTS COLLECTION
@@ -1869,11 +1875,7 @@ export function InsertStudent() {
       }
     };
 
-    if (
-      handleOneCurriculumDetails(studentData.curriculum).placesAvailable -
-        handleOneCurriculumDetails(studentData.curriculum).students.length >
-      0
-    ) {
+    if (placesAvailable) {
       // CHEKING IF INITIAL CLASS DATE AND/OR EXPERIMENTAL CLASS DATE WAS PICKED
       if (newClass.date === "") {
         return (
@@ -2838,8 +2840,7 @@ export function InsertStudent() {
 
               {studentData.curriculum && (
                 <>
-                  {handleOneCurriculumDetails(studentData.curriculum)
-                    .placesAvailable > 0 &&
+                  {placesAvailable &&
                   handleOneCurriculumDetails(studentData.curriculum).waitingList
                     .length === 0 ? (
                     <>
@@ -3032,8 +3033,8 @@ export function InsertStudent() {
                               <div className="w-1/4" />
                               <div className="flex gap-2 w-3/4 items-start text-left py-2">
                                 <p className="text-sm text-red-600 dark:text-yellow-500">
-                                  Desconto Familiar: Informando um irmão que
-                                  já é matriculado na {customerFullName}, você
+                                  Desconto Familiar: Informando um irmão que já
+                                  é matriculado na {customerFullName}, você
                                   obterá 10% de desconto no curso com
                                   mensalidade de menor valor. <br /> Desconto de
                                   Segundo Curso: Ao se matricular em um segundo
@@ -3221,9 +3222,8 @@ export function InsertStudent() {
                                   <div className="w-1/4" />
                                   <div className="flex gap-2 w-3/4 items-start text-left py-2">
                                     <p className="text-sm text-red-600 dark:text-yellow-500">
-                                      Não encontrou o irmão? Verifique os
-                                      dados de Filiação e/ou Responsável
-                                      financeiro.
+                                      Não encontrou o irmão? Verifique os dados
+                                      de Filiação e/ou Responsável financeiro.
                                       <br />
                                       Apenas alunos com a mesma filiação e/ou
                                       Responsáveis Financeiros podem ser
@@ -3474,8 +3474,7 @@ export function InsertStudent() {
                     <div className="flex flex-col gap-2 w-3/4 items-start text-left pb-2">
                       {/* EXPERIMENTAL CLASS DISCLAIMER */}
                       {newClass.isExperimental &&
-                        handleOneCurriculumDetails(studentData.curriculum)
-                          .placesAvailable > 0 &&
+                        placesAvailable &&
                         handleOneCurriculumDetails(studentData.curriculum)
                           .waitingList.length === 0 && (
                           <p className="text-sm text-red-600 dark:text-yellow-500">
