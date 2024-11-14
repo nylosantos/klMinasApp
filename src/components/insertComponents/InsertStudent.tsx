@@ -1973,7 +1973,7 @@ export function InsertStudent() {
       if (familyStudentData.studentId === "") {
         setIsSubmitting(false);
         return toast.error(
-          `Por favor, verifique os dados do parente que já estuda na escola... ☑️`,
+          `Por favor, verifique os dados do irmão que já estuda na escola... ☑️`,
           {
             theme: "colored",
             closeOnClick: true,
@@ -3032,7 +3032,7 @@ export function InsertStudent() {
                               <div className="w-1/4" />
                               <div className="flex gap-2 w-3/4 items-start text-left py-2">
                                 <p className="text-sm text-red-600 dark:text-yellow-500">
-                                  Desconto Familiar: Informando um parente que
+                                  Desconto Familiar: Informando um irmão que
                                   já é matriculado na {customerFullName}, você
                                   obterá 10% de desconto no curso com
                                   mensalidade de menor valor. <br /> Desconto de
@@ -3175,7 +3175,7 @@ export function InsertStudent() {
                                     : "w-1/4 text-right"
                                 }
                               >
-                                Algum parente estuda na escola?:{" "}
+                                Algum irmão estuda na escola?:{" "}
                               </label>
                               <select
                                 id="familySchoolSelectQuestion"
@@ -3212,7 +3212,7 @@ export function InsertStudent() {
                                 {/* FAMILY AT SCHOOL TITLE */}
                                 <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
                                   Atenção: a seguir selecione o aluno que já é
-                                  matriculado na {customerFullName}, e é parente
+                                  matriculado na {customerFullName}, e é irmão
                                   de {studentData.name}:
                                 </h1>
 
@@ -3221,7 +3221,7 @@ export function InsertStudent() {
                                   <div className="w-1/4" />
                                   <div className="flex gap-2 w-3/4 items-start text-left py-2">
                                     <p className="text-sm text-red-600 dark:text-yellow-500">
-                                      Não encontrou o parente? Verifique os
+                                      Não encontrou o irmão? Verifique os
                                       dados de Filiação e/ou Responsável
                                       financeiro.
                                       <br />
@@ -3242,7 +3242,7 @@ export function InsertStudent() {
                                         : "w-1/4 text-right"
                                     }
                                   >
-                                    Selecione o Parente:{" "}
+                                    Selecione o irmão:{" "}
                                   </label>
                                   <select
                                     id="familyStudentSelect"

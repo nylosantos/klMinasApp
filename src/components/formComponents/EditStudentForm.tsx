@@ -3057,7 +3057,7 @@ export function EditStudentForm({
             }),
           });
         } else {
-          console.log('não achei o aluno...')
+          console.log("não achei o aluno...");
         }
       }
     } else {
@@ -5217,10 +5217,12 @@ export function EditStudentForm({
               {newStudentData.experimentalCurriculum &&
                 classDayExperimentalCurriculumSelectedData !== undefined && (
                   <>
-                    {handleOneCurriculumDetails(newStudentData.curriculum)
-                      .placesAvailable > 0 &&
-                    handleOneCurriculumDetails(newStudentData.curriculum)
-                      .waitingList.length === 0 ? (
+                    {handleOneCurriculumDetails(
+                      newStudentData.experimentalCurriculum
+                    ).placesAvailable > 0 &&
+                    handleOneCurriculumDetails(
+                      newStudentData.experimentalCurriculum
+                    ).waitingList.length === 0 ? (
                       <>
                         {/* EXPERIMENTAL/INITIAL DAY */}
                         <div className="flex gap-2 items-center">
@@ -5249,7 +5251,7 @@ export function EditStudentForm({
                                   ? "px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                                   : "px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                               }
-                              minDate={new DateObject().add(1, "day")}
+                              minDate={new DateObject()}
                               mapDays={({ date }) => {
                                 const isWeekend =
                                   classDayExperimentalCurriculumSelectedData.indexDays.includes(

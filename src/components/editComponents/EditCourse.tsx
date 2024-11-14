@@ -406,7 +406,7 @@ export function EditCourse() {
               setIsSelected(true);
             }}
           >
-            <SelectOptions returnId dataType="schoolCourses" />
+            <SelectOptions returnId dataType="schoolCourses" showAllCourses />
           </select>
         </div>
 
