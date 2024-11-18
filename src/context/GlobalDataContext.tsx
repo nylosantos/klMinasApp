@@ -241,6 +241,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       schoolCourseName: "",
       classDayId: "",
       classDayName: "",
+      classDayIndexDays: [],
       scheduleId: "",
       scheduleName: "",
       teacherId: "",
@@ -301,6 +302,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
             curriculumToPush = {
               ...curriculumToPush,
               classDayName: classDay.name,
+              classDayIndexDays: classDay.indexDays,
             };
           }
         });
@@ -343,6 +345,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       schoolCourseName: "",
       classDayId: "",
       classDayName: "",
+      classDayIndexDays: [],
       scheduleId: "",
       scheduleName: "",
       teacherId: "",
@@ -404,6 +407,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
             curriculumToPush = {
               ...curriculumToPush,
               classDayName: classDay.name,
+              classDayIndexDays: classDay.indexDays,
             };
           }
         });
@@ -441,6 +445,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       schoolCourseName: "",
       classDayId: "",
       classDayName: "",
+      classDayIndexDays: [],
       scheduleId: "",
       scheduleName: "",
       teacherId: "",
@@ -499,6 +504,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           curriculumToShow = {
             ...curriculumToShow,
             classDayName: classDay.name,
+            classDayIndexDays: classDay.indexDays,
           };
         }
       });

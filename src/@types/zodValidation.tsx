@@ -56,8 +56,7 @@ export const createStudentValidationSchema = z.object ({
     name: z.string().min(1, {message: `Por favor, preencha o campo "Nome Filiação 1"`}),
     phone: z.object({
       ddd: z.string().min(2, {message: `Por favor, escolha um DDD para o Telefone de contato Filiação 1`}),
-      prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone de contato Filiação 1`}),
-      suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato Filiação 1`}),
+      number: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato Filiação 1`}),
     }),
     email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail Filiação 1"`}).email({message: "E-mail Filiação 1 inválido"}),
   }),
@@ -65,8 +64,7 @@ export const createStudentValidationSchema = z.object ({
     name: z.string().min(1, {message: `Por favor, preencha o campo "Nome Filiação 2"`}).optional().or(z.literal('')),
     phone: z.object({
       ddd: z.string().min(2, {message: `Por favor, escolha um DDD para o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
-      prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
-      suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
+      number: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
     }),
     email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail Filiação 2"`}).email({message: "E-mail Filiação 2 inválido"}),
   }),
@@ -98,20 +96,17 @@ export const createStudentValidationSchema = z.object ({
     }),
     phone: z.object({
       ddd: z.string().min(2, {message: `Por favor, escolha um DDD para o Telefone do Responsável Financeiro`}),
-      prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone do Responsável Financeiro`}),
-      suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone do Responsável Financeiro`}),
+      number: z.string().min(4, {message: `Por favor, insira corretamente o Telefone do Responsável Financeiro`}),
     }),
     activePhoneSecondary: z.boolean(),
     phoneSecondary: z.object({
       ddd: z.string().optional().or(z.literal('')),
-      prefix: z.string().optional().or(z.literal('')),
-      suffix: z.string().optional().or(z.literal('')),
+      number: z.string().optional().or(z.literal('')),
     }),
     activePhoneTertiary: z.boolean(),
     phoneTertiary: z.object({
       ddd: z.string().optional().or(z.literal('')),
-      prefix: z.string().optional().or(z.literal('')),
-      suffix: z.string().optional().or(z.literal('')),
+      number: z.string().optional().or(z.literal('')),
     }),
   }),
   
@@ -310,8 +305,7 @@ export const editStudentValidationSchema = z.object ({
     name: z.string().min(1, {message: `Por favor, preencha o campo "Nome Filiação 1"`}),
     phone: z.object({
       ddd: z.string().min(2, {message: `Por favor, escolha um DDD para o Telefone de contato Filiação 1`}),
-      prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone de contato Filiação 1`}),
-      suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato Filiação 1`}),
+      number: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato Filiação 1`}),
     }),
     email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail Filiação 1"`}).email({message: "E-mail Filiação 1 inválido"}),
   }),
@@ -319,8 +313,7 @@ export const editStudentValidationSchema = z.object ({
     name: z.string().min(1, {message: `Por favor, preencha o campo "Nome Filiação 2"`}).optional().or(z.literal('')),
     phone: z.object({
       ddd: z.string().min(2, {message: `Por favor, escolha um DDD para o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
-      prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
-      suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
+      number: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato Filiação 2`}).optional().or(z.literal('')),
     }),
     email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail Filiação 2"`}).email({message: "E-mail Filiação 2 inválido"}),
   }),
@@ -357,20 +350,17 @@ export const editStudentValidationSchema = z.object ({
     }),
     phone: z.object({
       ddd: z.string().min(2, {message: `Por favor, escolha um DDD para o Telefone do Responsável Financeiro`}),
-      prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone do Responsável Financeiro`}),
-      suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone do Responsável Financeiro`}),
+      number: z.string().min(4, {message: `Por favor, insira corretamente o Telefone do Responsável Financeiro`}),
     }),
     activePhoneSecondary: z.boolean(),
     phoneSecondary: z.object({
       ddd: z.string().optional().or(z.literal('')),
-      prefix: z.string().optional().or(z.literal('')),
-      suffix: z.string().optional().or(z.literal('')),
+      number: z.string().optional().or(z.literal('')),
     }),
     activePhoneTertiary: z.boolean(),
     phoneTertiary: z.object({
       ddd: z.string().optional().or(z.literal('')),
-      prefix: z.string().optional().or(z.literal('')),
-      suffix: z.string().optional().or(z.literal('')),
+      number: z.string().optional().or(z.literal('')),
     }),
   }),
   

@@ -10,9 +10,11 @@ import {
 import { ExcludeCurriculumProps } from "../../@types";
 
 type EditCurriculumButtonDetailsProps = {
-  isExperimental?: boolean;
-  openEditCurriculumDays: boolean;
-  setOpenEditCurriculumDays: (option: boolean) => void;
+  isExperimental: boolean;
+  openEditCurriculumDays?: boolean;
+  setOpenEditCurriculumDays?: (option: boolean) => void;
+  openEditExperimentalCurriculumDays?: boolean;
+  setOpenEditExperimentalCurriculumDays?: (option: boolean) => void;
   curriculum: ExcludeCurriculumProps;
   index: number;
   handleIncludeExcludeFunction: (
@@ -25,10 +27,12 @@ type EditCurriculumButtonDetailsProps = {
 export function EditCurriculumButton({
   curriculum,
   index,
-  isExperimental = false,
+  isExperimental,
   openEditCurriculumDays,
+  openEditExperimentalCurriculumDays,
   handleIncludeExcludeFunction,
   setOpenEditCurriculumDays,
+  setOpenEditExperimentalCurriculumDays,
   cancelEditFunction,
 }: EditCurriculumButtonDetailsProps) {
   // GET GLOBAL DATA
@@ -44,28 +48,33 @@ export function EditCurriculumButton({
       <MenuItems
         transition
         anchor="bottom end"
-        className="w-52 origin-top-right rounded-xl border border-white/5 bg-klGreen-500 p-1 text-sm/6 text-white transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
+        className="w-66 origin-top-right rounded-xl border border-white/5 bg-klGreen-500 p-1 text-sm/6 text-white transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
       >
-        {!isExperimental && (
-          <MenuItem>
-            <button
-              className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
-              onClick={() => {
+        <MenuItem>
+          <button
+            className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
+            onClick={() => {
+              if (isExperimental && setOpenEditExperimentalCurriculumDays) {
+                setOpenEditExperimentalCurriculumDays(
+                  !openEditExperimentalCurriculumDays
+                );
+              } else if (setOpenEditCurriculumDays) {
                 setOpenEditCurriculumDays(!openEditCurriculumDays);
-                cancelEditFunction(curriculum.id);
-              }}
-            >
-              <IoPencil size={12} />
-              {openEditCurriculumDays ? "Cancelar edição" : "Editar"}
-              {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
+              }
+              cancelEditFunction(curriculum.id);
+            }}
+          >
+            <IoPencil size={12} />
+            {openEditCurriculumDays || openEditExperimentalCurriculumDays
+              ? "Cancelar edição"
+              : "Editar"}
+            {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
               ⌘E
             </kbd> */}
-            </button>
-          </MenuItem>
-        )}
-        {!isExperimental && userFullData && userFullData.role !== "user" && (
-          <div className="my-1 h-px bg-white/5" />
-        )}
+          </button>
+        </MenuItem>
+
+        {userFullData && userFullData.role !== "user" && (<div className="my-1 h-px bg-white/5" />)}
 
         {userFullData && userFullData.role !== "user" && (
           <MenuItem>

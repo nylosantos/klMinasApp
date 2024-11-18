@@ -391,6 +391,7 @@ export interface CurriculumWithNamesProps extends CurriculumSearchProps {
   schoolClassName: string;
   schoolCourseName: string;
   classDayName: string;
+  classDayIndexDays: Array<number>;
   scheduleName: string;
   teacherName: string;
 }
