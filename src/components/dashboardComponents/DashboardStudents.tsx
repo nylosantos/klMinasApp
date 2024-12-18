@@ -408,7 +408,10 @@ export default function DashboardStudents({
                 <div className="absolute w-[4.65vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
                   <button
                     className="flex w-full items-center justify-evenly"
-                    onClick={() => setShowStudentList(!showStudentList)}
+                    onClick={() => {
+                      setShowStudentList(!showStudentList),
+                        setIsAdvancedSearch(false);
+                    }}
                   >
                     <IoIosArrowBack size={10} /> Voltar
                   </button>
@@ -419,7 +422,7 @@ export default function DashboardStudents({
               </>
             )}
           </div>
-          {isAdvancedSearch && (
+          {isAdvancedSearch && showStudentList && (
             <div className="flex gap-2">
               <div className="flex w-full gap-2">
                 <input
@@ -439,7 +442,7 @@ export default function DashboardStudents({
                   className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 />
               </div>
-              <div className="w-[4.65vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
+              <div className="w-[5.55vw] w-min-[4.55vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
                 <button
                   className="flex w-full items-center justify-between"
                   onClick={clearAdvancedSearch}

@@ -42,6 +42,8 @@ export function InsertCurriculum() {
     schoolCourseDatabaseData,
     scheduleDatabaseData,
     teacherDatabaseData,
+    page,
+    userFullData,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // CURRICULUM DATA
@@ -813,17 +815,32 @@ export function InsertCurriculum() {
   };
 
   return (
-    <div className="flex h-full flex-col container text-center overflow-scroll no-scrollbar rounded-xl">
+    <div className={`flex h-full flex-col container text-center overflow-scroll no-scrollbar ${
+      page.show !== "Dashboard" &&
+      userFullData &&
+      userFullData.role !== "user" &&
+      "rounded-xl"
+    } `}>
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Adicionar Turma</h1>
+      {page.show !== "Dashboard" &&
+        userFullData &&
+        userFullData.role !== "user" && (
+          <h1 className="font-bold text-2xl my-4">Adicionar Turma</h1>
+        )}
 
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddCurriculum)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
+        className={`flex flex-col w-full gap-2 rounded-xl ${
+          page.show !== "Dashboard" &&
+          userFullData &&
+          userFullData.role !== "user"
+            ? "bg-klGreen-500/20 dark:bg-klGreen-500/30 p-4"
+            : "pb-4 px-4 pt-2"
+        }`}
       >
         {/* SCHOOL SELECT */}
         <div className="flex gap-2 items-center">

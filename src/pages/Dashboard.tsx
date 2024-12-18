@@ -9,6 +9,7 @@ import { InsertStudent } from "../components/insertComponents/InsertStudent";
 import { SubmitLoading } from "../components/layoutComponents/SubmitLoading";
 import DashboardStudents from "../components/dashboardComponents/DashboardStudents";
 import DefaultListComponent from "../components/dashboardComponents/DefaultListComponent";
+import DashboardCurriculum from "../components/dashboardComponents/DashboardCurriculum";
 
 export default function Dashboard() {
   // GET GLOBAL DATA
@@ -22,7 +23,6 @@ export default function Dashboard() {
     curriculumDatabaseData,
     studentsDatabaseData,
     userFullData,
-    handleOneCurriculumDetails,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // DETAILS STATES
@@ -30,17 +30,6 @@ export default function Dashboard() {
   const [isEdit, setIsEdit] = useState(false);
   const [isFinance, setIsFinance] = useState(false);
   const [isDetailsViewing, setIsDetailsViewing] = useState(false);
-
-  function handleScheduleDetails(id: string) {
-    const scheduleDetail = scheduleDatabaseData.find(
-      (schedule) => schedule.id === id
-    );
-    if (scheduleDetail) {
-      return scheduleDetail;
-    } else {
-      return;
-    }
-  }
 
   // STATE FOR THE FILTERED STUDENTS
   const [filteredSearchStudents, setFilteredSearchStudents] =
@@ -203,7 +192,17 @@ export default function Dashboard() {
                   emptyMessage="Nenhum professor encontrado."
                 />
               )}
-              {showDashboardPage.page === "curriculum" &&
+              {showDashboardPage.page === "curriculum" && (
+                <DashboardCurriculum
+                  isDetailsViewing={isDetailsViewing}
+                  isEdit={isEdit}
+                  isFinance={isFinance}
+                  setIsDetailsViewing={setIsDetailsViewing}
+                  setIsEdit={setIsEdit}
+                  setOpen={setOpen}
+                />
+              )}
+              {/* {showDashboardPage.page === "curriculum" &&
                 (curriculumDatabaseData.length !== 0 ? (
                   curriculumDatabaseData
                     .sort((a, b) =>
@@ -368,7 +367,7 @@ export default function Dashboard() {
                       Nenhuma turma cadastrada.
                     </p>
                   </div>
-                ))}
+                ))} */}
             </>
           )}
           {showDashboardPage.page === "student" && (

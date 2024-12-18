@@ -124,6 +124,7 @@ export type GlobalDataContextType = {
   calcStudentPrice: (studentId: string) => Promise<void>;
   calcStudentPrice2: (studentId: string) => Promise<void>;
   formatCurriculumName: (id: string) => string;
+  handleDeleteCurriculum: (studentId: string, resetForm: () => void) => void;
   handleDeleteStudent: (studentId: string, resetForm: () => void) => void;
   handleOneCurriculumDetails: (id: string) => CurriculumWithNamesProps;
   handleOneStudentDetails: (id: string) => StudentSearchProps | undefined;
@@ -1323,9 +1324,120 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           setIsSubmitting(false);
         }
       } else {
-        // return toast.warning(
-        //   "Parabéns por pensar um pouco mais... Afinal, que palpite era aquele? 😂😂😂 #brinks"
-        // );
+        setIsSubmitting(false);
+      }
+    });
+  }
+
+  // DELETE CURRICULUM FUNCTION
+  function handleDeleteCurriculum(curriculumId: string, resetForm: () => void) {
+    ConfirmationAlert.fire({
+      title: "Você tem certeza?",
+      text: "Não será possível desfazer essa ação!",
+      icon: "warning",
+      showCancelButton: true,
+      cancelButtonColor: "#d33",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#2a5369",
+      confirmButtonText: "Sim, deletar!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const curriculumToDelete = curriculumDatabaseData.find(
+          (curriculum) => curriculum.id === curriculumId
+        );
+        if (curriculumToDelete) {
+          // CHECKING IF CURRICULUM CONTAINS STUDENTS
+          // STUDENTS IN THIS CURRICULUM ARRAY
+          const curriculumExistsOnStudent: StudentSearchProps[] = [];
+
+          // SEARCH STUDENTS WITH THIS SCHOOL AND PUTTING ON ARRAY
+          studentsDatabaseData.map((student) => {
+            if (student.curriculumIds) {
+              // ENROLLED STUDENTS
+              student.curriculumIds.map((studentCurriculum) => {
+                if (studentCurriculum.id === curriculumId) {
+                  curriculumExistsOnStudent.push(student);
+                }
+              });
+              // EXPERIMENTAL STUDENTS
+              student.experimentalCurriculumIds.map(
+                (studentExperimentalCurriculum) => {
+                  if (studentExperimentalCurriculum.id === curriculumId) {
+                    curriculumExistsOnStudent.push(student);
+                  }
+                }
+              );
+            }
+          });
+
+          // IF EXISTS, RETURN ERROR
+          if (curriculumExistsOnStudent.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Turma incluída em ${curriculumExistsOnStudent.length} ${
+                  curriculumExistsOnStudent.length === 1
+                    ? "cadastro de aluno"
+                    : "cadastros de alunos"
+                }, exclua ou altere primeiramente ${
+                  curriculumExistsOnStudent.length === 1
+                    ? "o aluno"
+                    : "os alunos"
+                } e depois exclua a turma... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else {
+            const deleteCurriculum = async () => {
+              try {
+                await deleteDoc(doc(db, "curriculum", curriculumId));
+                await deleteDoc(
+                  doc(db, "classDays", curriculumToDelete.classDayId)
+                );
+                resetForm();
+                toast.success(`Turma excluída com sucesso! 👌`, {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                });
+                setIsSubmitting(false);
+              } catch (error) {
+                console.log("ESSE É O ERROR", error);
+                toast.error(`Ocorreu um erro... 🤯`, {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                });
+                setIsSubmitting(false);
+              }
+            };
+            // IF NO EXISTS, DELETE
+            deleteCurriculum();
+          }
+        } else {
+          toast.error(
+            `Ocorreu um erro, turma não encontrada no banco de dados... 🤯`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
+          setIsSubmitting(false);
+        }
+      } else {
         setIsSubmitting(false);
       }
     });
@@ -1393,6 +1505,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         formatCurriculumName,
         handleAllCurriculumDetails,
         handleCurriculumDetailsWithSchoolCourse,
+        handleDeleteCurriculum,
         handleDeleteStudent,
         handleOneCurriculumDetails,
         handleOneStudentDetails,

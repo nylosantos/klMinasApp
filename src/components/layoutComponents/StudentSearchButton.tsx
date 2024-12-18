@@ -1,7 +1,7 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 // import { useContext } from "react";
 import { IoIosAddCircleOutline, IoIosArrowDown } from "react-icons/io";
-import { IoList, IoSearch } from "react-icons/io5";
+import { IoClose, IoList, IoSearch } from "react-icons/io5";
 // import {
 //   GlobalDataContext,
 //   GlobalDataContextType,
@@ -40,10 +40,17 @@ export function StudentSearchButton({
             className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
             onClick={toggleAdvancedSearch}
           >
-            <IoSearch size={15} />
-            {isAdvancedSearch
-              ? "Fechar Pesquisa Avançada"
-              : "Pesquisa Avançada"}
+            {isAdvancedSearch ? (
+              <>
+                <IoClose size={15} />
+                Fechar Pesquisa Avançada
+              </>
+            ) : (
+              <>
+                <IoSearch size={15} />
+                Pesquisa Avançada
+              </>
+            )}
             {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
               ⌘E
             </kbd> */}

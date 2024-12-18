@@ -240,6 +240,7 @@ export interface ClassDaysCompProps {
     confirmInsert?: boolean;
   };
   toggleClassDays: ({ day, value }: ToggleClassDaysFunctionProps) => void;
+  onlyView?: boolean;
 }
 
 export interface SystemConstantsSearchProps {
