@@ -41,6 +41,8 @@ import {
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { useCollectionData } from "react-firebase-hooks/firestore";
+import { useHttpsCallable } from "react-firebase-hooks/functions";
+import { getFunctions } from "firebase/functions";
 
 export type SetPageProps = {
   prev: "Dashboard" | "Settings" | "ManageSchools" | "ManageUsers";
@@ -126,6 +128,7 @@ export type GlobalDataContextType = {
   formatCurriculumName: (id: string) => string;
   handleDeleteCurriculum: (studentId: string, resetForm: () => void) => void;
   handleDeleteStudent: (studentId: string, resetForm: () => void) => void;
+  handleDeleteTeacher: (teacherId: string, resetForm: () => void) => void;
   handleOneCurriculumDetails: (id: string) => CurriculumWithNamesProps;
   handleOneStudentDetails: (id: string) => StudentSearchProps | undefined;
   setCheckUser: (option: boolean) => void;
@@ -193,6 +196,9 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
 
   // CHECK USER TRIGGER STATE
   const [checkUser, setCheckUser] = useState(false);
+
+  // DELETE USER CLOUD FUNCTION HOOK
+  const [deleteAppUser] = useHttpsCallable(getFunctions(app), "deleteAppUser");
 
   // HANDLE USER DATA FUNCTION
   const handleUserFullData = async (user: User | null | undefined) => {
@@ -1443,6 +1449,102 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     });
   }
 
+  // DELETE TEACHER FUNCTION
+  function handleDeleteTeacher(teacherId: string, resetForm: () => void) {
+    ConfirmationAlert.fire({
+      title: "Você tem certeza?",
+      text: "Não será possível desfazer essa ação!",
+      icon: "warning",
+      showCancelButton: true,
+      cancelButtonColor: "#d33",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#2a5369",
+      confirmButtonText: "Sim, deletar!",
+    }).then(async (result) => {
+      setIsSubmitting(true);
+      if (result.isConfirmed) {
+        const teacherToDelete = teacherDatabaseData.find(
+          (teacher) => teacher.id === teacherId
+        );
+        if (teacherToDelete) {
+          const deleteTeacher = async () => {
+            try {
+              if (teacherToDelete.haveAccount) {
+                await deleteAppUser(teacherToDelete.id);
+                await deleteDoc(doc(db, "appUsers", teacherToDelete.id));
+              }
+              await deleteDoc(doc(db, "teachers", teacherToDelete.id));
+              resetForm();
+              toast.success(`Professor excluído com sucesso! 👌`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+            } catch (error) {
+              console.log("ESSE É O ERROR", error);
+              toast.error(`Ocorreu um erro... 🤯`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+            } finally {
+              setIsSubmitting(false);
+              resetForm();
+            }
+          };
+          // SEARCH CURRICULUM WITH THIS TEACHER
+          const teacherExistsOnCurriculum = curriculumDatabaseData.filter(
+            (curriculum) => curriculum.teacherId === teacherToDelete.id
+          );
+
+          // IF EXISTS, RETURN ERROR
+          if (teacherExistsOnCurriculum.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Professor incluído em ${
+                  teacherExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+                }, exclua ou altere primeiramente ${
+                  teacherExistsOnCurriculum.length === 1
+                    ? "a Turma"
+                    : "as Turmas"
+                } e depois exclua o Professor ${teacherToDelete.name}... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else {
+            // IF NO EXISTS, DELETE
+            deleteTeacher();
+          }
+        } else {
+          toast.error(
+            `Ocorreu um erro, turma não encontrada no banco de dados... 🤯`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
+          setIsSubmitting(false);
+        }
+      } else {
+        setIsSubmitting(false);
+      }
+    });
+  }
+
   return (
     <GlobalDataContext.Provider
       value={{
@@ -1507,6 +1609,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         handleCurriculumDetailsWithSchoolCourse,
         handleDeleteCurriculum,
         handleDeleteStudent,
+        handleDeleteTeacher,
         handleOneCurriculumDetails,
         handleOneStudentDetails,
         setCheckUser,

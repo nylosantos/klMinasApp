@@ -1,7 +1,7 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { useContext } from "react";
-import { IoIosArrowDown, IoMdClose } from "react-icons/io";
-import { IoPencil } from "react-icons/io5";
+import { IoIosArrowDown } from "react-icons/io";
+import { IoClose, IoPencil } from "react-icons/io5";
 import { MdDelete, MdOutlinePreview } from "react-icons/md";
 // import { TbCurrencyReal } from "react-icons/tb";
 import {
@@ -17,9 +17,8 @@ type StudentButtonDetailsProps = {
   isDetailsViewing: boolean;
   isFinancialResponsible: boolean;
   open: boolean;
-
-  handleClickOpen: ({ id, option }: HandleClickOpenFunctionProps) => void;
   handleClose: () => void;
+  handleClickOpen: ({ id, option }: HandleClickOpenFunctionProps) => void;
   setIsEdit: (option: boolean) => void;
   setIsFinance: (option: boolean) => void;
   setIsDetailsViewing: (option: boolean) => void;
@@ -33,8 +32,8 @@ export function StudentButtonDetails({
   isDetailsViewing,
   isFinancialResponsible,
   open,
-  handleClickOpen,
   handleClose,
+  handleClickOpen,
   handleDeleteUser,
   setIsEdit,
   setIsFinance,
@@ -53,7 +52,7 @@ export function StudentButtonDetails({
       <MenuItems
         transition
         anchor="bottom end"
-        className="w-52 origin-top-right rounded-xl border border-white/5 bg-klGreen-500 p-1 text-sm/6 text-white transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
+        className="w-52 origin-top-right rounded-xl border border-white/5 bg-klGreen-500 p-1 text-sm/6 text-white transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0 z-50"
       >
         {!isDetailsViewing && (
           <MenuItem>
@@ -116,26 +115,6 @@ export function StudentButtonDetails({
           </MenuItem>
         )} */}
 
-        {open && id !== "" && (
-          <MenuItem>
-            <button
-              className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
-              onClick={() => {
-                setIsFinance(false);
-                setIsDetailsViewing(false);
-                setIsEdit(false);
-                handleClose();
-              }}
-            >
-              <IoMdClose />
-              Fechar Detalhes
-              {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                                          ⌘D
-                                        </kbd> */}
-            </button>
-          </MenuItem>
-        )}
-
         {userFullData && userFullData.role !== "user" && open && (
           <>
             <div className="my-1 h-px bg-white/5" />
@@ -148,7 +127,21 @@ export function StudentButtonDetails({
                 Deletar Cadastro
                 {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
                                         ⌘D
-                                      </kbd> */}
+                                        </kbd> */}
+              </button>
+            </MenuItem>
+          </>
+        )}
+        {open && (
+          <>
+            <div className="my-1 h-px bg-white/5" />
+            <MenuItem>
+              <button
+                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
+                onClick={handleClose}
+              >
+                <IoClose size={12} />
+                Fechar
               </button>
             </MenuItem>
           </>

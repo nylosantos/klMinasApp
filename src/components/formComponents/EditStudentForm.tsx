@@ -3328,7 +3328,11 @@ export function EditStudentForm({
   };
 
   return (
-    <>
+    <div
+      className={`w-full ${
+        open ? "max-w-9xl bg-white/80 dark:bg-klGreen-500/60 rounded-xl" : ""
+      } `}
+    >
       <div className="flex flex-col w-full h-full overflow-scroll no-scrollbar gap-2 pt-4 px-4 rounded-xl text-center">
         {/** DAHSBOARD SECTION TITLE */}
         {page.show === "Dashboard" &&
@@ -5369,6 +5373,6 @@ export function EditStudentForm({
           </form>
         </FormProvider>
       </div>
-    </>
+    </div>
   );
 }

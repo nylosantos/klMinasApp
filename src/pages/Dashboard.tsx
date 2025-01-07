@@ -10,6 +10,7 @@ import { SubmitLoading } from "../components/layoutComponents/SubmitLoading";
 import DashboardStudents from "../components/dashboardComponents/DashboardStudents";
 import DefaultListComponent from "../components/dashboardComponents/DefaultListComponent";
 import DashboardCurriculum from "../components/dashboardComponents/DashboardCurriculum";
+import DashboardTeacher from "../components/dashboardComponents/DashboardTeacher";
 
 export default function Dashboard() {
   // GET GLOBAL DATA
@@ -153,11 +154,11 @@ export default function Dashboard() {
         {/* PAGES TO SHOW */}
         <div
           className={
-            showDashboardPage.page === "curriculum"
-              ? `pb-4 flex h-full overflow-scroll no-scrollbar flex-wrap justify-center container mt-4 [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl gap-2`
-              : showDashboardPage.page === "student"
-              ? "pb-4 flex h-full overflow-scroll no-scrollbar justify-center w-full"
-              : `pb-4 flex h-full overflow-scroll no-scrollbar flex-col container mt-4 [&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl`
+            showDashboardPage.page === "curriculum" ||
+            showDashboardPage.page === "student" ||
+            showDashboardPage.page === "teacher"
+              ? "flex overflow-scroll no-scrollbar justify-center w-full container bg-klGreen-500/20 my-4 rounded-xl"
+              : "pb-4 flex h-full overflow-scroll no-scrollbar flex-col container mt-4 [&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl"
           }
         >
           {userFullData.role !== "user" && (
@@ -187,9 +188,16 @@ export default function Dashboard() {
                 />
               )}
               {showDashboardPage.page === "teacher" && (
-                <DefaultListComponent
-                  database={teacherDatabaseData}
-                  emptyMessage="Nenhum professor encontrado."
+                // <DefaultListComponent
+                //   database={teacherDatabaseData}
+                //   emptyMessage="Nenhum professor encontrado."
+                // />
+                <DashboardTeacher
+                  isDetailsViewing={isDetailsViewing}
+                  isEdit={isEdit}
+                  setIsDetailsViewing={setIsDetailsViewing}
+                  setIsEdit={setIsEdit}
+                  setOpen={setOpen}
                 />
               )}
               {showDashboardPage.page === "curriculum" && (

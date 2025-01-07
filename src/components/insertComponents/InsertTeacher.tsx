@@ -24,7 +24,7 @@ const db = getFirestore(app);
 
 export function InsertTeacher() {
   // GET GLOBAL DATA
-  const { appUsersDatabaseData } = useContext(
+  const { appUsersDatabaseData, page, userFullData } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
 
@@ -315,12 +315,23 @@ export function InsertTeacher() {
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Adicionar Professor</h1>
+      {page.show !== "Dashboard" &&
+        userFullData &&
+        userFullData.role !== "user" && (
+          <h1 className="font-bold text-2xl my-4">Adicionar Professor</h1>
+        )}
 
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddTeacher)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
+        className={`flex flex-col w-full gap-2 rounded-xl ${
+          page.show !== "Dashboard" &&
+          userFullData &&
+          userFullData.role !== "user"
+            ? "bg-klGreen-500/20 dark:bg-klGreen-500/30 p-4 mt-2"
+            : "pb-4 px-4 pt-2"
+        }`}
+        // className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* TEACHER NAME */}
         <div className="flex gap-2 items-center">

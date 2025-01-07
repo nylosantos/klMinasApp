@@ -584,7 +584,7 @@ export function EditCurriculum() {
   // REACT HOOK FORM SETTINGS
   const {
     handleSubmit,
-    reset,
+    // reset,
     setValue,
     formState: { errors },
   } = useForm<EditCurriculumValidationZProps>({

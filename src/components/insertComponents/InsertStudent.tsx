@@ -1931,7 +1931,7 @@ export function InsertStudent() {
             page.show !== "Dashboard" &&
             userFullData &&
             userFullData.role !== "user"
-              ? "bg-klGreen-500/20 dark:bg-klGreen-500/30 p-4"
+              ? "bg-klGreen-500/20 dark:bg-klGreen-500/30 p-4 mt-2"
               : "pb-4 px-4 pt-2"
           }`}
         >

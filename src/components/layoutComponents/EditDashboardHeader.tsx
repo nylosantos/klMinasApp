@@ -33,7 +33,7 @@ export default function EditDashboardHeader({
   setIsDetailsViewing,
 }: EditDashboardHeaderProps) {
   return (
-    <div className="flex items-center justify-center text-md/snug text-klGreen-500 dark:text-gray-100 bg-klGreen-500/20 dark:bg-klGreen-500/70 rounded-xl uppercase p-1">
+    <div className="flex w-full relative items-center justify-center text-md/snug text-gray-100 bg-klGreen-500/70 dark:bg-klGreen-500/70 rounded-xl uppercase p-4">
       <p className="flex absolute z-10">
         {`${
           isFinance

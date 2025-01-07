@@ -89,7 +89,7 @@ export function FinanceStudentModal({
   }
 
   return (
-    <div className="flex flex-col w-full h-full overflow-scroll no-scrollbar gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 text-center">
+    <div className="flex flex-col items-center w-full h-full overflow-scroll no-scrollbar gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 text-center">
       {/** DAHSBOARD SECTION TITLE */}
       {page.show === "Dashboard" &&
         studentName &&
@@ -116,7 +116,7 @@ export function FinanceStudentModal({
             key={studentId}
           />
         )}
-      <div className="flex flex-col w-full h-full overflow-scroll no-scrollbar container [&>*:nth-child(2)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/00 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/0 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl transition-all duration-1000">
+      <div className="flex flex-col w-full h-full overflow-scroll no-scrollbar [&>*:nth-child(2)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/00 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/0 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl transition-all duration-1000">
         <div className="flex flex-col px-4 py-3" key={uuidv4()}>
           <div className="flex items-center w-full gap-3">
             <div className="text-sm/6 text-center w-1/12 text-klGreen-500 dark:text-white">
@@ -153,7 +153,7 @@ export function FinanceStudentModal({
         </div>
         <div
           className={
-            "w-full ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container [&>*:nth-child(1)]:rounded-t-none [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/10 dark:[&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 transition-all duration-1000"
+            "w-full ease-in-out flex flex-col overflow-scroll no-scrollbar [&>*:nth-child(1)]:rounded-t-none [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/10 dark:[&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 transition-all duration-1000"
           }
         >
           {paymentArray.length !== 0 ? (
@@ -199,7 +199,7 @@ export function FinanceStudentModal({
                         </div>
                       </div>
                       <div
-                        className={`flex items-center justify-center text-center w-1/12 dark:text-white rounded-lg text-sm/snug px-1 ${handlePaymentStatusColor(
+                        className={`flex items-center justify-center text-center w-1/12 dark:text-white rounded-lg text-sm/snug px-1 py-2 ${handlePaymentStatusColor(
                           payment
                         )}`}
                       >
