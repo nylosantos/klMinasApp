@@ -60,20 +60,15 @@ export function EditMyUser() {
   // PHONE FORMATTED STATE
   const [phoneFormatted, setPhoneFormatted] = useState({
     ddd: "DDD",
-    prefix: "",
-    suffix: "",
+    number: "",
   });
 
   // SET PHONE NUMBER WHEN PHONE FORMATTED IS FULLY FILLED
   useEffect(() => {
-    if (
-      phoneFormatted.ddd !== "DDD" &&
-      phoneFormatted.prefix !== "" &&
-      phoneFormatted.suffix !== ""
-    ) {
+    if (phoneFormatted.ddd !== "DDD" && phoneFormatted.number !== "") {
       setUserEditData({
         ...userEditData,
-        phone: `+55${phoneFormatted.ddd}${phoneFormatted.prefix}${phoneFormatted.suffix}`,
+        phone: `+55${phoneFormatted.ddd}${phoneFormatted.number}`,
       });
     } else {
       setUserEditData({ ...userEditData, phone: null });
@@ -103,8 +98,7 @@ export function EditMyUser() {
         setPhoneFormatted({
           ...phoneFormatted,
           ddd: foundedUser.phone ? foundedUser.phone.slice(3, 5) : "DDD",
-          prefix: foundedUser.phone ? foundedUser.phone.slice(5, 10) : "",
-          suffix: foundedUser.phone ? foundedUser.phone.slice(-4) : "",
+          number: foundedUser.phone ? foundedUser.phone.slice(-9) : "",
         });
       }
     }
@@ -443,11 +437,11 @@ export function EditMyUser() {
                   <input
                     type="text"
                     disabled={isSubmitting}
-                    name="phoneInitial"
-                    pattern="^[+ 0-9]{5}$"
-                    maxLength={5}
-                    defaultValue={userEditData.phone?.slice(5, 10)}
-                    placeholder={errors.phone ? "É necessário um" : "99999"}
+                    name="phoneNumber"
+                    pattern="^[+ 0-9]{9}$"
+                    maxLength={9}
+                    defaultValue={userEditData.phone?.slice(-9)}
+                    placeholder={errors.phone ? "É necessário um" : "999999999"}
                     className={
                       errors.phone
                         ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -456,28 +450,7 @@ export function EditMyUser() {
                     onChange={(e) => {
                       setPhoneFormatted({
                         ...phoneFormatted,
-                        prefix: e.target.value,
-                      });
-                    }}
-                  />
-                  -
-                  <input
-                    type="text"
-                    disabled={isSubmitting}
-                    name="phoneFinal"
-                    pattern="^[+ 0-9]{4}$"
-                    maxLength={4}
-                    defaultValue={userEditData.phone?.slice(-4)}
-                    placeholder={errors.phone ? "telefone válido" : "9990"}
-                    className={
-                      errors.phone
-                        ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                        : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    }
-                    onChange={(e) => {
-                      setPhoneFormatted({
-                        ...phoneFormatted,
-                        suffix: e.target.value,
+                        number: e.target.value,
                       });
                     }}
                   />

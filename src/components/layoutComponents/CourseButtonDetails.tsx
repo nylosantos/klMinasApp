@@ -9,17 +9,17 @@ import {
 } from "../../context/GlobalDataContext";
 import { HandleClickOpenFunctionProps } from "../../@types";
 
-type TeacherButtonDetailsProps = {
+type CourseButtonDetailsProps = {
   id: string;
   handleClickOpen: ({ id, option }: HandleClickOpenFunctionProps) => void;
-  handleDeleteTeacher?: () => void;
+  handleDeleteCourse?: () => void;
 };
 
-export function TeacherButtonDetails({
+export function CourseButtonDetails({
   id,
   handleClickOpen,
-  handleDeleteTeacher,
-}: TeacherButtonDetailsProps) {
+  handleDeleteCourse,
+}: CourseButtonDetailsProps) {
   // GET GLOBAL DATA
   const { userFullData } = useContext(
     GlobalDataContext
@@ -65,7 +65,7 @@ export function TeacherButtonDetails({
             <MenuItem>
               <button
                 className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
-                onClick={() => handleDeleteTeacher && handleDeleteTeacher()}
+                onClick={() => handleDeleteCourse && handleDeleteCourse()}
               >
                 <MdDelete />
                 Deletar Cadastro

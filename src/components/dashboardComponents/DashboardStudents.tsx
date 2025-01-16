@@ -26,6 +26,7 @@ import { FinanceStudentModal } from "../modalComponents/FinanceStudentModal";
 import { InsertStudent } from "../insertComponents/InsertStudent";
 
 interface DashboardStudentsProps {
+  filteredStudents: FilteredStudentsProps[];
   filteredSearchStudents: StudentSearchProps[];
   isDetailsViewing: boolean;
   isEdit: boolean;
@@ -49,6 +50,7 @@ export type PaymentArrayProps = {
 };
 
 export default function DashboardStudents({
+  filteredStudents,
   filteredSearchStudents,
   isDetailsViewing,
   isEdit,
@@ -63,8 +65,6 @@ export default function DashboardStudents({
   // GET GLOBAL DATA
   const {
     isSubmitting,
-    studentsDatabaseData,
-    userFullData,
     calcStudentPrice2,
     handleDeleteStudent,
     setIsSubmitting,
@@ -107,46 +107,6 @@ export default function DashboardStudents({
     setIsFinance(false);
     setIsDetailsViewing(false);
   };
-
-  // FILTER STUDENTS STATE
-  const [filteredStudents, setFilteredStudents] = useState<
-    FilteredStudentsProps[]
-  >([]);
-
-  // FILTER STUDENTS IF USER.ROLE IS 'USER'
-  function filterStudents() {
-    if (userFullData) {
-      setIsSubmitting(true);
-      if (userFullData.role === "user") {
-        const studentsToShow: FilteredStudentsProps[] = [];
-        studentsDatabaseData.map((student) => {
-          if (student.financialResponsible.document === userFullData.document) {
-            studentsToShow.push({ ...student, isFinancialResponsible: true });
-          } else if (
-            student.parentOne?.email === userFullData.email ||
-            student.parentTwo?.email === userFullData.email
-          ) {
-            studentsToShow.push({ ...student, isFinancialResponsible: false });
-          }
-        });
-        setFilteredStudents(studentsToShow);
-      } else {
-        const studentsToShow: FilteredStudentsProps[] = [];
-        studentsDatabaseData.map((student) => {
-          studentsToShow.push({ ...student, isFinancialResponsible: true });
-        });
-        setFilteredStudents(studentsToShow);
-      }
-      setIsSubmitting(false);
-    } else {
-      console.log(`é porque não tem`);
-    }
-  }
-
-  // FILTER STUDENTS WHEN USER CHANGE
-  useEffect(() => {
-    filterStudents();
-  }, [userFullData]);
 
   // FILTER STUDENTS BY SEARCH STATES
   // STATE FOR THE SEARCH TERM
@@ -262,10 +222,14 @@ export default function DashboardStudents({
     setFinancialResponsibleDocument(event.target.value);
   };
 
+  function closeModal() {
+    setOpen(false);
+  }
+
   // DELETE STUDENT FUNCTION
   function handleDeleteUser() {
     if (studentSelected) {
-      handleDeleteStudent(studentSelected.id, handleClose);
+      handleDeleteStudent(studentSelected.id, handleClose, closeModal);
     } else {
       console.log("Nenhum usuário selecionado.");
     }
@@ -417,7 +381,7 @@ export default function DashboardStudents({
                     id="searchStudent"
                     value={searchTerm}
                     onChange={handleSearchTermChange}
-                    placeholder="Procurar"
+                    placeholder="Procurar Aluno"
                     className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                   />
                   <div className="flex gap-2">

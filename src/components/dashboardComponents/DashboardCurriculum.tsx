@@ -10,7 +10,6 @@ import {
   HandleClickOpenFunctionProps,
   CurriculumSearchProps,
 } from "../../@types";
-// import { CurriculumSearchButton } from "../layoutComponents/CurriculumSearchButton";
 import {
   GlobalDataContext,
   GlobalDataContextType,
@@ -20,7 +19,6 @@ import {
   IoIosArrowBack,
   IoMdClose,
 } from "react-icons/io";
-// import { EditCurriculumForm } from "../formComponents/EditCurriculumForm";
 import { InsertCurriculum } from "../insertComponents/InsertCurriculum";
 import EditCurriculumForm from "../formComponents/EditCurriculumForm";
 
@@ -32,16 +30,6 @@ interface DashboardCurriculumProps {
   setIsEdit: Dispatch<SetStateAction<boolean>>;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }
-
-export type PaymentArrayProps = {
-  type: "enrolledFee" | "montlyPayment";
-  dueDate: Date;
-  paymentDate: Date | string;
-  creationDate: Date;
-  description: string;
-  invoiceId: number;
-  value: number;
-};
 
 export default function DashboardCurriculum({
   setIsDetailsViewing,
@@ -219,10 +207,14 @@ export default function DashboardCurriculum({
     });
   };
 
-  // DELETE curriculum FUNCTION
+  function closeModal() {
+    setModal(false);
+  }
+
+  // DELETE CURRICULUM FUNCTION
   function handleDeleteData() {
     if (curriculumSelected) {
-      handleDeleteCurriculum(curriculumSelected.id, handleClose);
+      handleDeleteCurriculum(curriculumSelected.id, handleClose, closeModal);
     } else {
       console.log("Nenhuma turma selecionada.");
     }
@@ -230,9 +222,7 @@ export default function DashboardCurriculum({
 
   return (
     <div className="flex w-full h-full justify-start container no-scrollbar rounded-xl pt-4 gap-4">
-      <div
-        className="w-full ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container  rounded-xl transition-all duration-1000"
-      >
+      <div className="w-full ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container  rounded-xl transition-all duration-1000">
         <div className="flex w-full flex-col px-4 pb-4 gap-2">
           <div className="flex w-full gap-2 justify-start">
             {showCurriculumList ? (
@@ -331,20 +321,22 @@ export default function DashboardCurriculum({
             {/* CURRICULUM LISTS */}
             <div className="flex overflow-x-auto no-scrollbar">
               <table className="table-auto w-full border-collapse border border-transparent">
-                <thead className="bg-klGreen-500 sticky top-0 text-gray-100 z-50">
-                  <tr>
-                    <th className="border-r dark:border-klGreen-500 p-2 font-normal">
-                      Escola
-                    </th>
-                    <th className="border-r dark:border-klGreen-500 p-2 font-normal">
-                      Ano Escolar
-                    </th>
-                    <th className="border-r dark:border-klGreen-500 p-2 font-normal">
-                      Modalidade
-                    </th>
-                    <th className="p-2 font-normal">Professor</th>
-                  </tr>
-                </thead>
+                {filteredCurriculum.length !== 0 && (
+                  <thead className="bg-klGreen-500 sticky top-0 text-gray-100 z-50">
+                    <tr>
+                      <th className="border-r dark:border-klGreen-500 p-2 font-normal">
+                        Escola
+                      </th>
+                      <th className="border-r dark:border-klGreen-500 p-2 font-normal">
+                        Ano Escolar
+                      </th>
+                      <th className="border-r dark:border-klGreen-500 p-2 font-normal">
+                        Modalidade
+                      </th>
+                      <th className="p-2 font-normal">Professor</th>
+                    </tr>
+                  </thead>
+                )}
                 <tbody className="[&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100">
                   {filteredCurriculum.length ? (
                     filteredCurriculum

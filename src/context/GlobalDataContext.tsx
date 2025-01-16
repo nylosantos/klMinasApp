@@ -126,9 +126,36 @@ export type GlobalDataContextType = {
   calcStudentPrice: (studentId: string) => Promise<void>;
   calcStudentPrice2: (studentId: string) => Promise<void>;
   formatCurriculumName: (id: string) => string;
-  handleDeleteCurriculum: (studentId: string, resetForm: () => void) => void;
-  handleDeleteStudent: (studentId: string, resetForm: () => void) => void;
-  handleDeleteTeacher: (teacherId: string, resetForm: () => void) => void;
+  handleDeleteCurriculum: (
+    curriculumId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) => void;
+  handleDeleteCourse: (
+    courseId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) => void;
+  handleDeleteSchedule: (
+    scheduleId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) => void;
+  handleDeleteSchool: (
+    schoolId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) => void;
+  handleDeleteStudent: (
+    studentId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) => void;
+  handleDeleteTeacher: (
+    teacherId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) => void;
   handleOneCurriculumDetails: (id: string) => CurriculumWithNamesProps;
   handleOneStudentDetails: (id: string) => StudentSearchProps | undefined;
   setCheckUser: (option: boolean) => void;
@@ -1115,7 +1142,11 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   const ConfirmationAlert = withReactContent(Swal);
 
   // DELETE STUDENT FUNCTION
-  function handleDeleteStudent(studentId: string, resetForm: () => void) {
+  function handleDeleteStudent(
+    studentId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) {
     ConfirmationAlert.fire({
       title: "Você tem certeza?",
       text: "Não será possível desfazer essa ação!",
@@ -1315,6 +1346,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
               setIsSubmitting(false);
             }
           };
+          closeModal && closeModal();
           deleteStudent();
         } else {
           toast.error(
@@ -1336,7 +1368,11 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   }
 
   // DELETE CURRICULUM FUNCTION
-  function handleDeleteCurriculum(curriculumId: string, resetForm: () => void) {
+  function handleDeleteCurriculum(
+    curriculumId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) {
     ConfirmationAlert.fire({
       title: "Você tem certeza?",
       text: "Não será possível desfazer essa ação!",
@@ -1427,6 +1463,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
                 setIsSubmitting(false);
               }
             };
+            closeModal && closeModal();
             // IF NO EXISTS, DELETE
             deleteCurriculum();
           }
@@ -1450,7 +1487,11 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   }
 
   // DELETE TEACHER FUNCTION
-  function handleDeleteTeacher(teacherId: string, resetForm: () => void) {
+  function handleDeleteTeacher(
+    teacherId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) {
     ConfirmationAlert.fire({
       title: "Você tem certeza?",
       text: "Não será possível desfazer essa ação!",
@@ -1523,12 +1564,472 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
               )
             );
           } else {
+            closeModal && closeModal();
             // IF NO EXISTS, DELETE
             deleteTeacher();
           }
         } else {
           toast.error(
-            `Ocorreu um erro, turma não encontrada no banco de dados... 🤯`,
+            `Ocorreu um erro, professor não encontrado no banco de dados... 🤯`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
+          setIsSubmitting(false);
+        }
+      } else {
+        setIsSubmitting(false);
+      }
+    });
+  }
+
+  // DELETE SCHOOL FUNCTION
+  function handleDeleteSchool(
+    schoolId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) {
+    ConfirmationAlert.fire({
+      title: "Você tem certeza?",
+      text: "Não será possível desfazer essa ação!",
+      icon: "warning",
+      showCancelButton: true,
+      cancelButtonColor: "#d33",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#2a5369",
+      confirmButtonText: "Sim, deletar!",
+    }).then(async (result) => {
+      setIsSubmitting(true);
+      if (result.isConfirmed) {
+        const schoolToDelete = schoolDatabaseData.find(
+          (school) => school.id === schoolId
+        );
+        if (schoolToDelete) {
+          const deleteSchool = async () => {
+            try {
+              await deleteDoc(doc(db, "schools", schoolToDelete.id));
+              toast.success(`Colégio excluído com sucesso ! 👌`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+            } catch (error) {
+              console.log("ESSE É O ERROR", error);
+              toast.error(`Ocorreu um erro... 🤯`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+            } finally {
+              resetForm();
+              setIsSubmitting(false);
+            }
+          };
+
+          // CHECKING IF SCHOOL EXISTS ON SOME STUDENT, CLASS, SCHEDULE OR CURRICULUM ON DATABASE
+          // STUDENTS IN THIS SCHOOL ARRAY
+          const schoolExistsOnStudent: StudentSearchProps[] = [];
+
+          // SEARCH CURRICULUM WITH THIS SCHOOL
+          const schoolExistsOnCurriculum = curriculumDatabaseData.filter(
+            (curriculum) => curriculum.schoolId === schoolId
+          );
+
+          // SEARCH STUDENTS WITH THIS SCHOOL AND PUTTING ON ARRAY
+          studentsDatabaseData.map((student) => {
+            if (student.curriculumIds) {
+              // ENROLLED STUDENTS
+              student.curriculumIds.map((studentCurriculum) => {
+                const foundedSchoolStudentWithCurriculum =
+                  schoolExistsOnCurriculum.find(
+                    (schoolCurriculum) =>
+                      schoolCurriculum.id === studentCurriculum.id
+                  );
+                if (foundedSchoolStudentWithCurriculum) {
+                  schoolExistsOnStudent.push(student);
+                }
+              });
+              // EXPERIMENTAL STUDENTS
+              student.experimentalCurriculumIds.map(
+                (studentExperimentalCurriculum) => {
+                  const foundedSchoolStudentWithExperimentalCurriculum =
+                    schoolExistsOnCurriculum.find(
+                      (schoolCurriculum) =>
+                        schoolCurriculum.id === studentExperimentalCurriculum.id
+                    );
+                  if (foundedSchoolStudentWithExperimentalCurriculum) {
+                    schoolExistsOnStudent.push(student);
+                  }
+                }
+              );
+            }
+          });
+
+          // SEARCH CLASS WITH THIS SCHOOL
+          const schoolExistsOnClass = schoolClassDatabaseData.filter(
+            (schoolClass) => schoolClass.schoolId === schoolId
+          );
+
+          // SEARCH SCHEDULE WITH THIS SCHOOL
+          const schoolExistsOnSchedule = scheduleDatabaseData.filter(
+            (schedule) => schedule.schoolId === schoolId
+          );
+
+          // IF EXISTS, RETURN ERROR
+          if (schoolExistsOnStudent.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Colégio tem ${schoolExistsOnStudent.length} ${
+                  schoolExistsOnStudent.length === 1
+                    ? "aluno matriculado"
+                    : "alunos matriculados"
+                }, exclua ou altere primeiramente ${
+                  schoolExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
+                } e depois exclua o ${schoolToDelete.name}... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else if (schoolExistsOnCurriculum.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Colégio incluído em ${schoolExistsOnCurriculum.length} ${
+                  schoolExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+                }, exclua ou altere primeiramente ${
+                  schoolExistsOnCurriculum.length === 1
+                    ? "a Turma"
+                    : "as Turmas"
+                } e depois exclua o ${schoolToDelete.name}... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else if (schoolExistsOnSchedule.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Colégio incluído em ${schoolExistsOnSchedule.length} ${
+                  schoolExistsOnSchedule.length === 1 ? "Horário" : "Horários"
+                }, exclua ou altere primeiramente ${
+                  schoolExistsOnSchedule.length === 1
+                    ? "o Horário"
+                    : "os Horários"
+                } e depois exclua o ${schoolToDelete.name}... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else if (schoolExistsOnClass.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Colégio incluído em ${schoolExistsOnClass.length} ${
+                  schoolExistsOnClass.length === 1
+                    ? "Ano Escolar"
+                    : "Anos Escolares"
+                }, exclua ou altere primeiramente ${
+                  schoolExistsOnClass.length === 1
+                    ? "o Ano Escolar"
+                    : "os Anos Escolares"
+                } e depois exclua o ${schoolToDelete.name}... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else {
+            closeModal && closeModal();
+            // IF NO EXISTS, DELETE
+            deleteSchool();
+          }
+        } else {
+          toast.error(
+            `Ocorreu um erro, escola não encontrada no banco de dados... 🤯`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
+          setIsSubmitting(false);
+        }
+      } else {
+        setIsSubmitting(false);
+      }
+    });
+  }
+
+  // DELETE COURSE FUNCTION
+  function handleDeleteCourse(
+    courseId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) {
+    ConfirmationAlert.fire({
+      title: "Você tem certeza?",
+      text: "Não será possível desfazer essa ação!",
+      icon: "warning",
+      showCancelButton: true,
+      cancelButtonColor: "#d33",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#2a5369",
+      confirmButtonText: "Sim, deletar!",
+    }).then(async (result) => {
+      setIsSubmitting(true);
+      if (result.isConfirmed) {
+        const courseToDelete = schoolCourseDatabaseData.find(
+          (course) => course.id === courseId
+        );
+        if (courseToDelete) {
+          // DELETE SCHOOL COURSE FUNCTION
+          const deleteSchoolCourse = async () => {
+            try {
+              await deleteDoc(doc(db, "schoolCourses", courseToDelete.id));
+              resetForm();
+              toast.success(`Modalidade excluída com sucesso! 👌`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+              setIsSubmitting(false);
+            } catch (error) {
+              console.log("ESSE É O ERROR", error);
+              toast.error(`Ocorreu um erro... 🤯`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+              setIsSubmitting(false);
+            }
+          };
+
+          // CHECKING IF SCHOOLCOURSE EXISTS ON SOME STUDENT OR CURRICULUM ON DATABASE
+          // STUDENTS IN THIS SCHOOLCOURSE ARRAY
+          const schoolCourseExistsOnStudent: StudentSearchProps[] = [];
+
+          // SEARCH CURRICULUM WITH THIS SCHOOLCOURSE
+          const schoolCourseExistsOnCurriculum = curriculumDatabaseData.filter(
+            (curriculum) => curriculum.schoolCourseId === courseToDelete.id
+          );
+
+          // SEARCH STUDENTS WITH THIS SCHOOLCOURSE AND PUTTING ON ARRAY
+          studentsDatabaseData.map((student) => {
+            if (student.curriculumIds) {
+              // ENROLLED STUDENTS
+              student.curriculumIds.map((studentCurriculum) => {
+                const foundedSchoolCourseStudentWithCurriculum =
+                  schoolCourseExistsOnCurriculum.find(
+                    (schoolCurriculum) =>
+                      schoolCurriculum.id === studentCurriculum.id
+                  );
+                if (foundedSchoolCourseStudentWithCurriculum) {
+                  schoolCourseExistsOnStudent.push(student);
+                }
+              });
+              // EXPERIMENTAL STUDENTS
+              student.experimentalCurriculumIds.map(
+                (studentExperimentalCurriculum) => {
+                  const foundedSchoolCourseStudentWithExperimentalCurriculum =
+                    schoolCourseExistsOnCurriculum.find(
+                      (schoolCurriculum) =>
+                        schoolCurriculum.id === studentExperimentalCurriculum.id
+                    );
+                  if (foundedSchoolCourseStudentWithExperimentalCurriculum) {
+                    schoolCourseExistsOnStudent.push(student);
+                  }
+                }
+              );
+            }
+          });
+
+          // IF EXISTS, RETURN ERROR
+          if (schoolCourseExistsOnStudent.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Modalidade tem ${schoolCourseExistsOnStudent.length} ${
+                  schoolCourseExistsOnStudent.length === 1
+                    ? "aluno matriculado"
+                    : "alunos matriculados"
+                }, exclua ou altere primeiramente ${
+                  schoolCourseExistsOnStudent.length === 1
+                    ? "o aluno"
+                    : "os alunos"
+                } e depois exclua a modalidade ${courseToDelete.name}... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else if (schoolCourseExistsOnCurriculum.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Modalidade incluída em ${
+                  schoolCourseExistsOnCurriculum.length
+                } ${
+                  schoolCourseExistsOnCurriculum.length === 1
+                    ? "Turma"
+                    : "Turmas"
+                }, exclua ou altere primeiramente ${
+                  schoolCourseExistsOnCurriculum.length === 1
+                    ? "a Turma"
+                    : "as Turmas"
+                } e depois exclua a modalidade ${courseToDelete.name}... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else {
+            closeModal && closeModal();
+            // IF NO EXISTS, DELETE
+            deleteSchoolCourse();
+          }
+        } else {
+          toast.error(
+            `Ocorreu um erro, modalidade não encontrada no banco de dados... 🤯`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
+          setIsSubmitting(false);
+        }
+      } else {
+        setIsSubmitting(false);
+      }
+    });
+  }
+  // DELETE SCHEDULE FUNCTION
+  function handleDeleteSchedule(
+    scheduleId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) {
+    ConfirmationAlert.fire({
+      title: "Você tem certeza?",
+      text: "Não será possível desfazer essa ação!",
+      icon: "warning",
+      showCancelButton: true,
+      cancelButtonColor: "#d33",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#2a5369",
+      confirmButtonText: "Sim, deletar!",
+    }).then(async (result) => {
+      setIsSubmitting(true);
+      if (result.isConfirmed) {
+        const scheduleToDelete = scheduleDatabaseData.find(
+          (schedule) => schedule.id === scheduleId
+        );
+        if (scheduleToDelete) {
+          // DELETE SCHEDULE FUNCTION
+          const deleteSchedule = async () => {
+            try {
+              await deleteDoc(doc(db, "schedules", scheduleToDelete.id));
+              resetForm();
+              toast.success(`Horário excluído com sucesso! 👌`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+              setIsSubmitting(false);
+            } catch (error) {
+              console.log("ESSE É O ERROR", error);
+              toast.error(`Ocorreu um erro... 🤯`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+              setIsSubmitting(false);
+            }
+          };
+
+          // CHECKING IF SCHEDULE EXISTS ON DATABASE
+          // SEARCH CURRICULUM WITH THIS SCHEDULE
+          const scheduleExistsOnCurriculum = curriculumDatabaseData.filter(
+            (curriculum) => curriculum.scheduleId === scheduleToDelete.id
+          );
+
+          // IF EXISTS, RETURN ERROR
+          if (scheduleExistsOnCurriculum.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Horário incluído em ${scheduleExistsOnCurriculum.length} ${
+                  scheduleExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+                }, exclua ou altere primeiramente ${
+                  scheduleExistsOnCurriculum.length === 1
+                    ? "a Turma"
+                    : "as Turmas"
+                } e depois exclua o ${scheduleToDelete.name}... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else {
+            closeModal && closeModal();
+            // IF NO EXISTS, DELETE
+            deleteSchedule();
+          }
+        } else {
+          toast.error(
+            `Ocorreu um erro, modalidade não encontrada no banco de dados... 🤯`,
             {
               theme: "colored",
               closeOnClick: true,
@@ -1608,6 +2109,9 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         handleAllCurriculumDetails,
         handleCurriculumDetailsWithSchoolCourse,
         handleDeleteCurriculum,
+        handleDeleteCourse,
+        handleDeleteSchedule,
+        handleDeleteSchool,
         handleDeleteStudent,
         handleDeleteTeacher,
         handleOneCurriculumDetails,

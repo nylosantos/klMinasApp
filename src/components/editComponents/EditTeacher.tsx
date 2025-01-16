@@ -26,14 +26,6 @@ export function EditTeacher() {
     teacherId: "",
   });
 
-  // TEACHER EDIT DATA
-  // const [teacherEditData, setTeacherEditData] =
-  //   useState<EditTeacherValidationZProps>({
-  //     name: "",
-  //     email: "",
-  //     phone: "",
-  //   });
-
   // TEACHER SELECTED AND EDIT ACTIVE STATES
   const [isSelected, setIsSelected] = useState(false);
   const [isEdit, setIsEdit] = useState(false);

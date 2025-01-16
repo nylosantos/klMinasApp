@@ -166,8 +166,7 @@ export const createTeacherValidationSchema = z.object ({
   email: z.string().min(1, {message: `Por favor, preencha o campo "E-mail"`}).email({message: "E-mail inválido"}).or(z.literal("")),
   phone: z.object({
     ddd: z.string().min(2, {message: `Por favor, escolha um DDD para o Telefone de contato`}).or(z.literal("")),
-    prefix: z.string().min(5, {message: `Por favor, insira corretamente o Telefone de contato`}).or(z.literal("")),
-    suffix: z.string().min(4, {message: `Por favor, insira corretamente o Telefone de contato`}).or(z.literal("")),
+    number: z.string().min(9, {message: `Por favor, insira corretamente o Telefone de contato`}).or(z.literal("")),
   }),
   createAccount: z.boolean(),
   confirmInsert: z.boolean()

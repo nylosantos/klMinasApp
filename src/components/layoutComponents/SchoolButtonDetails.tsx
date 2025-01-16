@@ -3,23 +3,24 @@ import { useContext } from "react";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoPencil } from "react-icons/io5";
 import { MdDelete, MdOutlinePreview } from "react-icons/md";
+// import { TbCurrencyReal } from "react-icons/tb";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 import { HandleClickOpenFunctionProps } from "../../@types";
 
-type TeacherButtonDetailsProps = {
+type SchoolButtonDetailsProps = {
   id: string;
   handleClickOpen: ({ id, option }: HandleClickOpenFunctionProps) => void;
-  handleDeleteTeacher?: () => void;
+  handleDeleteSchool?: () => void;
 };
 
-export function TeacherButtonDetails({
+export function SchoolButtonDetails({
   id,
   handleClickOpen,
-  handleDeleteTeacher,
-}: TeacherButtonDetailsProps) {
+  handleDeleteSchool,
+}: SchoolButtonDetailsProps) {
   // GET GLOBAL DATA
   const { userFullData } = useContext(
     GlobalDataContext
@@ -65,7 +66,7 @@ export function TeacherButtonDetails({
             <MenuItem>
               <button
                 className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
-                onClick={() => handleDeleteTeacher && handleDeleteTeacher()}
+                onClick={() => handleDeleteSchool && handleDeleteSchool()}
               >
                 <MdDelete />
                 Deletar Cadastro

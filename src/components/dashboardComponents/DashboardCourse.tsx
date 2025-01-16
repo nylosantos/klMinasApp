@@ -6,47 +6,47 @@ import {
   useEffect,
   useState,
 } from "react";
-import { HandleClickOpenFunctionProps, TeacherSearchProps } from "../../@types";
+import { HandleClickOpenFunctionProps, SchoolCourseSearchProps } from "../../@types";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 import { IoIosAddCircleOutline, IoIosArrowBack } from "react-icons/io";
-import { InsertTeacher } from "../insertComponents/InsertTeacher";
-import EditTeacherForm from "../formComponents/EditTeacherForm";
-import { TeacherButtonDetails } from "../layoutComponents/TeacherButtonDetails";
+import { InsertCourse } from "../insertComponents/InsertCourse";
+import EditCourseForm from "../formComponents/EditCourseForm";
+import { CourseButtonDetails } from "../layoutComponents/CourseButtonDetails";
 
-interface DashboardTeacherProps {
+interface DashboardCourseProps {
   isEdit: boolean;
   setIsEdit: Dispatch<SetStateAction<boolean>>;
 }
 
-export default function DashboardTeacher({
+export default function DashboardCourse({
   setIsEdit,
   isEdit,
-}: DashboardTeacherProps) {
+}: DashboardCourseProps) {
   // GET GLOBAL DATA
   const {
     isSubmitting,
-    teacherDatabaseData,
-    handleDeleteTeacher,
+    schoolCourseDatabaseData,
+    handleDeleteCourse,
     setIsSubmitting,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // CURRICULUM LIST OR ADD CURRICULUM STATE
-  const [showTeacherList, setShowTeacherList] = useState(true);
+  const [showCourseList, setShowCourseList] = useState(true);
 
   // MODAL STATE
   const [modal, setModal] = useState(false);
 
   // CURRICULUM SELECTED FOR SHOW DETAILS STATE
-  const [teacherSelected, setTeacherSelected] = useState<TeacherSearchProps>();
+  const [courseSelected, setCourseSelected] = useState<SchoolCourseSearchProps>();
 
   // OPEN DETAILS FUNCTION
   const handleClickOpen = ({ id, option }: HandleClickOpenFunctionProps) => {
-    const teacherToShow = filteredTeacher.find((teacher) => teacher.id === id);
-    if (teacherToShow) {
-      setTeacherSelected(teacherToShow);
+    const courseToShow = filteredCourse.find((course) => course.id === id);
+    if (courseToShow) {
+      setCourseSelected(courseToShow);
       setModal(true);
       if (option === "details") {
         setIsEdit(false);
@@ -58,26 +58,26 @@ export default function DashboardTeacher({
 
   // CLOSE DETAILS FUNCTION
   const handleClose = () => {
-    setTeacherSelected(undefined);
+    setCourseSelected(undefined);
     setModal(false);
     setIsEdit(false);
   };
 
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  // FILTER Teacher STATE
-  const [filteredTeacher, setFilteredTeacher] =
-    useState<TeacherSearchProps[]>(teacherDatabaseData);
+  // FILTER COURSE STATE
+  const [filteredCourse, setFilteredCourse] =
+    useState<SchoolCourseSearchProps[]>(schoolCourseDatabaseData);
 
   // FILTER CURRICULUM
   useEffect(() => {
     // Realiza os filtros com base nos inputs
-    setFilteredTeacher(
-      teacherDatabaseData.filter((teacher) =>
-        teacher.name.toLowerCase().includes(searchTerm.toLowerCase())
+    setFilteredCourse(
+      schoolCourseDatabaseData.filter((course) =>
+        course.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
-  }, [searchTerm, teacherDatabaseData]);
+  }, [searchTerm, schoolCourseDatabaseData]);
 
   // HANDLER FOR CHANGES IN THE TEACHER NAME SEARCH FIELD
   const handleSearchTermChange = (
@@ -92,8 +92,8 @@ export default function DashboardTeacher({
 
   // DELETE TEACHER FUNCTION
   function handleDeleteData() {
-    if (teacherSelected) {
-      handleDeleteTeacher(teacherSelected.id, handleClose, closeModal);
+    if (courseSelected) {
+      handleDeleteCourse(courseSelected.id, handleClose, closeModal);
     } else {
       console.log("Nenhum professor selecionado.");
     }
@@ -104,7 +104,7 @@ export default function DashboardTeacher({
       <div className="w-full ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container  rounded-xl transition-all duration-1000">
         <div className="flex w-full flex-col px-4 pb-4 gap-2 z-50">
           <div className="flex w-full gap-2 justify-start">
-            {showTeacherList ? (
+            {showCourseList ? (
               <>
                 <div className="flex flex-col w-full gap-2">
                   <div className="flex w-full gap-2">
@@ -112,7 +112,7 @@ export default function DashboardTeacher({
                       type="text"
                       value={searchTerm}
                       onChange={(e) => handleSearchTermChange(e)}
-                      placeholder="Procurar Professor"
+                      placeholder="Procurar Modalidade"
                       className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                     />
                   </div>
@@ -121,7 +121,7 @@ export default function DashboardTeacher({
                   <div className="w-[5.55vw] w-min-[4.55vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
                     <button
                       className="flex w-full items-center justify-evenly"
-                      onClick={() => setShowTeacherList(false)}
+                      onClick={() => setShowCourseList(false)}
                     >
                       <IoIosAddCircleOutline size={15} />
                       Adicionar
@@ -134,28 +134,28 @@ export default function DashboardTeacher({
                 <div className="absolute w-[4.65vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
                   <button
                     className="flex w-full items-center justify-evenly"
-                    onClick={() => setShowTeacherList(!showTeacherList)}
+                    onClick={() => setShowCourseList(!showCourseList)}
                   >
                     <IoIosArrowBack size={10} /> Voltar
                   </button>
                 </div>
                 <p className="w-full px-2 py-1 dark:text-gray-100 cursor-default text-center font-bold text-lg">
-                  Adicionar Professor
+                  Adicionar Modalidade
                 </p>
               </>
             )}
           </div>
         </div>
-        {showTeacherList ? (
+        {showCourseList ? (
           <>
             {/* TEACHER LIST */}
             <div className="w-full ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container [&>*:nth-child(1)]:rounded-t-sm [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 transition-all duration-1000">
-              {filteredTeacher.length ? (
-                filteredTeacher
+              {filteredCourse.length ? (
+                filteredCourse
                   .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((teacher) => {
+                  .map((course) => {
                     return (
-                      <div className="flex flex-col px-4 py-3" key={teacher.id}>
+                      <div className="flex flex-col px-4 py-3" key={course.id}>
                         <div className="flex items-center w-full">
                           <div className="w-1/6" />
                           <div className="flex w-4/6">
@@ -163,19 +163,19 @@ export default function DashboardTeacher({
                               className="text-klGreen-500 dark:text-white hover:text-klOrange-500 hover:dark:text-klOrange-500 cursor-pointer"
                               onClick={() => {
                                 handleClickOpen({
-                                  id: teacher.id,
+                                  id: course.id,
                                   option: "details",
                                 });
                               }}
                             >
-                              {teacher.name}
+                              {course.name}
                             </p>
                           </div>
-                          <TeacherButtonDetails
-                            id={teacher.id}
+                          <CourseButtonDetails
+                            id={course.id}
                             handleClickOpen={handleClickOpen}
-                            handleDeleteTeacher={() => {
-                              handleDeleteTeacher(teacher.id, () => {});
+                            handleDeleteCourse={() => {
+                              handleDeleteCourse(course.id, () => {});
                             }}
                           />
                         </div>
@@ -185,17 +185,17 @@ export default function DashboardTeacher({
               ) : (
                 <div className="flex justify-center p-4 ">
                   <p className="text-klGreen-500 dark:text-white">
-                    Nenhum professor encontrado.
+                    Nenhuma modalidade encontrada.
                   </p>
                 </div>
               )}
             </div>
           </>
         ) : (
-          <InsertTeacher />
+          <InsertCourse />
         )}
       </div>
-      {modal && teacherSelected && (
+      {modal && courseSelected && (
         <div
           className="relative z-50"
           aria-labelledby="crop-image-dialog"
@@ -204,8 +204,8 @@ export default function DashboardTeacher({
         >
           <div className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-all backdrop-blur-sm"></div>
           <div className="flex fixed inset-0 z-10 w-screen items-center justify-center overflow-y-auto">
-            <EditTeacherForm
-              teacherSelectedData={teacherSelected}
+            <EditCourseForm
+              schoolCourseSelectedData={courseSelected}
               isEdit={isEdit}
               setIsEdit={setIsEdit}
               modal={modal}
@@ -213,7 +213,7 @@ export default function DashboardTeacher({
               onClose={() => setModal(false)}
               isSubmitting={isSubmitting}
               setIsSubmitting={setIsSubmitting}
-              handleDeleteTeacher={handleDeleteData}
+              handleDeleteCourse={handleDeleteData}
             />
           </div>
         </div>

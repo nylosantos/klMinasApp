@@ -51,20 +51,15 @@ export function DeleteTeacher() {
   // PHONE FORMATTED STATE
   const [phoneFormatted] = useState({
     ddd: "DDD",
-    prefix: "",
-    suffix: "",
+    number: "",
   });
 
   // SET PHONE NUMBER WHEN PHONE FORMATTED IS FULLY FILLED
   useEffect(() => {
-    if (
-      phoneFormatted.ddd !== "DDD" &&
-      phoneFormatted.prefix !== "" &&
-      phoneFormatted.suffix !== ""
-    ) {
+    if (phoneFormatted.ddd !== "DDD" && phoneFormatted.number !== "") {
       setTeacherFullData({
         ...teacherFullData,
-        phone: `+55${phoneFormatted.ddd}${phoneFormatted.prefix}${phoneFormatted.suffix}`,
+        phone: `+55${phoneFormatted.ddd}${phoneFormatted.number}`,
       });
     } else {
       setTeacherFullData({ ...teacherFullData, phone: null });
@@ -351,16 +346,8 @@ export function DeleteTeacher() {
                     <input
                       disabled
                       type="text"
-                      name="phoneInitial"
-                      value={teacherSelectedData?.phone?.slice(5, 10)}
-                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                    />
-                    -
-                    <input
-                      disabled
-                      type="text"
-                      name="phoneFinal"
-                      value={teacherSelectedData?.phone?.slice(-4)}
+                      name="phoneNumber"
+                      value={teacherSelectedData?.phone?.slice(-9)}
                       className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                     />
                   </div>

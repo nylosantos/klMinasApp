@@ -27,9 +27,8 @@ const db = getFirestore(app);
 
 export function InsertSchedule() {
   // GET GLOBAL DATA
-  const { schoolDatabaseData, scheduleDatabaseData } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const { schoolDatabaseData, scheduleDatabaseData, page, userFullData } =
+    useContext(GlobalDataContext) as GlobalDataContextType;
 
   // SCHEDULE DATA
   const [scheduleData, setScheduleData] =
@@ -244,12 +243,22 @@ export function InsertSchedule() {
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Adicionar Horário</h1>
+      {page.show !== "Dashboard" &&
+        userFullData &&
+        userFullData.role !== "user" && (
+          <h1 className="font-bold text-2xl my-4">Adicionar Horário</h1>
+        )}
 
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddSchedule)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
+        className={`flex flex-col w-full gap-2 rounded-xl ${
+          page.show !== "Dashboard" &&
+          userFullData &&
+          userFullData.role !== "user"
+            ? "bg-klGreen-500/20 dark:bg-klGreen-500/30 p-4 mt-2"
+            : "pb-4 px-4 pt-2"
+        }`}
       >
         {/* SCHOOL SELECT */}
         <div className="flex gap-2 items-center">

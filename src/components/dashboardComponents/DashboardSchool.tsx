@@ -6,47 +6,47 @@ import {
   useEffect,
   useState,
 } from "react";
-import { HandleClickOpenFunctionProps, TeacherSearchProps } from "../../@types";
+import { HandleClickOpenFunctionProps, SchoolSearchProps } from "../../@types";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 import { IoIosAddCircleOutline, IoIosArrowBack } from "react-icons/io";
-import { InsertTeacher } from "../insertComponents/InsertTeacher";
-import EditTeacherForm from "../formComponents/EditTeacherForm";
-import { TeacherButtonDetails } from "../layoutComponents/TeacherButtonDetails";
+import { InsertSchool } from "../insertComponents/InsertSchool";
+import EditSchoolForm from "../formComponents/EditSchoolForm";
+import { SchoolButtonDetails } from "../layoutComponents/SchoolButtonDetails";
 
-interface DashboardTeacherProps {
+interface DashboardSchoolProps {
   isEdit: boolean;
   setIsEdit: Dispatch<SetStateAction<boolean>>;
 }
 
-export default function DashboardTeacher({
+export default function DashboardSchool({
   setIsEdit,
   isEdit,
-}: DashboardTeacherProps) {
+}: DashboardSchoolProps) {
   // GET GLOBAL DATA
   const {
     isSubmitting,
-    teacherDatabaseData,
-    handleDeleteTeacher,
+    schoolDatabaseData,
+    handleDeleteSchool,
     setIsSubmitting,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // CURRICULUM LIST OR ADD CURRICULUM STATE
-  const [showTeacherList, setShowTeacherList] = useState(true);
+  const [showSchoolList, setShowSchoolList] = useState(true);
 
   // MODAL STATE
   const [modal, setModal] = useState(false);
 
   // CURRICULUM SELECTED FOR SHOW DETAILS STATE
-  const [teacherSelected, setTeacherSelected] = useState<TeacherSearchProps>();
+  const [schoolSelected, setSchoolSelected] = useState<SchoolSearchProps>();
 
   // OPEN DETAILS FUNCTION
   const handleClickOpen = ({ id, option }: HandleClickOpenFunctionProps) => {
-    const teacherToShow = filteredTeacher.find((teacher) => teacher.id === id);
-    if (teacherToShow) {
-      setTeacherSelected(teacherToShow);
+    const schoolToShow = filteredSchool.find((school) => school.id === id);
+    if (schoolToShow) {
+      setSchoolSelected(schoolToShow);
       setModal(true);
       if (option === "details") {
         setIsEdit(false);
@@ -58,26 +58,26 @@ export default function DashboardTeacher({
 
   // CLOSE DETAILS FUNCTION
   const handleClose = () => {
-    setTeacherSelected(undefined);
+    setSchoolSelected(undefined);
     setModal(false);
     setIsEdit(false);
   };
 
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  // FILTER Teacher STATE
-  const [filteredTeacher, setFilteredTeacher] =
-    useState<TeacherSearchProps[]>(teacherDatabaseData);
+  // FILTER SCHOOL STATE
+  const [filteredSchool, setFilteredSchool] =
+    useState<SchoolSearchProps[]>(schoolDatabaseData);
 
   // FILTER CURRICULUM
   useEffect(() => {
     // Realiza os filtros com base nos inputs
-    setFilteredTeacher(
-      teacherDatabaseData.filter((teacher) =>
+    setFilteredSchool(
+      schoolDatabaseData.filter((teacher) =>
         teacher.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
-  }, [searchTerm, teacherDatabaseData]);
+  }, [searchTerm, schoolDatabaseData]);
 
   // HANDLER FOR CHANGES IN THE TEACHER NAME SEARCH FIELD
   const handleSearchTermChange = (
@@ -92,10 +92,10 @@ export default function DashboardTeacher({
 
   // DELETE TEACHER FUNCTION
   function handleDeleteData() {
-    if (teacherSelected) {
-      handleDeleteTeacher(teacherSelected.id, handleClose, closeModal);
+    if (schoolSelected) {
+      handleDeleteSchool(schoolSelected.id, handleClose, closeModal);
     } else {
-      console.log("Nenhum professor selecionado.");
+      console.log("Nenhuma escola selecionada.");
     }
   }
 
@@ -104,7 +104,7 @@ export default function DashboardTeacher({
       <div className="w-full ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container  rounded-xl transition-all duration-1000">
         <div className="flex w-full flex-col px-4 pb-4 gap-2 z-50">
           <div className="flex w-full gap-2 justify-start">
-            {showTeacherList ? (
+            {showSchoolList ? (
               <>
                 <div className="flex flex-col w-full gap-2">
                   <div className="flex w-full gap-2">
@@ -112,7 +112,7 @@ export default function DashboardTeacher({
                       type="text"
                       value={searchTerm}
                       onChange={(e) => handleSearchTermChange(e)}
-                      placeholder="Procurar Professor"
+                      placeholder="Procurar Escola"
                       className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                     />
                   </div>
@@ -121,7 +121,7 @@ export default function DashboardTeacher({
                   <div className="w-[5.55vw] w-min-[4.55vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
                     <button
                       className="flex w-full items-center justify-evenly"
-                      onClick={() => setShowTeacherList(false)}
+                      onClick={() => setShowSchoolList(false)}
                     >
                       <IoIosAddCircleOutline size={15} />
                       Adicionar
@@ -134,28 +134,28 @@ export default function DashboardTeacher({
                 <div className="absolute w-[4.65vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
                   <button
                     className="flex w-full items-center justify-evenly"
-                    onClick={() => setShowTeacherList(!showTeacherList)}
+                    onClick={() => setShowSchoolList(!showSchoolList)}
                   >
                     <IoIosArrowBack size={10} /> Voltar
                   </button>
                 </div>
                 <p className="w-full px-2 py-1 dark:text-gray-100 cursor-default text-center font-bold text-lg">
-                  Adicionar Professor
+                  Adicionar Escola
                 </p>
               </>
             )}
           </div>
         </div>
-        {showTeacherList ? (
+        {showSchoolList ? (
           <>
             {/* TEACHER LIST */}
             <div className="w-full ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container [&>*:nth-child(1)]:rounded-t-sm [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 transition-all duration-1000">
-              {filteredTeacher.length ? (
-                filteredTeacher
+              {filteredSchool.length ? (
+                filteredSchool
                   .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((teacher) => {
+                  .map((school) => {
                     return (
-                      <div className="flex flex-col px-4 py-3" key={teacher.id}>
+                      <div className="flex flex-col px-4 py-3" key={school.id}>
                         <div className="flex items-center w-full">
                           <div className="w-1/6" />
                           <div className="flex w-4/6">
@@ -163,19 +163,19 @@ export default function DashboardTeacher({
                               className="text-klGreen-500 dark:text-white hover:text-klOrange-500 hover:dark:text-klOrange-500 cursor-pointer"
                               onClick={() => {
                                 handleClickOpen({
-                                  id: teacher.id,
+                                  id: school.id,
                                   option: "details",
                                 });
                               }}
                             >
-                              {teacher.name}
+                              {school.name}
                             </p>
                           </div>
-                          <TeacherButtonDetails
-                            id={teacher.id}
+                          <SchoolButtonDetails
+                            id={school.id}
                             handleClickOpen={handleClickOpen}
-                            handleDeleteTeacher={() => {
-                              handleDeleteTeacher(teacher.id, () => {});
+                            handleDeleteSchool={() => {
+                              handleDeleteSchool(school.id, () => {});
                             }}
                           />
                         </div>
@@ -192,10 +192,10 @@ export default function DashboardTeacher({
             </div>
           </>
         ) : (
-          <InsertTeacher />
+          <InsertSchool />
         )}
       </div>
-      {modal && teacherSelected && (
+      {modal && schoolSelected && (
         <div
           className="relative z-50"
           aria-labelledby="crop-image-dialog"
@@ -204,8 +204,8 @@ export default function DashboardTeacher({
         >
           <div className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-all backdrop-blur-sm"></div>
           <div className="flex fixed inset-0 z-10 w-screen items-center justify-center overflow-y-auto">
-            <EditTeacherForm
-              teacherSelectedData={teacherSelected}
+            <EditSchoolForm
+              schoolSelectedData={schoolSelected}
               isEdit={isEdit}
               setIsEdit={setIsEdit}
               modal={modal}
@@ -213,7 +213,7 @@ export default function DashboardTeacher({
               onClose={() => setModal(false)}
               isSubmitting={isSubmitting}
               setIsSubmitting={setIsSubmitting}
-              handleDeleteTeacher={handleDeleteData}
+              handleDeleteSchool={handleDeleteData}
             />
           </div>
         </div>

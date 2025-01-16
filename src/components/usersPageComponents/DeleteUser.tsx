@@ -296,22 +296,10 @@ export function DeleteUser() {
                         <input
                           disabled
                           type="text"
-                          name="phoneInitial"
+                          name="phoneNumber"
                           value={
                             userSelectedData?.phone
-                              ? userSelectedData?.phone?.slice(5, 10)
-                              : ""
-                          }
-                          className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                        />
-                        -
-                        <input
-                          disabled
-                          type="text"
-                          name="phoneFinal"
-                          value={
-                            userSelectedData?.phone
-                              ? userSelectedData?.phone?.slice(-4)
+                              ? userSelectedData?.phone?.slice(-9)
                               : ""
                           }
                           className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"

@@ -47,20 +47,15 @@ export function InsertUser() {
   // PHONE FORMATTED STATE
   const [phoneFormatted, setPhoneFormatted] = useState({
     ddd: "DDD",
-    prefix: "",
-    suffix: "",
+    number: "",
   });
 
   // SET PHONE NUMBER WHEN PHONE FORMATTED IS FULLY FILLED
   useEffect(() => {
-    if (
-      phoneFormatted.ddd !== "DDD" &&
-      phoneFormatted.prefix !== "" &&
-      phoneFormatted.suffix !== ""
-    ) {
+    if (phoneFormatted.ddd !== "DDD" && phoneFormatted.number !== "") {
       setUserData({
         ...userData,
-        phone: `+55${phoneFormatted.ddd}${phoneFormatted.prefix}${phoneFormatted.suffix}`,
+        phone: `+55${phoneFormatted.ddd}${phoneFormatted.number}`,
       });
     } else {
       setUserData({ ...userData, phone: null });
@@ -99,8 +94,7 @@ export function InsertUser() {
     });
     setPhoneFormatted({
       ddd: "DDD",
-      prefix: "",
-      suffix: "",
+      number: "",
     });
     reset();
   };
@@ -283,133 +277,6 @@ export function InsertUser() {
         setIsSubmitting(false);
       }
     }
-    // const userRef = collection(db, "appUsers");
-    // const q = query(userRef, where("email", "==", data.email));
-    // const querySnapshot = await getDocs(q);
-    // const promisesMail: UserFullDataProps[] = [];
-    // querySnapshot.forEach((doc) => {
-    //   const promise = doc.data() as UserFullDataProps;
-    //   promisesMail.push(promise);
-    // });
-    // Promise.all(promisesMail).then(async (results) => {
-    //   if (results.length !== 0) {
-    //     return (
-    //       setIsSubmitting(false),
-    //       toast.error(
-    //         `Já existe um usuário com este e-mail em nosso banco de dados... ❕`,
-    //         {
-    //           theme: "colored",
-    //           closeOnClick: true,
-    //           pauseOnHover: true,
-    //           draggable: true,
-    //           autoClose: 3000,
-    //         }
-    //       )
-    //     );
-    //   } else {
-    //     // CHECKING IF PHONE EXISTS ON DATABASE
-    //     const userRef = collection(db, "appUsers");
-    //     const q = query(userRef, where("phone", "==", data.phone));
-    //     const querySnapshot = await getDocs(q);
-    //     const promisesPhone: UserFullDataProps[] = [];
-    //     querySnapshot.forEach((doc) => {
-    //       const promise = doc.data() as UserFullDataProps;
-    //       promisesPhone.push(promise);
-    //     });
-    //     Promise.all(promisesPhone).then(async (results) => {
-    //       // IF EXISTS, RETURN ERROR
-    //       if (results.length !== 0) {
-    //         return (
-    //           setIsSubmitting(false),
-    //           toast.error(
-    //             `Já existe um usuário com este número de telefone em nosso banco de dados... ❕`,
-    //             {
-    //               theme: "colored",
-    //               closeOnClick: true,
-    //               pauseOnHover: true,
-    //               draggable: true,
-    //               autoClose: 3000,
-    //             }
-    //           )
-    //         );
-    //       } else {
-    //         // IF NOT EXISTS, CREATE
-    //         try {
-    //           await createAppUser(data).then(async (result) => {
-    //             if (result?.data) {
-    //               // CHECKING IF NEW USER IS A TEACHER
-    //               if (data.role === "teacher") {
-    //                 // GET USER ID FROM FIREBASE CLOUD FUNCTIONS
-    //                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //                 const userUid: any = result.data;
-    //                 try {
-    //                   // CREATE TEACHER ON SCHOOL DATABASE
-    //                   await setDoc(doc(db, "teachers", userUid), {
-    //                     id: userUid,
-    //                     name: data.name,
-    //                     email: data.email,
-    //                     phone: data.phone,
-    //                     timestamp: serverTimestamp(),
-    //                   });
-    //                   toast.success(
-    //                     `Usuário ${data.name} criado com sucesso! 👌`,
-    //                     {
-    //                       theme: "colored",
-    //                       closeOnClick: true,
-    //                       pauseOnHover: true,
-    //                       draggable: true,
-    //                       autoClose: 3000,
-    //                     }
-    //                   );
-    //                   resetForm();
-    //                   setIsSubmitting(false);
-    //                 } catch (error) {
-    //                   console.log(error);
-    //                   toast.error(
-    //                     `Usuário criado, porém correu um erro ao criar o professor no banco de dados da escola, contate o suporte... 🤯`,
-    //                     {
-    //                       theme: "colored",
-    //                       closeOnClick: true,
-    //                       pauseOnHover: true,
-    //                       draggable: true,
-    //                       autoClose: 3000,
-    //                     }
-    //                   );
-    //                   resetForm();
-    //                   setIsSubmitting(false);
-    //                 }
-    //               } else {
-    //                 toast.success(
-    //                   `Usuário ${data.name} criado com sucesso! 👌`,
-    //                   {
-    //                     theme: "colored",
-    //                     closeOnClick: true,
-    //                     pauseOnHover: true,
-    //                     draggable: true,
-    //                     autoClose: 3000,
-    //                   }
-    //                 );
-    //                 resetForm();
-    //                 setIsSubmitting(false);
-    //               }
-    //             }
-    //           });
-    //         } catch (e) {
-    //           console.error("CONSOLE.ERROR: ", e);
-    //           console.log("ESSE É O ERROR", e);
-    //           toast.error(`Ocorreu um erro... 🤯`, {
-    //             theme: "colored",
-    //             closeOnClick: true,
-    //             pauseOnHover: true,
-    //             draggable: true,
-    //             autoClose: 3000,
-    //           });
-    //           setIsSubmitting(false);
-    //         }
-    //       }
-    //     });
-    //   }
-    // });
   };
 
   return (
@@ -607,11 +474,11 @@ export function InsertUser() {
               </select>
               <input
                 type="text"
-                name="phoneInitial"
-                pattern="^[+ 0-9]{5}$"
-                maxLength={5}
-                value={phoneFormatted.prefix}
-                placeholder={errors.phone ? "É necessário um" : "99999"}
+                name="phoneNumber"
+                pattern="^[+ 0-9]{9}$"
+                maxLength={9}
+                value={phoneFormatted.number}
+                placeholder={errors.phone ? "É necessário um" : "999999999"}
                 className={
                   errors.phone
                     ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
@@ -620,30 +487,7 @@ export function InsertUser() {
                 onChange={(e) => {
                   setPhoneFormatted({
                     ...phoneFormatted,
-                    prefix: e.target.value
-                      .replace(/[^0-9.]/g, "")
-                      .replace(/(\..*?)\..*/g, "$1"),
-                  });
-                  setUserData({ ...userData, confirmInsert: false });
-                }}
-              />
-              -
-              <input
-                type="text"
-                name="phoneFinal"
-                pattern="^[+ 0-9]{4}$"
-                maxLength={4}
-                value={phoneFormatted.suffix}
-                placeholder={errors.phone ? "telefone válido" : "9990"}
-                className={
-                  errors.phone
-                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                onChange={(e) => {
-                  setPhoneFormatted({
-                    ...phoneFormatted,
-                    suffix: e.target.value
+                    number: e.target.value
                       .replace(/[^0-9.]/g, "")
                       .replace(/(\..*?)\..*/g, "$1"),
                   });

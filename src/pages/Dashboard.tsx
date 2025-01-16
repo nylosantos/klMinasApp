@@ -8,21 +8,24 @@ import {
 import { InsertStudent } from "../components/insertComponents/InsertStudent";
 import { SubmitLoading } from "../components/layoutComponents/SubmitLoading";
 import DashboardStudents from "../components/dashboardComponents/DashboardStudents";
-import DefaultListComponent from "../components/dashboardComponents/DefaultListComponent";
 import DashboardCurriculum from "../components/dashboardComponents/DashboardCurriculum";
 import DashboardTeacher from "../components/dashboardComponents/DashboardTeacher";
+import DashboardSchool from "../components/dashboardComponents/DashboardSchool";
+import DashboardCourse from "../components/dashboardComponents/DashboardCourse";
+import DashboardSchedule from "../components/dashboardComponents/DashboardSchedule";
+import { FilteredStudentsProps } from "../@types";
 
 export default function Dashboard() {
   // GET GLOBAL DATA
   const {
     isSubmitting,
     schoolDatabaseData,
-    schoolClassDatabaseData,
     schoolCourseDatabaseData,
     scheduleDatabaseData,
     teacherDatabaseData,
     curriculumDatabaseData,
     studentsDatabaseData,
+    setIsSubmitting,
     userFullData,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
@@ -32,9 +35,49 @@ export default function Dashboard() {
   const [isFinance, setIsFinance] = useState(false);
   const [isDetailsViewing, setIsDetailsViewing] = useState(false);
 
-  // STATE FOR THE FILTERED STUDENTS
+  // STATE FOR THE FILTERED SEARCH STUDENTS
   const [filteredSearchStudents, setFilteredSearchStudents] =
     useState(studentsDatabaseData);
+
+  // FILTER STUDENTS STATE
+  const [filteredStudents, setFilteredStudents] = useState<
+    FilteredStudentsProps[]
+  >([]);
+
+  // FILTER STUDENTS IF USER.ROLE IS 'USER'
+  function filterStudents() {
+    if (userFullData) {
+      setIsSubmitting(true);
+      if (userFullData.role === "user") {
+        const studentsToShow: FilteredStudentsProps[] = [];
+        studentsDatabaseData.map((student) => {
+          if (student.financialResponsible.document === userFullData.document) {
+            studentsToShow.push({ ...student, isFinancialResponsible: true });
+          } else if (
+            student.parentOne?.email === userFullData.email ||
+            student.parentTwo?.email === userFullData.email
+          ) {
+            studentsToShow.push({ ...student, isFinancialResponsible: false });
+          }
+        });
+        setFilteredStudents(studentsToShow);
+      } else {
+        const studentsToShow: FilteredStudentsProps[] = [];
+        studentsDatabaseData.map((student) => {
+          studentsToShow.push({ ...student, isFinancialResponsible: true });
+        });
+        setFilteredStudents(studentsToShow);
+      }
+      setIsSubmitting(false);
+    } else {
+      console.log(`é porque não tem`);
+    }
+  }
+
+  // FILTER STUDENTS WHEN USER CHANGE
+  useEffect(() => {
+    filterStudents();
+  }, [userFullData, studentsDatabaseData]);
 
   type DashBoardPageProps = {
     page:
@@ -65,12 +108,12 @@ export default function Dashboard() {
   }
 
   const dashboardMenuArray: DashboardMenuArrayProps[] = [
-    { title: "Escolas Cadastradas", page: "school", array: schoolDatabaseData },
-    {
-      title: "Anos Escolares Cadastrados",
-      page: "schoolClass",
-      array: schoolClassDatabaseData,
-    },
+    { title: "MAINEscolas Cadastradas", page: "school", array: schoolDatabaseData },
+    // {
+    //   title: "Anos Escolares Cadastrados",
+    //   page: "schoolClass",
+    //   array: schoolClassDatabaseData,
+    // },
     {
       title: "Modalidades Cadastradas",
       page: "schoolCourse",
@@ -94,7 +137,7 @@ export default function Dashboard() {
     {
       title: "Alunos Cadastrados",
       page: "student",
-      array: filteredSearchStudents,
+      array: filteredStudents,
     },
     { title: "Adicionar Aluno", page: "addStudent", array: [] },
   ];
@@ -154,51 +197,30 @@ export default function Dashboard() {
         {/* PAGES TO SHOW */}
         <div
           className={
-            showDashboardPage.page === "curriculum" ||
-            showDashboardPage.page === "student" ||
-            showDashboardPage.page === "teacher"
-              ? "flex overflow-scroll no-scrollbar justify-center w-full container bg-klGreen-500/20 my-4 rounded-xl"
-              : "pb-4 flex h-full overflow-scroll no-scrollbar flex-col container mt-4 [&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl"
+            showDashboardPage.page === "schoolClass"
+              ? "pb-4 flex h-full overflow-scroll no-scrollbar flex-col container mt-4 [&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl"
+              : "flex overflow-scroll no-scrollbar justify-center w-full container bg-klGreen-500/20 my-4 rounded-xl"
           }
         >
           {userFullData.role !== "user" && (
             <>
               {showDashboardPage.page === "school" && (
-                <DefaultListComponent
-                  database={schoolDatabaseData}
-                  emptyMessage="Nenhuma escola encontrada."
-                />
+                <DashboardSchool isEdit={isEdit} setIsEdit={setIsEdit} />
               )}
-              {showDashboardPage.page === "schoolClass" && (
+              {/* {showDashboardPage.page === "schoolClass" && (
                 <DefaultListComponent
                   database={schoolClassDatabaseData}
                   emptyMessage="Nenhuma turma encontrada."
                 />
-              )}
+              )} */}
               {showDashboardPage.page === "schoolCourse" && (
-                <DefaultListComponent
-                  database={schoolCourseDatabaseData}
-                  emptyMessage="Nenhuma modalidade encontrada."
-                />
+                <DashboardCourse isEdit={isEdit} setIsEdit={setIsEdit} />
               )}
               {showDashboardPage.page === "schedule" && (
-                <DefaultListComponent
-                  database={scheduleDatabaseData}
-                  emptyMessage="Nenhum horário encontrado."
-                />
+                <DashboardSchedule isEdit={isEdit} setIsEdit={setIsEdit} />
               )}
               {showDashboardPage.page === "teacher" && (
-                // <DefaultListComponent
-                //   database={teacherDatabaseData}
-                //   emptyMessage="Nenhum professor encontrado."
-                // />
-                <DashboardTeacher
-                  isDetailsViewing={isDetailsViewing}
-                  isEdit={isEdit}
-                  setIsDetailsViewing={setIsDetailsViewing}
-                  setIsEdit={setIsEdit}
-                  setOpen={setOpen}
-                />
+                <DashboardTeacher isEdit={isEdit} setIsEdit={setIsEdit} />
               )}
               {showDashboardPage.page === "curriculum" && (
                 <DashboardCurriculum
@@ -380,6 +402,7 @@ export default function Dashboard() {
           )}
           {showDashboardPage.page === "student" && (
             <DashboardStudents
+              filteredStudents={filteredStudents}
               filteredSearchStudents={filteredSearchStudents}
               isDetailsViewing={isDetailsViewing}
               isEdit={isEdit}

@@ -35,8 +35,7 @@ export function InsertTeacher() {
       email: "",
       phone: {
         ddd: "",
-        prefix: "",
-        suffix: "",
+        number: "",
       },
       confirmInsert: false,
       createAccount: false,
@@ -62,8 +61,7 @@ export function InsertTeacher() {
       email: "",
       phone: {
         ddd: "",
-        prefix: "",
-        suffix: "",
+        number: "",
       },
       confirmInsert: false,
     },
@@ -76,8 +74,7 @@ export function InsertTeacher() {
       email: "",
       phone: {
         ddd: "",
-        prefix: "",
-        suffix: "",
+        number: "",
       },
       confirmInsert: false,
       createAccount: false,
@@ -93,8 +90,7 @@ export function InsertTeacher() {
     setValue("name", teacherData.name);
     setValue("email", teacherData.email);
     setValue("phone.ddd", teacherData.phone.ddd);
-    setValue("phone.prefix", teacherData.phone.prefix);
-    setValue("phone.suffix", teacherData.phone.suffix);
+    setValue("phone.number", teacherData.phone.number);
     setValue("confirmInsert", teacherData.confirmInsert);
     setValue("createAccount", teacherData.createAccount);
   }, [teacherData]);
@@ -129,8 +125,8 @@ export function InsertTeacher() {
           name: data.name,
           email: data.email,
           phone:
-            data.phone.ddd && data.phone.prefix && data.phone.suffix
-              ? `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`
+            data.phone.ddd && data.phone.number
+              ? `+55${data.phone.ddd}${data.phone.number}`
               : "",
           confirmInsert: data.confirmInsert,
           role: "teacher",
@@ -149,8 +145,8 @@ export function InsertTeacher() {
                   name: data.name,
                   email: data.email,
                   phone:
-                    data.phone.ddd && data.phone.prefix && data.phone.suffix
-                      ? `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`
+                    data.phone.ddd && data.phone.number
+                      ? `+55${data.phone.ddd}${data.phone.number}`
                       : "",
                   haveAccount: data.createAccount,
                   updatedAt: serverTimestamp(),
@@ -204,8 +200,8 @@ export function InsertTeacher() {
             name: data.name,
             email: data.email,
             phone:
-              data.phone.ddd && data.phone.prefix && data.phone.suffix
-                ? `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`
+              data.phone.ddd && data.phone.number
+                ? `+55${data.phone.ddd}${data.phone.number}`
                 : "",
             haveAccount: data.createAccount,
             updatedAt: serverTimestamp(),
@@ -251,9 +247,7 @@ export function InsertTeacher() {
 
     // ---------- CHECKING IF PHONE EXISTS ON DATABASE ---------- //
     const teacherPhoneExist = appUsersDatabaseData.find(
-      (teacher) =>
-        teacher.phone ===
-        `+55${data.phone.ddd}${data.phone.prefix}${data.phone.suffix}`
+      (teacher) => teacher.phone === `+55${data.phone.ddd}${data.phone.number}`
     );
     // IF EXISTS, RETURN ERROR
     if (teacherPhoneExist) {
@@ -331,7 +325,6 @@ export function InsertTeacher() {
             ? "bg-klGreen-500/20 dark:bg-klGreen-500/30 p-4 mt-2"
             : "pb-4 px-4 pt-2"
         }`}
-        // className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* TEACHER NAME */}
         <div className="flex gap-2 items-center">
@@ -431,13 +424,15 @@ export function InsertTeacher() {
               </select>
               <input
                 type="text"
-                name="phoneInitial"
-                pattern="^[+ 0-9]{5}$"
-                maxLength={5}
-                value={teacherData.phone.prefix}
-                placeholder={errors.phone?.prefix ? "É necessário um" : "99999"}
+                name="phoneNumber"
+                pattern="^[+ 0-9]{9}$"
+                maxLength={9}
+                value={teacherData.phone.number}
+                placeholder={
+                  errors.phone?.number ? "É necessário um" : "999999999"
+                }
                 className={
-                  errors.phone?.prefix
+                  errors.phone?.number
                     ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
@@ -446,32 +441,7 @@ export function InsertTeacher() {
                     ...teacherData,
                     phone: {
                       ...teacherData.phone,
-                      prefix: e.target.value
-                        .replace(/[^0-9.]/g, "")
-                        .replace(/(\..*?)\..*/g, "$1"),
-                    },
-                  });
-                }}
-              />
-              -
-              <input
-                type="text"
-                name="phoneFinal"
-                pattern="^[+ 0-9]{4}$"
-                maxLength={4}
-                value={teacherData.phone.suffix}
-                placeholder={errors.phone?.suffix ? "telefone válido" : "9990"}
-                className={
-                  errors.phone?.suffix
-                    ? "w-full px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                onChange={(e) => {
-                  setTeacherData({
-                    ...teacherData,
-                    phone: {
-                      ...teacherData.phone,
-                      suffix: e.target.value
+                      number: e.target.value
                         .replace(/[^0-9.]/g, "")
                         .replace(/(\..*?)\..*/g, "$1"),
                     },

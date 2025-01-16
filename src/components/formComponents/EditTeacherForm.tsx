@@ -284,6 +284,7 @@ export default function EditTeacherForm({
       }
     }
   };
+  
   return (
     <div
       className={`w-full ${
@@ -308,9 +309,7 @@ export default function EditTeacherForm({
       )}
       <form
         onSubmit={handleSubmit(handleEditTeacher)}
-        className={`flex flex-col w-full gap-2 p-4 rounded-xl ${
-          modal ? "" : "bg-klGreen-500/20 dark:bg-klGreen-500/30"
-        } mt-2`}
+        className="flex flex-col w-full gap-2 p-4 rounded-xl mt-2"
       >
         {/* TEACHER NAME */}
         <div className="flex gap-2 items-center">

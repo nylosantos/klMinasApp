@@ -42,6 +42,7 @@ interface EditCurriculumFormProps {
   onClose?: () => void;
   setModal?: (option: boolean) => void;
   setIsSubmitting: (isSubmitting: boolean) => void;
+  // handleDeleteClass?: () => void;
   handleDeleteClass?: () => void;
 }
 
