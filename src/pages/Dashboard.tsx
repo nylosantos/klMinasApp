@@ -108,7 +108,7 @@ export default function Dashboard() {
   }
 
   const dashboardMenuArray: DashboardMenuArrayProps[] = [
-    { title: "MAINEscolas Cadastradas", page: "school", array: schoolDatabaseData },
+    { title: "Escolas Cadastradas", page: "school", array: schoolDatabaseData },
     // {
     //   title: "Anos Escolares Cadastrados",
     //   page: "schoolClass",
