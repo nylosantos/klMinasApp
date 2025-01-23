@@ -133,7 +133,7 @@ export default function DashboardCurriculum({
         .map((schoolClass) => schoolClass.id);
 
       filteredBySchoolYear = filteredBySchoolYear.filter((curriculum) =>
-        classIds.includes(curriculum.schoolClassId)
+        curriculum.schoolClassIds.some((id) => classIds.includes(id))
       );
     }
 
@@ -381,25 +381,33 @@ export default function DashboardCurriculum({
                               }
                             }}
                           >
-                            <td className="border-r dark:border-klGreen-500 p-2 text-center">
+                            <td
+                              key={index}
+                              className="border-r dark:border-klGreen-500 p-2 text-center"
+                            >
                               {
                                 handleOneCurriculumDetails(curriculum.id)
                                   .schoolName
                               }
                             </td>
-                            <td className="border-r dark:border-klGreen-500 p-2 text-center">
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .schoolClassName
-                              }
+                            <td
+                              key={index + 1}
+                              className="border-r dark:border-klGreen-500 p-2 text-center"
+                            >
+                              {handleOneCurriculumDetails(
+                                curriculum.id
+                              ).schoolClassNames.join(" - ")}
                             </td>
-                            <td className="border-r dark:border-klGreen-500 p-2 text-center">
+                            <td
+                              key={index + 2}
+                              className="border-r dark:border-klGreen-500 p-2 text-center"
+                            >
                               {
                                 handleOneCurriculumDetails(curriculum.id)
                                   .schoolCourseName
                               }
                             </td>
-                            <td className="p-2 text-center">
+                            <td key={index + 3} className="p-2 text-center">
                               {
                                 handleOneCurriculumDetails(curriculum.id)
                                   .teacherName
@@ -433,7 +441,7 @@ export default function DashboardCurriculum({
           aria-modal="true"
         >
           <div className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-all backdrop-blur-sm"></div>
-          <div className="flex fixed inset-0 z-10 w-screen items-center justify-center overflow-y-auto">
+          <div className="flex fixed inset-0 z-10 w-screen min-h-screen items-center justify-center overflow-scroll no-scrollbar">
             <EditCurriculumForm
               curriculumId={curriculumSelected.id}
               onlyView
@@ -442,6 +450,7 @@ export default function DashboardCurriculum({
               isSubmitting={isSubmitting}
               setIsSubmitting={setIsSubmitting}
               handleDeleteClass={handleDeleteData}
+              onClose={handleClose}
             />
           </div>
         </div>

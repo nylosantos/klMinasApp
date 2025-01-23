@@ -17,19 +17,7 @@ import {
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
-import {
-  classDayIndex,
-  customerFullName,
-  employeeDiscountValue,
-  enrolmentFee,
-  enrolmentFeeDiscount,
-  familyDiscountValue,
-  months,
-  paymentArray,
-  secondCourseDiscountValue,
-  standardPaymentDay,
-  weekDays,
-} from "../../custom";
+import { classDayIndex, months, paymentArray, weekDays } from "../../custom";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { createStudentValidationSchema } from "../../@types/zodValidation";
@@ -68,12 +56,30 @@ export function InsertStudent() {
     schoolClassDatabaseData,
     schoolCourseDatabaseData,
     studentsDatabaseData,
+    systemConstantsValues,
     userFullData,
     handleAllCurriculumDetails,
     handleCurriculumDetailsWithSchoolCourse,
     handleOneCurriculumDetails,
     setIsExperimentalClass,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
+
+  // const [systemConstantsValues, setSystemConstantsValues] =
+  //   useState<SystemConstantsSearchProps>();
+
+  // useEffect(() => {
+  //   if (
+  //     systemConstantsDb &&
+  //     !systemConstantsDbLoading &&
+  //     systemConstantsDbError === undefined
+  //   ) {
+  //     const currentYear = new Date().getFullYear().toString();
+  //     const constants = systemConstantsDb.find(
+  //       (constants) => constants.year === currentYear
+  //     ) as SystemConstantsSearchProps;
+  //     setSystemConstantsValues(constants);
+  //   }
+  // }, [systemConstantsDb, systemConstantsDbLoading, systemConstantsDbError]);
 
   // STUDENT DATA
   const [studentData, setStudentData] = useState<CreateStudentValidationZProps>(
@@ -329,9 +335,9 @@ export function InsertStudent() {
     enrolledDays: [] as number[],
     enrolmentFee:
       new Date().getMonth() < 6
-        ? enrolmentFee
+        ? systemConstantsValues!.enrolmentFee
         : new Date().getMonth() < 10
-        ? enrolmentFeeDiscount
+        ? systemConstantsValues!.enrolmentFeeDiscount
         : 0,
     fullPrice: 0,
     appliedPrice: 0,
@@ -346,9 +352,9 @@ export function InsertStudent() {
         ...newClass,
         enrolmentFee:
           new Date().getMonth() < 6
-            ? enrolmentFee
+            ? systemConstantsValues!.enrolmentFee
             : new Date().getMonth() < 10
-            ? enrolmentFeeDiscount
+            ? systemConstantsValues!.enrolmentFeeDiscount
             : 0,
       });
     }
@@ -381,9 +387,9 @@ export function InsertStudent() {
     const discountVariable = studentData.customDiscount
       ? customDiscountFinalValue
       : studentData.employeeDiscount
-      ? employeeDiscountValue
+      ? systemConstantsValues!.employeeDiscountValue
       : studentData.familyDiscount
-      ? familyDiscountValue
+      ? systemConstantsValues!.familyDiscountValue
       : 1; // WITHOUT DISCOUNT
 
     const priceUnit = schoolCourseSelectedPrice.priceUnit;
@@ -412,7 +418,8 @@ export function InsertStudent() {
         ...newClass,
         appliedPrice:
           (result * priceBundle +
-            rest * (priceUnit * secondCourseDiscountValue)) *
+            rest *
+              (priceUnit * systemConstantsValues!.secondCourseDiscountValue)) *
           discountVariable,
         fullPrice: result * priceBundle + rest * priceUnit,
       });
@@ -734,15 +741,15 @@ export function InsertStudent() {
   // -------------------------- RESET SELECTS -------------------------- //
   // RESET ALL UNDER SCHOOL SELECT WHEN CHANGE SCHOOL
   useEffect(() => {
-    (
-      document.getElementById("schoolClassSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
+    // (
+    //   document.getElementById("schoolClassSelect") as HTMLSelectElement
+    // ).selectedIndex = 0;
     (
       document.getElementById("schoolCourseSelect") as HTMLSelectElement
     ).selectedIndex = 0;
     setCurriculumData({
       ...curriculumData,
-      schoolClassId: "",
+      // schoolClassId: "",
       schoolCourseId: "",
     });
     setStudentData({
@@ -758,9 +765,9 @@ export function InsertStudent() {
       date: "",
       enrolmentFee:
         new Date().getMonth() < 6
-          ? enrolmentFee
+          ? systemConstantsValues!.enrolmentFee
           : new Date().getMonth() < 10
-          ? enrolmentFeeDiscount
+          ? systemConstantsValues!.enrolmentFeeDiscount
           : 0,
       fullPrice: 0,
       appliedPrice: 0,
@@ -1049,9 +1056,9 @@ export function InsertStudent() {
       date: "",
       enrolmentFee:
         new Date().getMonth() < 6
-          ? enrolmentFee
+          ? systemConstantsValues!.enrolmentFee
           : new Date().getMonth() < 10
-          ? enrolmentFeeDiscount
+          ? systemConstantsValues!.enrolmentFeeDiscount
           : 0,
       fullPrice: 0,
       appliedPrice: 0,
@@ -1074,9 +1081,9 @@ export function InsertStudent() {
       date: "",
       enrolmentFee:
         new Date().getMonth() < 6
-          ? enrolmentFee
+          ? systemConstantsValues!.enrolmentFee
           : new Date().getMonth() < 10
-          ? enrolmentFeeDiscount
+          ? systemConstantsValues!.enrolmentFeeDiscount
           : 0,
       fullPrice: 0,
       appliedPrice: 0,
@@ -1313,9 +1320,9 @@ export function InsertStudent() {
       date: "",
       enrolmentFee:
         new Date().getMonth() < 6
-          ? enrolmentFee
+          ? systemConstantsValues!.enrolmentFee
           : new Date().getMonth() < 10
-          ? enrolmentFeeDiscount
+          ? systemConstantsValues!.enrolmentFeeDiscount
           : 0,
       fullPrice: 0,
       appliedPrice: 0,
@@ -1326,7 +1333,7 @@ export function InsertStudent() {
     setExperimentalClassError(false);
     setEditAddress(false);
     (
-      document.getElementById("schoolYearsSelect") as HTMLSelectElement
+      document.getElementById("schoolStageSelect") as HTMLSelectElement
     ).selectedIndex = 0;
     (
       document.getElementById(
@@ -1334,34 +1341,8 @@ export function InsertStudent() {
       ) as HTMLSelectElement
     ).selectedIndex = 0;
     (
-      document.getElementById("parentOnePhoneDDD") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById("parentTwoPhoneDDD") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById(
-        "financialResponsiblePhoneDDD"
-      ) as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById(
-        "financialResponsiblePhoneSecondaryDDD"
-      ) as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById(
-        "financialResponsiblePhoneTertiaryDDD"
-      ) as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
       document.getElementById("schoolSelect") as HTMLSelectElement
     ).selectedIndex = 0;
-    userFullData &&
-      userFullData.role !== "user" &&
-      ((
-        document.getElementById("schoolClassSelect") as HTMLSelectElement
-      ).selectedIndex = 0);
     (
       document.getElementById("schoolCourseSelect") as HTMLSelectElement
     ).selectedIndex = 0;
@@ -1595,7 +1576,9 @@ export function InsertStudent() {
           familyDiscount: data.familyDiscount,
           secondCourseDiscount: data.secondCourseDiscount,
           paymentDay:
-            data.paymentDay === "" ? standardPaymentDay : data.paymentDay,
+            data.paymentDay === ""
+              ? systemConstantsValues!.standardPaymentDay
+              : data.paymentDay,
           experimentalCurriculumIds:
             placesAvailable && newClass.isExperimental
               ? arrayUnion({
@@ -1904,6 +1887,10 @@ export function InsertStudent() {
     }
   };
 
+  // useEffect(() => {
+  //   console.log(curriculumData);
+  // }, [curriculumData]);
+
   return (
     <div
       className={`flex h-full flex-col container text-center overflow-scroll no-scrollbar ${
@@ -2001,7 +1988,7 @@ export function InsertStudent() {
           {/* SCHOOL YEARS SELECT */}
           <div className="flex gap-2 items-center">
             <label
-              htmlFor="schoolYearsSelect"
+              htmlFor="schoolStageSelect"
               className={
                 errors.schoolYears
                   ? "w-1/4 text-right text-red-500 dark:text-red-400"
@@ -2011,19 +1998,23 @@ export function InsertStudent() {
               Ano escolar:{" "}
             </label>
             <select
-              id="schoolYearsSelect"
+              id="schoolStageSelect"
               defaultValue={" -- select an option -- "}
               className={
                 errors.schoolYears
                   ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                   : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
               }
-              name="schoolYearsSelect"
+              name="schoolStageSelect"
               onChange={(e) => {
                 setStudentData({ ...studentData, schoolYears: e.target.value });
+                setCurriculumData({
+                  ...curriculumData,
+                  schoolClassId: e.target.value,
+                });
               }}
             >
-              <SelectOptions returnId dataType="schoolYears" />
+              <SelectOptions returnId dataType="schoolClasses" />
             </select>
           </div>
 
@@ -2125,47 +2116,6 @@ export function InsertStudent() {
             </select>
           </div>
 
-          {/* SCHOOL CLASS SELECT */}
-          <div className="flex gap-2 items-center">
-            <label
-              htmlFor="schoolClassSelect"
-              className={
-                errors.curriculum
-                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                  : "w-1/4 text-right"
-              }
-            >
-              Selecione o Ano Escolar:{" "}
-            </label>
-            <select
-              id="schoolClassSelect"
-              disabled={curriculumData.schoolId ? false : true}
-              defaultValue={" -- select an option -- "}
-              className={
-                curriculumData.schoolId
-                  ? errors.curriculum
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-              }
-              name="schoolClassSelect"
-              onChange={(e) => {
-                setCurriculumData({
-                  ...curriculumData,
-                  schoolClassId: e.target.value,
-                });
-                setStudentData({ ...studentData, curriculum: "" });
-              }}
-            >
-              <SelectOptions
-                returnId
-                availableAndWaitingClasses
-                dataType="schoolClasses"
-                schoolId={curriculumData.schoolId}
-              />
-            </select>
-          </div>
-
           {/* SCHOOL COURSE SELECT */}
           <div className="flex gap-2 items-center">
             <label
@@ -2181,23 +2131,13 @@ export function InsertStudent() {
             <select
               id="schoolCourseSelect"
               disabled={
-                userFullData && userFullData.role !== "user"
-                  ? curriculumData.schoolClassId
-                    ? false
-                    : true
-                  : curriculumData.schoolId
+                curriculumData.schoolId && curriculumData.schoolClassId
                   ? false
                   : true
               }
               defaultValue={" -- select an option -- "}
               className={
-                userFullData && userFullData.role !== "user"
-                  ? curriculumData.schoolClassId
-                    ? errors.curriculum
-                      ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                  : curriculumData.schoolId
+                curriculumData.schoolId && curriculumData.schoolClassId
                   ? errors.curriculum
                     ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
@@ -2218,7 +2158,6 @@ export function InsertStudent() {
                 schoolClassId={curriculumData.schoolClassId}
                 dataType="schoolCourses"
               />
-              {/* <option value={"all"}>Todas as Modalidades</option> */}
             </select>
           </div>
 
@@ -2240,9 +2179,9 @@ export function InsertStudent() {
                 {/* CURRICULUM SELECT CARD */}
                 <div className="flex flex-wrap gap-4 justify-center">
                   {curriculumCoursesData
-                    .sort((a, b) =>
-                      a.schoolClassName.localeCompare(b.schoolClassName)
-                    )
+                    // .sort((a, b) =>
+                    //   a.schoolClassName.localeCompare(b.schoolClassName)
+                    // )
                     .map((curriculum) => (
                       <div
                         className={
@@ -2483,12 +2422,14 @@ export function InsertStudent() {
                                 <div className="flex gap-2 w-3/4 items-start text-left py-2">
                                   <p className="text-sm text-red-600 dark:text-yellow-500">
                                     Desconto Familiar: Informando um irmão que
-                                    já é matriculado na {customerFullName}, você
-                                    obterá 10% de desconto no curso com
+                                    já é matriculado na{" "}
+                                    {systemConstantsValues!.customerFullName},
+                                    você obterá 10% de desconto no curso com
                                     mensalidade de menor valor. <br /> Desconto
                                     de Segundo Curso: Ao se matricular em um
-                                    segundo curso na {customerFullName}, você
-                                    obterá 10% de desconto no curso com
+                                    segundo curso na{" "}
+                                    {systemConstantsValues!.customerFullName},
+                                    você obterá 10% de desconto no curso com
                                     mensalidade de menor valor. <br /> ATENÇÃO:
                                     Os descontos não são cumulativos.
                                   </p>
@@ -2663,8 +2604,9 @@ export function InsertStudent() {
                                   {/* FAMILY AT SCHOOL TITLE */}
                                   <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
                                     Atenção: a seguir selecione o aluno que já é
-                                    matriculado na {customerFullName}, e é irmão
-                                    de {studentData.name}:
+                                    matriculado na{" "}
+                                    {systemConstantsValues!.customerFullName}, e
+                                    é irmão de {studentData.name}:
                                   </h1>
 
                                   {/** FAMILY AT SCHOOL SUBTITLE */}
@@ -2844,57 +2786,17 @@ export function InsertStudent() {
                                     <div className="flex w-1/4" />
                                     <div className="flex w-3/4 px-2 py-1 gap-10 justify-start items-center">
                                       <p className="text-sm text-red-600 dark:text-yellow-500">
-                                        Data de vencimento dia 05 do mês a
-                                        cursar, pagamento antecipado
+                                        Data de vencimento dia{" "}
+                                        {systemConstantsValues &&
+                                        +systemConstantsValues?.standardPaymentDay <
+                                          10
+                                          ? `0${systemConstantsValues?.standardPaymentDay}`
+                                          : systemConstantsValues?.standardPaymentDay}{" "}
+                                        do mês a cursar, pagamento antecipado
                                       </p>
                                     </div>
                                   </>
                                 )}
-                                {/* <label className="flex items-center gap-2">
-                              <input
-                                type="radio"
-                                className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                                value="5"
-                                name="gender"
-                                onChange={(e) =>
-                                  setStudentData({
-                                    ...studentData,
-                                    paymentDay: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                              5
-                            </label>
-                            <label className="flex items-center gap-2">
-                              <input
-                                type="radio"
-                                className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                                value="10"
-                                name="gender"
-                                onChange={(e) =>
-                                  setStudentData({
-                                    ...studentData,
-                                    paymentDay: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                              10
-                            </label>
-                            <label className="flex items-center gap-2">
-                              <input
-                                type="radio"
-                                className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                                value="15"
-                                name="gender"
-                                onChange={(e) =>
-                                  setStudentData({
-                                    ...studentData,
-                                    paymentDay: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                              15
-                            </label> */}
                               </div>
                             </>
                           )}

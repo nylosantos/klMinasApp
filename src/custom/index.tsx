@@ -1,16 +1,16 @@
 import { Timestamp } from "firebase/firestore";
 
 // COMPANY NAME
-export const customerFullName = "KL Minas";
+// export const customerFullName = "KL Minas";
 // COMPANY SHORT NAME
-export const customerShortName = "KL";
+// export const customerShortName = "KL";
 // OPEN/CLOSE APP SIGN IN
 export const systemSignInClosed = false;
 // OPEN/CLOSE APP SIGN UP
 export const systemSignUpClosed = false;
 // ENROLMENT FEE FULL VALUES
-export const enrolmentFee = 157
-export const enrolmentFeeDiscount = 67.5
+// export const enrolmentFee = 157
+// export const enrolmentFeeDiscount = 67.5
 
 // CUSTOM MONTHS OF DATEPICKER
 export const months = [
@@ -92,17 +92,21 @@ export const classDayIndexNames = [
   { id: "saturday", name: "Sábado" },
 ];
 
-// IMPORTANT VARIABLES
-// MINIMUM CLASS STUDENTS
-export const minimumStudents = 20;
+// SCHOOL STAGE
+export const schoolStage = [
+  { id: "1SSEI", name: "Ensino Infantil" },
+  { id: "2SSEF", name: "Ensino Fundamental" },
+  { id: "3SSEM", name: "Ensino Médio" },
+];
 
+// IMPORTANT VARIABLES
 // STANDARD PAYMENT DAY
-export const standardPaymentDay = "5";
+// export const standardPaymentDay = "5";
 
 // DISCOUNT VARIABLES
-export const employeeDiscountValue = 0.8;
-export const familyDiscountValue = 0.9;
-export const secondCourseDiscountValue = 0.9;
+// export const employeeDiscountValue = 0.8;
+// export const familyDiscountValue = 0.9;
+// export const secondCourseDiscountValue = 0.9;
 
 // PAYMENT ARRAY (UPDATE WHEN A NEW YEAR BEGIN)
 export const paymentArray = [

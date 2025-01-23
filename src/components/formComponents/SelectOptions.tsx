@@ -5,6 +5,7 @@ import { useContext, useEffect, useState } from "react";
 import {
   CurriculumSearchProps,
   FilteredStudentsProps,
+  SchoolClassSearchProps,
   SchoolCourseSearchProps,
   SelectProps,
   StudentSearchProps,
@@ -13,6 +14,7 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { schoolStage } from "../../custom";
 
 // INITIALIZING FIRESTORE DB
 
@@ -31,7 +33,6 @@ export function SelectOptions({
   setTeacher = false,
   displaySchoolCourseAndSchedule = false,
   displayAdmins = false,
-  availableAndWaitingClasses = false,
   dontShowMyself = false,
   showAllCourses = false,
   parentOneEmail,
@@ -92,46 +93,61 @@ export function SelectOptions({
           })
         );
       }
+      if (dataType === "schoolCourses") {
+        const filterCurriculum = curriculumDatabaseData.filter(
+          (curriculum) =>
+            curriculum.schoolId === schoolId &&
+            curriculum.schoolClassIds.includes(schoolClassId)
+        );
+        const coursesToData: SchoolCourseSearchProps[] = [];
+        filterCurriculum.map((curriculum) => {
+          schoolCourseDatabaseData.map((course) => {
+            if (curriculum.schoolCourseId === course.id) {
+              coursesToData.push(course);
+            }
+          });
+        });
+        setData(coursesToData);
+      }
     } else {
       if (schoolId) {
-        if (dataType === "schoolClasses") {
-          if (schoolId === "all") {
-            const foundedStudentsArray: StudentSearchProps[] = [];
-            studentsDatabaseData.map((student) => {
-              if (
-                student.curriculumIds.length === 0 &&
-                student.experimentalCurriculumIds.length === 0
-              ) {
-                foundedStudentsArray.push(student);
-              }
-            });
-            setData(foundedStudentsArray);
-          } else {
-            if (availableAndWaitingClasses) {
-              const filterClasses = schoolClassDatabaseData.filter(
-                (schoolClass) =>
-                  schoolClass.schoolId === schoolId &&
-                  schoolClass.available !== "closed"
-              );
-              setData(filterClasses);
-            } else {
-              const filterClasses = schoolClassDatabaseData.filter(
-                (schoolClass) => schoolClass.schoolId === schoolId
-              );
-              setData(filterClasses);
-            }
-          }
-        }
-
         if (dataType === "schedules") {
           const filterSchedules = scheduleDatabaseData.filter(
             (schedule) => schedule.schoolId === schoolId
           );
           setData(filterSchedules);
         }
+        if (dataType === "schoolClasses") {
+          const filterClasses = curriculumDatabaseData.filter(
+            (curriculum) => curriculum.schoolId === schoolId
+          );
+          const filteredSchoolClass: SchoolClassSearchProps[] = [];
+
+          filterClasses.map((schoolClass) => {
+            schoolClass.schoolClassIds.map((id) => {
+              schoolClassDatabaseData.map((foundedSchoolClass) => {
+                if (foundedSchoolClass.id === id) {
+                  filteredSchoolClass.push(foundedSchoolClass);
+                }
+              });
+            });
+          });
+
+          setData(
+            filteredSchoolClass.sort((a, b) => {
+              if (a.schoolStageId !== b.schoolStageId) {
+                return a.schoolStageId.localeCompare(b.schoolStageId);
+              }
+              return a.name.localeCompare(b.name);
+            })
+          );
+        }
       }
     }
 
+    if (dataType === "schoolStage") {
+      setData(schoolStage);
+    }
     if (dataType === "schoolYears") {
       setData(schoolYears);
     }
@@ -225,14 +241,22 @@ export function SelectOptions({
       setData(schoolDatabaseData);
     }
 
-    if (dataType === "schoolCourses") {
+    if (dataType === "schoolClasses" && !schoolId) {
+      setData(
+        schoolClassDatabaseData.sort((a, b) => {
+          if (a.schoolStageId !== b.schoolStageId) {
+            return a.schoolStageId.localeCompare(b.schoolStageId);
+          }
+          return a.name.localeCompare(b.name);
+        })
+      );
+    }
+
+    if (dataType === "schoolCourses" && !schoolId) {
       if (schoolId && schoolClassId) {
         const foundedCurriculums: CurriculumSearchProps[] = [];
         curriculumDatabaseData.map((curriculum) => {
-          if (
-            curriculum.schoolId === schoolId &&
-            curriculum.schoolClassId === schoolClassId
-          ) {
+          if (curriculum.schoolId === schoolId) {
             foundedCurriculums.push(curriculum);
           }
         });
@@ -304,32 +328,14 @@ export function SelectOptions({
       {dontShowMyself && studentId
         ? data.map((option: any) => (
             <>
-              {option.id !== studentId ? (
+              {option.id !== studentId && (
                 <option
                   key={option.id}
                   value={returnId ? option.id : option.name}
-                  // className={
-                  //   dataType === "schoolClasses"
-                  //     ? option.available === "open"
-                  //       ? "bg-green-600"
-                  //       : option.available === "closed"
-                  //       ? "bg-red-600"
-                  //       : "bg-teal-600"
-                  //     : ""
-                  // }
                 >
-                  {/* {displaySchoolCourseAndSchedule
-                    ? `${option.schoolCourse} | ${option.schedule}`
-                    : dataType === "schoolClasses"
-                    ? option.available === "open"
-                      ? option.name + " (Turma Aberta)"
-                      : option.available === "closed"
-                      ? option.name + " (Turma Fechada)"
-                      : option.name + " (Lista de Espera)"
-                    : option.name} */}
                   {option.name}
                 </option>
-              ) : null}
+              )}
             </>
           ))
         : (setSchedule && scheduleId) || // FORCE SELECTED OPTIONS FOR EDIT CURRICULUM
@@ -345,25 +351,7 @@ export function SelectOptions({
                 }
                 key={option.id}
                 value={returnId ? option.id : option.name}
-                // className={
-                //   dataType === "schoolClasses"
-                //     ? option.available === "open"
-                //       ? "bg-green-600"
-                //       : option.available === "closed"
-                //       ? "bg-red-600"
-                //       : "bg-teal-600"
-                //     : ""
-                // }
               >
-                {/* {displaySchoolCourseAndSchedule
-                    ? `${option.schoolCourse} | ${option.schedule}`
-                    : dataType === "schoolClasses"
-                    ? option.available === "open"
-                      ? option.name + " (Turma Aberta)"
-                      : option.available === "closed"
-                      ? option.name + " (Turma Fechada)"
-                      : option.name + " (Lista de Espera)"
-                    : option.name} */}
                 {displaySchoolCourseAndSchedule
                   ? `${option.schoolCourseName} | ${option.scheduleName}`
                   : option.name}
@@ -375,25 +363,7 @@ export function SelectOptions({
               <option
                 key={option.id}
                 value={returnId ? option.id : option.name}
-                // className={
-                //   dataType === "schoolClasses"
-                //     ? option.available === "open"
-                //       ? "bg-green-600"
-                //       : option.available === "closed"
-                //       ? "bg-red-600"
-                //       : "bg-teal-600"
-                //     : ""
-                // }
               >
-                {/* {displaySchoolCourseAndSchedule
-                    ? `${option.schoolCourse} | ${option.schedule}`
-                    : dataType === "schoolClasses"
-                    ? option.available === "open"
-                      ? option.name + " (Turma Aberta)"
-                      : option.available === "closed"
-                      ? option.name + " (Turma Fechada)"
-                      : option.name + " (Lista de Espera)"
-                    : option.name} */}
                 {displaySchoolCourseAndSchedule
                   ? `${option.schoolCourseName} | ${option.scheduleName}`
                   : option.name}

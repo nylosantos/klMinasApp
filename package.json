@@ -30,6 +30,7 @@
     "react-loader-spinner": "^6.1.6",
     "react-multi-date-picker": "^4.5.2",
     "react-number-format": "^5.4.2",
+    "react-switch": "^7.1.0",
     "react-toastify": "^10.0.5",
     "sweetalert2": "^11.14.4",
     "sweetalert2-react-content": "^5.0.7",

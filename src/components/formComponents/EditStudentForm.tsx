@@ -38,14 +38,7 @@ import {
   ToggleClassDaysFunctionProps,
   WaitingListProps,
 } from "../../@types";
-import {
-  classDayIndex,
-  employeeDiscountValue,
-  familyDiscountValue,
-  months,
-  secondCourseDiscountValue,
-  weekDays,
-} from "../../custom";
+import { classDayIndex, months, weekDays } from "../../custom";
 import {
   GlobalDataContext,
   GlobalDataContextType,
@@ -124,10 +117,28 @@ export function EditStudentForm({
     studentsDatabaseData,
     page,
     userFullData,
+    systemConstantsValues,
     formatCurriculumName,
     handleOneCurriculumDetails,
     handleOneStudentDetails,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
+
+  // const [systemConstantsValues, setSystemConstantsValues] =
+  //   useState<SystemConstantsSearchProps>();
+
+  // useEffect(() => {
+  //   if (
+  //     systemConstantsDb &&
+  //     !systemConstantsDbLoading &&
+  //     systemConstantsDbError === undefined
+  //   ) {
+  //     const currentYear = new Date().getFullYear().toString();
+  //     const constants = systemConstantsDb.find(
+  //       (constants) => constants.year === currentYear
+  //     ) as SystemConstantsSearchProps;
+  //     setSystemConstantsValues(constants);
+  //   }
+  // }, [systemConstantsDb, systemConstantsDbLoading, systemConstantsDbError]);
 
   // STUDENT EDIT DATA
   const [studentEditData, setStudentEditData] =
@@ -310,20 +321,22 @@ export function EditStudentForm({
 
   // CHANGE ENROLMENT FEE VALUE WHEN ACTIVATE REGISTRATION EXEMPTION
   useEffect(() => {
-    if (enrolmentExemption) {
-      setStudentEditData({ ...studentEditData, enrolmentFee: 0 });
-    } else {
-      setStudentEditData({
-        ...studentEditData,
-        enrolmentFee:
-          new Date().getMonth() < 6
-            ? 135
-            : new Date().getMonth() < 10
-            ? 67.5
-            : 0,
-      });
+    if (systemConstantsValues) {
+      if (enrolmentExemption) {
+        setStudentEditData({ ...studentEditData, enrolmentFee: 0 });
+      } else {
+        setStudentEditData({
+          ...studentEditData,
+          enrolmentFee:
+            new Date().getMonth() < 6
+              ? systemConstantsValues.enrolmentFee
+              : new Date().getMonth() < 10
+              ? systemConstantsValues.enrolmentFeeDiscount
+              : 0,
+        });
+      }
     }
-  }, [enrolmentExemption]);
+  }, [enrolmentExemption, systemConstantsValues]);
 
   // SET CUSTOM DISCOUNT VALUE TO 0 WHEN CUSTOM DISCOUNT IS UNCHECKED
   useEffect(() => {
@@ -724,7 +737,7 @@ export function EditStudentForm({
                 result * foundedSchoolCourseDetails.priceBundle +
                 rest *
                   (foundedSchoolCourseDetails.priceUnit *
-                    secondCourseDiscountValue),
+                    systemConstantsValues!.secondCourseDiscountValue),
             };
           } else {
             // THE REST HAVEN'T CHANGED
@@ -1242,9 +1255,7 @@ export function EditStudentForm({
   // -------------------------- STUDENT EDIT STATES AND FUNCTIONS -------------------------- //
   // DATE TO STRING STATE
   const [dateToString, setDateToString] = useState("");
-  useEffect(() => {
-    console.log(studentEditData);
-  }, [studentEditData.financialResponsible]);
+
   // EDIT ADDRESS STATE
   const [editAddress, setEditAddress] = useState(false);
 
@@ -1475,14 +1486,14 @@ export function EditStudentForm({
       const filterCurriculum = curriculumDatabaseData.filter(
         (curriculum) =>
           curriculum.schoolId === curriculumData.schoolId &&
-          curriculum.schoolClassId === curriculumData.schoolClassId
+          curriculum.schoolClassIds.includes(curriculumData.schoolClassId)
       );
       setNewCurriculumCoursesData(filterCurriculum);
     } else {
       const filterCurriculum = curriculumDatabaseData.filter(
         (curriculum) =>
           curriculum.schoolId === curriculumData.schoolId &&
-          curriculum.schoolClassId === curriculumData.schoolClassId &&
+          curriculum.schoolClassIds.includes(curriculumData.schoolClassId) &&
           curriculum.schoolCourseId === curriculumData.schoolCourseId
       );
       setNewCurriculumCoursesData(filterCurriculum);
@@ -1713,15 +1724,18 @@ export function EditStudentForm({
       const filterCurriculum = curriculumDatabaseData.filter(
         (curriculum) =>
           curriculum.schoolId === experimentalCurriculumData.schoolId &&
-          curriculum.schoolClassId === experimentalCurriculumData.schoolClassId
+          curriculum.schoolClassIds.includes(
+            experimentalCurriculumData.schoolClassId
+          )
       );
       setNewExperimentalCurriculumCoursesData(filterCurriculum);
     } else {
       const filterCurriculum = curriculumDatabaseData.filter(
         (curriculum) =>
           curriculum.schoolId === experimentalCurriculumData.schoolId &&
-          curriculum.schoolClassId ===
-            experimentalCurriculumData.schoolClassId &&
+          curriculum.schoolClassIds.includes(
+            experimentalCurriculumData.schoolClassId
+          ) &&
           curriculum.schoolCourseId ===
             experimentalCurriculumData.schoolCourseId
       );
@@ -1918,8 +1932,9 @@ export function EditStudentForm({
     if (foundedCurriculum) {
       setAddEnrollWaitingCurriculum(true);
       setCurriculumData({
+        ...curriculumData,
         schoolId: foundedCurriculum.schoolId,
-        schoolClassId: foundedCurriculum.schoolClassId,
+        // schoolClassIds: foundedCurriculum.schoolClassIds,
         schoolCourseId: foundedCurriculum.schoolCourseId,
       });
       setNewStudentData({
@@ -1989,14 +2004,14 @@ export function EditStudentForm({
       const discountVariable = studentEditData.customDiscount
         ? customDiscountFinalValue
         : studentEditData.employeeDiscount
-        ? employeeDiscountValue
+        ? systemConstantsValues!.employeeDiscountValue
         : (haveFamilyWill && studentEditData.familyDiscount) ||
           studentEditData.addFamily
-        ? familyDiscountValue
+        ? systemConstantsValues!.familyDiscountValue
         : checkCurriculumForDiscount.length > 1 ||
           (checkCurriculumForDiscount.length === 1 &&
             studentEditData.addCurriculum)
-        ? secondCourseDiscountValue
+        ? systemConstantsValues!.secondCourseDiscountValue
         : 1; // WITHOUT DISCOUNT
 
       if (haveCurriculumWill) {
@@ -2041,7 +2056,7 @@ export function EditStudentForm({
             result * newStudentData.curriculumCoursePriceBundle +
             rest *
               (newStudentData.curriculumCoursePriceUnit *
-                secondCourseDiscountValue);
+                systemConstantsValues!.secondCourseDiscountValue);
         }
         if (newCoursePrice !== 0) {
           if (newSmallestPrice >= newCoursePrice) {
@@ -3300,6 +3315,7 @@ export function EditStudentForm({
 
       // EDIT STUDENT FUNCTION
       const editStudent = async () => {
+        console.log(updateData);
         try {
           await updateDoc(doc(db, "students", data.id), updateData);
           toast.success(`${data.name} alterado com sucesso! 👌`, {
@@ -3330,7 +3346,9 @@ export function EditStudentForm({
   return (
     <div
       className={`w-full ${
-        open ? "max-w-9xl bg-white/80 dark:bg-klGreen-500/60 rounded-xl" : ""
+        open
+          ? "flex flex-col h-full max-w-9xl bg-white/80 dark:bg-klGreen-500/60 rounded-xl overflow-y-auto no-scrollbar"
+          : ""
       } `}
     >
       <div className="flex flex-col w-full h-full overflow-scroll no-scrollbar gap-2 pt-4 px-4 rounded-xl text-center">
@@ -3591,24 +3609,23 @@ export function EditStudentForm({
                           readOnly
                         />
                       </div>
-                      {!onlyView &&
-                         (
-                          <EditCurriculumButton
-                            index={index}
-                            isExperimental
-                            curriculum={curriculum}
-                            handleIncludeExcludeFunction={
-                              handleIncludeExcludeExperimentalCurriculum
-                            }
-                            openEditExperimentalCurriculumDays={
-                              openEditExperimentalCurriculumDays
-                            }
-                            setOpenEditExperimentalCurriculumDays={
-                              setOpenEditExperimentalCurriculumDays
-                            }
-                            cancelEditFunction={restoreEditedExcludeCurriculum}
-                          />
-                        )}
+                      {!onlyView && (
+                        <EditCurriculumButton
+                          index={index}
+                          isExperimental
+                          curriculum={curriculum}
+                          handleIncludeExcludeFunction={
+                            handleIncludeExcludeExperimentalCurriculum
+                          }
+                          openEditExperimentalCurriculumDays={
+                            openEditExperimentalCurriculumDays
+                          }
+                          setOpenEditExperimentalCurriculumDays={
+                            setOpenEditExperimentalCurriculumDays
+                          }
+                          cancelEditFunction={restoreEditedExcludeCurriculum}
+                        />
+                      )}
                     </div>
                   </div>
                   {openEditExperimentalCurriculumDays && (
@@ -5336,8 +5353,12 @@ export function EditStudentForm({
                     <div className="flex w-1/4" />
                     <div className="flex w-3/4 px-2 py-1 gap-10 justify-start items-center">
                       <p className="text-sm text-red-600 dark:text-yellow-500">
-                        Data de vencimento dia 05 do mês a cursar, pagamento
-                        antecipado
+                        Data de vencimento dia{" "}
+                        {systemConstantsValues &&
+                        +systemConstantsValues?.standardPaymentDay < 10
+                          ? `0${systemConstantsValues?.standardPaymentDay}`
+                          : systemConstantsValues?.standardPaymentDay}{" "}
+                        do mês a cursar, pagamento antecipado
                       </p>
                     </div>
                   </>

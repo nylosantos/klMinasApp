@@ -9,6 +9,7 @@ import {
   GlobalDataContextType,
 } from "../context/GlobalDataContext";
 import SystemUsersSettings from "../components/usersPageComponents/SystemUsersSettings";
+import EditSystemConstants from "../components/usersPageComponents/EditSystemConstants";
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
@@ -52,7 +53,7 @@ export default function Settings() {
                 >
                   Gerenciar Contas
                 </Tab>
-                {/* <Tab
+                <Tab
                   className={({ selected }) =>
                     classNames(
                       "w-full rounded-lg py-2.5 text-sm font-medium leading-5 dark:text-gray-100",
@@ -63,11 +64,11 @@ export default function Settings() {
                   }
                 >
                   Configurações do Sistema
-                </Tab> */}
+                </Tab>
               </>
             </TabList>
           )}
-          <TabPanels className="flex flex-col h-full mt-2 items-center justify-center overflow-scroll no-scrollbar">
+          <TabPanels className="flex flex-col h-full mt-2 items-center justify-start overflow-scroll no-scrollbar">
             <TabPanel as={Fragment}>
               <EditMyUser />
             </TabPanel>
@@ -77,9 +78,9 @@ export default function Settings() {
                 <TabPanel as={Fragment}>
                   <SystemUsersSettings />
                 </TabPanel>
-                {/* <TabPanel as={Fragment}>
+                <TabPanel as={Fragment}>
                   <EditSystemConstants />
-                </TabPanel> */}
+                </TabPanel>
               </>
             )}
           </TabPanels>

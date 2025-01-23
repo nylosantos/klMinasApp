@@ -25,7 +25,7 @@ export function ClassDays({
       </p>
 
       {/* CLASS DAY CARD */}
-      <div className="flex w-full justify-evenly items-center mb-4">
+      <div className="flex w-full flex-wrap justify-evenly items-center mb-4">
         {Object.keys(classDay).map((item) => {
           if (
             item !== "sunday" &&

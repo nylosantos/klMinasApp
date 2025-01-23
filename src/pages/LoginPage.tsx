@@ -4,14 +4,13 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../context/GlobalDataContext";
-import { customerFullName } from "../custom";
 import { FormLogin } from "../components/signComponents/FormLogin";
 import { FormRegister } from "../components/signComponents/FormRegister";
 import { DNA } from "react-loader-spinner";
 
 export default function LoginPage() {
   // GET GLOBAL DATA
-  const { login, userLoading, setLogin } = useContext(
+  const { login, systemConstantsValues, userLoading, setLogin } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
 
@@ -32,8 +31,12 @@ export default function LoginPage() {
         </div>
       ) : (
         <>
-          <h1 className="font-bold text-2xl">
-            Bem-vindo(a) à {customerFullName}!
+          <h1
+            className={`font-bold text-2xl ${
+              systemConstantsValues ? "opacity-100" : "opacity-0"
+            } transition-all duration-500`}
+          >
+            Bem-vindo(a) à {systemConstantsValues?.customerFullName}!
           </h1>
 
           {login ? <FormLogin /> : <FormRegister />}

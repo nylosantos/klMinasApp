@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import {
-    GlobalDataContext,
-    GlobalDataContextType,
+  GlobalDataContext,
+  GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 
 interface CurriculumCardDescriptionProps {
@@ -27,7 +27,7 @@ export default function CurriculumCardDescription({
         <p>
           Ano Escolar:{" "}
           <span className="text-red-600 dark:text-yellow-500">
-            {handleOneCurriculumDetails(id).schoolClassName}
+            {handleOneCurriculumDetails(id).schoolClassNames.join(" - ")}
           </span>
         </p>
         <p>

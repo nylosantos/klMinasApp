@@ -18,6 +18,7 @@ import {
 import { app } from "../../db/Firebase";
 import {
   SignUpWithEmailAndPasswordZProps,
+  SystemConstantsSearchProps,
   UserFullDataProps,
 } from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
@@ -27,15 +28,44 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import { formataCPF, systemSignUpClosed, testaCPF } from "../../custom";
+import { formataCPF, testaCPF } from "../../custom";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function FormRegister() {
   // GET GLOBAL DATA
-  const { auth, checkUser, isSubmitting, setCheckUser, setIsSubmitting } =
-    useContext(GlobalDataContext) as GlobalDataContextType;
+  const {
+    auth,
+    checkUser,
+    isSubmitting,
+    systemConstantsDb,
+    systemConstantsDbLoading,
+    systemConstantsDbError,
+    setCheckUser,
+    setIsSubmitting,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
+
+// SYSTEM SIGN UP CLOSED STATE
+  const [systemSignUpClosed, setSystemSignUpClosed] = useState(false);
+
+  // GET SYSTEM CONSTANTS DATABASE DATA
+  useEffect(() => {
+    if (
+      systemConstantsDb &&
+      !systemConstantsDbLoading &&
+      systemConstantsDbError === undefined
+    ) {
+      const foundedSystemConstants: SystemConstantsSearchProps =
+        systemConstantsDb.find(
+          (constants) => constants.year === new Date().getFullYear().toString()
+        ) as SystemConstantsSearchProps;
+      console.log(foundedSystemConstants);
+      if (foundedSystemConstants) {
+        setSystemSignUpClosed(foundedSystemConstants.systemSignUpClosed);
+      }
+    }
+  }, [systemConstantsDb]);
 
   // USER SIGNUP STATE
   const [userSignUp, setUserSignUp] =

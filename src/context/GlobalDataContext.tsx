@@ -33,11 +33,6 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import {
-  employeeDiscountValue,
-  familyDiscountValue,
-  secondCourseDiscountValue,
-} from "../custom";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { useCollectionData } from "react-firebase-hooks/firestore";
@@ -109,6 +104,7 @@ export type GlobalDataContextType = {
   studentsDatabaseData: StudentSearchProps[];
   classDaysDatabaseData: ClassDaySearchProps[];
   systemConstantsDatabaseData: SystemConstantsSearchProps[];
+  systemConstantsValues: SystemConstantsSearchProps | undefined;
   // END OF DATABASE DATA
   theme: "dark" | "light" | null;
   user: User | null | undefined;
@@ -269,8 +265,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       id: "",
       schoolId: "",
       schoolName: "",
-      schoolClassId: "",
-      schoolClassName: "",
+      schoolClassIds: [],
+      schoolClassNames: [],
       schoolCourseId: "",
       schoolCourseName: "",
       classDayId: "",
@@ -290,13 +286,13 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     curriculumDatabaseData.map((curriculum) => {
       if (
         curriculum.schoolId === schoolId &&
-        curriculum.schoolClassId === schoolClassId
+        curriculum.schoolClassIds.includes(schoolClassId)
       ) {
         curriculumToPush = {
           ...curriculumToPush,
           id: curriculum.id,
           schoolId: curriculum.schoolId,
-          schoolClassId: curriculum.schoolClassId,
+          schoolClassIds: curriculum.schoolClassIds,
           schoolCourseId: curriculum.schoolCourseId,
           classDayId: curriculum.classDayId,
           scheduleId: curriculum.scheduleId,
@@ -315,14 +311,16 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
             };
           }
         });
+        const schoolClassNames: string[] = [];
         schoolClassDatabaseData.map((schoolClass) => {
-          if (schoolClass.id === curriculum.schoolClassId) {
-            curriculumToPush = {
-              ...curriculumToPush,
-              schoolClassName: schoolClass.name,
-            };
+          if (curriculum.schoolClassIds.includes(schoolClass.id)) {
+            schoolClassNames.push(schoolClass.name);
           }
         });
+        curriculumToPush = {
+          ...curriculumToPush,
+          schoolClassNames: schoolClassNames,
+        };
         schoolCourseDatabaseData.map((schoolCourse) => {
           if (schoolCourse.id === curriculum.schoolCourseId) {
             curriculumToPush = {
@@ -373,8 +371,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       id: "",
       schoolId: "",
       schoolName: "",
-      schoolClassId: "",
-      schoolClassName: "",
+      schoolClassIds: [],
+      schoolClassNames: [],
       schoolCourseId: "",
       schoolCourseName: "",
       classDayId: "",
@@ -394,14 +392,14 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     curriculumDatabaseData.map((curriculum) => {
       if (
         curriculum.schoolId === schoolId &&
-        curriculum.schoolClassId === schoolClassId &&
+        curriculum.schoolClassIds.includes(schoolClassId) &&
         curriculum.schoolCourseId === schoolCourseId
       ) {
         curriculumToPush = {
           ...curriculumToPush,
           id: curriculum.id,
           schoolId: curriculum.schoolId,
-          schoolClassId: curriculum.schoolClassId,
+          schoolClassIds: curriculum.schoolClassIds,
           schoolCourseId: curriculum.schoolCourseId,
           classDayId: curriculum.classDayId,
           scheduleId: curriculum.scheduleId,
@@ -420,14 +418,16 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
             };
           }
         });
+        const schoolClassNames: string[] = [];
         schoolClassDatabaseData.map((schoolClass) => {
-          if (schoolClass.id === curriculum.schoolClassId) {
-            curriculumToPush = {
-              ...curriculumToPush,
-              schoolClassName: schoolClass.name,
-            };
+          if (curriculum.schoolClassIds.includes(schoolClass.id)) {
+            schoolClassNames.push(schoolClass.name);
           }
         });
+        curriculumToPush = {
+          ...curriculumToPush,
+          schoolClassNames: schoolClassNames,
+        };
         schoolCourseDatabaseData.map((schoolCourse) => {
           if (schoolCourse.id === curriculum.schoolCourseId) {
             curriculumToPush = {
@@ -473,8 +473,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       id: "",
       schoolId: "",
       schoolName: "",
-      schoolClassId: "",
-      schoolClassName: "",
+      schoolClassIds: [],
+      schoolClassNames: [],
       schoolCourseId: "",
       schoolCourseName: "",
       classDayId: "",
@@ -503,7 +503,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         waitingList: foundedCurriculum.waitingList,
         id: foundedCurriculum.id,
         schoolId: foundedCurriculum.schoolId,
-        schoolClassId: foundedCurriculum.schoolClassId,
+        schoolClassIds: foundedCurriculum.schoolClassIds,
         schoolCourseId: foundedCurriculum.schoolCourseId,
         classDayId: foundedCurriculum.classDayId,
         scheduleId: foundedCurriculum.scheduleId,
@@ -517,14 +517,16 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           };
         }
       });
+      const schoolClassNames: string[] = [];
       schoolClassDatabaseData.map((schoolClass) => {
-        if (schoolClass.id === foundedCurriculum.schoolClassId) {
-          curriculumToShow = {
-            ...curriculumToShow,
-            schoolClassName: schoolClass.name,
-          };
+        if (foundedCurriculum.schoolClassIds.includes(schoolClass.id)) {
+          schoolClassNames.push(schoolClass.name);
         }
       });
+      curriculumToShow = {
+        ...curriculumToShow,
+        schoolClassNames: schoolClassNames,
+      };
       schoolCourseDatabaseData.map((schoolCourse) => {
         if (schoolCourse.id === foundedCurriculum.schoolCourseId) {
           curriculumToShow = {
@@ -578,301 +580,305 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
 
   // CALC STUDENT PRICE (PRICE WITH DISCOUNT: APPLIED PRICE | PRICE WITHOUT DISCOUNTS: FULL PRICE)
   async function calcStudentPrice(studentId: string) {
-    const userRef = collection(db, "students");
-    const q = query(userRef, where("id", "==", studentId));
-    const querySnapshot = await getDocs(q);
-    const promises: StudentSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as StudentSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      const studentToCalcPrices = results;
-      studentToCalcPrices.map(async (student) => {
-        // DISCOUNT VARIABLE
-        const customDiscountValueSum = 100 - +student.customDiscountValue;
-        const customDiscountFinalValue = +`0.${
-          customDiscountValueSum > 9
-            ? customDiscountValueSum
-            : `0${customDiscountValueSum}`
-        }`;
-
-        const discountVariable = student.customDiscount
-          ? customDiscountFinalValue
-          : student.employeeDiscount
-          ? employeeDiscountValue
-          : student.familyDiscount
-          ? familyDiscountValue
-          : student.secondCourseDiscount
-          ? secondCourseDiscountValue
-          : 1; // WITHOUT DISCOUNT
-
-        // CALC OF FULL AND APPLY PRICE OF STUDENT
-        let smallestPrice = 0;
-        let otherSumPrices = 0;
-        let olderSmallestPrice = 0;
-        student.curriculumIds.map(async (studentCurriculum, index) => {
-          if (index === 0) {
-            smallestPrice = studentCurriculum.price;
-          } else {
-            if (studentCurriculum.price <= smallestPrice) {
-              olderSmallestPrice = smallestPrice;
-              smallestPrice = studentCurriculum.price;
-              otherSumPrices = olderSmallestPrice + otherSumPrices;
-            } else {
-              otherSumPrices = otherSumPrices + studentCurriculum.price;
-            }
-          }
-        });
-        await updateDoc(doc(db, "students", student.id), {
-          appliedPrice: +(
-            smallestPrice * discountVariable +
-            otherSumPrices
-          ).toFixed(2),
-          fullPrice: smallestPrice + otherSumPrices,
-        });
+    if (systemConstantsValues) {
+      const userRef = collection(db, "students");
+      const q = query(userRef, where("id", "==", studentId));
+      const querySnapshot = await getDocs(q);
+      const promises: StudentSearchProps[] = [];
+      querySnapshot.forEach((doc) => {
+        const promise = doc.data() as StudentSearchProps;
+        promises.push(promise);
       });
-    });
-  }
-
-  async function calcStudentPrice2(studentId: string) {
-    const userRef = collection(db, "students");
-    const q = query(userRef, where("id", "==", studentId));
-    const querySnapshot = await getDocs(q);
-    const promises: StudentSearchProps[] = [];
-    querySnapshot.forEach((doc) => {
-      const promise = doc.data() as StudentSearchProps;
-      promises.push(promise);
-    });
-    Promise.all(promises).then((results) => {
-      const studentToCalcPrices = results.find(
-        (student) => student.id === studentId
-      );
-      if (studentToCalcPrices) {
-        if (studentToCalcPrices.customDiscount) {
+      Promise.all(promises).then((results) => {
+        const studentToCalcPrices = results;
+        studentToCalcPrices.map(async (student) => {
           // DISCOUNT VARIABLE
-          const customDiscountValueSum =
-            100 - +studentToCalcPrices.customDiscountValue;
+          const customDiscountValueSum = 100 - +student.customDiscountValue;
           const customDiscountFinalValue = +`0.${
             customDiscountValueSum > 9
               ? customDiscountValueSum
               : `0${customDiscountValueSum}`
           }`;
-          // IF WE NEED GET THE CURRICULUM ORDERED UNCOMENT BELOW
-          // const curriculumOrderedByPrice =
-          //   studentToCalcPrices.curriculumIds.sort((a, b) => b.price - a.price);
-          // WITH CUSTOM DISCOUNT
-          let appliedPrice = 0;
-          studentToCalcPrices.curriculumIds.map((curriculum) => {
-            appliedPrice = appliedPrice + curriculum.price;
-          });
-          console.log(
-            "appliedPrice sem desconto: ",
-            appliedPrice,
-            " appliedPrice com desconto: ",
-            appliedPrice * customDiscountFinalValue
-          );
-        }
-        // PRICE CALC IF HAVE FAMILY
-        else if (studentToCalcPrices.employeeDiscount) {
-          // WITH EMPLOYEE DISCOUNT
-          let appliedPrice = 0;
-          studentToCalcPrices.curriculumIds.map((curriculum) => {
-            appliedPrice = appliedPrice + curriculum.price;
-          });
-          console.log(
-            "appliedPrice sem desconto: ",
-            appliedPrice,
-            " appliedPrice com desconto: ",
-            appliedPrice * employeeDiscountValue
-          );
-        } else if (studentToCalcPrices.studentFamilyAtSchool.length < 1) {
-          // WITHOUT FAMILY DISCOUNT
-          const studentCurriculums: CurriculumArrayProps[] = [];
-          curriculumDatabaseData.map((curriculum) => {
-            curriculum.students.map((student) => {
-              if (student.id === studentToCalcPrices.id) {
-                if (!studentCurriculums.includes(student)) {
-                  studentCurriculums.push(student);
-                }
-              }
-            });
-          });
-          let biggerPriceIndex = 0;
-          let biggerPrice = 0;
+
+          const discountVariable = student.customDiscount
+            ? customDiscountFinalValue
+            : student.employeeDiscount
+            ? systemConstantsValues.employeeDiscountValue
+            : student.familyDiscount
+            ? systemConstantsValues.familyDiscountValue
+            : student.secondCourseDiscount
+            ? systemConstantsValues.secondCourseDiscountValue
+            : 1; // WITHOUT DISCOUNT
+
+          // CALC OF FULL AND APPLY PRICE OF STUDENT
+          let smallestPrice = 0;
           let otherSumPrices = 0;
-          let olderBiggerPrice = 0;
-          studentCurriculums.map(async (studentCurriculum, index) => {
-            if (studentCurriculum.price > biggerPrice) {
-              biggerPriceIndex = index;
-              olderBiggerPrice = biggerPrice;
-              biggerPrice = studentCurriculum.price;
-              otherSumPrices = olderBiggerPrice + otherSumPrices;
+          let olderSmallestPrice = 0;
+          student.curriculumIds.map(async (studentCurriculum, index) => {
+            if (index === 0) {
+              smallestPrice = studentCurriculum.price;
             } else {
-              otherSumPrices = otherSumPrices + studentCurriculum.price;
+              if (studentCurriculum.price <= smallestPrice) {
+                olderSmallestPrice = smallestPrice;
+                smallestPrice = studentCurriculum.price;
+                otherSumPrices = olderSmallestPrice + otherSumPrices;
+              } else {
+                otherSumPrices = otherSumPrices + studentCurriculum.price;
+              }
             }
           });
-          console.log(
-            "todos os curriculum juntos, student",
-            studentCurriculums
-          );
-          console.log(
-            "Maior mensalidade: ",
-            biggerPrice,
-            " Soma das outras mensalidades: ",
-            otherSumPrices,
-            " Index da maior mensalidade: ",
-            biggerPriceIndex
-          );
-        } else {
-          // WITH FAMILY DISCOUNT
-          const studentFamilyCurriculums: CurriculumArrayProps[] = [];
-          studentToCalcPrices.studentFamilyAtSchool.map((familyId) => {
+          await updateDoc(doc(db, "students", student.id), {
+            appliedPrice: +(
+              smallestPrice * discountVariable +
+              otherSumPrices
+            ).toFixed(2),
+            fullPrice: smallestPrice + otherSumPrices,
+          });
+        });
+      });
+    }
+  }
+
+  async function calcStudentPrice2(studentId: string) {
+    if (systemConstantsValues) {
+      const userRef = collection(db, "students");
+      const q = query(userRef, where("id", "==", studentId));
+      const querySnapshot = await getDocs(q);
+      const promises: StudentSearchProps[] = [];
+      querySnapshot.forEach((doc) => {
+        const promise = doc.data() as StudentSearchProps;
+        promises.push(promise);
+      });
+      Promise.all(promises).then((results) => {
+        const studentToCalcPrices = results.find(
+          (student) => student.id === studentId
+        );
+        if (studentToCalcPrices) {
+          if (studentToCalcPrices.customDiscount) {
+            // DISCOUNT VARIABLE
+            const customDiscountValueSum =
+              100 - +studentToCalcPrices.customDiscountValue;
+            const customDiscountFinalValue = +`0.${
+              customDiscountValueSum > 9
+                ? customDiscountValueSum
+                : `0${customDiscountValueSum}`
+            }`;
+            // IF WE NEED GET THE CURRICULUM ORDERED UNCOMENT BELOW
+            // const curriculumOrderedByPrice =
+            //   studentToCalcPrices.curriculumIds.sort((a, b) => b.price - a.price);
+            // WITH CUSTOM DISCOUNT
+            let appliedPrice = 0;
+            studentToCalcPrices.curriculumIds.map((curriculum) => {
+              appliedPrice = appliedPrice + curriculum.price;
+            });
+            console.log(
+              "appliedPrice sem desconto: ",
+              appliedPrice,
+              " appliedPrice com desconto: ",
+              appliedPrice * customDiscountFinalValue
+            );
+          }
+          // PRICE CALC IF HAVE FAMILY
+          else if (studentToCalcPrices.employeeDiscount) {
+            // WITH EMPLOYEE DISCOUNT
+            let appliedPrice = 0;
+            studentToCalcPrices.curriculumIds.map((curriculum) => {
+              appliedPrice = appliedPrice + curriculum.price;
+            });
+            console.log(
+              "appliedPrice sem desconto: ",
+              appliedPrice,
+              " appliedPrice com desconto: ",
+              appliedPrice * systemConstantsValues.employeeDiscountValue
+            );
+          } else if (studentToCalcPrices.studentFamilyAtSchool.length < 1) {
+            // WITHOUT FAMILY DISCOUNT
+            const studentCurriculums: CurriculumArrayProps[] = [];
             curriculumDatabaseData.map((curriculum) => {
               curriculum.students.map((student) => {
-                if (
-                  student.id === familyId ||
-                  student.id === studentToCalcPrices.id
-                ) {
-                  if (!studentFamilyCurriculums.includes(student)) {
-                    studentFamilyCurriculums.push(student);
+                if (student.id === studentToCalcPrices.id) {
+                  if (!studentCurriculums.includes(student)) {
+                    studentCurriculums.push(student);
                   }
                 }
               });
             });
-          });
-          let biggerPriceIndex = 0;
-          let biggerPrice = 0;
-          let otherSumPrices = 0;
-          let olderBiggerPrice = 0;
-          studentFamilyCurriculums.map(async (studentCurriculum, index) => {
-            if (studentCurriculum.price > biggerPrice) {
-              biggerPriceIndex = index;
-              olderBiggerPrice = biggerPrice;
-              biggerPrice = studentCurriculum.price;
-              otherSumPrices = olderBiggerPrice + otherSumPrices;
-            } else {
-              otherSumPrices = otherSumPrices + studentCurriculum.price;
-            }
-          });
-          console.log(
-            "todos os curriculum juntos, student and family",
-            studentFamilyCurriculums
-          );
-          console.log(
-            "Maior mensalidade: ",
-            biggerPrice,
-            " Soma das outras mensalidades: ",
-            otherSumPrices,
-            " Index da maior mensalidade: ",
-            biggerPriceIndex
-          );
+            let biggerPriceIndex = 0;
+            let biggerPrice = 0;
+            let otherSumPrices = 0;
+            let olderBiggerPrice = 0;
+            studentCurriculums.map(async (studentCurriculum, index) => {
+              if (studentCurriculum.price > biggerPrice) {
+                biggerPriceIndex = index;
+                olderBiggerPrice = biggerPrice;
+                biggerPrice = studentCurriculum.price;
+                otherSumPrices = olderBiggerPrice + otherSumPrices;
+              } else {
+                otherSumPrices = otherSumPrices + studentCurriculum.price;
+              }
+            });
+            console.log(
+              "todos os curriculum juntos, student",
+              studentCurriculums
+            );
+            console.log(
+              "Maior mensalidade: ",
+              biggerPrice,
+              " Soma das outras mensalidades: ",
+              otherSumPrices,
+              " Index da maior mensalidade: ",
+              biggerPriceIndex
+            );
+          } else {
+            // WITH FAMILY DISCOUNT
+            const studentFamilyCurriculums: CurriculumArrayProps[] = [];
+            studentToCalcPrices.studentFamilyAtSchool.map((familyId) => {
+              curriculumDatabaseData.map((curriculum) => {
+                curriculum.students.map((student) => {
+                  if (
+                    student.id === familyId ||
+                    student.id === studentToCalcPrices.id
+                  ) {
+                    if (!studentFamilyCurriculums.includes(student)) {
+                      studentFamilyCurriculums.push(student);
+                    }
+                  }
+                });
+              });
+            });
+            let biggerPriceIndex = 0;
+            let biggerPrice = 0;
+            let otherSumPrices = 0;
+            let olderBiggerPrice = 0;
+            studentFamilyCurriculums.map(async (studentCurriculum, index) => {
+              if (studentCurriculum.price > biggerPrice) {
+                biggerPriceIndex = index;
+                olderBiggerPrice = biggerPrice;
+                biggerPrice = studentCurriculum.price;
+                otherSumPrices = olderBiggerPrice + otherSumPrices;
+              } else {
+                otherSumPrices = otherSumPrices + studentCurriculum.price;
+              }
+            });
+            console.log(
+              "todos os curriculum juntos, student and family",
+              studentFamilyCurriculums
+            );
+            console.log(
+              "Maior mensalidade: ",
+              biggerPrice,
+              " Soma das outras mensalidades: ",
+              otherSumPrices,
+              " Index da maior mensalidade: ",
+              biggerPriceIndex
+            );
+          }
+          // if (curriculumOrderedByPrice.length < 1) {
+          //   console.log(
+          //     "O preço total é: R$ ",
+          //     0,
+          //     " o desconto é de ",
+          //     0,
+          //     ", e o valor final é: R$ ",
+          //     0
+          //   );
+          // } else if (curriculumOrderedByPrice.length === 1) {
+          //   if (studentToCalcPrices.customDiscount) {
+          //     console.log(
+          //       "O preço total é: R$ ",
+          //       curriculumOrderedByPrice[0].price,
+          //       " o desconto é de ",
+          //       studentToCalcPrices.customDiscountValue,
+          //       "%, e o valor final é: R$ ",
+          //       curriculumOrderedByPrice[0].price * customDiscountFinalValue
+          //     );
+          //   } else if (studentToCalcPrices.employeeDiscount) {
+          //     console.log(
+          //       "O preço total é: R$ ",
+          //       curriculumOrderedByPrice[0].price,
+          //       " o desconto é de ",
+          //       employeeDiscountValue,
+          //       ", e o valor final é: R$ ",
+          //       curriculumOrderedByPrice[0].price * employeeDiscountValue
+          //     );
+          //   } else if (studentToCalcPrices.familyDiscount) {
+          //     console.log(
+          //       "O preço total é: R$ ",
+          //       curriculumOrderedByPrice[0].price,
+          //       " o desconto é de ",
+          //       familyDiscountValue,
+          //       ", e o valor final é: R$ ",
+          //       curriculumOrderedByPrice[0].price * familyDiscountValue
+          //     );
+          //   } else {
+          //     console.log(
+          //       "O preço total é: R$ ",
+          //       curriculumOrderedByPrice[0].price,
+          //       " o desconto é de ",
+          //       0,
+          //       ", e o valor final é: R$ ",
+          //       curriculumOrderedByPrice[0].price
+          //     );
+          //   }
+          // } else {
+          //   if (studentToCalcPrices.customDiscount) {
+          //     console.log(
+          //       "O preço total é: R$ ",
+          //       curriculumOrderedByPrice[0].price,
+          //       " o desconto é de ",
+          //       studentToCalcPrices.customDiscountValue,
+          //       "%, e o valor final é: R$ ",
+          //       curriculumOrderedByPrice[0].price * customDiscountFinalValue
+          //     );
+          //   }
+          // }
         }
-        // if (curriculumOrderedByPrice.length < 1) {
-        //   console.log(
-        //     "O preço total é: R$ ",
-        //     0,
-        //     " o desconto é de ",
-        //     0,
-        //     ", e o valor final é: R$ ",
-        //     0
-        //   );
-        // } else if (curriculumOrderedByPrice.length === 1) {
-        //   if (studentToCalcPrices.customDiscount) {
-        //     console.log(
-        //       "O preço total é: R$ ",
-        //       curriculumOrderedByPrice[0].price,
-        //       " o desconto é de ",
-        //       studentToCalcPrices.customDiscountValue,
-        //       "%, e o valor final é: R$ ",
-        //       curriculumOrderedByPrice[0].price * customDiscountFinalValue
-        //     );
-        //   } else if (studentToCalcPrices.employeeDiscount) {
-        //     console.log(
-        //       "O preço total é: R$ ",
-        //       curriculumOrderedByPrice[0].price,
-        //       " o desconto é de ",
-        //       employeeDiscountValue,
-        //       ", e o valor final é: R$ ",
-        //       curriculumOrderedByPrice[0].price * employeeDiscountValue
-        //     );
-        //   } else if (studentToCalcPrices.familyDiscount) {
-        //     console.log(
-        //       "O preço total é: R$ ",
-        //       curriculumOrderedByPrice[0].price,
-        //       " o desconto é de ",
-        //       familyDiscountValue,
-        //       ", e o valor final é: R$ ",
-        //       curriculumOrderedByPrice[0].price * familyDiscountValue
-        //     );
+        // studentToCalcPrices.map(async (student) => {
+        // DISCOUNT VARIABLE
+        // const customDiscountValueSum = 100 - +student.customDiscountValue;
+        // const customDiscountFinalValue = +`0.${
+        //   customDiscountValueSum > 9
+        //     ? customDiscountValueSum
+        //     : `0${customDiscountValueSum}`
+        // }`;
+
+        // const discountVariable = student.customDiscount
+        //   ? customDiscountFinalValue
+        //   : student.employeeDiscount
+        //   ? employeeDiscountValue
+        //   : student.familyDiscount
+        //   ? familyDiscountValue
+        //   : student.secondCourseDiscount
+        //   ? secondCourseDiscountValue
+        //   : 1; // WITHOUT DISCOUNT
+
+        // CALC OF FULL AND APPLY PRICE OF STUDENT
+        // let smallestPrice = 0;
+        // let otherSumPrices = 0;
+        // let olderSmallestPrice = 0;
+        // student.curriculumIds.map(async (studentCurriculum, index) => {
+        //   if (index === 0) {
+        //     smallestPrice = studentCurriculum.price;
         //   } else {
-        //     console.log(
-        //       "O preço total é: R$ ",
-        //       curriculumOrderedByPrice[0].price,
-        //       " o desconto é de ",
-        //       0,
-        //       ", e o valor final é: R$ ",
-        //       curriculumOrderedByPrice[0].price
-        //     );
+        //     if (studentCurriculum.price <= smallestPrice) {
+        //       olderSmallestPrice = smallestPrice;
+        //       smallestPrice = studentCurriculum.price;
+        //       otherSumPrices = olderSmallestPrice + otherSumPrices;
+        //     } else {
+        //       otherSumPrices = otherSumPrices + studentCurriculum.price;
+        //     }
         //   }
-        // } else {
-        //   if (studentToCalcPrices.customDiscount) {
-        //     console.log(
-        //       "O preço total é: R$ ",
-        //       curriculumOrderedByPrice[0].price,
-        //       " o desconto é de ",
-        //       studentToCalcPrices.customDiscountValue,
-        //       "%, e o valor final é: R$ ",
-        //       curriculumOrderedByPrice[0].price * customDiscountFinalValue
-        //     );
-        //   }
-        // }
-      }
-      // studentToCalcPrices.map(async (student) => {
-      // DISCOUNT VARIABLE
-      // const customDiscountValueSum = 100 - +student.customDiscountValue;
-      // const customDiscountFinalValue = +`0.${
-      //   customDiscountValueSum > 9
-      //     ? customDiscountValueSum
-      //     : `0${customDiscountValueSum}`
-      // }`;
-
-      // const discountVariable = student.customDiscount
-      //   ? customDiscountFinalValue
-      //   : student.employeeDiscount
-      //   ? employeeDiscountValue
-      //   : student.familyDiscount
-      //   ? familyDiscountValue
-      //   : student.secondCourseDiscount
-      //   ? secondCourseDiscountValue
-      //   : 1; // WITHOUT DISCOUNT
-
-      // CALC OF FULL AND APPLY PRICE OF STUDENT
-      // let smallestPrice = 0;
-      // let otherSumPrices = 0;
-      // let olderSmallestPrice = 0;
-      // student.curriculumIds.map(async (studentCurriculum, index) => {
-      //   if (index === 0) {
-      //     smallestPrice = studentCurriculum.price;
-      //   } else {
-      //     if (studentCurriculum.price <= smallestPrice) {
-      //       olderSmallestPrice = smallestPrice;
-      //       smallestPrice = studentCurriculum.price;
-      //       otherSumPrices = olderSmallestPrice + otherSumPrices;
-      //     } else {
-      //       otherSumPrices = otherSumPrices + studentCurriculum.price;
-      //     }
-      //   }
-      // });
-      // await updateDoc(doc(db, "students", student.id), {
-      //   appliedPrice: +(
-      //     smallestPrice * discountVariable +
-      //     otherSumPrices
-      //   ).toFixed(2),
-      //   fullPrice: smallestPrice + otherSumPrices,
-      // });
-      // });
-    });
+        // });
+        // await updateDoc(doc(db, "students", student.id), {
+        //   appliedPrice: +(
+        //     smallestPrice * discountVariable +
+        //     otherSumPrices
+        //   ).toFixed(2),
+        //   fullPrice: smallestPrice + otherSumPrices,
+        // });
+        // });
+      });
+    }
   }
   // MONITORING USER LOGIN
   useEffect(() => {
@@ -1010,6 +1016,23 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   // LISTENER SYSTEMCONSTANTS DATA
   const [systemConstantsDb, systemConstantsDbLoading, systemConstantsDbError] =
     useCollectionData(collection(db, "systemConstants"));
+
+  const [systemConstantsValues, setSystemConstantsValues] =
+    useState<SystemConstantsSearchProps>();
+
+  useEffect(() => {
+    if (
+      systemConstantsDb &&
+      !systemConstantsDbLoading &&
+      systemConstantsDbError === undefined
+    ) {
+      const currentYear = new Date().getFullYear().toString();
+      const constants = systemConstantsDb.find(
+        (constants) => constants.year === currentYear
+      ) as SystemConstantsSearchProps;
+      setSystemConstantsValues(constants);
+    }
+  }, [systemConstantsDb, systemConstantsDbLoading, systemConstantsDbError]);
 
   async function handleData() {
     // GET SCHOOL DATA
@@ -1410,6 +1433,15 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
                 }
               );
             }
+            curriculumDatabaseData.map((curriculum) => {
+              if (curriculum.id === curriculumId) {
+                curriculum.waitingList.map((waitingStudent) => {
+                  if (waitingStudent.id === student.id) {
+                    curriculumExistsOnStudent.push(student);
+                  }
+                });
+              }
+            });
           });
 
           // IF EXISTS, RETURN ERROR
@@ -1673,11 +1705,6 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
             }
           });
 
-          // SEARCH CLASS WITH THIS SCHOOL
-          const schoolExistsOnClass = schoolClassDatabaseData.filter(
-            (schoolClass) => schoolClass.schoolId === schoolId
-          );
-
           // SEARCH SCHEDULE WITH THIS SCHOOL
           const schoolExistsOnSchedule = scheduleDatabaseData.filter(
             (schedule) => schedule.schoolId === schoolId
@@ -1734,28 +1761,6 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
                   schoolExistsOnSchedule.length === 1
                     ? "o Horário"
                     : "os Horários"
-                } e depois exclua o ${schoolToDelete.name}... ❕`,
-                {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                }
-              )
-            );
-          } else if (schoolExistsOnClass.length !== 0) {
-            return (
-              setIsSubmitting(false),
-              toast.error(
-                `Colégio incluído em ${schoolExistsOnClass.length} ${
-                  schoolExistsOnClass.length === 1
-                    ? "Ano Escolar"
-                    : "Anos Escolares"
-                }, exclua ou altere primeiramente ${
-                  schoolExistsOnClass.length === 1
-                    ? "o Ano Escolar"
-                    : "os Anos Escolares"
                 } e depois exclua o ${schoolToDelete.name}... ❕`,
                 {
                   theme: "colored",
@@ -2093,6 +2098,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         schoolClassDatabaseData,
         schoolCourseDatabaseData,
         scheduleDatabaseData,
+        systemConstantsValues,
         teacherDatabaseData,
         curriculumDatabaseData,
         studentsDatabaseData,

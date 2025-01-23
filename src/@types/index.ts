@@ -187,6 +187,7 @@ export interface SelectProps {
     | "enrolledCurriculum"
     | "appUsers"
     | "searchEnrolledStudent"
+    | "schoolStage"
     | "schoolYears"
     | "schoolYearsComplement"
     | "searchStudent";
@@ -208,7 +209,6 @@ export interface SelectProps {
   displaySchoolCourseAndSchedule?: boolean;
   displayAdmins?: boolean;
   onlyAvailableClasses?: boolean;
-  availableAndWaitingClasses?: boolean;
   onlyEnrolledStudents?: boolean;
   dontShowMyself?: boolean;
   showAllCourses?: boolean;
@@ -249,6 +249,13 @@ export interface SystemConstantsSearchProps {
   enrolmentFeeDiscount: number;
   systemSignInClosed: boolean;
   systemSignUpClosed: boolean;
+  customerFullName: string;
+  customerShortName: string;
+  employeeDiscountValue: number;
+  familyDiscountValue: number;
+  secondCourseDiscountValue: number;
+  standardPaymentDay: string;
+  year: string;
 }
 
 export interface SchoolSearchProps {
@@ -260,8 +267,7 @@ export interface SchoolSearchProps {
 export interface SchoolClassSearchProps {
   id: string;
   name: string;
-  schoolId: string;
-  available: "open" | "closed" | "waitingList";
+  schoolStageId: string;
   updatedAt: Date;
 }
 
@@ -389,7 +395,7 @@ export interface ExcludeCurriculumProps extends CurriculumArrayProps {
 
 export interface CurriculumWithNamesProps extends CurriculumSearchProps {
   schoolName: string;
-  schoolClassName: string;
+  schoolClassNames: string[];
   schoolCourseName: string;
   classDayName: string;
   classDayIndexDays: Array<number>;
@@ -408,7 +414,7 @@ export interface ExcludeWaitingListProps extends WaitingListProps {
 export interface CurriculumSearchProps {
   id: string;
   schoolId: string;
-  schoolClassId: string;
+  schoolClassIds: Array<string>;
   schoolCourseId: string;
   classDayId: string;
   scheduleId: string;

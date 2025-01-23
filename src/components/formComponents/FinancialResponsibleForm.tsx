@@ -147,7 +147,7 @@ const FinancialResponsibleForm = <
     <>
       {/** STUDENT FINANCIAL RESPONSIBLE SECTION TITLE */}
       <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
-        Dados do Responsável Financeiro COMPONENTE:
+        Dados do Responsável Financeiro:
       </h1>
 
       {/** STUDENT FINANCIAL RESPONSIBLE SECTION SUBTITLE */}

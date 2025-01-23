@@ -28,6 +28,7 @@ import {
 } from "../../context/GlobalDataContext";
 import { classDayIndexNames } from "../../custom";
 import { ClassDays } from "../formComponents/ClassDays";
+import SchoolStageSelect from "../formComponents/SchoolStageSelect";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -38,7 +39,6 @@ export function InsertCurriculum() {
     classDaysDatabaseData,
     curriculumDatabaseData,
     schoolDatabaseData,
-    schoolClassDatabaseData,
     schoolCourseDatabaseData,
     scheduleDatabaseData,
     teacherDatabaseData,
@@ -50,7 +50,8 @@ export function InsertCurriculum() {
   const [curriculumData, setCurriculumData] =
     useState<CreateCurriculumValidationZProps>({
       schoolId: "",
-      schoolClassId: "",
+      // schoolClassId: "",
+      schoolClassIds: [],
       schoolCourseId: "",
       scheduleId: "",
       classDayId: "",
@@ -63,12 +64,14 @@ export function InsertCurriculum() {
   const [curriculumFormattedName, setCurriculumFormattedName] = useState({
     formattedName: "",
     schoolName: "",
-    schoolClassName: "",
+    schoolClassNames: [] as SchoolClassSearchProps[],
     schoolCourseName: "",
     scheduleName: "",
     classDayName: "",
     teacherName: "",
   });
+
+  // UPDATE SCHOOLCLASSNAMES WHEN SCHOOLCLASSIDS ARE UPDATED
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL SELECTED STATE DATA
@@ -96,35 +99,6 @@ export function InsertCurriculum() {
     }
   }, [schoolSelectedData]);
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
-
-  // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
-  // SCHOOL CLASS SELECTED STATE DATA
-  const [schoolClassSelectedData, setSchoolClassSelectedData] =
-    useState<SchoolClassSearchProps>();
-
-  // SET SCHOOL CLASS SELECTED STATE WHEN SELECT SCHOOL CLASS
-  useEffect(() => {
-    if (curriculumData.schoolClassId !== "") {
-      setSchoolClassSelectedData(
-        schoolClassDatabaseData.find(
-          ({ id }) => id === curriculumData.schoolClassId
-        )
-      );
-    } else {
-      setSchoolClassSelectedData(undefined);
-    }
-  }, [curriculumData.schoolClassId]);
-
-  // SET SCHOOL CLASS NAME WITH SCHOOL CLASS SELECTED DATA WHEN SELECT SCHOOL CLASS
-  useEffect(() => {
-    if (schoolClassSelectedData !== undefined) {
-      setCurriculumFormattedName({
-        ...curriculumFormattedName,
-        schoolClassName: schoolClassSelectedData.name,
-      });
-    }
-  }, [schoolClassSelectedData]);
-  // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL COURSE SELECTED STATE DATA
@@ -435,7 +409,7 @@ export function InsertCurriculum() {
     });
   }, [
     curriculumFormattedName.schoolName,
-    curriculumFormattedName.schoolClassName,
+    // curriculumFormattedName.schoolClassName,
     curriculumFormattedName.schoolCourseName,
     curriculumFormattedName.scheduleName,
     classDayName,
@@ -451,7 +425,7 @@ export function InsertCurriculum() {
       curriculumFormattedName.schoolCourseName &&
       curriculumFormattedName.scheduleName &&
       classDayName.length > 0 &&
-      curriculumFormattedName.schoolClassName &&
+      // curriculumFormattedName.schoolClassName &&
       curriculumFormattedName.teacherName
     ) {
       setCurriculumNameFilled(true);
@@ -460,7 +434,7 @@ export function InsertCurriculum() {
     }
   }, [
     curriculumFormattedName.schoolName,
-    curriculumFormattedName.schoolClassName,
+    // curriculumFormattedName.schoolClassName,
     curriculumFormattedName.schoolCourseName,
     curriculumFormattedName.scheduleName,
     classDayName,
@@ -474,9 +448,6 @@ export function InsertCurriculum() {
   // RESET ALL UNDER SCHOOL SELECT WHEN CHANGE SCHOOL
   useEffect(() => {
     (
-      document.getElementById("schoolClassSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
       document.getElementById("schoolCourseSelect") as HTMLSelectElement
     ).selectedIndex = 0;
     (
@@ -487,7 +458,7 @@ export function InsertCurriculum() {
     ).selectedIndex = 0;
     setCurriculumData({
       ...curriculumData,
-      schoolClassId: "",
+      schoolClassIds: [],
       schoolCourseId: "",
       scheduleId: "",
       classDayId: "",
@@ -495,27 +466,6 @@ export function InsertCurriculum() {
       confirmInsert: false,
     });
   }, [curriculumData.schoolId]);
-
-  // RESET ALL UNDER SCHOOL CLASS SELECT WHEN CHANGE SCHOOL CLASS
-  useEffect(() => {
-    (
-      document.getElementById("schoolCourseSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById("scheduleSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
-      document.getElementById("teacherSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    setCurriculumData({
-      ...curriculumData,
-      schoolCourseId: "",
-      scheduleId: "",
-      classDayId: "",
-      teacherId: "",
-      confirmInsert: false,
-    });
-  }, [curriculumData.schoolClassId]);
 
   // RESET ALL UNDER SCHOOL COURSE SELECT WHEN CHANGE SCHOOL COURSE
   useEffect(() => {
@@ -578,7 +528,7 @@ export function InsertCurriculum() {
     resolver: zodResolver(createCurriculumValidationSchema),
     defaultValues: {
       schoolId: "",
-      schoolClassId: "",
+      schoolClassIds: [],
       schoolCourseId: "",
       scheduleId: "",
       classDayId: "",
@@ -605,7 +555,7 @@ export function InsertCurriculum() {
     setClassDayName([]);
     setCurriculumData({
       schoolId: "",
-      schoolClassId: "",
+      schoolClassIds: [],
       schoolCourseId: "",
       scheduleId: "",
       classDayId: "",
@@ -619,7 +569,7 @@ export function InsertCurriculum() {
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("schoolId", curriculumData.schoolId);
-    setValue("schoolClassId", curriculumData.schoolClassId);
+    setValue("schoolClassIds", curriculumData.schoolClassIds);
     setValue("schoolCourseId", curriculumData.schoolCourseId);
     setValue("scheduleId", curriculumData.scheduleId);
     setValue("classDayId", classDaysCommonId);
@@ -633,7 +583,7 @@ export function InsertCurriculum() {
   useEffect(() => {
     const fullErrors = [
       errors.schoolId,
-      errors.schoolClassId,
+      errors.schoolClassIds,
       errors.schoolCourseId,
       errors.scheduleId,
       errors.classDayId,
@@ -749,7 +699,7 @@ export function InsertCurriculum() {
         await setDoc(doc(db, "curriculum", commonId), {
           id: commonId,
           schoolId: data.schoolId,
-          schoolClassId: data.schoolClassId,
+          schoolClassIds: data.schoolClassIds,
           schoolCourseId: data.schoolCourseId,
           scheduleId: data.scheduleId,
           classDayId: data.classDayId,
@@ -786,7 +736,7 @@ export function InsertCurriculum() {
     const curriculumExists = curriculumDatabaseData.find(
       (curriculum) =>
         curriculum.schoolId === data.schoolId &&
-        curriculum.schoolClassId === data.schoolClassId &&
+        curriculum.schoolClassIds === data.schoolClassIds &&
         curriculum.schoolCourseId === data.schoolCourseId &&
         curriculum.scheduleId === data.scheduleId &&
         curriculum.teacherId === data.teacherId
@@ -815,12 +765,14 @@ export function InsertCurriculum() {
   };
 
   return (
-    <div className={`flex h-full flex-col container text-center overflow-scroll no-scrollbar ${
-      page.show !== "Dashboard" &&
-      userFullData &&
-      userFullData.role !== "user" &&
-      "rounded-xl"
-    } `}>
+    <div
+      className={`flex h-full flex-col container text-center overflow-scroll no-scrollbar ${
+        page.show !== "Dashboard" &&
+        userFullData &&
+        userFullData.role !== "user" &&
+        "rounded-xl"
+      } `}
+    >
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
@@ -871,42 +823,6 @@ export function InsertCurriculum() {
             }}
           >
             <SelectOptions returnId dataType="schools" />
-          </select>
-        </div>
-
-        {/* SCHOOL CLASS SELECT */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="schoolClassSelect"
-            className={
-              errors.schoolClassId
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            Selecione o Ano Escolar:{" "}
-          </label>
-          <select
-            id="schoolClassSelect"
-            defaultValue={" -- select an option -- "}
-            className={
-              errors.schoolClassId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
-            name="schoolClassSelect"
-            onChange={(e) => {
-              setCurriculumData({
-                ...curriculumData,
-                schoolClassId: e.target.value,
-              });
-            }}
-          >
-            <SelectOptions
-              returnId
-              dataType="schoolClasses"
-              schoolId={curriculumData.schoolId}
-            />
           </select>
         </div>
 
@@ -1045,6 +961,20 @@ export function InsertCurriculum() {
           />
         </div>
 
+        {/* SCHOOL CLASS SELECT */}
+        <p className="mt-4 mb-2 text-center">
+          Selecione os anos escolares inclusos nessa turma
+        </p>
+
+        <SchoolStageSelect
+          curriculumData={curriculumData}
+          dashboardView={false}
+          onlyView={false}
+          setCurriculumData={setCurriculumData}
+          curriculumFormattedName={curriculumFormattedName}
+          setCurriculumFormattedName={setCurriculumFormattedName}
+        />
+
         {/* CLASS DAYS SELECT */}
         {/* CLASSDAY IDENTIFIER */}
         <div className="hidden gap-2 items-center">
@@ -1084,98 +1014,125 @@ export function InsertCurriculum() {
         </div>
 
         {/* CURRICULUM DESCRIPTON CARD */}
-        {curriculumNameFilled && (
-          <>
-            <div className="flex gap-2 items-center justify-center mt-2">
-              <div className="flex flex-col w-2/6 items-left p-4 my-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left">
-                <p>
-                  Colégio:{" "}
-                  <span className="text-red-600 dark:text-yellow-500">
-                    {curriculumFormattedName.schoolName}
-                  </span>
-                </p>
-
-                <p>
-                  Ano Escolar:{" "}
-                  <span className="text-red-600 dark:text-yellow-500">
-                    {curriculumFormattedName.schoolClassName}
-                  </span>
-                </p>
-
-                <p>
-                  Modalidade:{" "}
-                  <span className="text-red-600 dark:text-yellow-500">
-                    {curriculumFormattedName.schoolCourseName}
-                  </span>
-                </p>
-                <p>
-                  Dias:{" "}
-                  <span className="text-red-600 dark:text-yellow-500">
-                    {classDayName.join(" - ")}
-                  </span>
-                </p>
-                {scheduleSelectedData && (
+        {curriculumNameFilled &&
+          curriculumFormattedName.schoolClassNames.length > 0 && (
+            <>
+              <div className="flex gap-2 items-center justify-center mt-2">
+                <div className="flex flex-col w-2/6 items-left p-4 my-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left">
                   <p>
-                    Horário:{" "}
+                    Colégio:{" "}
                     <span className="text-red-600 dark:text-yellow-500">
-                      De{" "}
-                      {`${scheduleSelectedData!.classStart.slice(0, 2)}h${
-                        scheduleSelectedData!.classStart.slice(3, 5) === "00"
-                          ? ""
-                          : scheduleSelectedData!.classStart.slice(3, 5) + "min"
-                      } a ${scheduleSelectedData!.classEnd.slice(0, 2)}h${
-                        scheduleSelectedData!.classEnd.slice(3, 5) === "00"
-                          ? ""
-                          : scheduleSelectedData!.classEnd.slice(3, 5) + "min"
-                      } (${scheduleSelectedData!.name})`}
+                      {curriculumFormattedName.schoolName}
                     </span>
                   </p>
-                )}
-                <p>
-                  Professor:{" "}
-                  <span className="text-red-600 dark:text-yellow-500">
-                    {curriculumFormattedName.teacherName}
-                  </span>
-                </p>
-                <p>
-                  Total de vagas:{" "}
-                  <span className="text-red-600 dark:text-yellow-500">
-                    {curriculumData.placesAvailable}
-                  </span>
-                </p>
+
+                  <p>
+                    Ano Escolar:{" "}
+                    <span className="text-red-600 dark:text-yellow-500">
+                      {curriculumFormattedName.schoolClassNames
+                        .sort((a, b) => {
+                          if (a.schoolStageId !== b.schoolStageId) {
+                            return a.schoolStageId.localeCompare(
+                              b.schoolStageId
+                            );
+                          }
+                          return a.name.localeCompare(b.name);
+                        })
+                        .map((schoolClass) => {
+                          return schoolClass.name;
+                        })
+                        .join(" - ")}
+                    </span>
+                  </p>
+
+                  <p>
+                    Modalidade:{" "}
+                    <span className="text-red-600 dark:text-yellow-500">
+                      {curriculumFormattedName.schoolCourseName}
+                    </span>
+                  </p>
+                  <p>
+                    Dias:{" "}
+                    <span className="text-red-600 dark:text-yellow-500">
+                      {classDayName.join(" - ")}
+                    </span>
+                  </p>
+                  {scheduleSelectedData && (
+                    <p>
+                      Horário:{" "}
+                      <span className="text-red-600 dark:text-yellow-500">
+                        De{" "}
+                        {`${scheduleSelectedData!.classStart.slice(0, 2)}h${
+                          scheduleSelectedData!.classStart.slice(3, 5) === "00"
+                            ? ""
+                            : scheduleSelectedData!.classStart.slice(3, 5) +
+                              "min"
+                        } a ${scheduleSelectedData!.classEnd.slice(0, 2)}h${
+                          scheduleSelectedData!.classEnd.slice(3, 5) === "00"
+                            ? ""
+                            : scheduleSelectedData!.classEnd.slice(3, 5) + "min"
+                        } (${scheduleSelectedData!.name})`}
+                      </span>
+                    </p>
+                  )}
+                  <p>
+                    Professor:{" "}
+                    <span className="text-red-600 dark:text-yellow-500">
+                      {curriculumFormattedName.teacherName}
+                    </span>
+                  </p>
+                  <p>
+                    Total de vagas:{" "}
+                    <span className="text-red-600 dark:text-yellow-500">
+                      {curriculumData.placesAvailable}
+                    </span>
+                  </p>
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <input
-            type="checkbox"
-            name="confirmInsert"
-            className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
-            checked={curriculumData.confirmInsert}
-            onChange={() => {
-              setCurriculumData({
-                ...curriculumData,
-                confirmInsert: !curriculumData.confirmInsert,
-              });
-            }}
-          />
-          <label htmlFor="confirmInsert" className="text-sm">
-            Confirmar criação da Turma
-          </label>
-        </div>
+        {curriculumNameFilled &&
+          curriculumFormattedName.schoolClassNames.length > 0 && (
+            <div className="flex justify-center items-center gap-2 mt-6">
+              <input
+                type="checkbox"
+                name="confirmInsert"
+                className="ml-1 text-klGreen-500 dark:text-klGreen-500 border-none"
+                checked={curriculumData.confirmInsert}
+                onChange={() => {
+                  setCurriculumData({
+                    ...curriculumData,
+                    confirmInsert: !curriculumData.confirmInsert,
+                  });
+                }}
+              />
+              <label htmlFor="confirmInsert" className="text-sm">
+                Confirmar criação da Turma
+              </label>
+            </div>
+          )}
 
         {/* SUBMIT AND RESET BUTTONS */}
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-4 justify-center">
           {/* SUBMIT BUTTON */}
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={
+              curriculumNameFilled &&
+              curriculumFormattedName.schoolClassNames.length > 0
+                ? isSubmitting
+                : true
+            }
             className="border rounded-xl border-green-900/10 bg-klGreen-500 disabled:bg-klGreen-500/70 disabled:dark:bg-klGreen-500/40 disabled:border-green-900/10 text-white disabled:dark:text-white/50 w-2/4"
           >
-            {!isSubmitting ? "Criar" : "Criando"}
+            {curriculumNameFilled &&
+            curriculumFormattedName.schoolClassNames.length > 0
+              ? !isSubmitting
+                ? "Criar"
+                : "Criando"
+              : "Selecione as informações necessárias"}
           </button>
 
           {/* RESET BUTTON */}

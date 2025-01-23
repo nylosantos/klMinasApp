@@ -30,6 +30,7 @@ import {
 } from "firebase/firestore";
 import { app } from "../../db/Firebase";
 import { EditDashboardCurriculumButton } from "../layoutComponents/EditDashboardCurriculumButton";
+import SchoolStageSelect from "./SchoolStageSelect";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -70,6 +71,10 @@ export default function EditCurriculumForm({
 
   const [dashboardView, setDasboardView] = useState(true);
 
+  useEffect(() => {
+    !onlyView && setDasboardView(false);
+  }, []);
+
   // -------------------------- CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
 
   // CURRICULUM FORMATTED NAME STATE
@@ -90,9 +95,9 @@ export default function EditCurriculumForm({
   // CURRICULUM DATA
   const [curriculumEditData, setCurriculumEditData] =
     useState<EditCurriculumValidationZProps>({
-      curriculumId: "",
+      curriculumId: curriculumId,
       schoolId: "",
-      schoolClassId: "",
+      schoolClassIds: [],
       schoolCourseId: "",
       scheduleId: "",
       classDayId: "",
@@ -121,7 +126,7 @@ export default function EditCurriculumForm({
       setCurriculumEditData({
         ...curriculumEditData,
         schoolId: curriculumSelectedData.schoolId,
-        schoolClassId: curriculumSelectedData.schoolClassId,
+        schoolClassIds: curriculumSelectedData.schoolClassIds,
         schoolCourseId: curriculumSelectedData.schoolCourseId,
         scheduleId: curriculumSelectedData.scheduleId,
         classDayId: curriculumSelectedData.classDayId,
@@ -503,10 +508,9 @@ export default function EditCurriculumForm({
   } = useForm<EditCurriculumValidationZProps>({
     resolver: zodResolver(editCurriculumValidationSchema),
     defaultValues: {
-      // name: "",
-      curriculumId: "",
+      curriculumId: curriculumId,
       schoolId: "",
-      schoolClassId: "",
+      schoolClassIds: [],
       schoolCourseId: "",
       scheduleId: "",
       classDayId: "",
@@ -517,9 +521,9 @@ export default function EditCurriculumForm({
   // RESET FORM FUNCTION
   const resetForm = () => {
     setCurriculumEditData({
-      curriculumId: "",
+      curriculumId: curriculumId,
       schoolId: "",
-      schoolClassId: "",
+      schoolClassIds: [],
       schoolCourseId: "",
       scheduleId: "",
       classDayId: "",
@@ -545,7 +549,7 @@ export default function EditCurriculumForm({
   useEffect(() => {
     setValue("curriculumId", curriculumEditData.curriculumId);
     setValue("schoolId", curriculumEditData.schoolId);
-    setValue("schoolClassId", curriculumEditData.schoolClassId);
+    setValue("schoolClassIds", curriculumEditData.schoolClassIds);
     setValue("schoolCourseId", curriculumEditData.schoolCourseId);
     setValue("scheduleId", curriculumEditData.scheduleId);
     setValue("classDayId", curriculumEditData.classDayId);
@@ -558,7 +562,7 @@ export default function EditCurriculumForm({
     const fullErrors = [
       errors.curriculumId,
       errors.schoolId,
-      errors.schoolClassId,
+      errors.schoolClassIds,
       errors.schoolCourseId,
       errors.scheduleId,
       errors.classDayId,
@@ -595,6 +599,7 @@ export default function EditCurriculumForm({
           scheduleId: data.scheduleId,
           teacherId: data.teacherId,
           placesAvailable: data.placesAvailable,
+          schoolClassIds: data.schoolClassIds,
         });
         resetForm();
         toast.success(`Turma alterada com sucesso! 👌`, {
@@ -816,15 +821,19 @@ export default function EditCurriculumForm({
   return (
     <div
       className={`w-full ${
-        modal ? "max-w-7xl bg-white/80 dark:bg-klGreen-500/60 rounded-xl" : ""
+        modal
+          ? "flex flex-col h-full max-w-7xl bg-white/80 dark:bg-transparent rounded-xl overflow-y-auto no-scrollbar"
+          : ""
       } `}
     >
       {modal && (
-        <div className="flex items-center justify-center text-md/snug text-gray-100 bg-klGreen-500/70 dark:bg-klGreen-500/70 rounded-t-xl uppercase p-4">
-          <p className="flex absolute z-10">
-            {onlyView && dashboardView ? "Detalhes Turma" : "Editar Turma"}
-          </p>
-          <div className="flex relative justify-end px-2 w-full z-50">
+        <div className="flex items-center justify-between text-md/snug text-gray-100 bg-klGreen-500/70 dark:bg-klGreen-500/70 dark:rounded-t-xl uppercase p-4">
+          <div className="flex-1 flex justify-center relative">
+            <p className="absolute left-1/2 transform -translate-y-1/2 z-10">
+              {onlyView && dashboardView ? "Detalhes Turma" : "Editar Turma"}
+            </p>
+          </div>
+          <div className="flex justify-end px-2 z-50">
             <EditDashboardCurriculumButton
               dashboardView={dashboardView}
               handleDeleteClass={handleDeleteClass && handleDeleteClass}
@@ -870,20 +879,6 @@ export default function EditCurriculumForm({
           />
         </div>
 
-        {/* SCHOOL CLASS NAME */}
-        <div className="flex gap-2 items-center">
-          <label htmlFor="schoolClass" className="w-1/4 text-right">
-            Ano Escolar:{" "}
-          </label>
-          <input
-            type="text"
-            name="schoolClass"
-            disabled
-            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-            value={handleOneCurriculumDetails(curriculumId).schoolClassName}
-          />
-        </div>
-
         {/* SCHOOL COURSE NAME */}
         <div className="flex gap-2 items-center">
           <label htmlFor="schoolCourse" className="w-1/4 text-right">
@@ -925,7 +920,7 @@ export default function EditCurriculumForm({
               : "Número máximo de alunos: "}
           </label>
           <input
-            disabled={onlyView || dashboardView ? false : true}
+            disabled={onlyView && dashboardView ? true : false}
             type="text"
             name="placesAvailable"
             pattern="^(0?[0-9]|[1-9][0-9])$"
@@ -1057,137 +1052,130 @@ export default function EditCurriculumForm({
               } (${handleOneCurriculumDetails(curriculumId).scheduleName})`}
             />
           )}
-          {!onlyView ||
-            (!dashboardView && (
-              <select
-                id="scheduleSelect"
-                disabled={onlyView && dashboardView ? true : isSubmitting}
-                value={
-                  scheduleSelectedData?.id === curriculumEditData.scheduleId
-                    ? scheduleSelectedData.id
-                    : curriculumEditData.scheduleId
-                }
-                className={
-                  errors.scheduleId
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                }
-                name="scheduleSelect"
-                onChange={(e) => {
-                  setCurriculumEditData({
-                    ...curriculumEditData,
-                    scheduleId: e.target.value,
-                  });
-                }}
-              >
-                <SelectOptions
-                  returnId
-                  dataType="schedules"
-                  schoolId={curriculumEditData.schoolId}
-                  setSchedule
-                  scheduleId={scheduleSelectedData?.id}
-                />
-              </select>
-            ))}
+          {(!onlyView || !dashboardView) && (
+            <select
+              id="scheduleSelect"
+              disabled={onlyView && dashboardView ? true : isSubmitting}
+              value={
+                scheduleSelectedData?.id === curriculumEditData.scheduleId
+                  ? scheduleSelectedData.id
+                  : curriculumEditData.scheduleId
+              }
+              className={
+                errors.scheduleId
+                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              }
+              name="scheduleSelect"
+              onChange={(e) => {
+                setCurriculumEditData({
+                  ...curriculumEditData,
+                  scheduleId: e.target.value,
+                });
+              }}
+            >
+              <SelectOptions
+                returnId
+                dataType="schedules"
+                schoolId={curriculumEditData.schoolId}
+                setSchedule
+                scheduleId={scheduleSelectedData?.id}
+              />
+            </select>
+          )}
         </div>
 
         {/* TRANSITION START */}
-        {!onlyView ||
-          (!dashboardView && (
-            <div className="flex gap-2 items-center">
-              <label htmlFor="transitionStart" className="w-1/4 text-right">
-                Início da Transição:{" "}
-              </label>
-              <input
-                type="text"
-                name="transitionStart"
-                disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                value={scheduleSelectedData?.transitionStart}
-              />
-            </div>
-          ))}
+        {(!onlyView || !dashboardView) && (
+          <div className="flex gap-2 items-center">
+            <label htmlFor="transitionStart" className="w-1/4 text-right">
+              Início da Transição:{" "}
+            </label>
+            <input
+              type="text"
+              name="transitionStart"
+              disabled
+              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              value={scheduleSelectedData?.transitionStart}
+            />
+          </div>
+        )}
 
         {/* TRANSITION END */}
-        {!onlyView ||
-          (!dashboardView && (
-            <div className="flex gap-2 items-center">
-              <label htmlFor="transitionEnd" className="w-1/4 text-right">
-                Fim da Transição:{" "}
-              </label>
-              <input
-                type="text"
-                name="transitionEnd"
-                disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                value={scheduleSelectedData?.transitionEnd}
-              />
-            </div>
-          ))}
+        {(!onlyView || !dashboardView) && (
+          <div className="flex gap-2 items-center">
+            <label htmlFor="transitionEnd" className="w-1/4 text-right">
+              Fim da Transição:{" "}
+            </label>
+            <input
+              type="text"
+              name="transitionEnd"
+              disabled
+              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              value={scheduleSelectedData?.transitionEnd}
+            />
+          </div>
+        )}
 
         {/* CLASS START */}
-        {!onlyView ||
-          (!dashboardView && (
-            <div className="flex gap-2 items-center">
-              <label htmlFor="classStart" className="w-1/4 text-right">
-                Início da Aula:{" "}
-              </label>
-              <input
-                type="text"
-                name="classStart"
-                disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                value={scheduleSelectedData?.classStart}
-              />
-            </div>
-          ))}
+        {(!onlyView || !dashboardView) && (
+          <div className="flex gap-2 items-center">
+            <label htmlFor="classStart" className="w-1/4 text-right">
+              Início da Aula:{" "}
+            </label>
+            <input
+              type="text"
+              name="classStart"
+              disabled
+              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              value={scheduleSelectedData?.classStart}
+            />
+          </div>
+        )}
 
         {/* CLASS END */}
-        {!onlyView ||
-          (!dashboardView && (
-            <div className="flex gap-2 items-center">
-              <label htmlFor="classEnd" className="w-1/4 text-right">
-                Fim da Aula:{" "}
-              </label>
-              <input
-                type="text"
-                name="classEnd"
-                disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                value={scheduleSelectedData?.classEnd}
-              />
-            </div>
-          ))}
+        {(!onlyView || !dashboardView) && (
+          <div className="flex gap-2 items-center">
+            <label htmlFor="classEnd" className="w-1/4 text-right">
+              Fim da Aula:{" "}
+            </label>
+            <input
+              type="text"
+              name="classEnd"
+              disabled
+              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              value={scheduleSelectedData?.classEnd}
+            />
+          </div>
+        )}
 
         {/* EXIT */}
-        {!onlyView ||
-          (!dashboardView && (
-            <div className="flex gap-2 items-center">
-              <label htmlFor="exit" className="w-1/4 text-right">
-                Saída:{" "}
-              </label>
-              <input
-                type="text"
-                name="exit"
-                disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-                value={scheduleSelectedData?.exit}
-              />
-            </div>
-          ))}
+        {(!onlyView || !dashboardView) && (
+          <div className="flex gap-2 items-center">
+            <label htmlFor="exit" className="w-1/4 text-right">
+              Saída:{" "}
+            </label>
+            <input
+              type="text"
+              name="exit"
+              disabled
+              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              value={scheduleSelectedData?.exit}
+            />
+          </div>
+        )}
 
         {/* EDIT TEACHER TITLE */}
-        {!onlyView ||
-          (!dashboardView && (
-            <div className="flex gap-2 items-center">
-              <div className="w-1/4"></div>
-              <div className="w-3/4">
-                <h1 className="text-start font-bold text-lg py-2 text-red-600 dark:text-yellow-500">
-                  Altere o Professor:
-                </h1>
-              </div>
+        {(!onlyView || !dashboardView) && (
+          <div className="flex gap-2 items-center">
+            <div className="w-1/4"></div>
+            <div className="w-3/4">
+              <h1 className="text-start font-bold text-lg py-2 text-red-600 dark:text-yellow-500">
+                Altere o Professor:
+              </h1>
             </div>
-          ))}
+          </div>
+        )}
 
         {/* TEACHER SELECT */}
         <div className="flex gap-2 items-center">
@@ -1231,6 +1219,67 @@ export default function EditCurriculumForm({
           </select>
         </div>
 
+        {/* EDIT SCHOOL STAGE TITLE */}
+        {(!onlyView || !dashboardView) && (
+          <div className="flex gap-2 items-center">
+            <div className="w-1/4"></div>
+            <div className="w-3/4">
+              <h1 className="text-start font-bold text-lg py-2 text-red-600 dark:text-yellow-500">
+                Altere os Anos Escolares:
+              </h1>
+            </div>
+          </div>
+        )}
+
+        {/* SCHOOL CLASS SELECT */}
+        <p className="mt-4 mb-2 text-center">
+          Selecione os anos escolares inclusos nessa turma
+        </p>
+
+        <SchoolStageSelect
+          curriculumData={curriculumEditData}
+          dashboardView={dashboardView}
+          onlyView={onlyView}
+          setCurriculumData={setCurriculumEditData}
+        />
+
+        {/* <div className="flex flex-col w-full gap-4 items-center">
+          {schoolStage.map((stage) => (
+            <div className="flex gap-2 w-full items-center">
+              <p className="w-1/4 text-right">{stage.name}:</p>
+              <div className="flex w-3/4 flex-wrap items-center">
+                {schoolClassDatabaseData
+                  .filter((schoolClass) =>
+                    schoolClass.schoolStageId.includes(stage.id)
+                  )
+                  .map((schoolClass) => {
+                    return (
+                      <div
+                        className="flex items-center gap-2 mr-2"
+                        key={uuidv4()}
+                      >
+                        <input
+                          disabled={onlyView && dashboardView}
+                          type="checkbox"
+                          name={schoolClass.name}
+                          id={uuidv4()}
+                          className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none "
+                          checked={curriculumEditData.schoolClassIds.includes(
+                            schoolClass.id
+                          )}
+                          onChange={() => schoolClassIdsFunction(schoolClass)}
+                        />
+                        <label htmlFor={schoolClass.name} className="text-sm">
+                          {schoolClass.name}
+                        </label>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          ))}
+        </div> */}
+
         {/* EDIT CLASS DAY TITLE */}
         {!onlyView ||
           (!dashboardView && (
@@ -1268,10 +1317,10 @@ export default function EditCurriculumForm({
         />
 
         {/* SUBMIT AND RESET BUTTONS */}
-        {!onlyView ||
-          (!dashboardView && (
-            <div className="flex gap-2 mt-4">
-              {/* SUBMIT BUTTON */}
+        <div className="flex gap-2 mt-4 justify-center">
+          {/* SUBMIT BUTTON */}
+          {!onlyView ||
+            (!dashboardView && (
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -1279,21 +1328,25 @@ export default function EditCurriculumForm({
               >
                 {!isSubmitting ? "Salvar" : "Salvando"}
               </button>
+            ))}
 
-              {/* RESET BUTTON */}
-              <button
-                type="reset"
-                className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
-                disabled={isSubmitting}
-                onClick={() => {
-                  setModal && setModal(false);
-                  resetForm();
-                }}
-              >
-                {isSubmitting ? "Aguarde" : "Cancelar"}
-              </button>
-            </div>
-          ))}
+          {/* RESET BUTTON */}
+          <button
+            type="reset"
+            className="border rounded-xl border-gray-600/20 bg-gray-200 disabled:bg-gray-200/30 disabled:border-gray-600/30 text-gray-600 disabled:text-gray-400 w-2/4"
+            disabled={isSubmitting}
+            onClick={() => {
+              resetForm();
+              setModal && setModal(false);
+            }}
+          >
+            {isSubmitting
+              ? "Aguarde"
+              : onlyView && dashboardView
+              ? "Fechar"
+              : "Cancelar"}
+          </button>
+        </div>
       </form>
     </div>
   );

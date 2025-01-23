@@ -3,7 +3,6 @@ import { useState, useEffect, useContext } from "react";
 
 import Logo from "../../assets/logoAlt1.png";
 import LogoDark from "../../assets/logoAlt2.png";
-import { customerFullName } from "../../custom";
 import {
   GlobalDataContext,
   GlobalDataContextType,
@@ -16,6 +15,7 @@ export function Header() {
     page,
     theme,
     logged,
+    systemConstantsValues,
     userFullData,
     setLogin,
     setPage,
@@ -74,9 +74,10 @@ export function Header() {
         <div className="w-1/6">
           <img
             src={theme === "light" ? Logo : LogoDark}
-            alt={`Logo ${customerFullName}`}
+            alt={`Logo ${systemConstantsValues?.customerFullName}`}
             width={200}
-            className="dark:bg-transparent dark:rounded-xl p-4"
+            className="dark:bg-transparent dark:rounded-xl p-4 cursor-pointer"
+            onClick={() => setPage({ prev: page.show, show: "Dashboard" })}
           />
         </div>
 

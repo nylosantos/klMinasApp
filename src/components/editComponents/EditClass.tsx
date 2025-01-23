@@ -31,13 +31,13 @@ export function EditClass() {
   // SCHOOL CLASS DATA
   const [schoolClassData, setSchoolClassData] = useState({
     schoolClassId: "",
-    schoolId: "",
   });
 
   // SCHOOL CLASS EDIT DATA
   const [schoolClassEditData, setSchoolClassEditData] =
     useState<EditSchoolClassValidationZProps>({
       name: "",
+      schoolStageId: "",
     });
 
   // SCHOOL CLASS SELECTED AND EDIT ACTIVE STATES
@@ -57,6 +57,7 @@ export function EditClass() {
       setSchoolClassEditData({
         ...schoolClassEditData,
         name: schoolClassSelectedData.name,
+        schoolStageId: schoolClassSelectedData.schoolStageId,
       });
     }
   }, [schoolClassSelectedData]);
@@ -73,15 +74,6 @@ export function EditClass() {
       setSchoolClassSelectedData(undefined);
     }
   }, [schoolClassData.schoolClassId]);
-
-  // RESET SCHOOL CLASS SELECT TO INDEX 0 WHEN SCHOOL CHANGE
-  useEffect(() => {
-    (
-      document.getElementById("schoolClassSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    setIsEdit(false);
-    setIsSelected(false);
-  }, [schoolClassData.schoolId]);
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // SUBMITTING STATE
@@ -97,35 +89,36 @@ export function EditClass() {
     resolver: zodResolver(editSchoolClassValidationSchema),
     defaultValues: {
       name: "",
+      schoolStageId: "",
     },
   });
 
   // RESET FORM FUNCTION
   const resetForm = () => {
     (
-      document.getElementById("schoolSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    (
       document.getElementById("schoolClassSelect") as HTMLSelectElement
     ).selectedIndex = 0;
     setSchoolClassEditData({
       name: "",
+      schoolStageId: "",
     });
     setSchoolClassData({
       schoolClassId: "",
-      schoolId: "",
     });
+    setIsSelected(false);
+    setIsEdit(false);
     reset();
   };
 
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("name", schoolClassEditData.name);
+    setValue("schoolStageId", schoolClassEditData.schoolStageId);
   }, [schoolClassEditData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [errors.name];
+    const fullErrors = [errors.name, errors.schoolStageId];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -150,6 +143,7 @@ export function EditClass() {
           doc(db, "schoolClasses", schoolClassData.schoolClassId),
           {
             name: data.name,
+            schoolStageId: data.schoolStageId,
           }
         );
         resetForm();
@@ -211,38 +205,6 @@ export function EditClass() {
         onSubmit={handleSubmit(handleEditClass)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
-        {/* SCHOOL SELECT */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="schoolSelect"
-            className={
-              errors.name
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            Selecione a Escola:{" "}
-          </label>
-          <select
-            id="schoolSelect"
-            defaultValue={" -- select an option -- "}
-            className={
-              errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
-            name="schoolSelect"
-            onChange={(e) => {
-              setSchoolClassData({
-                ...schoolClassData,
-                schoolId: e.target.value,
-              });
-            }}
-          >
-            <SelectOptions returnId dataType="schools" />
-          </select>
-        </div>
-
         {/* SCHOOL CLASS SELECT */}
         <div className="flex gap-2 items-center">
           <label
@@ -258,13 +220,10 @@ export function EditClass() {
           <select
             id="schoolClassSelect"
             defaultValue={" -- select an option -- "}
-            disabled={schoolClassData.schoolId ? false : true}
             className={
-              schoolClassData.schoolId
-                ? errors.name
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              errors.name
+                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolClassSelect"
             onChange={(e) => {
@@ -275,11 +234,7 @@ export function EditClass() {
               setIsSelected(true);
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schoolClasses"
-              schoolId={schoolClassData.schoolId}
-            />
+            <SelectOptions returnId dataType="schoolClasses" />
           </select>
         </div>
 
@@ -341,77 +296,81 @@ export function EditClass() {
               />
             </div>
 
-            {/* SCHOOL CLASS AVAILABILITY */}
-            {/* <div className="flex gap-2 items-center">
+            {/* SCHOOL CLASS STAGE */}
+            <div className="flex gap-2 items-center">
               <label
-                htmlFor="available"
+                htmlFor="schoolStage"
                 className={
-                  errors.available
+                  errors.schoolStageId
                     ? "w-1/4 text-right text-red-500 dark:text-red-400"
                     : "w-1/4 text-right"
                 }
               >
-                Disponibilidade:{" "}
+                Etapa Escolar:{" "}
               </label>
               <div className="flex w-3/4 px-2 py-1 gap-10 justify-start items-center">
                 <label className="flex items-center gap-2">
                   <input
                     type="radio"
                     checked={
-                      schoolClassEditData.available === "open" ? true : false
-                    }
-                    className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                    value="open"
-                    name="classAvailable"
-                    onChange={() =>
-                      setSchoolClassEditData({
-                        ...schoolClassEditData,
-                        available: "open",
-                      })
-                    }
-                  />{" "}
-                  Aberta
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={
-                      schoolClassEditData.available === "closed" ? true : false
-                    }
-                    className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                    value="closed"
-                    name="classAvailable"
-                    onChange={() =>
-                      setSchoolClassEditData({
-                        ...schoolClassEditData,
-                        available: "closed",
-                      })
-                    }
-                  />{" "}
-                  Fechada
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={
-                      schoolClassEditData.available === "waitingList"
+                      schoolClassEditData.schoolStageId === "1SSEI"
                         ? true
                         : false
                     }
                     className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                    value="waitingList"
-                    name="classAvailable"
+                    value="1SSEI"
+                    name="Ensino Infantil"
                     onChange={() =>
                       setSchoolClassEditData({
                         ...schoolClassEditData,
-                        available: "waitingList",
+                        schoolStageId: "1SSEI",
                       })
                     }
                   />{" "}
-                  Lista de Espera
+                  Ensino Infantil
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={
+                      schoolClassEditData.schoolStageId === "2SSEF"
+                        ? true
+                        : false
+                    }
+                    className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                    value="2SSEF"
+                    name="Ensino Fundamental"
+                    onChange={() =>
+                      setSchoolClassEditData({
+                        ...schoolClassEditData,
+                        schoolStageId: "2SSEF",
+                      })
+                    }
+                  />{" "}
+                  Ensino Fundamental
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={
+                      schoolClassEditData.schoolStageId === "3SSEM"
+                        ? true
+                        : false
+                    }
+                    className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                    value="3SSEM"
+                    name="Ensino Médio"
+                    onChange={() =>
+                      setSchoolClassEditData({
+                        ...schoolClassEditData,
+                        schoolStageId: "3SSEM",
+                      })
+                    }
+                  />{" "}
+                  Ensino Médio
                 </label>
               </div>
-            </div> */}
+            </div>
 
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">

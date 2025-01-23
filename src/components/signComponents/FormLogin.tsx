@@ -4,7 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 
-import { LoginWithEmailAndPasswordZProps } from "../../@types";
+import {
+  LoginWithEmailAndPasswordZProps,
+  SystemConstantsSearchProps,
+} from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { ButtonSignSubmit } from "../layoutComponents/ButtonSignSubmit";
@@ -13,19 +16,45 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import { systemSignInClosed } from "../../custom";
 
 export function FormLogin() {
   // GET GLOBAL DATA
-  const { auth, isSubmitting, setIsSubmitting, setLogged } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const {
+    auth,
+    isSubmitting,
+    systemConstantsDb,
+    systemConstantsDbLoading,
+    systemConstantsDbError,
+    setIsSubmitting,
+    setLogged,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // USER LOGIN STATE
   const [userLogin, setUserLogin] = useState<LoginWithEmailAndPasswordZProps>({
     email: "",
     password: "",
   });
+
+  // SYSTEM SIGN IN CLOSED STATE
+  const [systemSignInClosed, setSystemSignInClosed] = useState(false);
+
+  // GET SYSTEM CONSTANTS DATABASE DATA
+  useEffect(() => {
+    if (
+      systemConstantsDb &&
+      !systemConstantsDbLoading &&
+      systemConstantsDbError === undefined
+    ) {
+      const foundedSystemConstants: SystemConstantsSearchProps =
+        systemConstantsDb.find(
+          (constants) => constants.year === new Date().getFullYear().toString()
+        ) as SystemConstantsSearchProps;
+      console.log(foundedSystemConstants);
+      if (foundedSystemConstants) {
+        setSystemSignInClosed(foundedSystemConstants.systemSignInClosed);
+      }
+    }
+  }, [systemConstantsDb]);
 
   // REACT HOOK FORM SETTINGS
   const {

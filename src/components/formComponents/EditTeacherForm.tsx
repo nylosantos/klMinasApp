@@ -284,19 +284,23 @@ export default function EditTeacherForm({
       }
     }
   };
-  
+
   return (
     <div
       className={`w-full ${
-        modal ? "max-w-7xl bg-white/80 dark:bg-klGreen-500/60 rounded-xl" : ""
+        modal
+          ? "flex flex-col flex-1 max-w-7xl bg-white/80 dark:bg-transparent rounded-xl"
+          : ""
       } `}
     >
       {modal && (
         <div className="flex items-center justify-center text-md/snug text-gray-100 bg-klGreen-500/70 dark:bg-klGreen-500/70 rounded-t-xl uppercase p-4">
-          <p className="flex absolute z-10">
-            {!isEdit ? `Detalhes` : `Editando`} - {teacherSelectedData.name}
-          </p>
-          <div className="flex relative justify-end px-2 w-full z-50">
+          <div className="flex-1 flex justify-center relative">
+            <p className="absolute left-1/2 transform -translate-y-1/2 z-10">
+              {!isEdit ? `Detalhes` : `Editando`} - {teacherSelectedData.name}
+            </p>
+          </div>
+          <div className="flex justify-end px-2 z-50">
             <EditDashboardTeacherButton
               isEdit={isEdit}
               handleDeleteTeacher={handleDeleteTeacher && handleDeleteTeacher}
@@ -309,7 +313,11 @@ export default function EditTeacherForm({
       )}
       <form
         onSubmit={handleSubmit(handleEditTeacher)}
-        className="flex flex-col w-full gap-2 p-4 rounded-xl mt-2"
+        className={`flex flex-col w-full gap-2 p-4 ${
+          modal
+            ? "rounded-b-xl bg-klGreen-500/20 dark:bg-klGreen-500/30"
+            : "mt-2"
+        }`}
       >
         {/* TEACHER NAME */}
         <div className="flex gap-2 items-center">

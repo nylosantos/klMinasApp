@@ -184,12 +184,14 @@ export default function Dashboard() {
                 itemMenu.page !== "addStudent"
               ) {
                 return renderDashboardMenu(itemMenu);
-              } else if (
-                userFullData.role === "user" &&
-                (itemMenu.page === "addStudent" || itemMenu.page === "student")
-              ) {
-                return renderDashboardMenu(itemMenu);
-              } else return;
+              }
+              // UNCOMMENT TO SHOW DASHBOARD MENU TO USERS
+              // else if (
+              //   userFullData.role === "user" &&
+              //   (itemMenu.page === "addStudent" || itemMenu.page === "student")
+              // ) {
+              //   return renderDashboardMenu(itemMenu);
+              // } else return;
             }
           })}
         </div>
@@ -232,172 +234,6 @@ export default function Dashboard() {
                   setOpen={setOpen}
                 />
               )}
-              {/* {showDashboardPage.page === "curriculum" &&
-                (curriculumDatabaseData.length !== 0 ? (
-                  curriculumDatabaseData
-                    .sort((a, b) =>
-                      handleOneCurriculumDetails(a.id).schoolName.localeCompare(
-                        handleOneCurriculumDetails(b.id).schoolName
-                      )
-                    )
-                    .sort((a, b) =>
-                      handleOneCurriculumDetails(
-                        a.id
-                      ).scheduleName.localeCompare(
-                        handleOneCurriculumDetails(b.id).scheduleName
-                      )
-                    )
-                    .sort((a, b) =>
-                      handleOneCurriculumDetails(
-                        a.id
-                      ).schoolCourseName.localeCompare(
-                        handleOneCurriculumDetails(b.id).schoolCourseName
-                      )
-                    )
-                    .map((curriculum) => {
-                      return (
-                        <div
-                          key={curriculum.id}
-                          className="flex flex-col w-3/12 items-left p-4 my-4 gap-6 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left"
-                        >
-                          <p>
-                            Colégio:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .schoolName
-                              }
-                            </span>
-                          </p>
-
-                          <p>
-                            Ano Escolar:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .schoolClassName
-                              }
-                            </span>
-                          </p>
-
-                          <p>
-                            Modalidade:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .schoolCourseName
-                              }
-                            </span>
-                          </p>
-                          <p>
-                            Dias:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .classDayName
-                              }
-                            </span>
-                          </p>
-                          {handleScheduleDetails(
-                            handleOneCurriculumDetails(curriculum.id).scheduleId
-                          ) !== undefined && (
-                            <p>
-                              Horário:{" "}
-                              <span className="text-red-600 dark:text-yellow-500">
-                                De{" "}
-                                {`${handleScheduleDetails(
-                                  handleOneCurriculumDetails(curriculum.id)
-                                    .scheduleId
-                                )!.classStart.slice(0, 2)}h${
-                                  handleScheduleDetails(
-                                    handleOneCurriculumDetails(curriculum.id)
-                                      .scheduleId
-                                  )!.classStart.slice(3, 5) === "00"
-                                    ? ""
-                                    : handleScheduleDetails(
-                                        handleOneCurriculumDetails(
-                                          curriculum.id
-                                        ).scheduleId
-                                      )!.classStart.slice(3, 5) + "min"
-                                } a ${handleScheduleDetails(
-                                  handleOneCurriculumDetails(curriculum.id)
-                                    .scheduleId
-                                )!.classEnd.slice(0, 2)}h${
-                                  handleScheduleDetails(
-                                    handleOneCurriculumDetails(curriculum.id)
-                                      .scheduleId
-                                  )!.classEnd.slice(3, 5) === "00"
-                                    ? ""
-                                    : handleScheduleDetails(
-                                        handleOneCurriculumDetails(
-                                          curriculum.id
-                                        ).scheduleId
-                                      )!.classEnd.slice(3, 5) + "min"
-                                } (${
-                                  handleOneCurriculumDetails(curriculum.id)
-                                    .scheduleName
-                                })`}
-                              </span>
-                            </p>
-                          )}
-                          <p>
-                            Professor:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .teacherName
-                              }
-                            </span>
-                          </p>
-                          <p>
-                            Total de vagas:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .placesAvailable
-                              }
-                            </span>
-                          </p>
-                          <p>
-                            Alunos Matriculados:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .students.length
-                              }
-                            </span>
-                          </p>
-                          <p>
-                            Vagas Disponíveis:{" "}
-                            <span className="text-red-600 dark:text-yellow-500">
-                              {handleOneCurriculumDetails(curriculum.id)
-                                .placesAvailable -
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .students.length}
-                            </span>
-                          </p>
-                          {handleOneCurriculumDetails(curriculum.id).waitingList
-                            .length > 0 && (
-                            <p>
-                              Alunos na lista de espera:{" "}
-                              <span className="text-red-600 dark:text-yellow-500">
-                                {
-                                  handleOneCurriculumDetails(curriculum.id)
-                                    .waitingList.length
-                                }
-                              </span>
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })
-                ) : (
-                  <div className="flex justify-center p-4 ">
-                    <p className="text-klGreen-500 dark:text-white">
-                      Nenhuma turma cadastrada.
-                    </p>
-                  </div>
-                ))} */}
             </>
           )}
           {showDashboardPage.page === "student" && (

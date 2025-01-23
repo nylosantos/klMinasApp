@@ -203,7 +203,7 @@ export default function DashboardTeacher({
           aria-modal="true"
         >
           <div className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-all backdrop-blur-sm"></div>
-          <div className="flex fixed inset-0 z-10 w-screen items-center justify-center overflow-y-auto">
+          <div className="flex fixed inset-0 z-10 w-screen h-full items-center justify-center overflow-y-auto">
             <EditTeacherForm
               teacherSelectedData={teacherSelected}
               isEdit={isEdit}

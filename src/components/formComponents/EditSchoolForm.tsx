@@ -164,7 +164,7 @@ export default function EditSchoolForm({
   return (
     <div
       className={`w-full ${
-        modal ? "max-w-7xl bg-white/80 dark:bg-klGreen-500/60 rounded-xl" : ""
+        modal ? "max-w-7xl bg-white/80 dark:bg-transparent rounded-xl" : ""
       } `}
     >
       {modal && (
@@ -187,7 +187,11 @@ export default function EditSchoolForm({
         {/* FORM */}
         <form
           onSubmit={handleSubmit(handleEditSchool)}
-          className="flex flex-col w-full gap-2 p-4 rounded-xl mt-2"
+          className={`flex flex-col w-full gap-2 p-4 ${
+            modal
+              ? "rounded-b-xl bg-klGreen-500/20 dark:bg-klGreen-500/30"
+              : "mt-2"
+          }`}
         >
           {/* SCHOOL NAME */}
           <div className="flex gap-2 items-center">

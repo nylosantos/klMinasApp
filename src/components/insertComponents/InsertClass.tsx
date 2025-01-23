@@ -8,7 +8,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { createClassValidationSchema } from "../../@types/zodValidation";
 import { CreateClassValidationZProps } from "../../@types";
@@ -30,7 +29,7 @@ export function InsertClass() {
   const [schoolClassData, setSchoolClassData] =
     useState<CreateClassValidationZProps>({
       name: "",
-      schoolId: "",
+      schoolStageId: "",
       confirmInsert: false,
     });
 
@@ -47,7 +46,7 @@ export function InsertClass() {
     resolver: zodResolver(createClassValidationSchema),
     defaultValues: {
       name: "",
-      schoolId: "",
+      schoolStageId: "",
       confirmInsert: false,
     },
   });
@@ -56,11 +55,11 @@ export function InsertClass() {
   const resetForm = () => {
     setSchoolClassData({
       name: "",
-      schoolId: "",
+      schoolStageId: "",
       confirmInsert: false,
     });
     ((
-      document.getElementById("schoolSelect") as HTMLSelectElement
+      document.getElementById("schoolStageSelect") as HTMLSelectElement
     ).selectedIndex = 0),
       reset();
   };
@@ -68,13 +67,17 @@ export function InsertClass() {
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("name", schoolClassData.name);
-    setValue("schoolId", schoolClassData.schoolId);
+    setValue("schoolStageId", schoolClassData.schoolStageId);
     setValue("confirmInsert", schoolClassData.confirmInsert);
   }, [schoolClassData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [errors.name, errors.schoolId, errors.confirmInsert];
+    const fullErrors = [
+      errors.name,
+      errors.schoolStageId,
+      errors.confirmInsert,
+    ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -114,7 +117,7 @@ export function InsertClass() {
         await setDoc(doc(db, "schoolClasses", commonId), {
           id: commonId,
           name: data.name,
-          schoolId: data.schoolId,
+          schoolStageId: data.schoolStageId,
           updatedAt: serverTimestamp(),
         });
         resetForm();
@@ -142,9 +145,10 @@ export function InsertClass() {
     // CHECKING IF SCHOOL CLASS EXISTS ON DATABASE
     const schoolClassExists = schoolClassDatabaseData.find(
       (schoolClass) =>
-        schoolClass.name === data.name && schoolClass.schoolId === data.schoolId
+        schoolClass.name === data.name &&
+        schoolClass.schoolStageId === data.schoolStageId
     );
-    
+
     if (schoolClassExists) {
       // IF EXISTS, RETURN ERROR
       return (
@@ -216,102 +220,75 @@ export function InsertClass() {
           />
         </div>
 
-        {/* SCHOOL SELECT */}
+        {/* SCHOOL CLASS STAGE */}
         <div className="flex gap-2 items-center">
           <label
-            htmlFor="schoolSelect"
+            htmlFor="schoolStage"
             className={
-              errors.schoolId
+              errors.schoolStageId
                 ? "w-1/4 text-right text-red-500 dark:text-red-400"
                 : "w-1/4 text-right"
             }
           >
-            Selecione a Escola:{" "}
+            Etapa Escolar:{" "}
           </label>
-          <select
-            id="schoolSelect"
-            defaultValue={" -- select an option -- "}
-            className={
-              errors.schoolId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
-            name="schoolSelect"
-            onChange={(e) => {
-              setSchoolClassData({
-                ...schoolClassData,
-                schoolId: e.target.value,
-                confirmInsert: false,
-              });
-            }}
-          >
-            <SelectOptions returnId dataType="schools" />
-          </select>
-        </div>
-
-        {/* SCHOOL CLASS AVAILABILITY */}
-        {/* <div className="flex gap-2 items-center">
-          <label
-            htmlFor="available"
-            className={
-              errors.available
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            Disponibilidade:{" "}
-          </label>
-          <div className="flex flex-col px-2 py-1 gap-2 justify-start items-start">
+          <div className="flex w-3/4 px-2 py-1 gap-10 justify-start items-center">
             <label className="flex items-center gap-2">
               <input
                 type="radio"
+                checked={
+                  schoolClassData.schoolStageId === "1SSEI" ? true : false
+                }
                 className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                value="open"
-                name="classAvailable"
+                value="1SSEI"
+                name="Ensino Infantil"
                 onChange={() =>
                   setSchoolClassData({
                     ...schoolClassData,
-                    available: "open",
-                    confirmInsert: false,
+                    schoolStageId: "1SSEI",
                   })
                 }
               />{" "}
-              Aberta
+              Ensino Infantil
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="radio"
+                checked={
+                  schoolClassData.schoolStageId === "2SSEF" ? true : false
+                }
                 className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                value="closed"
-                name="classAvailable"
+                value="2SSEF"
+                name="Ensino Fundamental"
                 onChange={() =>
                   setSchoolClassData({
                     ...schoolClassData,
-                    available: "closed",
-                    confirmInsert: false,
+                    schoolStageId: "2SSEF",
                   })
                 }
               />{" "}
-              Fechada
+              Ensino Fundamental
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="radio"
+                checked={
+                  schoolClassData.schoolStageId === "3SSEM" ? true : false
+                }
                 className="text-klGreen-500 dark:text-klGreen-500 border-none"
-                value="waitingList"
-                name="classAvailable"
+                value="3SSEM"
+                name="Ensino Médio"
                 onChange={() =>
                   setSchoolClassData({
                     ...schoolClassData,
-                    available: "waitingList",
-                    confirmInsert: false,
+                    schoolStageId: "3SSEM",
                   })
                 }
               />{" "}
-              Lista de Espera
+              Ensino Médio
             </label>
           </div>
-        </div> */}
+        </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
         <div className="flex justify-center items-center gap-2 mt-6">

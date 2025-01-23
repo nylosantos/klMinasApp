@@ -31,6 +31,7 @@ const db = getFirestore(app);
 export function DeleteCurriculum() {
   // GET GLOBAL DATA
   const {
+    curriculumDatabaseData,
     schoolDatabaseData,
     schoolClassDatabaseData,
     schoolCourseDatabaseData,
@@ -190,18 +191,6 @@ export function DeleteCurriculum() {
           schoolClassId: curriculumData.schoolClassId,
         })
       );
-      //   collection(db, "curriculum"),
-      //   where("schoolId", "==", curriculumData.schoolId),
-      //   where("schoolClassId", "==", curriculumData.schoolClassId),
-      //   orderBy("name")
-      // );
-      // const querySnapshot = await getDocs(q);
-      // const promises: CurriculumSearchProps[] = [];
-      // querySnapshot.forEach((doc) => {
-      //   const promise = doc.data() as CurriculumSearchProps;
-      //   promises.push(promise);
-      // });
-      // setCurriculumCoursesData(promises);
     } else {
       if (curriculumData.schoolCourseId) {
         setCurriculumCoursesData(
@@ -227,30 +216,32 @@ export function DeleteCurriculum() {
 
   // -------------------------- RESET SELECTS -------------------------- //
   // RESET ALL UNDER SCHOOL SELECT WHEN CHANGE SCHOOL
-  // useEffect(() => {
-  //   (
-  //     document.getElementById("schoolClassSelect") as HTMLSelectElement
-  //   ).selectedIndex = 0;
-  //   (
-  //     document.getElementById("schoolCourseSelect") as HTMLSelectElement
-  //   ).selectedIndex = 0;
-  //   setCurriculumData({
-  //     ...curriculumData,
-  //     schoolClassId: "",
-  //     schoolCourseId: "",
-  //   });
-  // }, [curriculumData.schoolId]);
+  useEffect(() => {
+    (
+      document.getElementById("schoolClassSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setCurriculumData({
+      ...curriculumData,
+      schoolClassId: "",
+      schoolCourseId: "",
+    });
+    setIsSelected(false);
+  }, [curriculumData.schoolId]);
 
   // RESET ALL UNDER SCHOOL CLASS SELECT WHEN CHANGE SCHOOL CLASS
-  // useEffect(() => {
-  //   (
-  //     document.getElementById("schoolCourseSelect") as HTMLSelectElement
-  //   ).selectedIndex = 0;
-  //   setCurriculumData({
-  //     ...curriculumData,
-  //     schoolCourseId: "",
-  //   });
-  // }, [curriculumData.schoolClassId]);
+  useEffect(() => {
+    (
+      document.getElementById("schoolCourseSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+    setCurriculumData({
+      ...curriculumData,
+      schoolCourseId: "",
+    });
+    setIsSelected(false);
+  }, [curriculumData.schoolClassId]);
   // -------------------------- END OF RESET SELECTS -------------------------- //
 
   // SUBMITTING AND SELECTED STATE
@@ -380,7 +371,7 @@ export function DeleteCurriculum() {
     // STUDENTS IN THIS CURRICULUM ARRAY
     const curriculumExistsOnStudent: StudentSearchProps[] = [];
 
-    // SEARCH STUDENTS WITH THIS SCHOOL AND PUTTING ON ARRAY
+    // SEARCH STUDENTS WITH THIS CURRICULUM AND PUTTING ON ARRAY
     studentsDatabaseData.map((student) => {
       if (student.curriculumIds) {
         // ENROLLED STUDENTS
@@ -398,6 +389,15 @@ export function DeleteCurriculum() {
           }
         );
       }
+      curriculumDatabaseData.map((curriculum) => {
+        if (curriculum.id === data.curriculumId) {
+          curriculum.waitingList.map((waitingStudent) => {
+            if (waitingStudent.id === student.id) {
+              curriculumExistsOnStudent.push(student);
+            }
+          });
+        }
+      });
     });
 
     // IF EXISTS, RETURN ERROR
@@ -500,11 +500,19 @@ export function DeleteCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              dataType="schoolClasses"
-              schoolId={curriculumData.schoolId}
-            />
+            {curriculumData.schoolId ? (
+              <SelectOptions
+                returnId
+                dataType="schoolClasses"
+                schoolId={curriculumData.schoolId}
+              />
+            ) : (
+              <option disabled value={" -- select an option -- "}>
+                {" "}
+                -- Selecione uma escola para ver os Anos Escolares disponíveis
+                --{" "}
+              </option>
+            )}
           </select>
         </div>
 
@@ -536,12 +544,20 @@ export function DeleteCurriculum() {
               });
             }}
           >
-            <SelectOptions
-              returnId
-              schoolId={curriculumData.schoolId}
-              schoolClassId={curriculumData.schoolClassId}
-              dataType="schoolCourses"
-            />
+            {curriculumData.schoolId && curriculumData.schoolClassId ? (
+              <SelectOptions
+                returnId
+                schoolId={curriculumData.schoolId}
+                schoolClassId={curriculumData.schoolClassId}
+                dataType="schoolCourses"
+              />
+            ) : (
+              <option disabled value={" -- select an option -- "}>
+                {" "}
+                -- Selecione uma escola para ver as modalidades disponíveis --{" "}
+              </option>
+            )}
+
             {/* <option value={"all"}>Todas as Modalidades</option> */}
           </select>
         </div>
@@ -564,7 +580,6 @@ export function DeleteCurriculum() {
 
               {/* SEPARATOR */}
               <hr className="pb-4" />
-
               {curriculumCoursesData.length !== 0 ? (
                 <>
                   {/* CURRICULUM CARD */}
@@ -607,7 +622,7 @@ export function DeleteCurriculum() {
                           <p>
                             Ano Escolar:{" "}
                             <span className="text-red-600 dark:text-yellow-500">
-                              {c.schoolClassName}
+                              {c.schoolClassNames.join(" - ")}
                             </span>
                           </p>
                           <p>
