@@ -83,9 +83,11 @@ export default function EditCurriculumForm({
   // CHANGE CURRICULUM NAME
   useEffect(() => {
     setCurriculumFormattedName(
-      `${handleOneCurriculumDetails(curriculumId).schoolName} | ${
-        handleOneCurriculumDetails(curriculumId).schoolCourseName
-      } | ${handleOneCurriculumDetails(curriculumId).scheduleName} | ${
+      `${handleOneCurriculumDetails(curriculumId).publicId} - ${
+        handleOneCurriculumDetails(curriculumId).schoolName
+      } | ${handleOneCurriculumDetails(curriculumId).schoolCourseName} | ${
+        handleOneCurriculumDetails(curriculumId).scheduleName
+      } | ${
         handleOneCurriculumDetails(curriculumId).classDayName
       } | Professor: ${handleOneCurriculumDetails(curriculumId).teacherName}`
     );

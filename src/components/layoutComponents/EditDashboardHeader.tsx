@@ -1,4 +1,4 @@
-import { HandleClickOpenFunctionProps } from "../../@types";
+import { HandleClickOpenFunctionProps, StudentSearchProps } from "../../@types";
 import { StudentButtonDetails } from "./StudentButtonDetails";
 
 interface EditDashboardHeaderProps {
@@ -7,8 +7,7 @@ interface EditDashboardHeaderProps {
   isFinancialResponsible?: boolean;
   onlyView?: boolean;
   open?: boolean;
-  studentId: string;
-  studentName: string;
+  student: StudentSearchProps;
   handleClickOpen: ({ id, option }: HandleClickOpenFunctionProps) => void;
   handleDeleteUser: () => void;
   onClose: () => void;
@@ -23,8 +22,7 @@ export default function EditDashboardHeader({
   isFinancialResponsible = false,
   onlyView = false,
   open = false,
-  studentId,
-  studentName,
+  student,
   handleClickOpen,
   handleDeleteUser,
   onClose,
@@ -41,11 +39,11 @@ export default function EditDashboardHeader({
             : onlyView
             ? "Ficha de Cadastro"
             : "Editando Cadastro"
-        } - ${studentName}`}
+        } | ${student.publicId} - ${student.name}`}
       </p>
       <div className="flex relative justify-end px-2 w-full z-50">
         <StudentButtonDetails
-          id={studentId}
+          id={student.id}
           isEdit={isEdit}
           isFinance={isFinance}
           isDetailsViewing={onlyView}

@@ -312,6 +312,7 @@ export interface ScheduleSearchProps {
 export interface StudentSearchProps {
   [x: string]: any;
   // Section 1: Student Data
+  publicId?: number;
   id: string;
   name: string;
   birthDate: string;
@@ -412,6 +413,7 @@ export interface ExcludeWaitingListProps extends WaitingListProps {
 }
 
 export interface CurriculumSearchProps {
+  publicId?: number;
   id: string;
   schoolId: string;
   schoolClassIds: Array<string>;

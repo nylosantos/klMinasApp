@@ -692,11 +692,15 @@ export function InsertCurriculum() {
       }
     };
 
+    const curriculumPublicId =
+      curriculumDatabaseData[curriculumDatabaseData.length - 1].publicId! + 1;
+
     // ADD CURRICULUM FUNCTION
     const addCurriculum = async () => {
       try {
         const commonId = uuidv4();
         await setDoc(doc(db, "curriculum", commonId), {
+          publicId: curriculumPublicId,
           id: commonId,
           schoolId: data.schoolId,
           schoolClassIds: data.schoolClassIds,

@@ -90,6 +90,7 @@ export default function DashboardCurriculum({
   };
 
   const [filters, setFilters] = useState({
+    publicId: "",
     school: "",
     schoolYear: "",
     modality: "",
@@ -105,11 +106,21 @@ export default function DashboardCurriculum({
   // FILTER CURRICULUM
   useEffect(() => {
     // Realiza os filtros com base nos inputs
+    let filteredByPublicId = curriculumDatabaseData;
     let filteredBySchool = curriculumDatabaseData;
     let filteredBySchoolYear = curriculumDatabaseData;
     let filteredByModality = curriculumDatabaseData;
     let filteredBySchedule = curriculumDatabaseData;
     let filteredByTeacher = curriculumDatabaseData;
+
+    if (filters.publicId) {
+      filteredByPublicId = curriculumDatabaseData.filter((curriculum) =>
+        curriculum.publicId
+          ?.toString()
+          .toLowerCase()
+          .includes(filters.publicId.toLowerCase())
+      );
+    }
 
     if (filters.school) {
       const schoolIds = schoolDatabaseData
@@ -175,6 +186,7 @@ export default function DashboardCurriculum({
 
     // Combina os filtros
     const combinedFilter = filteredBySchool
+      .filter((item) => filteredByPublicId.includes(item))
       .filter((item) => filteredBySchoolYear.includes(item))
       .filter((item) => filteredByModality.includes(item))
       .filter((item) => filteredBySchedule.includes(item))
@@ -199,6 +211,7 @@ export default function DashboardCurriculum({
   // FUNCTION TO CLEAR SEARCH FIELDS
   const clearSearch = () => {
     setFilters({
+      publicId: "",
       school: "",
       schoolYear: "",
       modality: "",
@@ -229,6 +242,16 @@ export default function DashboardCurriculum({
               <>
                 <div className="flex flex-col w-full gap-2">
                   <div className="flex w-full gap-2">
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={filters.publicId}
+                      onChange={(e) =>
+                        handleInputChange("publicId", e.target.value)
+                      }
+                      placeholder="Identificador"
+                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    />
                     <input
                       type="text"
                       value={filters.school}
@@ -325,6 +348,9 @@ export default function DashboardCurriculum({
                   <thead className="bg-klGreen-500 sticky top-0 text-gray-100 z-50">
                     <tr>
                       <th className="border-r dark:border-klGreen-500 p-2 font-normal">
+                        #ID
+                      </th>
+                      <th className="border-r dark:border-klGreen-500 p-2 font-normal">
                         Escola
                       </th>
                       <th className="border-r dark:border-klGreen-500 p-2 font-normal">
@@ -347,13 +373,13 @@ export default function DashboardCurriculum({
                           handleOneCurriculumDetails(b.id).schoolName
                         )
                       )
-                      .sort((a, b) =>
-                        handleOneCurriculumDetails(
-                          a.id
-                        ).scheduleName.localeCompare(
-                          handleOneCurriculumDetails(b.id).scheduleName
-                        )
-                      )
+                      // .sort((a, b) =>
+                      //   handleOneCurriculumDetails(
+                      //     a.id
+                      //   ).scheduleName.localeCompare(
+                      //     handleOneCurriculumDetails(b.id).scheduleName
+                      //   )
+                      // )
                       .sort((a, b) =>
                         handleOneCurriculumDetails(
                           a.id
@@ -361,6 +387,7 @@ export default function DashboardCurriculum({
                           handleOneCurriculumDetails(b.id).schoolCourseName
                         )
                       )
+                      .sort((a, b) => a.publicId! - b.publicId!)
                       .map((curriculum, index) => (
                         <>
                           <tr
@@ -387,11 +414,20 @@ export default function DashboardCurriculum({
                             >
                               {
                                 handleOneCurriculumDetails(curriculum.id)
-                                  .schoolName
+                                  .publicId
                               }
                             </td>
                             <td
                               key={index + 1}
+                              className="border-r dark:border-klGreen-500 p-2 text-center"
+                            >
+                              {
+                                handleOneCurriculumDetails(curriculum.id)
+                                  .schoolName
+                              }
+                            </td>
+                            <td
+                              key={index + 2}
                               className="border-r dark:border-klGreen-500 p-2 text-center"
                             >
                               {handleOneCurriculumDetails(
@@ -399,7 +435,7 @@ export default function DashboardCurriculum({
                               ).schoolClassNames.join(" - ")}
                             </td>
                             <td
-                              key={index + 2}
+                              key={index + 3}
                               className="border-r dark:border-klGreen-500 p-2 text-center"
                             >
                               {
@@ -407,7 +443,7 @@ export default function DashboardCurriculum({
                                   .schoolCourseName
                               }
                             </td>
-                            <td key={index + 3} className="p-2 text-center">
+                            <td key={index + 4} className="p-2 text-center">
                               {
                                 handleOneCurriculumDetails(curriculum.id)
                                   .teacherName

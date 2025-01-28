@@ -5,11 +5,11 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import { HandleClickOpenFunctionProps } from "../../@types";
+import { HandleClickOpenFunctionProps, StudentSearchProps } from "../../@types";
 import { PaymentArrayProps } from "../dashboardComponents/DashboardStudents";
 
 type FinanceStudentModalProps = {
-  studentId: string;
+  student: StudentSearchProps;
   onClose?: () => void;
   onlyView?: boolean;
 
@@ -18,7 +18,6 @@ type FinanceStudentModalProps = {
   isFinancialResponsible?: boolean;
   open?: boolean;
   paymentArray: PaymentArrayProps[];
-  studentName: string;
 
   handleClickOpen?: ({ id, option }: HandleClickOpenFunctionProps) => void;
   handleDeleteUser?: () => void;
@@ -28,7 +27,7 @@ type FinanceStudentModalProps = {
 };
 
 export function FinanceStudentModal({
-  studentId,
+  student,
   onClose,
   onlyView = false,
   isEdit = false,
@@ -36,7 +35,6 @@ export function FinanceStudentModal({
   isFinancialResponsible = false,
   open = false,
   paymentArray,
-  studentName,
   handleClickOpen,
   handleDeleteUser,
   setIsEdit,
@@ -92,7 +90,7 @@ export function FinanceStudentModal({
     <div className="flex flex-col items-center w-full h-full overflow-scroll no-scrollbar gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 text-center">
       {/** DAHSBOARD SECTION TITLE */}
       {page.show === "Dashboard" &&
-        studentName &&
+        student &&
         handleClickOpen &&
         handleDeleteUser &&
         onClose &&
@@ -106,14 +104,13 @@ export function FinanceStudentModal({
             setIsDetailsViewing={setIsDetailsViewing}
             setIsEdit={setIsEdit}
             setIsFinance={setIsFinance}
-            studentId={studentId}
-            studentName={studentName}
+            student={student}
             isEdit={isEdit}
             isFinance={isFinance}
             isFinancialResponsible={isFinancialResponsible}
             onlyView={onlyView}
             open={open}
-            key={studentId}
+            key={student.id}
           />
         )}
       <div className="flex flex-col w-full h-full overflow-scroll no-scrollbar [&>*:nth-child(2)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/00 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/0 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl transition-all duration-1000">

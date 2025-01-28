@@ -111,6 +111,7 @@ export default function DashboardStudents({
   // FILTER STUDENTS BY SEARCH STATES
   // STATE FOR THE SEARCH TERM
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchId, setSearchId] = useState<string>("");
   const [financialResponsibleName, setFinancialResponsibleName] =
     useState<string>("");
   const [financialResponsibleDocument, setFinancialResponsibleDocument] =
@@ -131,6 +132,7 @@ export default function DashboardStudents({
 
   // FUNCTION TO CLEAR THE ADVANCED SEARCH FIELDS
   const clearAdvancedSearch = () => {
+    setSearchId("");
     setSearchTerm("");
     setFinancialResponsibleName("");
     setFinancialResponsibleDocument("");
@@ -141,6 +143,10 @@ export default function DashboardStudents({
     // SEARCH CONSIDERING STUDENT NAME, RESPONSIBLE NAME, AND CPF
     setFilteredSearchStudents(
       filteredStudents.filter((student) => {
+        const matchesPublicId = student
+          .publicId!.toString()
+          .toLowerCase()
+          .includes(searchId.toLowerCase());
         const matchesName = student.name
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
@@ -154,6 +160,7 @@ export default function DashboardStudents({
 
         // APPLY FILTER ONLY FOR FIELDS THAT HAVE BEEN FILLED
         return (
+          (matchesPublicId || !searchId) &&
           (matchesName || !searchTerm) &&
           (matchesResponsibleName || !financialResponsibleName) &&
           (matchesResponsibleDocument || !financialResponsibleDocument)
@@ -194,6 +201,7 @@ export default function DashboardStudents({
     //   );
     // }
   }, [
+    searchId,
     searchTerm,
     financialResponsibleName,
     financialResponsibleDocument,
@@ -201,6 +209,10 @@ export default function DashboardStudents({
     isAdvancedSearch,
   ]);
 
+  // HANDLER FOR CHANGES IN THE STUDENT ID SEARCH FIELD
+  const handleSearchIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchId(event.target.value);
+  };
   // HANDLER FOR CHANGES IN THE STUDENT NAME SEARCH FIELD
   const handleSearchTermChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -376,33 +388,42 @@ export default function DashboardStudents({
             {showStudentList ? (
               <>
                 <div className="flex flex-col w-full gap-2">
-                  <input
-                    type="text"
-                    id="searchStudent"
-                    value={searchTerm}
-                    onChange={handleSearchTermChange}
-                    placeholder="Procurar Aluno"
-                    className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                  />
-                  <div className="flex gap-2">
-                    <div className="flex w-full gap-2">
-                      <input
-                        type="text"
-                        placeholder="Nome do Responsável Financeiro"
-                        value={financialResponsibleName}
-                        onChange={handleFinancialResponsibleNameChange}
-                        className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                      />
-                      <input
-                        type="text"
-                        name="financialResponsibleDocument"
-                        pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                        placeholder="CPF do Responsável Financeiro"
-                        value={financialResponsibleDocument}
-                        onChange={handleFinancialResponsibleDocumentChange}
-                        className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                      />
-                    </div>
+                  <div className="flex w-full gap-2">
+                    <input
+                      type="text"
+                      id="searchStudent"
+                      value={searchTerm}
+                      onChange={handleSearchTermChange}
+                      placeholder="Nome do Aluno"
+                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    />
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      name="searchId"
+                      placeholder="Identificador"
+                      value={searchId}
+                      onChange={handleSearchIdChange}
+                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    />
+                  </div>
+                  <div className="flex w-full gap-2">
+                    <input
+                      type="text"
+                      placeholder="Nome do Responsável Financeiro"
+                      value={financialResponsibleName}
+                      onChange={handleFinancialResponsibleNameChange}
+                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    />
+                    <input
+                      type="text"
+                      name="financialResponsibleDocument"
+                      pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                      placeholder="CPF do Responsável Financeiro"
+                      value={financialResponsibleDocument}
+                      onChange={handleFinancialResponsibleDocumentChange}
+                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    />
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -453,11 +474,25 @@ export default function DashboardStudents({
               {filteredSearchStudents.length !== 0 ? (
                 filteredSearchStudents
                   .sort((a, b) => a.name.localeCompare(b.name))
+                  .sort((a, b) => a.publicId! - b.publicId!)
                   .map((student) => {
                     return (
                       <div className="flex flex-col px-4 py-3" key={student.id}>
                         <div className="flex items-center w-full">
-                          <div className="w-1/6" />
+                          <div className="flex w-1/6">
+                            <p
+                              className="w-auto text-klGreen-500 dark:text-white hover:text-klOrange-500 hover:dark:text-klOrange-500 cursor-pointer"
+                              onClick={() => {
+                                handleClickOpen({
+                                  id: student.id,
+                                  option: "details",
+                                });
+                                calcStudentPrice2(student.id);
+                              }}
+                            >
+                              {student.publicId}
+                            </p>
+                          </div>
                           <div className="flex w-4/6">
                             <p
                               className="text-klGreen-500 dark:text-white hover:text-klOrange-500 hover:dark:text-klOrange-500 cursor-pointer"
@@ -543,7 +578,7 @@ export default function DashboardStudents({
             {isFinance && studentSelected && (
               <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-white dark:bg-gray-800 overflow-scroll no-scrollbar">
                 <FinanceStudentModal
-                  studentId={studentSelected!.id}
+                  student={studentSelected!}
                   key={studentSelected!.id}
                   onClose={handleClose}
                   isEdit={isEdit}
@@ -553,7 +588,6 @@ export default function DashboardStudents({
                   }
                   open={open}
                   paymentArray={paymentArray}
-                  studentName={studentSelected.name}
                   handleClickOpen={handleClickOpen}
                   handleDeleteUser={handleDeleteUser}
                   setIsEdit={setIsEdit}

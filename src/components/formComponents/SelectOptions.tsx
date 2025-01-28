@@ -365,7 +365,7 @@ export function SelectOptions({
                 value={returnId ? option.id : option.name}
               >
                 {displaySchoolCourseAndSchedule
-                  ? `${option.schoolCourseName} | ${option.scheduleName}`
+                  ? `${option.publicId} - ${option.schoolCourseName} | ${option.scheduleName}`
                   : option.name}
               </option>
             </>

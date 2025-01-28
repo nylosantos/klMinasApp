@@ -1541,6 +1541,9 @@ export function InsertStudent() {
       }
     }
 
+    const studentPublicId =
+      studentsDatabaseData[studentsDatabaseData.length - 1].publicId! + 1;
+
     // ADD STUDENT FUNCTION
     const addStudent = async () => {
       const newStudentRef = doc(db, "students", newStudentId);
@@ -1548,6 +1551,7 @@ export function InsertStudent() {
         // CREATE STUDENT
         await setDoc(newStudentRef, {
           // Section 1: Student Data
+          publicId: studentPublicId,
           id: newStudentId,
           name: data.name,
           birthDate: Timestamp.fromDate(new Date(data.birthDate)),
