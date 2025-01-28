@@ -692,8 +692,15 @@ export function InsertCurriculum() {
       }
     };
 
-    const curriculumPublicId =
-      curriculumDatabaseData[curriculumDatabaseData.length - 1].publicId! + 1;
+    let curriculumPublicId = 1;
+    if (curriculumDatabaseData.length > 0) {
+      const lastCurriculum =
+        curriculumDatabaseData[curriculumDatabaseData.length - 1].publicId;
+
+      if (lastCurriculum) {
+        curriculumPublicId = lastCurriculum + 1;
+      }
+    }
 
     // ADD CURRICULUM FUNCTION
     const addCurriculum = async () => {

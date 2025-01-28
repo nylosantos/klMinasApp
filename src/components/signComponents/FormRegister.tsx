@@ -60,8 +60,8 @@ export function FormRegister() {
         systemConstantsDb.find(
           (constants) => constants.year === new Date().getFullYear().toString()
         ) as SystemConstantsSearchProps;
-      console.log(foundedSystemConstants);
-      if (foundedSystemConstants) {
+
+        if (foundedSystemConstants) {
         setSystemSignUpClosed(foundedSystemConstants.systemSignUpClosed);
       }
     }

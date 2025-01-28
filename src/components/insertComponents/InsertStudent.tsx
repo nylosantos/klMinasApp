@@ -1541,8 +1541,15 @@ export function InsertStudent() {
       }
     }
 
-    const studentPublicId =
-      studentsDatabaseData[studentsDatabaseData.length - 1].publicId! + 1;
+    let studentPublicId = 1;
+    if (studentsDatabaseData.length > 0) {
+      const lastStudent =
+        studentsDatabaseData[studentsDatabaseData.length - 1].publicId;
+
+      if (lastStudent) {
+        studentPublicId = lastStudent + 1;
+      }
+    }
 
     // ADD STUDENT FUNCTION
     const addStudent = async () => {
