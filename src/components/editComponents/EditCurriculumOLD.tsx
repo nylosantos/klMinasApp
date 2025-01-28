@@ -20,7 +20,7 @@ import { editCurriculumValidationSchema } from "../../@types/zodValidation";
 import {
   CurriculumSearchProps,
   EditCurriculumValidationZProps,
-  SchoolClassSearchProps,
+  // SchoolClassSearchProps,
   SchoolSearchProps,
   ScheduleSearchProps,
   ClassDaySearchProps,
@@ -42,7 +42,7 @@ export function EditCurriculum() {
   // GET GLOBAL DATA
   const {
     schoolDatabaseData,
-    schoolClassDatabaseData,
+    // schoolClassDatabaseData,
     schoolCourseDatabaseData,
     curriculumDatabaseData,
     scheduleDatabaseData,
@@ -57,7 +57,7 @@ export function EditCurriculum() {
     useState<EditCurriculumValidationZProps>({
       curriculumId: "",
       schoolId: "",
-      schoolClassId: "",
+      schoolClassIds: [],
       schoolCourseId: "",
       scheduleId: "",
       classDayId: "",
@@ -117,37 +117,37 @@ export function EditCurriculum() {
 
   // -------------------------- SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
   // SCHOOL CLASS SELECTED STATE DATA
-  const [schoolClassSelectedData, setSchoolClassSelectedData] =
-    useState<SchoolClassSearchProps>();
+  // const [schoolClassSelectedData, setSchoolClassSelectedData] =
+  //   useState<SchoolClassSearchProps>();
 
   // SET SCHOOL CLASS SELECTED STATE AND RESET SELECTS ABOVE SELECT SCHOOL CLASS WHEN SELECT SCHOOL CLASS
-  useEffect(() => {
-    (
-      document.getElementById("curriculumSelect") as HTMLSelectElement
-    ).selectedIndex = 0;
-    setIsSelected(false);
-    setIsEdit(false);
-    setCurriculumSelectedData(undefined);
-    if (curriculumEditData.schoolClassId !== "") {
-      setSchoolClassSelectedData(
-        schoolClassDatabaseData.find(
-          ({ id }) => id === curriculumEditData.schoolClassId
-        )
-      );
-    } else {
-      setSchoolClassSelectedData(undefined);
-    }
-  }, [curriculumEditData.schoolClassId]);
+  // useEffect(() => {
+  //   (
+  //     document.getElementById("curriculumSelect") as HTMLSelectElement
+  //   ).selectedIndex = 0;
+  //   setIsSelected(false);
+  //   setIsEdit(false);
+  //   setCurriculumSelectedData(undefined);
+  //   if (curriculumEditData.schoolClassId !== "") {
+  //     setSchoolClassSelectedData(
+  //       schoolClassDatabaseData.find(
+  //         ({ id }) => id === curriculumEditData.schoolClassId
+  //       )
+  //     );
+  //   } else {
+  //     setSchoolClassSelectedData(undefined);
+  //   }
+  // }, [curriculumEditData.schoolClassId]);
 
   // SET CURRICULUM EDIT DATA WHEN SCHOOL CLASS CHANGE
-  useEffect(() => {
-    setCurriculumFormattedName({
-      ...curriculumFormattedName,
-      schoolClassName: schoolClassSelectedData
-        ? schoolClassSelectedData.name
-        : "",
-    });
-  }, [schoolClassSelectedData]);
+  // useEffect(() => {
+  //   setCurriculumFormattedName({
+  //     ...curriculumFormattedName,
+  //     schoolClassName: schoolClassSelectedData
+  //       ? schoolClassSelectedData.name
+  //       : "",
+  //   });
+  // }, [schoolClassSelectedData]);
   // -------------------------- END OF SCHOOL CLASS SELECT STATES AND FUNCTIONS -------------------------- //
 
   // -------------------------- CURRICULUM SELECT STATES AND FUNCTIONS -------------------------- //
@@ -593,7 +593,7 @@ export function EditCurriculum() {
       // name: "",
       curriculumId: "",
       schoolId: "",
-      schoolClassId: "",
+      schoolClassIds: [],
       schoolCourseId: "",
       scheduleId: "",
       classDayId: "",
@@ -644,7 +644,7 @@ export function EditCurriculum() {
     // setValue("name", curriculumEditData.name);
     setValue("curriculumId", curriculumEditData.curriculumId);
     setValue("schoolId", curriculumEditData.schoolId);
-    setValue("schoolClassId", curriculumEditData.schoolClassId);
+    // setValue("schoolClassId", curriculumEditData.schoolClassId);
     setValue("schoolCourseId", curriculumEditData.schoolCourseId);
     setValue("scheduleId", curriculumEditData.scheduleId);
     setValue("classDayId", curriculumEditData.classDayId);
@@ -658,7 +658,7 @@ export function EditCurriculum() {
       // errors.name,
       errors.curriculumId,
       errors.schoolId,
-      errors.schoolClassId,
+      // errors.schoolClassId,
       errors.schoolCourseId,
       errors.scheduleId,
       errors.classDayId,
@@ -963,9 +963,10 @@ export function EditCurriculum() {
           <label
             htmlFor="schoolClassSelect"
             className={
-              errors.schoolClassId
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
+              // errors.schoolClassId
+              //   ? "w-1/4 text-right text-red-500 dark:text-red-400"
+              //   : 
+                "w-1/4 text-right"
             }
           >
             Selecione o Ano Escolar:{" "}
@@ -974,17 +975,18 @@ export function EditCurriculum() {
             id="schoolClassSelect"
             defaultValue={" -- select an option -- "}
             className={
-              errors.schoolClassId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              // errors.schoolClassId
+              //   ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+              //   : 
+                "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolClassSelect"
-            onChange={(e) => {
-              setCurriculumEditData({
-                ...curriculumEditData,
-                schoolClassId: e.target.value,
-              });
-            }}
+            // onChange={(e) => {
+            //   setCurriculumEditData({
+            //     ...curriculumEditData,
+            //     schoolClassId: e.target.value,
+            //   });
+            // }}
           >
             {curriculumEditData.schoolId ? (
               <SelectOptions
@@ -1018,11 +1020,12 @@ export function EditCurriculum() {
             id="curriculumSelect"
             defaultValue={" -- select an option -- "}
             className={
-              curriculumEditData.schoolClassId
-                ? errors.curriculumId
+              // curriculumEditData.schoolClassId
+              //   ? 
+                errors.curriculumId
                   ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                   : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                // : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             }
             name="curriculumSelect"
             onChange={(e) => {
@@ -1033,13 +1036,13 @@ export function EditCurriculum() {
               setIsSelected(true);
             }}
           >
-            {curriculumEditData.schoolClassId ? (
+            {curriculumEditData.schoolClassIds ? (
               <SelectOptions
                 returnId
                 dataType="curriculum"
                 displaySchoolCourseAndSchedule
                 schoolId={curriculumEditData.schoolId}
-                schoolClassId={curriculumEditData.schoolClassId}
+                // schoolClassId={curriculumEditData.schoolClassId}
               />
             ) : (
               <option disabled value={" -- select an option -- "}>

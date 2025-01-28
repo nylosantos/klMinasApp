@@ -21,12 +21,12 @@ const db = getFirestore(app);
 export default function EditSystemConstants() {
   const {
     isSubmitting,
-    studentsDatabaseData,
+    // studentsDatabaseData,
     systemConstantsDb,
     systemConstantsDbLoading,
     systemConstantsDbError,
     systemConstantsValues,
-    calcStudentPrice2,
+    // calcStudentPrice2,
     setIsSubmitting,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
