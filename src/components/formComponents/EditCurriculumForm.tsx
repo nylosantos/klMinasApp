@@ -15,7 +15,11 @@ import {
 } from "../../@types";
 import { SelectOptions } from "./SelectOptions";
 import { ClassDays } from "./ClassDays";
-import { classDayIndexNames } from "../../custom";
+import {
+  classDayIndex,
+  classDayIndexNames,
+  schoolYearsComplementData,
+} from "../../custom";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { editCurriculumValidationSchema } from "../../@types/zodValidation";
@@ -59,14 +63,17 @@ export default function EditCurriculumForm({
 }: EditCurriculumFormProps) {
   // GET GLOBAL DATA
   const {
+    schoolClassDatabaseData,
     classDaysDatabaseData,
     curriculumDatabaseData,
     scheduleDatabaseData,
     schoolCourseDatabaseData,
     studentsDatabaseData,
     teacherDatabaseData,
+    userFullData,
     calcStudentPrice,
     handleOneCurriculumDetails,
+    handleOneStudentDetails,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   const [dashboardView, setDasboardView] = useState(true);
@@ -820,6 +827,47 @@ export default function EditCurriculumForm({
     }
   };
 
+  function handleSchoolYearName(id: string) {
+    const schoolYear = schoolClassDatabaseData.find(
+      (schoolYear) => schoolYear.id === id
+    );
+    if (schoolYear) {
+      return schoolYear.name;
+    } else {
+      return "";
+    }
+  }
+
+  function handleSchoolYearComplementName(id: string) {
+    const schoolYearComplement = schoolYearsComplementData.find(
+      (schoolYear) => schoolYear.id === id
+    );
+    if (schoolYearComplement) {
+      return schoolYearComplement.name;
+    } else {
+      return "";
+    }
+  }
+
+  function handleClassDaysName(id: number) {
+    const classDayName = classDayIndex.find((classDay) => classDay.id === id);
+    if (classDayName) {
+      return classDayName.name;
+    } else {
+      return "";
+    }
+  }
+
+  const formatPhoneNumber = (phone: string) => {
+    if (phone.length <= 6) return phone; // Verifica se o telefone tem comprimento suficiente
+    const trimmedPhone = phone.slice(3); // Descartar os 3 primeiros caracteres
+    return `${trimmedPhone.slice(0, 2)} ${trimmedPhone.slice(
+      2,
+      7
+    )}-${trimmedPhone.slice(7)}`; // Adicionar espaço entre o caractere 5 e 6 e adicionar hífen
+    // return `${trimmedPhone.slice(0, 2)} ${trimmedPhone.slice(2)}`; // Adicionar espaço entre o caractere 5 e 6
+  };
+
   return (
     <div
       className={`w-full ${
@@ -830,12 +878,12 @@ export default function EditCurriculumForm({
     >
       {modal && (
         <div className="flex items-center justify-between text-md/snug text-gray-100 bg-klGreen-500/70 dark:bg-klGreen-500/70 dark:rounded-t-xl uppercase p-4">
-          <div className="flex-1 flex justify-center relative">
-            <p className="absolute left-1/2 transform -translate-y-1/2 z-10">
+          <div className="flex w-full text-center">
+            <p className="w-full mx-auto">
               {onlyView && dashboardView ? "Detalhes Turma" : "Editar Turma"}
             </p>
           </div>
-          <div className="flex justify-end px-2 z-50">
+          <div className="flex absolute right-0 px-2 z-50">
             <EditDashboardCurriculumButton
               dashboardView={dashboardView}
               handleDeleteClass={handleDeleteClass && handleDeleteClass}
@@ -849,12 +897,28 @@ export default function EditCurriculumForm({
         onSubmit={handleSubmit(handleEditCurriculum)}
         className={`flex flex-col w-full gap-2 p-4 ${
           modal
-            ? "rounded-b-xl bg-klGreen-500/20 dark:bg-klGreen-500/30"
+            ? userFullData && userFullData.role === "teacher"
+              ? "rounded-b-none bg-klGreen-500/20 dark:bg-klGreen-500/30"
+              : "rounded-b-xl bg-klGreen-500/20 dark:bg-klGreen-500/30"
             : "mt-2"
         }`}
       >
         {/* CURRICULUM NAME */}
         <div className="flex gap-2 items-center">
+          <label htmlFor="publicId" className="w-1/4 text-right">
+            Identificador:
+          </label>
+          <input
+            type="text"
+            name="publicId"
+            disabled
+            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+            value={handleOneCurriculumDetails(curriculumId).publicId!}
+          />
+        </div>
+
+        {/* UNCOMMENT FOR SHOW CURRICULUM FORMATTED NAME */}
+        {/* <div className="flex gap-2 items-center">
           <label htmlFor="name" className="w-1/4 text-right">
             Nome:
           </label>
@@ -865,7 +929,7 @@ export default function EditCurriculumForm({
             className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             value={curriculumFormattedName}
           />
-        </div>
+        </div> */}
 
         {/* SCHOOL NAME */}
         <div className="flex gap-2 items-center">
@@ -880,6 +944,35 @@ export default function EditCurriculumForm({
             value={handleOneCurriculumDetails(curriculumId).schoolName}
           />
         </div>
+
+        {/* SCHOOL YEARS JOIN INPUT */}
+        {onlyView && dashboardView && (
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="schooYearsJoinInput"
+              className={
+                errors.scheduleId
+                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                  : "w-1/4 text-right"
+              }
+            >
+              Anos Escolares:{" "}
+            </label>
+            <input
+              type="text"
+              name="schooYearsJoinInput"
+              disabled
+              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              value={
+                curriculumEditData.schoolClassIds.length > 0
+                  ? handleOneCurriculumDetails(
+                      curriculumId
+                    ).schoolClassNames.join(" - ")
+                  : ""
+              }
+            />
+          </div>
+        )}
 
         {/* SCHOOL COURSE NAME */}
         <div className="flex gap-2 items-center">
@@ -908,44 +1001,48 @@ export default function EditCurriculumForm({
         )}
 
         {/* PLACES AVAILABLE INPUT */}
-        <div className="flex gap-2 items-center">
-          <label
-            htmlFor="placesAvailable"
-            className={
-              errors.placesAvailable
-                ? "w-1/4 text-right text-red-500 dark:text-red-400"
-                : "w-1/4 text-right"
-            }
-          >
-            {onlyView && dashboardView
-              ? "Total de vagas: "
-              : "Número máximo de alunos: "}
-          </label>
-          <input
-            disabled={onlyView && dashboardView ? true : false}
-            type="text"
-            name="placesAvailable"
-            pattern="^(0?[0-9]|[1-9][0-9])$"
-            maxLength={2}
-            value={curriculumEditData.placesAvailable}
-            placeholder={errors.placesAvailable ? "É necessário um" : "0 a 99"}
-            className={
-              !onlyView || !dashboardView
-                ? errors.placesAvailable
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
-            }
-            onChange={(e) => {
-              setCurriculumEditData({
-                ...curriculumEditData,
-                placesAvailable: +e.target.value
-                  .replace(/[^0-9.]/g, "")
-                  .replace(/(\..*?)\..*/g, "$1"),
-              });
-            }}
-          />
-        </div>
+        {userFullData && (
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="placesAvailable"
+              className={
+                errors.placesAvailable
+                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                  : "w-1/4 text-right"
+              }
+            >
+              {onlyView && dashboardView
+                ? "Total de vagas: "
+                : "Número máximo de alunos: "}
+            </label>
+            <input
+              disabled={onlyView && dashboardView ? true : false}
+              type="text"
+              name="placesAvailable"
+              pattern="^(0?[0-9]|[1-9][0-9])$"
+              maxLength={2}
+              value={curriculumEditData.placesAvailable}
+              placeholder={
+                errors.placesAvailable ? "É necessário um" : "0 a 99"
+              }
+              className={
+                !onlyView || !dashboardView
+                  ? errors.placesAvailable
+                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              }
+              onChange={(e) => {
+                setCurriculumEditData({
+                  ...curriculumEditData,
+                  placesAvailable: +e.target.value
+                    .replace(/[^0-9.]/g, "")
+                    .replace(/(\..*?)\..*/g, "$1"),
+                });
+              }}
+            />
+          </div>
+        )}
 
         {/* ENROLLED STUDENTS */}
         {onlyView && dashboardView && (
@@ -1167,6 +1264,29 @@ export default function EditCurriculumForm({
           </div>
         )}
 
+        {/* CLASS DAYS JOIN INPUT */}
+        {onlyView && dashboardView && (
+          <div className="flex gap-2 items-center">
+            <label
+              htmlFor="classDaysJoinInput"
+              className={
+                errors.scheduleId
+                  ? "w-1/4 text-right text-red-500 dark:text-red-400"
+                  : "w-1/4 text-right"
+              }
+            >
+              Dias de Aula:{" "}
+            </label>
+            <input
+              type="text"
+              name="classDaysJoinInput"
+              disabled
+              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              value={classDayName.length > 0 ? classDayName.join(" - ") : ""}
+            />
+          </div>
+        )}
+
         {/* EDIT TEACHER TITLE */}
         {(!onlyView || !dashboardView) && (
           <div className="flex gap-2 items-center">
@@ -1234,53 +1354,22 @@ export default function EditCurriculumForm({
         )}
 
         {/* SCHOOL CLASS SELECT */}
-        <p className="mt-4 mb-2 text-center">
-          Selecione os anos escolares inclusos nessa turma
-        </p>
+        {(!onlyView || !dashboardView) && (
+          <>
+            <p className="mt-4 mb-2 text-center">
+              {!onlyView || !dashboardView
+                ? "Selecione os anos escolares inclusos nessa turma"
+                : "Anos Escolares Inclusos:"}
+            </p>
 
-        <SchoolStageSelect
-          curriculumData={curriculumEditData}
-          dashboardView={dashboardView}
-          onlyView={onlyView}
-          setCurriculumData={setCurriculumEditData}
-        />
-
-        {/* <div className="flex flex-col w-full gap-4 items-center">
-          {schoolStage.map((stage) => (
-            <div className="flex gap-2 w-full items-center">
-              <p className="w-1/4 text-right">{stage.name}:</p>
-              <div className="flex w-3/4 flex-wrap items-center">
-                {schoolClassDatabaseData
-                  .filter((schoolClass) =>
-                    schoolClass.schoolStageId.includes(stage.id)
-                  )
-                  .map((schoolClass) => {
-                    return (
-                      <div
-                        className="flex items-center gap-2 mr-2"
-                        key={uuidv4()}
-                      >
-                        <input
-                          disabled={onlyView && dashboardView}
-                          type="checkbox"
-                          name={schoolClass.name}
-                          id={uuidv4()}
-                          className="ml-1 dark: text-klGreen-500 dark:text-klGreen-500 border-none "
-                          checked={curriculumEditData.schoolClassIds.includes(
-                            schoolClass.id
-                          )}
-                          onChange={() => schoolClassIdsFunction(schoolClass)}
-                        />
-                        <label htmlFor={schoolClass.name} className="text-sm">
-                          {schoolClass.name}
-                        </label>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          ))}
-        </div> */}
+            <SchoolStageSelect
+              curriculumData={curriculumEditData}
+              dashboardView={dashboardView}
+              onlyView={onlyView}
+              setCurriculumData={setCurriculumEditData}
+            />
+          </>
+        )}
 
         {/* EDIT CLASS DAY TITLE */}
         {!onlyView ||
@@ -1312,11 +1401,14 @@ export default function EditCurriculumForm({
         </div>
 
         {/* DAYS PICKER */}
-        <ClassDays
-          classDay={classDayEditData}
-          toggleClassDays={toggleClassDays}
-          onlyView={onlyView && dashboardView}
-        />
+        {!onlyView ||
+          (!dashboardView && (
+            <ClassDays
+              classDay={classDayEditData}
+              toggleClassDays={toggleClassDays}
+              onlyView={onlyView && dashboardView}
+            />
+          ))}
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4 justify-center">
@@ -1350,6 +1442,107 @@ export default function EditCurriculumForm({
           </button>
         </div>
       </form>
+      {curriculumSelectedData &&
+        userFullData &&
+        userFullData.role === "teacher" && (
+          <>
+            {/* CURRICULUM LISTS */}
+            <div className="flex flex-col w-full">
+              <div className="bg-klGreen-500/20 dark:bg-klGreen-500/30 text-center p-[1vw]">
+                Alunos
+              </div>
+              <table className="table-auto w-full border-collapse border border-transparent">
+                {curriculumSelectedData.students.length !== 0 && (
+                  <thead className="bg-klGreen-500 sticky top-0 text-gray-100 text-sm md:text-base z-40">
+                    <tr>
+                      <th className="border-r dark:border-klGreen-500 p-2 font-normal">
+                        Nome
+                      </th>
+                      <th className="border-r dark:border-klGreen-500 p-2 font-normal">
+                        Turma
+                      </th>
+                      <th className="border-r dark:border-klGreen-500 p-2 font-normal">
+                        Dias de Aula
+                      </th>
+                      <th className="border-r dark:border-klGreen-500 p-2 font-normal">
+                        Contato
+                      </th>
+                    </tr>
+                  </thead>
+                )}
+                <tbody className="[&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 text-sm md:text-base">
+                  {curriculumSelectedData.students.length ? (
+                    curriculumSelectedData.students
+                      .sort(
+                        (a, b) =>
+                          handleOneStudentDetails(a.id)!.publicId! -
+                          handleOneStudentDetails(b.id)!.publicId!
+                      )
+
+                      .map((student, index) => (
+                        <>
+                          <tr
+                            key={index}
+                            className="hover:bg-gray-100 cursor-pointer"
+                          >
+                            <td
+                              key={index}
+                              className="border-r dark:border-klGreen-500 p-2 text-center"
+                            >
+                              {handleOneStudentDetails(student.id)?.name}
+                            </td>
+                            <td
+                              key={index + 1}
+                              className="border-r dark:border-klGreen-500 p-2 text-center"
+                            >
+                              {handleSchoolYearName(
+                                handleOneStudentDetails(student.id)!.schoolYears
+                              )}{" "}
+                              -{" "}
+                              {handleSchoolYearComplementName(
+                                handleOneStudentDetails(student.id)!
+                                  .schoolYearsComplement
+                              )}
+                            </td>
+                            <td
+                              key={index + 2}
+                              className="border-r dark:border-klGreen-500 p-2 text-center"
+                            >
+                              {handleOneStudentDetails(student.id)
+                                ?.curriculumIds.filter(
+                                  (curriculum) => curriculum.id === curriculumId
+                                )[0]
+                                .indexDays.map(handleClassDaysName)
+                                .join(" - ")}
+                            </td>
+                            <td
+                              key={index + 3}
+                              className="border-r dark:border-klGreen-500 p-2 text-center"
+                            >
+                              {handleOneStudentDetails(student.id)
+                                ?.financialResponsible.phone &&
+                                formatPhoneNumber(
+                                  handleOneStudentDetails(student.id)!
+                                    .financialResponsible.phone
+                                )}
+                            </td>
+                          </tr>
+                        </>
+                      ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="text-center p-4">
+                        <p className="text-klGreen-500 dark:text-white">
+                          Nenhuma turma encontrada
+                        </p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
     </div>
   );
 }

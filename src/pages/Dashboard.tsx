@@ -97,9 +97,15 @@ export default function Dashboard() {
     });
 
   useEffect(() => {
-    userFullData && userFullData.role === "user"
-      ? setShowDashboardPage({ page: "student" })
-      : setShowDashboardPage({ page: "school" });
+    if (userFullData) {
+      if (userFullData.role === "user") {
+        setShowDashboardPage({ page: "student" });
+      } else if (userFullData.role === "teacher") {
+        setShowDashboardPage({ page: "curriculum" });
+      } else {
+        setShowDashboardPage({ page: "school" });
+      }
+    }
   }, [userFullData]);
 
   interface DashboardMenuArrayProps extends DashBoardPageProps {
@@ -139,13 +145,13 @@ export default function Dashboard() {
       page: "student",
       array: filteredStudents,
     },
-    { title: "Adicionar Aluno", page: "addStudent", array: [] },
+    // { title: "Adicionar Aluno", page: "addStudent", array: [] },
   ];
 
   function renderDashboardMenu(itemMenu: DashboardMenuArrayProps) {
     return (
       <div
-        className="flex flex-col w-36 h-full justify-center items-center text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 hover:bg-klGreen-500/30 hover:dark:bg-klGreen-500/70 py-2 px-3 rounded-xl cursor-pointer"
+        className="flex flex-col w-36 h-full mt-4 justify-center items-center text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 hover:bg-klGreen-500/30 hover:dark:bg-klGreen-500/70 py-2 px-3 rounded-xl cursor-pointer"
         onClick={() => {
           setShowDashboardPage({ page: itemMenu.page }),
             setIsEdit(false),
@@ -180,8 +186,9 @@ export default function Dashboard() {
           {dashboardMenuArray.map((itemMenu) => {
             if (userFullData) {
               if (
-                userFullData.role !== "user" &&
-                itemMenu.page !== "addStudent"
+                userFullData.role === "root" ||
+                userFullData.role === "admin" ||
+                userFullData.role === "editor"
               ) {
                 return renderDashboardMenu(itemMenu);
               }

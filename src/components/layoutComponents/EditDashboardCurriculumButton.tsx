@@ -1,7 +1,7 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoClose, IoPencil } from "react-icons/io5";
-import { MdDelete } from "react-icons/md";
+import { MdDelete, MdSettings } from "react-icons/md";
 
 type EditCurriculumButtonDetailsProps = {
   dashboardView: boolean;
@@ -18,8 +18,14 @@ export function EditDashboardCurriculumButton({
 }: EditCurriculumButtonDetailsProps) {
   return (
     <Menu>
-      <MenuButton className="w-[5.65vw] inline-flex items-center justify-evenly rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-0 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
-        Opções <IoIosArrowDown size={10} />
+      <MenuButton className="w-[5.65vw] inline-flex items-center justify-evenly rounded-md md:bg-klGreen-500 md:dark:bg-klGreen-500/50 px-0 py-[0.125rem] text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white md:hover:dark:bg-klGreen-500 md:hover:bg-klGreen-500/80">
+        <p className="hidden md:flex">Opções</p>
+        <div className="hidden md:flex">
+          <IoIosArrowDown size={10} />
+        </div>
+        <div className="flex md:hidden">
+          <MdSettings size={20} />
+        </div>
       </MenuButton>
       <MenuItems
         transition

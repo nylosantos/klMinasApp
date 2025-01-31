@@ -99,6 +99,15 @@ export const schoolStage = [
   { id: "3SSEM", name: "Ensino Médio" },
 ];
 
+export const schoolYearsComplementData = [
+  { id: "unknown", name: "Não definida" },
+  { id: "classA", name: "A" },
+  { id: "classB", name: "B" },
+  { id: "classC", name: "C" },
+  { id: "classD", name: "D" },
+  { id: "classE", name: "E" },
+];
+
 // IMPORTANT VARIABLES
 // STANDARD PAYMENT DAY
 // export const standardPaymentDay = "5";

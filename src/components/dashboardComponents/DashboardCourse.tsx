@@ -102,7 +102,7 @@ export default function DashboardCourse({
   return (
     <div className="flex w-full h-full justify-start container no-scrollbar rounded-xl pt-4 gap-4">
       <div className="w-full ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container  rounded-xl transition-all duration-1000">
-        <div className="flex w-full flex-col px-4 pb-4 gap-2 z-50">
+        <div className="flex w-full flex-col px-4 pb-4 gap-2 z-40">
           <div className="flex w-full gap-2 justify-start">
             {showCourseList ? (
               <>
