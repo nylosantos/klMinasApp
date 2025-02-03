@@ -15,6 +15,22 @@ import DashboardCourse from "../components/dashboardComponents/DashboardCourse";
 import DashboardSchedule from "../components/dashboardComponents/DashboardSchedule";
 import { FilteredStudentsProps } from "../@types";
 
+export type DashBoardPageProps = {
+  page:
+    | "school"
+    | "schoolClass"
+    | "schoolCourse"
+    | "schedule"
+    | "teacher"
+    | "curriculum"
+    | "student"
+    | "addStudent";
+};
+export interface DashboardMenuArrayProps extends DashBoardPageProps {
+  title: string;
+  array: unknown[];
+}
+
 export default function Dashboard() {
   // GET GLOBAL DATA
   const {
@@ -79,18 +95,6 @@ export default function Dashboard() {
     filterStudents();
   }, [userFullData, studentsDatabaseData]);
 
-  type DashBoardPageProps = {
-    page:
-      | "school"
-      | "schoolClass"
-      | "schoolCourse"
-      | "schedule"
-      | "teacher"
-      | "curriculum"
-      | "student"
-      | "addStudent";
-  };
-
   const [showDashboardPage, setShowDashboardPage] =
     useState<DashBoardPageProps>({
       page: "school",
@@ -107,11 +111,6 @@ export default function Dashboard() {
       }
     }
   }, [userFullData]);
-
-  interface DashboardMenuArrayProps extends DashBoardPageProps {
-    title: string;
-    array: unknown[];
-  }
 
   const dashboardMenuArray: DashboardMenuArrayProps[] = [
     { title: "Escolas Cadastradas", page: "school", array: schoolDatabaseData },
@@ -151,7 +150,7 @@ export default function Dashboard() {
   function renderDashboardMenu(itemMenu: DashboardMenuArrayProps) {
     return (
       <div
-        className="flex flex-col w-36 h-full mt-4 justify-center items-center text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 hover:bg-klGreen-500/30 hover:dark:bg-klGreen-500/70 py-2 px-3 rounded-xl cursor-pointer"
+        className="flex flex-col w-2/3 md:w-[7vw] md:h-[5vw] mt-4 justify-center items-center text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 hover:bg-klGreen-500/30 hover:dark:bg-klGreen-500/70 py-2 px-3 rounded-xl cursor-pointer"
         onClick={() => {
           setShowDashboardPage({ page: itemMenu.page }),
             setIsEdit(false),
@@ -161,10 +160,10 @@ export default function Dashboard() {
         }}
         key={uuidv4()}
       >
-        <p className="text-klGreen-500 dark:text-gray-100 text-md/snug">
+        <p className="text-klGreen-500 dark:text-gray-100">
           {itemMenu.title}
         </p>
-        <p className="text-klOrange-500 text-md/snug">
+        <p className="text-klOrange-500 ">
           {itemMenu.title === "Adicionar Aluno"
             ? ""
             : itemMenu.array.length > 0
@@ -182,7 +181,7 @@ export default function Dashboard() {
     return (
       <div className="w-screen h-full flex flex-col justify-start items-center overflow-scroll no-scrollbar">
         {/* DASHBOARD BUTTONS MENU */}
-        <div className="flex container items-center justify-center gap-4">
+        {/* <div className="flex container items-center justify-center gap-4">
           {dashboardMenuArray.map((itemMenu) => {
             if (userFullData) {
               if (
@@ -201,7 +200,7 @@ export default function Dashboard() {
               // } else return;
             }
           })}
-        </div>
+        </div> */}
 
         {/* PAGES TO SHOW */}
         <div
@@ -214,7 +213,12 @@ export default function Dashboard() {
           {userFullData.role !== "user" && (
             <>
               {showDashboardPage.page === "school" && (
-                <DashboardSchool isEdit={isEdit} setIsEdit={setIsEdit} />
+                <DashboardSchool
+                  isEdit={isEdit}
+                  setIsEdit={setIsEdit}
+                  renderDashboardMenu={renderDashboardMenu}
+                  itemsMenu={dashboardMenuArray}
+                />
               )}
               {/* {showDashboardPage.page === "schoolClass" && (
                 <DefaultListComponent
@@ -223,22 +227,36 @@ export default function Dashboard() {
                 />
               )} */}
               {showDashboardPage.page === "schoolCourse" && (
-                <DashboardCourse isEdit={isEdit} setIsEdit={setIsEdit} />
+                <DashboardCourse
+                  isEdit={isEdit}
+                  setIsEdit={setIsEdit}
+                  renderDashboardMenu={renderDashboardMenu}
+                  itemsMenu={dashboardMenuArray}
+                />
               )}
               {showDashboardPage.page === "schedule" && (
-                <DashboardSchedule isEdit={isEdit} setIsEdit={setIsEdit} />
+                <DashboardSchedule
+                  isEdit={isEdit}
+                  setIsEdit={setIsEdit}
+                  renderDashboardMenu={renderDashboardMenu}
+                  itemsMenu={dashboardMenuArray}
+                />
               )}
               {showDashboardPage.page === "teacher" && (
-                <DashboardTeacher isEdit={isEdit} setIsEdit={setIsEdit} />
+                <DashboardTeacher
+                  isEdit={isEdit}
+                  setIsEdit={setIsEdit}
+                  renderDashboardMenu={renderDashboardMenu}
+                  itemsMenu={dashboardMenuArray}
+                />
               )}
               {showDashboardPage.page === "curriculum" && (
                 <DashboardCurriculum
-                  isDetailsViewing={isDetailsViewing}
-                  isEdit={isEdit}
-                  isFinance={isFinance}
                   setIsDetailsViewing={setIsDetailsViewing}
                   setIsEdit={setIsEdit}
                   setOpen={setOpen}
+                  renderDashboardMenu={renderDashboardMenu}
+                  itemsMenu={dashboardMenuArray}
                 />
               )}
             </>
@@ -256,6 +274,8 @@ export default function Dashboard() {
               setIsEdit={setIsEdit}
               setIsFinance={setIsFinance}
               setOpen={setOpen}
+              renderDashboardMenu={renderDashboardMenu}
+              itemsMenu={dashboardMenuArray}
             />
           )}
           {userFullData.role === "user" &&

@@ -15,15 +15,19 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import {
-  IoIosAddCircleOutline,
-  IoIosArrowBack,
-  IoMdClose,
-} from "react-icons/io";
+import { IoMdClose } from "react-icons/io";
 import { StudentButtonDetails } from "../layoutComponents/StudentButtonDetails";
 import { EditStudentForm } from "../formComponents/EditStudentForm";
 import { FinanceStudentModal } from "../modalComponents/FinanceStudentModal";
 import { InsertStudent } from "../insertComponents/InsertStudent";
+import { DashboardMenuArrayProps } from "../../pages/Dashboard";
+import { FcClearFilters, FcFilledFilter } from "react-icons/fc";
+import { TbFilterSearch } from "react-icons/tb";
+import DashboardMenuModal from "../layoutComponents/DashboardMenuModal";
+import BackdropModal from "../layoutComponents/BackdropModal";
+import SearchInputModal from "../layoutComponents/SearchInputModal";
+import DashboardSectionSubHeader from "../layoutComponents/DashboardSectionSubHeader";
+import DashboardSectionAddHeader from "../layoutComponents/DashboardSectionAddHeader";
 
 interface DashboardStudentsProps {
   filteredStudents: FilteredStudentsProps[];
@@ -37,6 +41,8 @@ interface DashboardStudentsProps {
   setIsEdit: Dispatch<SetStateAction<boolean>>;
   setIsFinance: Dispatch<SetStateAction<boolean>>;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  renderDashboardMenu(itemMenu: DashboardMenuArrayProps): JSX.Element;
+  itemsMenu: DashboardMenuArrayProps[];
 }
 
 export type PaymentArrayProps = {
@@ -61,10 +67,14 @@ export default function DashboardStudents({
   setIsEdit,
   setIsFinance,
   setOpen,
+  renderDashboardMenu,
+  itemsMenu,
 }: DashboardStudentsProps) {
   // GET GLOBAL DATA
   const {
     isSubmitting,
+    studentsDatabaseData,
+    userFullData,
     calcStudentPrice2,
     handleDeleteStudent,
     setIsSubmitting,
@@ -118,7 +128,7 @@ export default function DashboardStudents({
     useState<string>("");
 
   // STATE TO CONTROL IF THE SEARCH IS ADVANCED OR NOT
-  const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
+  // const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
 
   // FUNCTION TO TOGGLE THE ADVANCED SEARCH MODE
   // const toggleAdvancedSearch = () => {
@@ -206,7 +216,7 @@ export default function DashboardStudents({
     financialResponsibleName,
     financialResponsibleDocument,
     filteredStudents,
-    isAdvancedSearch,
+    // isAdvancedSearch,
   ]);
 
   // HANDLER FOR CHANGES IN THE STUDENT ID SEARCH FIELD
@@ -245,6 +255,112 @@ export default function DashboardStudents({
     } else {
       console.log("Nenhum usuário selecionado.");
     }
+  }
+
+  // MOBILE MENU FILTER STATE
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // DASHBOARD MENU STATE
+  const [dashboardMenu, setDashboardMenu] = useState(false);
+
+  // FILTER ACTIVE STATE
+  const [filterActive, setFilterActive] = useState(false);
+
+  // FILTER ACTIVE EFFECT
+  useEffect(() => {
+    if (
+      searchId ||
+      searchTerm ||
+      financialResponsibleName ||
+      financialResponsibleDocument
+    ) {
+      setFilterActive(true);
+    } else {
+      setFilterActive(false);
+    }
+  }, [
+    searchTerm,
+    searchId,
+    financialResponsibleName,
+    financialResponsibleDocument,
+  ]);
+
+  function toggleFilterIcon() {
+    if (filterActive) {
+      return (
+        <span className="text-klOrange-500">
+          <FcClearFilters />
+        </span>
+      );
+    } else {
+      return (
+        <span className="text-klOrange-500">
+          <TbFilterSearch size={15} />
+        </span>
+      );
+    }
+  }
+
+  // FILTERS INPUT RENDER
+  function renderFiltersInput() {
+    return (
+      <>
+        <div className="flex flex-col w-full gap-2">
+          <input
+            type="number"
+            inputMode="numeric"
+            name="searchId"
+            placeholder="Identificador"
+            value={searchId}
+            onChange={handleSearchIdChange}
+            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+          />
+          <input
+            type="text"
+            id="searchStudent"
+            value={searchTerm}
+            onChange={handleSearchTermChange}
+            placeholder="Nome do Aluno"
+            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+          />
+          <input
+            type="text"
+            placeholder="Nome do Responsável Financeiro"
+            value={financialResponsibleName}
+            onChange={handleFinancialResponsibleNameChange}
+            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+          />
+          <input
+            type="text"
+            name="financialResponsibleDocument"
+            pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+            placeholder="CPF do Responsável Financeiro"
+            value={financialResponsibleDocument}
+            onChange={handleFinancialResponsibleDocumentChange}
+            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+          />
+          <div className="flex flex-col gap-4 mt-6">
+            <button
+              className="flex w-full items-center justify-center gap-4 bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white outline-none active:dark:bg-klGreen-500 active:bg-klGreen-500/80 transition-all rounded-xl"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <FcFilledFilter size={15} />
+              Aplicar Filtros
+            </button>
+
+            {filterActive && (
+              <button
+                className="flex w-full items-center justify-center gap-4 bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white outline-none active:dark:bg-klGreen-500 active:bg-klGreen-500/80 transition-all rounded-xl"
+                onClick={clearAdvancedSearch}
+              >
+                <IoMdClose size={15} />
+                Limpar Filtros
+              </button>
+            )}
+          </div>
+        </div>
+      </>
+    );
   }
 
   // EXAMPLE ARRAY FOR STUDENT PAYMENTS TO USE ON PAYMENT DETAILS
@@ -386,84 +502,23 @@ export default function DashboardStudents({
         <div className="flex w-full flex-col px-4 pb-4 gap-2">
           <div className="flex w-full gap-2 justify-start">
             {showStudentList ? (
-              <>
-                <div className="flex flex-col w-full gap-2">
-                  <div className="flex w-full gap-2">
-                    <input
-                      type="text"
-                      id="searchStudent"
-                      value={searchTerm}
-                      onChange={handleSearchTermChange}
-                      placeholder="Nome do Aluno"
-                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    />
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      name="searchId"
-                      placeholder="Identificador"
-                      value={searchId}
-                      onChange={handleSearchIdChange}
-                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    />
-                  </div>
-                  <div className="flex w-full gap-2">
-                    <input
-                      type="text"
-                      placeholder="Nome do Responsável Financeiro"
-                      value={financialResponsibleName}
-                      onChange={handleFinancialResponsibleNameChange}
-                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    />
-                    <input
-                      type="text"
-                      name="financialResponsibleDocument"
-                      pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                      placeholder="CPF do Responsável Financeiro"
-                      value={financialResponsibleDocument}
-                      onChange={handleFinancialResponsibleDocumentChange}
-                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <div className="w-[5.55vw] w-min-[4.55vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
-                    <button
-                      className="flex w-full items-center justify-evenly"
-                      onClick={() => setShowStudentList(!showStudentList)}
-                    >
-                      <IoIosAddCircleOutline size={15} />
-                      Adicionar
-                    </button>
-                  </div>
-                  <div className="w-[5.55vw] w-min-[4.55vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
-                    <button
-                      className="flex w-full items-center justify-evenly"
-                      onClick={clearAdvancedSearch}
-                    >
-                      <IoMdClose size={15} />
-                      Limpar
-                    </button>
-                  </div>
-                </div>
-              </>
+              <DashboardSectionSubHeader
+                title="Alunos cadastrados"
+                dashboardMenu={dashboardMenu}
+                dataArray={studentsDatabaseData}
+                mobileMenuOpen={mobileMenuOpen}
+                setDashboardMenu={setDashboardMenu}
+                setMobileMenuOpen={setMobileMenuOpen}
+                setShowList={setShowStudentList}
+                toggleFilterIcon={toggleFilterIcon}
+                userFullData={userFullData}
+              />
             ) : (
-              <>
-                <div className="absolute w-[4.65vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
-                  <button
-                    className="flex w-full items-center justify-evenly"
-                    onClick={() => {
-                      setShowStudentList(!showStudentList),
-                        setIsAdvancedSearch(false);
-                    }}
-                  >
-                    <IoIosArrowBack size={10} /> Voltar
-                  </button>
-                </div>
-                <p className="w-full px-2 py-1 dark:text-gray-100 cursor-default text-center font-bold text-lg">
-                  Adicionar Aluno
-                </p>
-              </>
+              <DashboardSectionAddHeader
+                setShowList={setShowStudentList}
+                showList={showStudentList}
+                title="Adicionar Aluno"
+              />
             )}
           </div>
         </div>
@@ -600,6 +655,32 @@ export default function DashboardStudents({
           </div>
         </div>
       )}
+
+      {/* BACKDROP */}
+      {(mobileMenuOpen || dashboardMenu) && (
+        <BackdropModal
+          setDashboardMenu={setDashboardMenu}
+          setMobileMenuOpen={setMobileMenuOpen}
+        />
+      )}
+
+      {/* MOBILE MENU DRAWER */}
+      <SearchInputModal
+        title="Aluno"
+        mobileMenuOpen={mobileMenuOpen}
+        renderFiltersInput={renderFiltersInput}
+        setMobileMenuOpen={setMobileMenuOpen}
+        userFullData={userFullData}
+      />
+
+      {/* DASHBOARD MENU DRAWER */}
+      <DashboardMenuModal
+        dashboardMenu={dashboardMenu}
+        itemsMenu={itemsMenu}
+        renderDashboardMenu={renderDashboardMenu}
+        setDashboardMenu={setDashboardMenu}
+        userFullData={userFullData}
+      />
     </div>
   );
 }

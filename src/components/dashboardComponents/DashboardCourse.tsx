@@ -6,41 +6,58 @@ import {
   useEffect,
   useState,
 } from "react";
-import { HandleClickOpenFunctionProps, SchoolCourseSearchProps } from "../../@types";
+import {
+  HandleClickOpenFunctionProps,
+  SchoolCourseSearchProps,
+} from "../../@types";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import { IoIosAddCircleOutline, IoIosArrowBack } from "react-icons/io";
+import { IoMdClose } from "react-icons/io";
 import { InsertCourse } from "../insertComponents/InsertCourse";
 import EditCourseForm from "../formComponents/EditCourseForm";
 import { CourseButtonDetails } from "../layoutComponents/CourseButtonDetails";
+import { FcClearFilters, FcFilledFilter } from "react-icons/fc";
+import { TbFilterSearch } from "react-icons/tb";
+import { DashboardMenuArrayProps } from "../../pages/Dashboard";
+import DashboardMenuModal from "../layoutComponents/DashboardMenuModal";
+import BackdropModal from "../layoutComponents/BackdropModal";
+import SearchInputModal from "../layoutComponents/SearchInputModal";
+import DashboardSectionSubHeader from "../layoutComponents/DashboardSectionSubHeader";
+import DashboardSectionAddHeader from "../layoutComponents/DashboardSectionAddHeader";
 
 interface DashboardCourseProps {
   isEdit: boolean;
   setIsEdit: Dispatch<SetStateAction<boolean>>;
+  renderDashboardMenu(itemMenu: DashboardMenuArrayProps): JSX.Element;
+  itemsMenu: DashboardMenuArrayProps[];
 }
 
 export default function DashboardCourse({
   setIsEdit,
   isEdit,
+  renderDashboardMenu,
+  itemsMenu,
 }: DashboardCourseProps) {
   // GET GLOBAL DATA
   const {
     isSubmitting,
     schoolCourseDatabaseData,
+    userFullData,
     handleDeleteCourse,
     setIsSubmitting,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
-  // CURRICULUM LIST OR ADD CURRICULUM STATE
+  // COURSE LIST OR ADD COURSE STATE
   const [showCourseList, setShowCourseList] = useState(true);
 
   // MODAL STATE
   const [modal, setModal] = useState(false);
 
-  // CURRICULUM SELECTED FOR SHOW DETAILS STATE
-  const [courseSelected, setCourseSelected] = useState<SchoolCourseSearchProps>();
+  // COURSE SELECTED FOR SHOW DETAILS STATE
+  const [courseSelected, setCourseSelected] =
+    useState<SchoolCourseSearchProps>();
 
   // OPEN DETAILS FUNCTION
   const handleClickOpen = ({ id, option }: HandleClickOpenFunctionProps) => {
@@ -66,10 +83,11 @@ export default function DashboardCourse({
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   // FILTER COURSE STATE
-  const [filteredCourse, setFilteredCourse] =
-    useState<SchoolCourseSearchProps[]>(schoolCourseDatabaseData);
+  const [filteredCourse, setFilteredCourse] = useState<
+    SchoolCourseSearchProps[]
+  >(schoolCourseDatabaseData);
 
-  // FILTER CURRICULUM
+  // FILTER COURSE
   useEffect(() => {
     // Realiza os filtros com base nos inputs
     setFilteredCourse(
@@ -79,7 +97,7 @@ export default function DashboardCourse({
     );
   }, [searchTerm, schoolCourseDatabaseData]);
 
-  // HANDLER FOR CHANGES IN THE TEACHER NAME SEARCH FIELD
+  // HANDLER FOR CHANGES IN THE COURSE NAME SEARCH FIELD
   const handleSearchTermChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -90,7 +108,7 @@ export default function DashboardCourse({
     setModal(false);
   }
 
-  // DELETE TEACHER FUNCTION
+  // DELETE COURSE FUNCTION
   function handleDeleteData() {
     if (courseSelected) {
       handleDeleteCourse(courseSelected.id, handleClose, closeModal);
@@ -99,53 +117,109 @@ export default function DashboardCourse({
     }
   }
 
+  // MOBILE MENU FILTER STATE
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // DASHBOARD MENU STATE
+  const [dashboardMenu, setDashboardMenu] = useState(false);
+
+  // FILTER ACTIVE STATE
+  const [filterActive, setFilterActive] = useState(false);
+
+  // FILTER ACTIVE EFFECT
+  useEffect(() => {
+    if (searchTerm) {
+      setFilterActive(true);
+    } else {
+      setFilterActive(false);
+    }
+  }, [searchTerm]);
+
+  function toggleFilterIcon() {
+    if (filterActive) {
+      return (
+        <span className="text-klOrange-500">
+          <FcClearFilters />
+        </span>
+      );
+    } else {
+      return (
+        <span className="text-klOrange-500">
+          <TbFilterSearch size={15} />
+        </span>
+      );
+    }
+  }
+
+  // CLEAR SEARCH TERM
+  function clearSearch() {
+    setSearchTerm("");
+  }
+
+  // FILTERS INPUT RENDER
+  function renderFiltersInput() {
+    return (
+      <div className="flex flex-col w-full gap-2">
+        <div className="flex flex-col w-full gap-2">
+          <div className="flex w-full gap-2">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => handleSearchTermChange(e)}
+              placeholder="Digite o nome da Modalidade"
+              className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col gap-4 mt-6">
+          <button
+            className="flex w-full items-center justify-center gap-4 bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white outline-none active:dark:bg-klGreen-500 active:bg-klGreen-500/80 transition-all rounded-xl"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <FcFilledFilter size={15} />
+            Aplicar Filtros
+          </button>
+
+          {filterActive && (
+            <button
+              className="flex w-full items-center justify-center gap-4 bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white outline-none active:dark:bg-klGreen-500 active:bg-klGreen-500/80 transition-all rounded-xl"
+              onClick={clearSearch}
+            >
+              <IoMdClose size={15} />
+              Limpar Filtros
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full h-full justify-start container no-scrollbar rounded-xl pt-4 gap-4">
       <div className="w-full ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container  rounded-xl transition-all duration-1000">
-        <div className="flex w-full flex-col px-4 pb-4 gap-2 z-40">
-          <div className="flex w-full gap-2 justify-start">
-            {showCourseList ? (
-              <>
-                <div className="flex flex-col w-full gap-2">
-                  <div className="flex w-full gap-2">
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => handleSearchTermChange(e)}
-                      placeholder="Procurar Modalidade"
-                      className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <div className="w-[5.55vw] w-min-[4.55vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
-                    <button
-                      className="flex w-full items-center justify-evenly"
-                      onClick={() => setShowCourseList(false)}
-                    >
-                      <IoIosAddCircleOutline size={15} />
-                      Adicionar
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="absolute w-[4.65vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
-                  <button
-                    className="flex w-full items-center justify-evenly"
-                    onClick={() => setShowCourseList(!showCourseList)}
-                  >
-                    <IoIosArrowBack size={10} /> Voltar
-                  </button>
-                </div>
-                <p className="w-full px-2 py-1 dark:text-gray-100 cursor-default text-center font-bold text-lg">
-                  Adicionar Modalidade
-                </p>
-              </>
-            )}
-          </div>
+        {/* <div className="flex w-full flex-col px-4 pb-4 gap-2 z-40"> */}
+        <div className="flex w-full justify-start px-4 pb-4 z-40">
+          {showCourseList ? (
+            <DashboardSectionSubHeader
+              title="Modalidades cadastradas"
+              dashboardMenu={dashboardMenu}
+              dataArray={schoolCourseDatabaseData}
+              mobileMenuOpen={mobileMenuOpen}
+              setDashboardMenu={setDashboardMenu}
+              setMobileMenuOpen={setMobileMenuOpen}
+              setShowList={setShowCourseList}
+              toggleFilterIcon={toggleFilterIcon}
+              userFullData={userFullData}
+            />
+          ) : (
+            <DashboardSectionAddHeader
+              setShowList={setShowCourseList}
+              showList={showCourseList}
+              title="Adicionar Modalidade"
+            />
+          )}
         </div>
+        {/* </div> */}
         {showCourseList ? (
           <>
             {/* TEACHER LIST */}
@@ -218,6 +292,32 @@ export default function DashboardCourse({
           </div>
         </div>
       )}
+
+      {/* BACKDROP */}
+      {(mobileMenuOpen || dashboardMenu) && (
+        <BackdropModal
+          setDashboardMenu={setDashboardMenu}
+          setMobileMenuOpen={setMobileMenuOpen}
+        />
+      )}
+
+      {/* MOBILE MENU DRAWER */}
+      <SearchInputModal
+        title="Modalidade"
+        mobileMenuOpen={mobileMenuOpen}
+        renderFiltersInput={renderFiltersInput}
+        setMobileMenuOpen={setMobileMenuOpen}
+        userFullData={userFullData}
+      />
+
+      {/* DASHBOARD MENU DRAWER */}
+      <DashboardMenuModal
+        dashboardMenu={dashboardMenu}
+        itemsMenu={itemsMenu}
+        renderDashboardMenu={renderDashboardMenu}
+        setDashboardMenu={setDashboardMenu}
+        userFullData={userFullData}
+      />
     </div>
   );
 }

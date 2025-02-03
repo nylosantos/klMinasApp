@@ -6,6 +6,10 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import BackdropModal from "./BackdropModal";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+import CopyrightBottom from "./CopyrightBottom";
 
 export function Header() {
   // GET GLOBAL DATA
@@ -69,13 +73,13 @@ export function Header() {
     );
   };
 
+  // CONFIRM ALERT MODAL
+  const ConfirmationAlert = withReactContent(Swal);
+
   // NAVIGATION ITEMS FUNCTION
   const renderNavItems = () => (
-    <div className="flex flex-col md:flex-row gap-[2.5vw] absolute justify-between md:items-center h-[20vh] md:h-0 md:text-base text-lg space-y-[2vh] md:space-y-[0vh]">
-      <div
-        key="Dashboard"
-        className="flex border-b-2 border-klGreen-500/0 md:hover:border-klGreen-500 dark:border-klGreen-500/10 dark:md:hover:border-klOrange-500"
-      >
+    <div className="flex flex-col gap-[2.5vw] absolute justify-between h-[20vh] md:h-0 md:text-base text-lg space-y-[2vh] md:space-y-[0vh]">
+      <div key="Dashboard">
         <button
           onClick={() => {
             setPage({ prev: page.show, show: "Dashboard" });
@@ -83,19 +87,18 @@ export function Header() {
           }}
           className={
             page.show === "Dashboard"
-              ? `text-klOrange-500 dark:text-gray-100`
+              ? "text-klOrange-500 dark:text-gray-100"
               : "text-klGreen-500 dark:text-klOrange-500"
           }
         >
-          Início
+          <p className="flex border-b-2 border-klGreen-500/0 md:hover:border-klGreen-500 dark:border-klGreen-500/10 dark:md:hover:border-klOrange-500">
+            Início
+          </p>
         </button>
       </div>
       {userFullData &&
         (userFullData.role === "root" || userFullData.role === "admin") && (
-          <div
-            key="ManageSchools"
-            className="flex border-b-2 border-klGreen-500/0 md:hover:border-klGreen-500 dark:border-klGreen-500/10 dark:md:hover:border-klOrange-500"
-          >
+          <div key="ManageSchools">
             <button
               onClick={() => {
                 setPage({ prev: page.show, show: "ManageSchools" });
@@ -107,14 +110,13 @@ export function Header() {
                   : "text-klGreen-500 dark:text-klOrange-500"
               }
             >
-              Gerenciar Escolas
+              <p className="flex border-b-2 border-klGreen-500/0 md:hover:border-klGreen-500 dark:border-klGreen-500/10 dark:md:hover:border-klOrange-500">
+                Gerenciar Escolas
+              </p>
             </button>
           </div>
         )}
-      <div
-        key="Settings"
-        className="flex border-b-2 border-klGreen-500/0 md:hover:border-klGreen-500 dark:border-klGreen-500/10 dark:md:hover:border-klOrange-500"
-      >
+      <div key="Settings">
         <button
           onClick={() => {
             setPage({ prev: page.show, show: "Settings" });
@@ -126,19 +128,33 @@ export function Header() {
               : "text-klGreen-500 dark:text-klOrange-500"
           }
         >
-          Configurações
+          <p className="flex border-b-2 border-klGreen-500/0 md:hover:border-klGreen-500 dark:border-klGreen-500/10 dark:md:hover:border-klOrange-500">
+            Configurações
+          </p>
         </button>
       </div>
-      <div
-        key="logout"
-        className="flex border-b-2 border-klGreen-500/0 md:hover:border-red-500 dark:border-klGreen-500/10 dark:md:hover:border-red-500"
-      >
+      <div key="logout">
         <p
-          className="text-klGreen-500 dark:text-klOrange-500 hover:text-red-500 dark:hover:text-red-500 cursor-pointer"
+          className="flex border-b-2 border-klGreen-500/0 dark:border-klGreen-500/10 text-red-500 dark:text-red-500 hover:text-red-500 dark:hover:text-red-500 cursor-pointer"
           onClick={() => {
-            setLogin(true);
-            auth.signOut();
-            setMobileMenuOpen(false);
+            ConfirmationAlert.fire({
+              title: "Sair?",
+              text: "Fazer logout no sistema",
+              icon: "warning",
+              showCancelButton: true,
+              cancelButtonColor: "#d33",
+              cancelButtonText: "Cancelar",
+              confirmButtonColor: "#2a5369",
+              confirmButtonText: "Sair",
+            }).then(async (result) => {
+              if (result.isConfirmed) {
+                setLogin(true);
+                auth.signOut();
+                setMobileMenuOpen(false);
+              } else {
+                setMobileMenuOpen(false);
+              }
+            });
           }}
         >
           Sair
@@ -151,30 +167,41 @@ export function Header() {
     <div className="w-screen flex justify-center top-0 left-0 p-[2vh] md:p-[2vh] bg-klGreen-500/20 dark:bg-klGreen-500/30 z-50">
       <div className="flex w-full container justify-between items-center">
         {/* MOBILE MENU BUTTON */}
-        <div className="md:hidden flex items-center">
-          <button
-            className="text-klGreen-500 dark:text-klOrange-500"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-[2.5vh] h-[2.5vh]"
+        {logged && userFullData && (
+          <div className="flex items-center">
+            <button
+              className="text-klGreen-500 dark:text-klOrange-500"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4.5 6.75h15m-15 5.25h15m-15 5.25h15"
-              />
-            </svg>
-          </button>
-        </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-[2.5vh] h-[2.5vh]"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4.5 6.75h15m-15 5.25h15m-15 5.25h15"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* LOGO */}
-        <div className="absolute left-1/2 flex justify-center transform -translate-x-1/2 md:static md:left-0 md:transform-none w-auto md:w-auto">
+        {/* <div className="absolute left-1/2 flex justify-center transform -translate-x-1/2 md:static md:left-0 md:transform-none w-auto md:w-auto">
+          <img
+            src={theme === "light" ? Logo : LogoDark}
+            alt={`Logo ${systemConstantsValues?.customerFullName}`}
+            className="dark:bg-transparent cursor-pointer"
+            style={{ height: "min(4vh, 12.5vw)", width: "auto" }}
+            onClick={() => setPage({ prev: page.show, show: "Dashboard" })}
+          />
+        </div> */}
+        <div className="absolute left-1/2 flex justify-center transform -translate-x-1/2 w-auto">
           <img
             src={theme === "light" ? Logo : LogoDark}
             alt={`Logo ${systemConstantsValues?.customerFullName}`}
@@ -185,14 +212,17 @@ export function Header() {
         </div>
 
         {/* NAVIGATION DISPLAY CENTER */}
-        <div className="hidden md:flex absolute container justify-center">
+        {/* <div className="hidden absolute container justify-center">
           {logged && userFullData && renderNavItems()}
-        </div>
+        </div> */}
 
         {/* BUTTON THEME CHANGE RIGHT */}
-        <div className="hidden md:flex w-auto justify-end items-center gap-[1vw]">
+        <div className="hidden md:flex w-full justify-end items-center gap-[1vw]">
           {logged && userFullData && (
-            <p className="relative z-10 text-klGreen-500 dark:text-klOrange-500">
+            <p
+              className="relative z-10 text-klGreen-500 dark:text-klOrange-500 cursor-pointer"
+              onClick={() => setPage({ prev: page.show, show: "Settings" })}
+            >
               Olá, {userFullData.name.split(" ")[0]}
             </p>
           )}
@@ -200,30 +230,27 @@ export function Header() {
         </div>
 
         {/* MOBILE THEME CHANGE BUTTON */}
-        <div className="md:hidden flex items-center">
+        <div className="md:hidden justify-end w-full flex items-center">
           {renderThemeChanger()}
         </div>
       </div>
 
       {/* BACKDROP */}
       {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setMobileMenuOpen(false)}
-        />
+        <BackdropModal setMobileMenuOpen={setMobileMenuOpen} />
       )}
 
       {/* MOBILE MENU DRAWER */}
       <div
-        className={`fixed top-0 left-0 h-full w-[75vw] max-w-[75vw] p-[4vh] bg-white dark:bg-gray-800/95 transform transition-transform duration-300 ease-in-out z-50 ${
+        className={`fixed top-0 left-0 h-full w-[75vw] max-w-[75vw] md:w-[20vw] md:max-w-[20vw] p-[4vh] bg-white dark:bg-gray-800/95 transform transition-transform duration-300 ease-in-out z-50 ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Background Layer */}
-        <div className="absolute inset-0 bg-klGreen-500/20 dark:bg-klGreen-500/40" />
+        <div className="absolute inset-0 bg-white dark:bg-klGreen-500/40" />
         <div className="relative z-10 flex justify-between items-center mb-[4vh]">
           <button
-            className="text-klGreen-500 dark:text-klOrange-500"
+            className="flex w-full justify-end text-klGreen-500 dark:text-klOrange-500"
             onClick={() => setMobileMenuOpen(false)}
           >
             <svg
@@ -241,20 +268,11 @@ export function Header() {
               />
             </svg>
           </button>
-          {/* {userFullData && (
-            <p className="relative z-10 text-klGreen-500 dark:text-klOrange-500">
-              Olá, {userFullData.name.split(" ")[0]}
-            </p>
-          )} */}
         </div>
         {logged && userFullData && (
           <ul className="relative z-10">{renderNavItems()}</ul>
         )}
-        <div className="z-10 absolute bottom-[4vh] left-0 right-0 w-full text-center text-xs text-klGreen-500 dark:text-klOrange-500">
-          &copy; {new Date().getFullYear()}{" "}
-          {systemConstantsValues?.customerShortName}. Todos os direitos
-          reservados.
-        </div>
+        <CopyrightBottom systemConstantsValues={systemConstantsValues} />
       </div>
     </div>
   );

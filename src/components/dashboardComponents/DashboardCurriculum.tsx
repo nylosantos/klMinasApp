@@ -14,29 +14,32 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import {
-  IoIosAddCircleOutline,
-  IoIosArrowBack,
-  IoMdClose,
-} from "react-icons/io";
+import { IoMdClose } from "react-icons/io";
 import { InsertCurriculum } from "../insertComponents/InsertCurriculum";
 import EditCurriculumForm from "../formComponents/EditCurriculumForm";
 import { TbFilterSearch } from "react-icons/tb";
 import { FcClearFilters, FcFilledFilter } from "react-icons/fc";
+import { DashboardMenuArrayProps } from "../../pages/Dashboard";
+import DashboardMenuModal from "../layoutComponents/DashboardMenuModal";
+import BackdropModal from "../layoutComponents/BackdropModal";
+import SearchInputModal from "../layoutComponents/SearchInputModal";
+import DashboardSectionSubHeader from "../layoutComponents/DashboardSectionSubHeader";
+import DashboardSectionAddHeader from "../layoutComponents/DashboardSectionAddHeader";
 
 interface DashboardCurriculumProps {
-  isDetailsViewing: boolean;
-  isEdit: boolean;
-  isFinance: boolean;
   setIsDetailsViewing: Dispatch<SetStateAction<boolean>>;
   setIsEdit: Dispatch<SetStateAction<boolean>>;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  renderDashboardMenu(itemMenu: DashboardMenuArrayProps): JSX.Element;
+  itemsMenu: DashboardMenuArrayProps[];
 }
 
 export default function DashboardCurriculum({
   setIsDetailsViewing,
   setIsEdit,
   setOpen,
+  renderDashboardMenu,
+  itemsMenu,
 }: DashboardCurriculumProps) {
   // GET GLOBAL DATA
   const {
@@ -87,6 +90,9 @@ export default function DashboardCurriculum({
   // MOBILE MENU FILTER STATE
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // DASHBOARD MENU STATE
+  const [dashboardMenu, setDashboardMenu] = useState(false);
+
   // CLOSE DETAILS FUNCTION
   const handleClose = () => {
     setCurriculumSelected(undefined);
@@ -95,6 +101,7 @@ export default function DashboardCurriculum({
     setIsDetailsViewing(false);
   };
 
+  // FILTER STATE
   const [filters, setFilters] = useState({
     publicId: "",
     school: "",
@@ -104,7 +111,25 @@ export default function DashboardCurriculum({
     teacher: "",
   });
 
-  // FILTER Curriculum STATE
+  // FILTER ACTIVE STATE
+  const [filterActive, setFilterActive] = useState(false);
+
+  // FILTER ACTIVE EFFECT
+  useEffect(() => {
+    if (
+      filters.publicId ||
+      filters.school ||
+      filters.schoolYear ||
+      filters.modality ||
+      filters.teacher
+    ) {
+      setFilterActive(true);
+    } else {
+      setFilterActive(false);
+    }
+  }, [filters]);
+
+  // FILTER CURRICULUM STATE
   const [filteredCurriculum, setFilteredCurriculum] = useState<
     CurriculumSearchProps[]
   >(curriculumDatabaseData);
@@ -209,7 +234,7 @@ export default function DashboardCurriculum({
     curriculumDatabaseData,
   ]);
 
-  // Atualiza o valor do filtro ao digitar nos inputs
+  // FUNCTION TO HANDLE INPUT CHANGE
   const handleInputChange = (field: keyof typeof filters, value: string) => {
     setFilters((prevFilters) => ({ ...prevFilters, [field]: value }));
   };
@@ -226,6 +251,7 @@ export default function DashboardCurriculum({
     });
   };
 
+  // CLOSE MODAL FUNCTION
   function closeModal() {
     setModal(false);
   }
@@ -239,50 +265,51 @@ export default function DashboardCurriculum({
     }
   }
 
+  // RENDER FILTERS INPUT
   function renderFiltersInput() {
     return (
       <div className="flex flex-col w-full gap-2">
-        <div className="flex flex-col md:flex-row w-full gap-2">
+        <div className="flex flex-col w-full gap-2">
           <input
             type="number"
             inputMode="numeric"
             value={filters.publicId}
             onChange={(e) => handleInputChange("publicId", e.target.value)}
             placeholder="Identificador"
-            className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
           <input
             type="text"
             value={filters.school}
             onChange={(e) => handleInputChange("school", e.target.value)}
             placeholder="Escola"
-            className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
           <input
             type="text"
             value={filters.schoolYear}
             onChange={(e) => handleInputChange("schoolYear", e.target.value)}
             placeholder="Ano Escolar"
-            className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
         </div>
-        <div className="flex flex-col md:flex-row w-full gap-2">
+        <div className="flex flex-col w-full gap-2">
           <input
             type="text"
             value={filters.modality}
             onChange={(e) => handleInputChange("modality", e.target.value)}
             placeholder="Modalidade"
-            className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
           <input
             type="text"
             value={filters.teacher}
             onChange={(e) => handleInputChange("teacher", e.target.value)}
             placeholder="Professor"
-            className="w-full px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
         </div>
-        <div className="flex md:hidden flex-col gap-4 mt-6">
+        <div className="flex flex-col gap-4 mt-6">
           <button
             className="flex w-full items-center justify-center gap-4 bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white outline-none active:dark:bg-klGreen-500 active:bg-klGreen-500/80 transition-all rounded-xl"
             onClick={() => setMobileMenuOpen(false)}
@@ -290,29 +317,35 @@ export default function DashboardCurriculum({
             <FcFilledFilter size={15} />
             Aplicar Filtros
           </button>
-          <button
-            className="flex w-full items-center justify-center gap-4 bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white outline-none active:dark:bg-klGreen-500 active:bg-klGreen-500/80 transition-all rounded-xl"
-            onClick={clearSearch}
-          >
-            <IoMdClose size={15} />
-            Limpar
-          </button>
+
+          {filterActive && (
+            <button
+              className="flex w-full items-center justify-center gap-4 bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white outline-none active:dark:bg-klGreen-500 active:bg-klGreen-500/80 transition-all rounded-xl"
+              onClick={clearSearch}
+            >
+              <IoMdClose size={15} />
+              Limpar Filtros
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
+  // TOGGLE FILTER ICON
   function toggleFilterIcon() {
-    if (
-      filters.publicId ||
-      filters.school ||
-      filters.schoolYear ||
-      filters.modality ||
-      filters.teacher
-    ) {
-      return <FcClearFilters />;
+    if (filterActive) {
+      return (
+        <span className="text-klOrange-500">
+          <FcClearFilters />
+        </span>
+      );
     } else {
-      return <TbFilterSearch size={15} />;
+      return (
+        <span className="text-klOrange-500">
+          <TbFilterSearch size={15} />
+        </span>
+      );
     }
   }
 
@@ -322,63 +355,23 @@ export default function DashboardCurriculum({
         <div className="flex w-full flex-col px-4 pb-4 gap-2">
           <div className="flex w-full gap-2 justify-start">
             {showCurriculumList ? (
-              <>
-                <div className="hidden md:flex w-full">
-                  {renderFiltersInput()}
-                </div>
-                {/* MOBILE MENU BUTTON */}
-                <div className="md:hidden flex items-center w-full justify-between">
-                  {userFullData && (
-                    <p className="relative z-10 text-klGreen-500 dark:text-klOrange-500">
-                      Olá, {userFullData.name.split(" ")[0]}
-                    </p>
-                  )}
-                  <button
-                    className="text-klGreen-500 dark:text-klOrange-500"
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  >
-                    {toggleFilterIcon()}
-                  </button>
-                </div>
-                {userFullData &&
-                  (userFullData.role === "admin" ||
-                    userFullData.role === "editor") && (
-                    <div className="flex flex-col gap-2">
-                      <div className="w-[5.55vw] w-min-[4.55vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
-                        <button
-                          className="flex w-full items-center justify-evenly"
-                          onClick={() => setShowCurriculumList(false)}
-                        >
-                          <IoIosAddCircleOutline size={15} />
-                          Adicionar
-                        </button>
-                      </div>
-                      <div className="w-[5.55vw] w-min-[4.55vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
-                        <button
-                          className="flex w-full items-center justify-evenly"
-                          onClick={clearSearch}
-                        >
-                          <IoMdClose size={15} />
-                          Limpar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-              </>
+              <DashboardSectionSubHeader
+                title="Turmas cadastradas"
+                dashboardMenu={dashboardMenu}
+                dataArray={curriculumDatabaseData}
+                mobileMenuOpen={mobileMenuOpen}
+                setDashboardMenu={setDashboardMenu}
+                setMobileMenuOpen={setMobileMenuOpen}
+                setShowList={setShowCurriculumList}
+                toggleFilterIcon={toggleFilterIcon}
+                userFullData={userFullData}
+              />
             ) : (
-              <>
-                <div className="absolute w-[4.65vw] inline-flex items-center gap-2 rounded-md bg-klGreen-500 dark:bg-klGreen-500/50 py-1 text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80">
-                  <button
-                    className="flex w-full items-center justify-evenly"
-                    onClick={() => setShowCurriculumList(!showCurriculumList)}
-                  >
-                    <IoIosArrowBack size={10} /> Voltar
-                  </button>
-                </div>
-                <p className="w-full px-2 py-1 dark:text-gray-100 cursor-default text-center font-bold text-lg">
-                  Adicionar Turma
-                </p>
-              </>
+              <DashboardSectionAddHeader
+                setShowList={setShowCurriculumList}
+                showList={showCurriculumList}
+                title="Adicionar Turma"
+              />
             )}
           </div>
         </div>
@@ -416,13 +409,6 @@ export default function DashboardCurriculum({
                           handleOneCurriculumDetails(b.id).schoolName
                         )
                       )
-                      // .sort((a, b) =>
-                      //   handleOneCurriculumDetails(
-                      //     a.id
-                      //   ).scheduleName.localeCompare(
-                      //     handleOneCurriculumDetails(b.id).scheduleName
-                      //   )
-                      // )
                       .sort((a, b) =>
                         handleOneCurriculumDetails(
                           a.id
@@ -512,6 +498,8 @@ export default function DashboardCurriculum({
           <InsertCurriculum />
         )}
       </div>
+
+      {/* MODAL EDIT CURRICULUM */}
       {modal && curriculumSelected && (
         <div
           className="relative z-50"
@@ -534,50 +522,32 @@ export default function DashboardCurriculum({
           </div>
         </div>
       )}
+
       {/* BACKDROP */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setMobileMenuOpen(false)}
+      {(mobileMenuOpen || dashboardMenu) && (
+        <BackdropModal
+          setDashboardMenu={setDashboardMenu}
+          setMobileMenuOpen={setMobileMenuOpen}
         />
       )}
 
       {/* MOBILE MENU DRAWER */}
-      <div
-        className={`fixed top-0 right-0 h-full w-[75vw] max-w-[75vw] p-[4vh] bg-white dark:bg-gray-800/95 transform transition-transform duration-300 ease-in-out z-50 ${
-          mobileMenuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        {/* Background Layer */}
-        <div className="absolute inset-0 bg-klGreen-500/20 dark:bg-klGreen-500/40" />
-        <div className="relative z-10 flex justify-between items-center mb-[4vh]">
-          <p className="relative z-10 text-klGreen-500 dark:text-klOrange-500">
-            Procurar Turma
-          </p>
-          <button
-            className="text-klGreen-500 dark:text-klOrange-500"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-[3vh] h-[3vh]"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        {userFullData && (
-          <ul className="relative z-10">{renderFiltersInput()}</ul>
-        )}
-      </div>
+      <SearchInputModal
+        title="Turma"
+        mobileMenuOpen={mobileMenuOpen}
+        renderFiltersInput={renderFiltersInput}
+        setMobileMenuOpen={setMobileMenuOpen}
+        userFullData={userFullData}
+      />
+
+      {/* DASHBOARD MENU DRAWER */}
+      <DashboardMenuModal
+        dashboardMenu={dashboardMenu}
+        itemsMenu={itemsMenu}
+        renderDashboardMenu={renderDashboardMenu}
+        setDashboardMenu={setDashboardMenu}
+        userFullData={userFullData}
+      />
     </div>
   );
 }
