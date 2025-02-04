@@ -29,9 +29,9 @@ export default function DashboardSectionSubHeader<T>({
     <div className="flex items-center w-full justify-between">
       <div
         className={`flex w-auto rounded-md ${
-          userFullData && userFullData.role === "teacher"
-            ? "bg-transparent"
-            : "bg-klGreen-500 dark:bg-klGreen-500/50"
+          userFullData && userFullData.role !== "teacher"
+            ? "bg-klGreen-500 dark:bg-klGreen-500/50"
+            : "bg-transparent"
         } py-1 px-1 md:px-3 text-xs md:text-sm/6 focus:outline-none hover:dark:bg-klGreen-500 hover:bg-klGreen-500/80`}
       >
         {userFullData && userFullData.role !== "teacher" ? (

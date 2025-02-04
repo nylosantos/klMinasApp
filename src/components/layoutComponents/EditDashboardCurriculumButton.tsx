@@ -1,30 +1,56 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { Dispatch, SetStateAction, useContext } from "react";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoClose, IoPencil } from "react-icons/io5";
-import { MdDelete, MdSettings } from "react-icons/md";
+import { MdDelete } from "react-icons/md";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 type EditCurriculumButtonDetailsProps = {
   dashboardView: boolean;
-  setDashboardView: (option: boolean) => void;
-  setModal?: (option: boolean) => void;
+  classCall: boolean;
+  setDashboardView: Dispatch<SetStateAction<boolean>>;
+  setModal?: Dispatch<SetStateAction<boolean>>;
+  setClassCall: Dispatch<SetStateAction<boolean>>;
   handleDeleteClass?: () => void;
 };
 
 export function EditDashboardCurriculumButton({
   dashboardView,
+  classCall,
   handleDeleteClass,
   setDashboardView,
   setModal,
+  setClassCall,
 }: EditCurriculumButtonDetailsProps) {
+  // GET GLOBAL DATA
+  const { userFullData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
   return (
     <Menu>
-      <MenuButton className="w-[5.65vw] inline-flex items-center justify-evenly rounded-md md:bg-klGreen-500 md:dark:bg-klGreen-500/50 px-0 py-[0.125rem] text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white md:hover:dark:bg-klGreen-500 md:hover:bg-klGreen-500/80">
+      <MenuButton className="w-auto px-2 inline-flex items-center justify-evenly rounded-md md:bg-klGreen-500 md:dark:bg-klGreen-500/50 px-0 py-[0.125rem] text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white md:hover:dark:bg-klGreen-500 md:hover:bg-klGreen-500/80">
         <p className="hidden md:flex">Opções</p>
         <div className="hidden md:flex">
           <IoIosArrowDown size={10} />
         </div>
-        <div className="flex md:hidden">
-          <MdSettings size={20} />
+        <div className="flex md:hidden text-klOrange-500">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-[2.5vh] h-[2.5vh]"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4.5 6.75h15m-15 5.25h15m-15 5.25h15"
+            />
+          </svg>
         </div>
       </MenuButton>
       <MenuItems
@@ -36,27 +62,41 @@ export function EditDashboardCurriculumButton({
           <button
             className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
             onClick={() => {
-              setDashboardView(!dashboardView);
+              if (userFullData && userFullData.role === "teacher") {
+                setClassCall(!classCall);
+              } else {
+                setDashboardView(!dashboardView);
+              }
             }}
           >
             <IoPencil size={12} />
-            {dashboardView ? "Editar" : "Cancelar edição"}
+            {dashboardView
+              ? userFullData && userFullData.role === "teacher"
+                ? classCall
+                  ? "Detalhes da Turma"
+                  : "Registro de Aula"
+                : "Editar"
+              : "Cancelar edição"}
           </button>
         </MenuItem>
 
         <div className="my-1 h-px bg-white/5" />
 
-        <MenuItem>
-          <button
-            className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
-            onClick={() => handleDeleteClass && handleDeleteClass()}
-          >
-            <MdDelete />
-            Deletar Turma
-          </button>
-        </MenuItem>
+        {userFullData && userFullData.role !== "teacher" && (
+          <>
+            <MenuItem>
+              <button
+                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
+                onClick={() => handleDeleteClass && handleDeleteClass()}
+              >
+                <MdDelete />
+                Deletar Turma
+              </button>
+            </MenuItem>
 
-        <div className="my-1 h-px bg-white/5" />
+            <div className="my-1 h-px bg-white/5" />
+          </>
+        )}
 
         <MenuItem>
           <button

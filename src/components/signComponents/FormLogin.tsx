@@ -49,7 +49,6 @@ export function FormLogin() {
         systemConstantsDb.find(
           (constants) => constants.year === new Date().getFullYear().toString()
         ) as SystemConstantsSearchProps;
-      console.log(foundedSystemConstants);
       if (foundedSystemConstants) {
         setSystemSignInClosed(foundedSystemConstants.systemSignInClosed);
       }

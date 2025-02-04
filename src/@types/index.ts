@@ -394,6 +394,20 @@ export interface ExcludeCurriculumProps extends CurriculumArrayProps {
   exclude: boolean;
 }
 
+export interface PresenceListProps {
+  id: string;
+  presence: boolean;
+}
+
+export interface ClassCallsProps {
+  id: string;
+  presenceList: Array<PresenceListProps>;
+}
+
+export interface CurriculumAttendanceProps extends CurriculumSearchProps {
+  classCalls: Array<ClassCallsProps>;
+}
+
 export interface CurriculumWithNamesProps extends CurriculumSearchProps {
   schoolName: string;
   schoolClassNames: string[];
