@@ -46,7 +46,7 @@ export default function DashboardSectionSubHeader<T>({
           </button>
         ) : (
           userFullData && (
-            <p className="relative z-10 text-klGreen-500 dark:text-klOrange-500">
+            <p className="md:hidden flex relative z-10 text-klGreen-500 dark:text-klOrange-500">
               Olá, {userFullData.name.split(" ")[0]}
             </p>
           )
