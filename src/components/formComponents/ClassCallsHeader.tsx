@@ -35,7 +35,7 @@ export default function ClassCallsHeader({
           name="publicId"
           disabled
           className="w-full text-center px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-          value={`${handleOneCurriculumDetails(curriculumId).schoolName} - ${
+          value={`${handleOneCurriculumDetails(curriculumId).publicId} - ${handleOneCurriculumDetails(curriculumId).schoolName} - ${
             handleOneCurriculumDetails(curriculumId).schoolCourseName
           } - ${handleOneCurriculumDetails(curriculumId).teacherName}`}
         />

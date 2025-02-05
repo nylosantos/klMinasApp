@@ -2211,7 +2211,7 @@ export function InsertStudent() {
                           }
                           id={curriculum.id}
                           name="curriculumRadio"
-                          className="text-klGreen-500 dark:text-klGreen-500 border-none"
+                          className="text-klGreen-500 dark:text-klGreen-500 border bg-gray-500"
                           value={curriculum.id}
                           onChange={(e) => {
                             setCurriculumData({
