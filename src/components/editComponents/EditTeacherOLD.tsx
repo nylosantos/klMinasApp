@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
-import { doc, getFirestore, updateDoc } from "firebase/firestore";
+import { doc, getFirestore } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -18,13 +18,14 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { secureUpdateDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function EditTeacher() {
   // GET GLOBAL DATA
-  const { appUsersDatabaseData, teacherDatabaseData } = useContext(
+  const { appUsersDatabaseData, teacherDatabaseData, userFullData } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
 
@@ -177,7 +178,7 @@ export function EditTeacher() {
     // EDIT TEACHER FUNCTION
     const editTeacher = async () => {
       try {
-        await updateDoc(doc(db, "teachers", teacherData.teacherId), {
+        await secureUpdateDoc(doc(db, "teachers", teacherData.teacherId), {
           name: data.name,
           email: data.email,
           phone: data.phone,
@@ -213,7 +214,7 @@ export function EditTeacher() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user: any = await getAuthUser(teacherData.teacherId);
     // IF YES, EDIT ALSO
-    if (user !== undefined) {
+    if (user !== undefined && userFullData) {
       const teacherPhoneExist = appUsersDatabaseData.find(
         (teacher) => teacher.phone === data.phone
       );
@@ -250,6 +251,7 @@ export function EditTeacher() {
             ...data,
             role: "teacher",
             id: user!.data.uid,
+            updatedBy: userFullData.id,
           };
           // EDIT FIREBASE AUTH DATA ONLY WITHOUT CHANGE PASSWORD -> FOR EDIT PASSWORD GO TO EDITUSER
           await updateAppUserWithoutPassword(dataForAuth);
@@ -331,8 +333,8 @@ export function EditTeacher() {
             defaultValue={" -- select an option -- "}
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="teacherSelect"
             onChange={(e) => {
@@ -392,8 +394,8 @@ export function EditTeacher() {
                 }
                 className={
                   errors.name
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 value={teacherEditData.name}
                 onChange={(e) => {
@@ -418,7 +420,7 @@ export function EditTeacher() {
                 E-mail:{" "}
               </label>
               <input
-                type="text"
+                type="email"
                 name="email"
                 disabled={isSubmitting}
                 placeholder={
@@ -428,8 +430,8 @@ export function EditTeacher() {
                 }
                 className={
                   errors.email
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 value={teacherEditData.email}
                 onChange={(e) => {

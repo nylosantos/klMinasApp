@@ -92,10 +92,14 @@ const BirthDaySelect = <T extends { birthDate: string }>({
   }, [day, month, year, setStudentData]);
 
   useEffect(() => {
-    if (birthDateValue !== "") {
+    // Verifica se a string está no formato correto: dd/MM/YYYY
+    const isValidDateFormat = /^\d{2}\/\d{2}\/\d{4}$/.test(birthDateValue);
+
+    if (birthDateValue !== "" && isValidDateFormat) {
       const [birthDateDay, birthDateMonth, birthDateYear] = birthDateValue
         .split("/")
         .map((num) => parseInt(num, 10));
+
       setDay(birthDateDay);
       setMonth(birthDateMonth);
       setYear(birthDateYear);

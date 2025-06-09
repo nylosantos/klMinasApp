@@ -4,9 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
-import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteTeacherValidationSchema } from "../../@types/zodValidation";
@@ -20,15 +18,10 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import { useHttpsCallable } from "react-firebase-hooks/functions";
-import { getFunctions } from "firebase/functions";
-
-// INITIALIZING FIRESTORE DB
-const db = getFirestore(app);
 
 export function DeleteTeacher() {
   // GET GLOBAL DATA
-  const { curriculumDatabaseData, teacherDatabaseData } = useContext(
+  const { teacherDatabaseData, isSubmitting, handleDeleteTeacher } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
 
@@ -36,7 +29,7 @@ export function DeleteTeacher() {
   const [teacherData, setTeacherData] = useState<DeleteTeacherValidationZProps>(
     {
       teacherId: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     }
   );
 
@@ -74,7 +67,7 @@ export function DeleteTeacher() {
 
   // SET TEACHER SELECTED STATE WHEN SELECT TEACHER
   useEffect(() => {
-    setTeacherData({ ...teacherData, confirmDelete: false });
+    // setTeacherData({ ...teacherData, confirmDelete: false });
     if (teacherData.teacherId !== "") {
       setTeacherSelectedData(
         teacherDatabaseData.find(({ id }) => id === teacherData.teacherId)
@@ -101,12 +94,6 @@ export function DeleteTeacher() {
     }
   }, [teacherSelectedData]);
 
-  // DELETE USER CLOUD FUNCTION HOOK
-  const [deleteAppUser] = useHttpsCallable(getFunctions(app), "deleteAppUser");
-
-  // SUBMITTING STATE
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   // REACT HOOK FORM SETTINGS
   const {
     handleSubmit,
@@ -117,7 +104,7 @@ export function DeleteTeacher() {
     resolver: zodResolver(deleteTeacherValidationSchema),
     defaultValues: {
       teacherId: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     },
   });
 
@@ -128,7 +115,7 @@ export function DeleteTeacher() {
     ).selectedIndex = 0;
     setTeacherData({
       teacherId: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     });
     setIsSelected(false);
     reset();
@@ -137,12 +124,12 @@ export function DeleteTeacher() {
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("teacherId", teacherData.teacherId);
-    setValue("confirmDelete", teacherData.confirmDelete);
+    // setValue("confirmDelete", teacherData.confirmDelete);
   }, [teacherData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [errors.teacherId, errors.confirmDelete];
+    const fullErrors = [errors.teacherId /*, errors.confirmDelete*/];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -155,88 +142,10 @@ export function DeleteTeacher() {
   }, [errors]);
 
   // SUBMIT DATA FUNCTION
-  const handleDeleteTeacher: SubmitHandler<
+  const handleSubmitDeleteTeacher: SubmitHandler<
     DeleteTeacherValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
-
-    const deleteTeacher = async () => {
-      try {
-        if (teacherSelectedData?.haveAccount) {
-          await deleteAppUser(data.teacherId);
-          await deleteDoc(doc(db, "appUsers", data.teacherId));
-        }
-        await deleteDoc(doc(db, "teachers", data.teacherId));
-        resetForm();
-        toast.success(`Professor excluído com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } finally {
-        resetForm();
-      }
-    };
-
-    // CHECK DELETE CONFIRMATION
-    if (!data.confirmDelete) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir o Professor ${teacherFullData.name}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    // CHECKING IF TEACHER EXISTS ON DATABASE
-
-    // SEARCH CURRICULUM WITH THIS TEACHER
-    const teacherExistsOnCurriculum = curriculumDatabaseData.filter(
-      (curriculum) => curriculum.teacherId === teacherData.teacherId
-    );
-
-    // IF EXISTS, RETURN ERROR
-    if (teacherExistsOnCurriculum.length !== 0) {
-      return (
-        setTeacherData({ ...teacherData, confirmDelete: false }),
-        setIsSubmitting(false),
-        toast.error(
-          `Professor incluído em ${
-            teacherExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-          }, exclua ou altere primeiramente ${
-            teacherExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
-          } e depois exclua o Professor ${teacherFullData.name}... ❕`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
-      );
-    } else {
-      // IF NO EXISTS, DELETE
-      deleteTeacher();
-    }
+    handleDeleteTeacher(data.teacherId, resetForm);
   };
 
   return (
@@ -249,7 +158,7 @@ export function DeleteTeacher() {
 
       {/* FORM */}
       <form
-        onSubmit={handleSubmit(handleDeleteTeacher)}
+        onSubmit={handleSubmit(handleSubmitDeleteTeacher)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* TEACHER SELECT */}
@@ -269,14 +178,14 @@ export function DeleteTeacher() {
             defaultValue={" -- select an option -- "}
             className={
               errors.teacherId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="teacherSelect"
             onChange={(e) => {
               setTeacherData({
                 teacherId: e.target.value,
-                confirmDelete: false,
+                // confirmDelete: false,
               });
               setIsSelected(true);
             }}
@@ -303,7 +212,7 @@ export function DeleteTeacher() {
                   type="text"
                   name="name"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={teacherSelectedData?.name}
                 />
               </div>
@@ -314,10 +223,10 @@ export function DeleteTeacher() {
                   E-mail:{" "}
                 </label>
                 <input
-                  type="text"
+                  type="email"
                   name="email"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={teacherSelectedData?.email}
                 />
               </div>
@@ -357,7 +266,7 @@ export function DeleteTeacher() {
             </div>
 
             {/** CHECKBOX CONFIRM DELETE */}
-            <div className="flex justify-center items-center gap-2 mt-6">
+            {/* <div className="flex justify-center items-center gap-2 mt-6">
               <input
                 type="checkbox"
                 name="confirmDelete"
@@ -375,7 +284,7 @@ export function DeleteTeacher() {
                   ? `Confirmar exclusão de ${teacherFullData.name}`
                   : `Confirmar exclusão`}
               </label>
-            </div>
+            </div> */}
 
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">

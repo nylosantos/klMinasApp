@@ -13,10 +13,11 @@ import {
 import { SubmitHandler, useForm } from "react-hook-form";
 import { editSystemConstantsValidationSchema } from "../../@types/zodValidation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { doc, getFirestore, updateDoc } from "firebase/firestore";
+import { doc, getFirestore } from "firebase/firestore";
 import { app } from "../../db/Firebase";
 import { NumericFormat } from "react-number-format";
 import Switch from "react-switch";
+import { secureUpdateDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -218,7 +219,7 @@ export default function EditSystemConstants() {
     // EDIT SYSTEM CONSTANTS FUNCTION
     const editSystemConstants = async () => {
       try {
-        await updateDoc(doc(db, "systemConstants", systemConstantsData.id), {
+        await secureUpdateDoc(doc(db, "systemConstants", systemConstantsData.id), {
           enrolmentFee: data.enrolmentFee,
           enrolmentFeeDiscount: data.enrolmentFeeDiscount,
           systemSignInClosed: data.systemSignInClosed,
@@ -293,8 +294,8 @@ export default function EditSystemConstants() {
             }
             className={
               errors.customerFullName
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={systemConstantsEditData.customerFullName}
             onChange={(e) => {
@@ -329,8 +330,8 @@ export default function EditSystemConstants() {
             }
             className={
               errors.customerShortName
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={systemConstantsEditData.customerShortName}
             onChange={(e) => {
@@ -415,8 +416,8 @@ export default function EditSystemConstants() {
             }
             className={
               errors.enrolmentFee
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
             }
           />
         </div>
@@ -456,8 +457,8 @@ export default function EditSystemConstants() {
             }
             className={
               errors.enrolmentFeeDiscount
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
             }
           />
         </div>

@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { doc, getFirestore, updateDoc } from "firebase/firestore";
+import { doc, getFirestore } from "firebase/firestore";
 import { app } from "../../db/Firebase";
 import { EditSchoolValidationZProps, SchoolSearchProps } from "../../@types";
 import { toast } from "react-toastify";
@@ -12,6 +12,7 @@ import {
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 import { EditDashboardSchoolButton } from "../layoutComponents/EditDashboardSchoolButton";
+import { secureUpdateDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -26,6 +27,7 @@ interface EditSchoolFormProps {
   setIsSubmitting: (isSubmitting: boolean) => void;
   setIsEdit: (isEdit: boolean) => void;
   handleDeleteSchool?: () => void;
+  onCloseLogModal?: (schoolId: string) => void; // Função para fechar o modal
 }
 
 export default function EditSchoolForm({
@@ -38,9 +40,10 @@ export default function EditSchoolForm({
   setIsSubmitting,
   setIsEdit,
   handleDeleteSchool,
+  onCloseLogModal,
 }: EditSchoolFormProps) {
   // GET GLOBAL DATA
-  const { schoolDatabaseData } = useContext(
+  const { schoolsDb, handleConfirmationToSubmit } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
 
@@ -109,55 +112,68 @@ export default function EditSchoolForm({
   const handleEditSchool: SubmitHandler<EditSchoolValidationZProps> = async (
     data
   ) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Editar Escola",
+      text: "Tem certeza que deseja confirmar as mudanças?",
+      icon: "question",
+      confirmButtonText: "Sim, confirmar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
 
-    // EDIT SCHOOL FUNCTION
-    const editSchool = async () => {
-      try {
-        await updateDoc(doc(db, "schools", schoolSelectedData.id), {
-          name: data.name,
-        });
-        resetForm();
-        toast.success(`${schoolEditData.name} alterado com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
+      // EDIT SCHOOL FUNCTION
+      const editSchool = async () => {
+        try {
+          await secureUpdateDoc(doc(db, "schools", schoolSelectedData.id), {
+            name: data.name,
+          });
+          resetForm();
+          toast.success(`${schoolEditData.name} alterado com sucesso! 👌`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
 
-    // CHECKING IF SCHOOL EXISTS ON DATABASE
-    const schoolExists = schoolDatabaseData.find(
-      (school) => school.id === schoolSelectedData.id
-    );
-    if (!schoolExists) {
-      // IF NOT EXISTS, RETURN ERROR
-      return (
-        setIsSubmitting(false),
-        toast.error(`Colégio não existe no banco de dados... ❕`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        })
+      // CHECKING IF SCHOOL EXISTS ON DATABASE
+      const schools = schoolsDb as SchoolSearchProps[];
+      const schoolExists = schools.find(
+        (school) => school.id === schoolSelectedData.id
       );
+      if (!schoolExists) {
+        // IF NOT EXISTS, RETURN ERROR
+        return (
+          setIsSubmitting(false),
+          toast.error(`Colégio não existe no banco de dados... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
+        );
+      } else {
+        // IF EXISTS, EDIT
+        editSchool();
+      }
     } else {
-      // IF EXISTS, EDIT
-      editSchool();
+      setIsSubmitting(false);
     }
   };
 
@@ -179,6 +195,8 @@ export default function EditSchoolForm({
               resetSchoolData={resetSchoolDataFunction}
               setIsEdit={setIsEdit}
               setModal={setModal && setModal}
+              onCloseLogModal={onCloseLogModal}
+              id={schoolSelectedData.id}
             />
           </div>
         </div>
@@ -216,8 +234,8 @@ export default function EditSchoolForm({
               }
               className={
                 errors.name
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                  ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
               }
               value={schoolEditData.name}
               onChange={(e) => {

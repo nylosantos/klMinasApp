@@ -9,11 +9,14 @@ import {
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 import { HandleClickOpenFunctionProps } from "../../@types";
+import { FaUserPlus, FaUserSlash } from "react-icons/fa";
+import { FaList } from "react-icons/fa6";
 
 type StudentButtonDetailsProps = {
   id: string;
   isEdit: boolean;
   isFinance: boolean;
+  isActive: boolean;
   isDetailsViewing: boolean;
   isFinancialResponsible: boolean;
   open: boolean;
@@ -23,12 +26,14 @@ type StudentButtonDetailsProps = {
   setIsFinance: (option: boolean) => void;
   setIsDetailsViewing: (option: boolean) => void;
   handleDeleteUser: () => void;
+  toggleActiveUser: () => void;
+  onCloseLogModal?: (schoolId: string) => void; // Função para fechar o modal
 };
 
 export function StudentButtonDetails({
   id,
   isEdit,
-  // isFinance,
+  isActive,
   isDetailsViewing,
   isFinancialResponsible,
   open,
@@ -38,6 +43,8 @@ export function StudentButtonDetails({
   setIsEdit,
   setIsFinance,
   setIsDetailsViewing,
+  toggleActiveUser,
+  onCloseLogModal,
 }: StudentButtonDetailsProps) {
   // GET GLOBAL DATA
   const { userFullData } = useContext(
@@ -55,44 +62,57 @@ export function StudentButtonDetails({
         className="w-52 origin-top-right rounded-xl border border-white/5 bg-klGreen-500 p-1 text-sm/6 text-white transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0 z-50"
       >
         {!isDetailsViewing && (
-          <MenuItem>
-            <button
-              className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
-              onClick={() => {
-                setIsFinance(false);
-                setIsDetailsViewing(true);
-                setIsEdit(false);
-                handleClickOpen({ id: id, option: "details" });
-              }}
-            >
-              <MdOutlinePreview size={12} />
-              Ver Detalhes
-              {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                                        ⌘E
-                                      </kbd> */}
-            </button>
-          </MenuItem>
+          <>
+            <MenuItem>
+              <button
+                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
+                onClick={() => {
+                  setIsFinance(false);
+                  setIsDetailsViewing(true);
+                  setIsEdit(false);
+                  handleClickOpen({ id: id, option: "details" });
+                }}
+              >
+                <MdOutlinePreview size={12} />
+                Ver Detalhes
+              </button>
+            </MenuItem>
+            <div className="my-1 h-px bg-white/5" />
+          </>
         )}
 
-        {isFinancialResponsible && !isEdit && (
-          <MenuItem>
-            <button
-              className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
-              onClick={() => {
-                setIsFinance(false);
-                setIsDetailsViewing(false);
-                setIsEdit(true);
-                handleClickOpen({ id: id, option: "edit" });
-              }}
-            >
-              <IoPencil size={12} />
-              Editar
-              {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                                        ⌘E
-                                      </kbd> */}
-            </button>
-          </MenuItem>
-        )}
+        {isFinancialResponsible &&
+          !isEdit &&
+          userFullData &&
+          (userFullData.role !== "user" ||
+            (userFullData.role === "user" && isActive)) && (
+            <>
+              <MenuItem>
+                <button
+                  className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"
+                  onClick={() => {
+                    setIsFinance(false);
+                    setIsDetailsViewing(false);
+                    setIsEdit(true);
+                    handleClickOpen({ id: id, option: "edit" });
+                  }}
+                >
+                  <IoPencil size={12} />
+                  Editar
+                </button>
+              </MenuItem>
+              <MenuItem>
+                <button
+                  className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
+                  onClick={() => onCloseLogModal && onCloseLogModal(id)}
+                >
+                  <FaList />
+                  Ver Logs
+                </button>
+              </MenuItem>
+              <div className="my-1 h-px bg-white/5" />
+            </>
+          )}
 
         {/* BOTÃO PARA ACESSAR PARTE FINANCEIRA - DESATIVADO ATÉ IMPLANTAÇÃO */}
         {/* {!isFinance && (
@@ -117,24 +137,35 @@ export function StudentButtonDetails({
 
         {userFullData && userFullData.role !== "user" && open && (
           <>
-            <div className="my-1 h-px bg-white/5" />
             <MenuItem>
               <button
                 className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
-                onClick={() => handleDeleteUser()}
+                onClick={toggleActiveUser}
               >
-                <MdDelete />
-                Deletar Cadastro
-                {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
-                                        ⌘D
-                                        </kbd> */}
+                {isActive ? <FaUserSlash /> : <FaUserPlus />}
+                {`${isActive ? "Desativar" : "Reativar"} Cadastro`}
               </button>
             </MenuItem>
           </>
         )}
+        {userFullData &&
+          (userFullData.role === "root" || userFullData.role === "admin") &&
+          open && (
+            <>
+              <MenuItem>
+                <button
+                  className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
+                  onClick={() => handleDeleteUser()}
+                >
+                  <MdDelete />
+                  Deletar Cadastro
+                </button>
+              </MenuItem>
+              <div className="my-1 h-px bg-white/5" />
+            </>
+          )}
         {open && (
           <>
-            <div className="my-1 h-px bg-white/5" />
             <MenuItem>
               <button
                 className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10"

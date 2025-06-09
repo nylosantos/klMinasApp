@@ -32,6 +32,7 @@ interface DashboardScheduleProps {
   setIsEdit: Dispatch<SetStateAction<boolean>>;
   renderDashboardMenu(itemMenu: DashboardMenuArrayProps): JSX.Element;
   itemsMenu: DashboardMenuArrayProps[];
+  onCloseLogModal: (schoolId: string) => void; // Função para fechar o modal
 }
 
 export default function DashboardSchedule({
@@ -39,6 +40,7 @@ export default function DashboardSchedule({
   isEdit,
   renderDashboardMenu,
   itemsMenu,
+  onCloseLogModal,
 }: DashboardScheduleProps) {
   // GET GLOBAL DATA
   const {
@@ -253,6 +255,7 @@ export default function DashboardSchedule({
                             handleDeleteSchedule={() => {
                               handleDeleteSchedule(schedule.id, () => {});
                             }}
+                            onCloseLogModal={onCloseLogModal}
                           />
                         </div>
                       </div>

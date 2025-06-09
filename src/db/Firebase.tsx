@@ -1,5 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+// import {
+//   getFirestore, connectFirestoreEmulator,
+// } from "firebase/firestore";
 import "firebase/auth";
 import "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -18,6 +21,12 @@ const firebaseConfig = {
 
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
+
+// const db = getFirestore(app);
+// // Configura o emulador (apenas para desenvolvimento local)
+// if (window.location.hostname === "localhost") {
+//   connectFirestoreEmulator(db, 'localhost', 8080); // Aqui, 8080 é a porta padrão do Firestore Emulator
+// }
 
 // Export function to initialize Firebase
 export const initFirebase = () => {

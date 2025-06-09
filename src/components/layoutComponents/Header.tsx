@@ -10,6 +10,7 @@ import BackdropModal from "./BackdropModal";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import CopyrightBottom from "./CopyrightBottom";
+import { formatUserName } from "../../custom";
 
 export function Header() {
   // GET GLOBAL DATA
@@ -96,7 +97,7 @@ export function Header() {
           </p>
         </button>
       </div>
-      {userFullData &&
+      {/* {userFullData &&
         (userFullData.role === "root" || userFullData.role === "admin") && (
           <div key="ManageSchools">
             <button
@@ -115,7 +116,7 @@ export function Header() {
               </p>
             </button>
           </div>
-        )}
+        )} */}
       <div key="Settings">
         <button
           onClick={() => {
@@ -192,15 +193,6 @@ export function Header() {
         )}
 
         {/* LOGO */}
-        {/* <div className="absolute left-1/2 flex justify-center transform -translate-x-1/2 md:static md:left-0 md:transform-none w-auto md:w-auto">
-          <img
-            src={theme === "light" ? Logo : LogoDark}
-            alt={`Logo ${systemConstantsValues?.customerFullName}`}
-            className="dark:bg-transparent cursor-pointer"
-            style={{ height: "min(4vh, 12.5vw)", width: "auto" }}
-            onClick={() => setPage({ prev: page.show, show: "Dashboard" })}
-          />
-        </div> */}
         <div className="absolute left-1/2 flex justify-center transform -translate-x-1/2 w-auto">
           <img
             src={theme === "light" ? Logo : LogoDark}
@@ -211,11 +203,6 @@ export function Header() {
           />
         </div>
 
-        {/* NAVIGATION DISPLAY CENTER */}
-        {/* <div className="hidden absolute container justify-center">
-          {logged && userFullData && renderNavItems()}
-        </div> */}
-
         {/* BUTTON THEME CHANGE RIGHT */}
         <div className="hidden md:flex w-full justify-end items-center gap-[1vw]">
           {logged && userFullData && (
@@ -223,7 +210,7 @@ export function Header() {
               className="relative z-10 text-klGreen-500 dark:text-klOrange-500 cursor-pointer"
               onClick={() => setPage({ prev: page.show, show: "Settings" })}
             >
-              Olá, {userFullData.name.split(" ")[0]}
+              Olá, {formatUserName(userFullData.name.split(" ")[0])}
             </p>
           )}
           {renderThemeChanger()}

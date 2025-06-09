@@ -64,3 +64,12 @@ select {
     display: flex;
   }
 }
+
+/* No seu arquivo CSS ou Tailwind (se estiver utilizando o arquivo .css ou .scss) */
+.animate-fast-pulse {
+  animation-duration: 0.2s; /* 500ms, ajuste conforme necessário */
+}
+
+input:not([type='email']) {
+  text-transform: uppercase;
+}

@@ -1,7 +1,13 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { useContext } from "react";
+import { FaList } from "react-icons/fa6";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoClose, IoPencil } from "react-icons/io5";
 import { MdDelete } from "react-icons/md";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 type EditSchoolButtonDetailsProps = {
   isEdit: boolean;
@@ -9,6 +15,8 @@ type EditSchoolButtonDetailsProps = {
   resetSchoolData: () => void;
   setModal?: (option: boolean) => void;
   handleDeleteSchool?: () => void;
+  id?: string;
+  onCloseLogModal?: (schoolId: string) => void; // Função para fechar o modal
 };
 
 export function EditDashboardSchoolButton({
@@ -17,7 +25,13 @@ export function EditDashboardSchoolButton({
   resetSchoolData,
   setIsEdit,
   setModal,
+  id,
+  onCloseLogModal,
 }: EditSchoolButtonDetailsProps) {
+  // GET GLOBAL DATA
+  const { userFullData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
 
   return (
     <Menu>
@@ -41,6 +55,21 @@ export function EditDashboardSchoolButton({
             {!isEdit ? "Editar" : "Cancelar edição"}
           </button>
         </MenuItem>
+
+        {userFullData && userFullData.role !== "user" && (
+          <>
+            <div className="my-1 h-px bg-white/5" />
+            <MenuItem>
+              <button
+                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
+                onClick={() => onCloseLogModal && id && onCloseLogModal(id)}
+              >
+                <FaList />
+                Ver Logs
+              </button>
+            </MenuItem>
+          </>
+        )}
 
         <div className="my-1 h-px bg-white/5" />
 

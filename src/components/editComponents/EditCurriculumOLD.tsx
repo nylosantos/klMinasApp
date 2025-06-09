@@ -8,9 +8,7 @@ import {
   arrayRemove,
   arrayUnion,
   doc,
-  getFirestore,
-  setDoc,
-  updateDoc,
+  getFirestore
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -34,6 +32,7 @@ import {
 } from "../../context/GlobalDataContext";
 import { classDayIndexNames } from "../../custom";
 import { ClassDays } from "../formComponents/ClassDays";
+import { secureSetDoc, secureUpdateDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -49,7 +48,6 @@ export function EditCurriculum() {
     classDaysDatabaseData,
     teacherDatabaseData,
     studentsDatabaseData,
-    calcStudentPrice,
     handleOneCurriculumDetails,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
   // CURRICULUM DATA
@@ -691,7 +689,7 @@ export function EditCurriculum() {
     // EDIT CURRICULUM FUNCTION
     const editCurriculum = async () => {
       try {
-        await updateDoc(doc(db, "curriculum", data.curriculumId), {
+        await secureUpdateDoc(doc(db, "curriculum", data.curriculumId), {
           scheduleId: data.scheduleId,
           teacherId: data.teacherId,
           placesAvailable: data.placesAvailable,
@@ -729,10 +727,10 @@ export function EditCurriculum() {
             daysIncluded.includes(days)
           );
           if (daysToDelete.length > 0) {
-            await updateDoc(doc(db, "curriculum", data.curriculumId), {
+            await secureUpdateDoc(doc(db, "curriculum", data.curriculumId), {
               students: arrayRemove(student),
             });
-            await updateDoc(doc(db, "curriculum", data.curriculumId), {
+            await secureUpdateDoc(doc(db, "curriculum", data.curriculumId), {
               students: arrayUnion({
                 date: student.date,
                 id: student.id,
@@ -745,7 +743,7 @@ export function EditCurriculum() {
             );
             if (studentToChange) {
               const curriculumInsideStudentToChange =
-                studentToChange.curriculumIds.find(
+                studentToChange.curriculums.find(
                   (curriculumInsideStudent) =>
                     curriculumInsideStudent.id === data.curriculumId
                 );
@@ -777,10 +775,10 @@ export function EditCurriculum() {
                         rest * schoolCourseDetails.priceUnit;
                     }
                   }
-                  await updateDoc(doc(db, "students", student.id), {
+                  await secureUpdateDoc(doc(db, "students", student.id), {
                     curriculumIds: arrayRemove(curriculumInsideStudentToChange),
                   });
-                  await updateDoc(doc(db, "students", student.id), {
+                  await secureUpdateDoc(doc(db, "students", student.id), {
                     curriculumIds: arrayUnion({
                       date: curriculumInsideStudentToChange.date,
                       id: curriculumInsideStudentToChange.id,
@@ -793,7 +791,7 @@ export function EditCurriculum() {
                 }
               }
               // UPDATING STUDENT PRICE WITH NEW CURRICULUM PRICE
-              await calcStudentPrice(studentToChange.id);
+              // await calcStudentPrice(studentToChange.id);
             }
           }
         });
@@ -841,7 +839,7 @@ export function EditCurriculum() {
       if (classDaysExists) {
         if (!arraysEqual(classDaysExists.indexDays, daysIncluded)) {
           try {
-            await setDoc(
+            await secureSetDoc(
               doc(db, "classDays", data.classDayId),
               {
                 name:
@@ -943,8 +941,8 @@ export function EditCurriculum() {
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolSelect"
             onChange={(e) => {
@@ -976,9 +974,9 @@ export function EditCurriculum() {
             defaultValue={" -- select an option -- "}
             className={
               // errors.schoolClassId
-              //   ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+              //   ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
               //   : 
-                "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolClassSelect"
             // onChange={(e) => {
@@ -1023,9 +1021,9 @@ export function EditCurriculum() {
               // curriculumEditData.schoolClassId
               //   ? 
                 errors.curriculumId
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                // : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                // : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             }
             name="curriculumSelect"
             onChange={(e) => {
@@ -1084,7 +1082,7 @@ export function EditCurriculum() {
                 type="text"
                 name="name"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={curriculumFormattedName.formattedName}
               />
             </div>
@@ -1098,7 +1096,7 @@ export function EditCurriculum() {
                 type="text"
                 name="schoolName"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={curriculumFormattedName.schoolName}
               />
             </div>
@@ -1112,7 +1110,7 @@ export function EditCurriculum() {
                 type="text"
                 name="schoolClass"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={curriculumFormattedName.schoolClassName}
               />
             </div>
@@ -1126,7 +1124,7 @@ export function EditCurriculum() {
                 type="text"
                 name="schoolCourse"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={curriculumFormattedName.schoolCourseName}
               />
             </div>
@@ -1164,8 +1162,8 @@ export function EditCurriculum() {
                 }
                 className={
                   errors.placesAvailable
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 onChange={(e) => {
                   setCurriculumEditData({
@@ -1210,8 +1208,8 @@ export function EditCurriculum() {
                 }
                 className={
                   errors.scheduleId
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 name="scheduleSelect"
                 onChange={(e) => {
@@ -1240,7 +1238,7 @@ export function EditCurriculum() {
                 type="text"
                 name="transitionStart"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={scheduleSelectedData?.transitionStart}
               />
             </div>
@@ -1254,7 +1252,7 @@ export function EditCurriculum() {
                 type="text"
                 name="transitionEnd"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={scheduleSelectedData?.transitionEnd}
               />
             </div>
@@ -1268,7 +1266,7 @@ export function EditCurriculum() {
                 type="text"
                 name="classStart"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={scheduleSelectedData?.classStart}
               />
             </div>
@@ -1282,7 +1280,7 @@ export function EditCurriculum() {
                 type="text"
                 name="classEnd"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={scheduleSelectedData?.classEnd}
               />
             </div>
@@ -1296,7 +1294,7 @@ export function EditCurriculum() {
                 type="text"
                 name="exit"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={scheduleSelectedData?.exit}
               />
             </div>
@@ -1333,8 +1331,8 @@ export function EditCurriculum() {
                 }
                 className={
                   errors.teacherId
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 name="teacherSelect"
                 onChange={(e) => {
@@ -1374,7 +1372,7 @@ export function EditCurriculum() {
                 disabled={isSubmitting}
                 readOnly
                 placeholder="Selecione os dias para formar o Identificador dos Dias de Aula"
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 value={classDayName.length > 0 ? classDayName.join(" - ") : ""}
               />
             </div>

@@ -4,7 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { deleteDoc, doc, getFirestore } from "firebase/firestore";
+import { doc, getFirestore } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -18,15 +18,19 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { secureDeleteDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function DeleteClassDays() {
   // GET GLOBAL DATA
-  const { classDaysDatabaseData, curriculumDatabaseData } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const {
+    classDaysDatabaseData,
+    curriculumDatabaseData,
+    handleConfirmationToSubmit,
+    // logDelete,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // CLASS DAY DATA
   const [classDaysData, setClassDaysData] =
@@ -113,63 +117,77 @@ export function DeleteClassDays() {
   const handleDeleteClassDays: SubmitHandler<
     DeleteClassDaysValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Deletar Dias de Aula",
+      text: "Tem certeza que deseja deletar estes Dias de Aula?",
+      icon: "warning",
+      confirmButtonText: "Sim, deletar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
 
-    // DELETE CLASS DAY FUNCTION
-    const deleteClassDay = async () => {
-      try {
-        await deleteDoc(doc(db, "classDays", data.classDayId));
-        resetForm();
-        toast.success(`Dia de Aula excluído com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
 
-    // CHECKING IF CLASS DAYS EXISTS ON CURRICULUM DATABASE
-
-    // SEARCH CURRICULUM WITH THIS CLASS DAYS
-    const classDaysExistsOnCurriculum = curriculumDatabaseData.filter(
-      (curriculum) => curriculum.classDayId === classDaysData.classDayId
-    );
-
-    // IF EXISTS, RETURN ERROR
-    if (classDaysExistsOnCurriculum.length !== 0) {
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `Dia de Aula incluído em ${classDaysExistsOnCurriculum.length} ${
-            classDaysExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-          }, exclua ou altere primeiramente ${
-            classDaysExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
-          } e depois exclua o dia de aula: ${classDayName}... ❕`,
-          {
+      // DELETE CLASS DAY FUNCTION
+      const deleteClassDay = async () => {
+        try {
+          await secureDeleteDoc(doc(db, "classDays", data.classDayId));
+          // await logDelete(data, "classDays", data.classDayId);
+          resetForm();
+          toast.success(`Dia de Aula excluído com sucesso! 👌`, {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
             autoClose: 3000,
-          }
-        )
+          });
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
+
+      // CHECKING IF CLASS DAYS EXISTS ON CURRICULUM DATABASE
+
+      // SEARCH CURRICULUM WITH THIS CLASS DAYS
+      const classDaysExistsOnCurriculum = curriculumDatabaseData.filter(
+        (curriculum) => curriculum.classDayId === classDaysData.classDayId
       );
+
+      // IF EXISTS, RETURN ERROR
+      if (classDaysExistsOnCurriculum.length !== 0) {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Dia de Aula incluído em ${classDaysExistsOnCurriculum.length} ${
+              classDaysExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+            }, exclua ou altere primeiramente ${
+              classDaysExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
+            } e depois exclua o dia de aula: ${classDayName}... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      } else {
+        // IF NO EXISTS, DELETE
+        deleteClassDay();
+      }
     } else {
-      // IF NO EXISTS, DELETE
-      deleteClassDay();
+      setIsSubmitting(false);
     }
   };
 
@@ -203,8 +221,8 @@ export function DeleteClassDays() {
             defaultValue={" -- select an option -- "}
             className={
               errors.classDayId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="classDaySelect"
             onChange={(e) => {

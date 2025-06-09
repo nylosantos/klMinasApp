@@ -12,8 +12,12 @@ export default function CurriculumCardDescription({
   id,
 }: CurriculumCardDescriptionProps) {
   // GET GLOBAL DATA
-  const { userFullData, scheduleDatabaseData, handleOneCurriculumDetails } =
-    useContext(GlobalDataContext) as GlobalDataContextType;
+  const {
+    userFullData,
+    scheduleDatabaseData,
+    handleOneCurriculumDetails,
+    getWaitingCurriculums,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   return (
     <div className="w-full p-4 mb-4 bg-white/50 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl text-left">
@@ -77,11 +81,15 @@ export default function CurriculumCardDescription({
             </span>
           </p>
         )}
-        {handleOneCurriculumDetails(id).waitingList.length > 0 && (
+        {getWaitingCurriculums(handleOneCurriculumDetails(id).students).length >
+          0 && (
           <p>
             Alunos na lista de espera:{" "}
             <span className="text-red-600 dark:text-yellow-500">
-              {handleOneCurriculumDetails(id).waitingList.length}
+              {
+                getWaitingCurriculums(handleOneCurriculumDetails(id).students)
+                  .length
+              }
             </span>
           </p>
         )}

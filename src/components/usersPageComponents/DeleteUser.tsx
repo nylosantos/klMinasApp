@@ -1,31 +1,69 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useContext } from "react";
+import {
+  useState,
+  useEffect,
+  useContext,
+  Dispatch,
+  SetStateAction,
+} from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { getFunctions } from "firebase/functions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
-import { deleteDoc, doc, getFirestore } from "firebase/firestore";
+import { doc, DocumentData, getFirestore } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteUserValidationSchema } from "../../@types/zodValidation";
-import { DeleteUserValidationZProps, UserFullDataProps } from "../../@types";
+import {
+  CurriculumSearchProps,
+  DeleteUserValidationZProps,
+  TeacherSearchProps,
+  UserFullDataProps,
+} from "../../@types";
 import { BrazilianStateSelectOptions } from "../formComponents/BrazilianStateSelectOptions";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import BackdropModal from "../layoutComponents/BackdropModal";
+import SettingsMenuModal from "../layoutComponents/SettingsMenuModal";
+import { SettingsMenuArrayProps } from "../../pages/Settings";
+import SettingsSectionSubHeader from "../layoutComponents/SettingsSectionSubHeader";
+import { secureDeleteDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
-export function DeleteUser() {
+interface DeleteUserProps {
+  renderSettingsMenu(itemMenu: string): JSX.Element | undefined;
+  itemsMenu: SettingsMenuArrayProps[];
+  settingsMenu: boolean;
+  setSettingsMenu: Dispatch<SetStateAction<boolean>>;
+  showSettingsPage: { page: string };
+}
+
+export function DeleteUser({
+  itemsMenu,
+  renderSettingsMenu,
+  settingsMenu,
+  setSettingsMenu,
+  showSettingsPage,
+}: DeleteUserProps) {
   // GET GLOBAL DATA
-  const { appUsersDatabaseData, isSubmitting, userFullData, setIsSubmitting } =
-    useContext(GlobalDataContext) as GlobalDataContextType;
+  const {
+    appUsersDatabaseData,
+    teachersDb,
+    curriculumDb,
+    isSubmitting,
+    userFullData,
+    setIsSubmitting,
+    handleConfirmationToSubmit,
+    // logDelete,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // DELETE USER CLOUD FUNCTION HOOK
   const [deleteAppUser] = useHttpsCallable(getFunctions(app), "deleteAppUser");
@@ -67,6 +105,12 @@ export function DeleteUser() {
     },
   });
 
+  useEffect(() => {
+    (
+      document.getElementById("userSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
+  }, []);
+
   // RESET FORM FUNCTION
   const resetForm = () => {
     (
@@ -102,26 +146,197 @@ export function DeleteUser() {
   const handleDeleteUser: SubmitHandler<DeleteUserValidationZProps> = async (
     data
   ) => {
-    setIsSubmitting(true);
-    // DELETE USER FUNCTION
-    await deleteAppUser(data)
-      .then(async () => {
-        if (userSelectedData?.role === "teacher") {
-          try {
-            // DELETE TEACHER ON SCHOOL DATABASE
-            await deleteDoc(doc(db, "teachers", data.id));
-            toast.success(`${userSelectedData.name} excluído com sucesso! 👌`, {
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Deletar Usuário",
+      text: "Tem certeza que deseja deletar este usuário?",
+      icon: "warning",
+      confirmButtonText: "Sim, deletar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+
+    if (confirmation.isConfirmed && userSelectedData && userFullData) {
+      setIsSubmitting(true);
+      // DELETE USER FUNCTION
+      const deleteUser = async () => {
+        await deleteAppUser({
+          userSelectedData,
+          userFullDataId: userFullData.id,
+        })
+          .then(async () => {
+            if (userSelectedData.role === "teacher") {
+              try {
+                const teachersDbTransformed: TeacherSearchProps[] = teachersDb
+                  ? teachersDb.map((doc: DocumentData) => ({
+                      ...(doc as TeacherSearchProps),
+                    }))
+                  : [];
+                const curriculumDbTransformed: CurriculumSearchProps[] =
+                  curriculumDb
+                    ? curriculumDb.map((doc: DocumentData) => ({
+                        ...(doc as CurriculumSearchProps),
+                      }))
+                    : [];
+                const teacherToDelete = teachersDbTransformed.find(
+                  (teacher) => teacher.id === data.id
+                );
+                if (teacherToDelete) {
+                  const deleteTeacher = async () => {
+                    await secureDeleteDoc(doc(db, "teachers", teacherToDelete.id));
+                    // await logDelete(
+                    //   teacherToDelete,
+                    //   "teachers",
+                    //   teacherToDelete.id
+                    // );
+                    resetForm();
+                    toast.success(`Professor excluído com sucesso! 👌`, {
+                      theme: "colored",
+                      closeOnClick: true,
+                      pauseOnHover: true,
+                      draggable: true,
+                      autoClose: 3000,
+                    });
+                  };
+                  // SEARCH CURRICULUM WITH THIS TEACHER
+                  const teacherExistsOnCurriculum =
+                    curriculumDbTransformed.filter(
+                      (curriculum) =>
+                        curriculum.teacherId === teacherToDelete.id
+                    );
+
+                  // IF EXISTS, RETURN ERROR
+                  if (teacherExistsOnCurriculum.length !== 0) {
+                    return (
+                      setIsSubmitting(false),
+                      toast.error(
+                        `Professor incluído em ${
+                          teacherExistsOnCurriculum.length === 1
+                            ? "Turma"
+                            : "Turmas"
+                        }, exclua ou altere primeiramente ${
+                          teacherExistsOnCurriculum.length === 1
+                            ? "a Turma"
+                            : "as Turmas"
+                        } e depois exclua o Professor ${
+                          teacherToDelete.name
+                        }... ❕`,
+                        {
+                          theme: "colored",
+                          closeOnClick: true,
+                          pauseOnHover: true,
+                          draggable: true,
+                          autoClose: 3000,
+                        }
+                      )
+                    );
+                  } else {
+                    // IF NO EXISTS, DELETE
+                    deleteTeacher();
+                  }
+                } else {
+                  toast.error(
+                    `Ocorreu um erro, professor não encontrado no banco de dados... 🤯`,
+                    {
+                      theme: "colored",
+                      closeOnClick: true,
+                      pauseOnHover: true,
+                      draggable: true,
+                      autoClose: 3000,
+                    }
+                  );
+                  setIsSubmitting(false);
+                }
+              } catch (error) {
+                toast.error(
+                  `Usuário excluído, porém correu um erro ao excluir o professor no banco de dados da escola, contate o suporte... 🤯`,
+                  {
+                    theme: "colored",
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    autoClose: 3000,
+                  }
+                );
+                resetForm();
+                setIsSubmitting(false);
+              }
+            } else {
+              toast.success(
+                `${userSelectedData.name} excluído com sucesso! 👌`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              );
+              resetForm();
+              setIsSubmitting(false);
+            }
+          })
+          .catch((error) => {
+            console.log("ESSE É O ERROR", error);
+            toast.error(`Ocorreu um erro... 🤯`, {
               theme: "colored",
               closeOnClick: true,
               pauseOnHover: true,
               draggable: true,
               autoClose: 3000,
             });
-            resetForm();
             setIsSubmitting(false);
-          } catch (error) {
+          });
+      };
+
+      // CHECK IF USER IS A TEACHER WITH CLASSES
+      if (userSelectedData.role === "teacher") {
+        const teachersDbTransformed: TeacherSearchProps[] = teachersDb
+          ? teachersDb.map((doc: DocumentData) => ({
+              ...(doc as TeacherSearchProps),
+            }))
+          : [];
+        const curriculumDbTransformed: CurriculumSearchProps[] = curriculumDb
+          ? curriculumDb.map((doc: DocumentData) => ({
+              ...(doc as CurriculumSearchProps),
+            }))
+          : [];
+        const teacherToDelete = teachersDbTransformed.find(
+          (teacher) => teacher.id === userSelectedData.id
+        );
+        if (teacherToDelete) {
+          // SEARCH CURRICULUM WITH THIS TEACHER
+          const teacherExistsOnCurriculum = curriculumDbTransformed.filter(
+            (curriculum) => curriculum.teacherId === teacherToDelete.id
+          );
+
+          // IF EXISTS, RETURN ERROR
+          if (teacherExistsOnCurriculum.length !== 0) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Professor incluído em ${
+                  teacherExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+                }, exclua ou altere primeiramente ${
+                  teacherExistsOnCurriculum.length === 1
+                    ? "a Turma"
+                    : "as Turmas"
+                } e depois exclua o Professor ${teacherToDelete.name}... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          }
+        } else {
+          // IF TEACHER'S NOT FOUND, RETURN ERROR
+          return (
+            setIsSubmitting(false),
             toast.error(
-              `Usuário excluído, porém correu um erro ao excluir o professor no banco de dados da escola, contate o suporte... 🤯`,
+              `Professor não encontrado no banco de dados, para evitar erros críticos no sistema não foi efetuada a exclusão, contate a administração... ❕`,
               {
                 theme: "colored",
                 closeOnClick: true,
@@ -129,33 +344,15 @@ export function DeleteUser() {
                 draggable: true,
                 autoClose: 3000,
               }
-            );
-            resetForm();
-            setIsSubmitting(false);
-          }
-        } else {
-          toast.success(`${userSelectedData?.name} excluído com sucesso! 👌`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
-          resetForm();
-          setIsSubmitting(false);
+            )
+          );
         }
-      })
-      .catch((error) => {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      });
+      }
+
+      deleteUser();
+    } else {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -164,9 +361,15 @@ export function DeleteUser() {
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="deletando" />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">
-        {isSelected ? `Excluindo ${userSelectedData?.name}` : "Excluir Usuário"}
-      </h1>
+      <div className="flex justify-center items-center mt-2 py-2 gap-4">
+        <h1 className="text-lg font-semibold">Configurações</h1>
+      </div>
+      <SettingsSectionSubHeader
+        setSettingsMenu={setSettingsMenu}
+        settingsMenu={settingsMenu}
+        data={itemsMenu}
+        showSettingsPage={showSettingsPage}
+      />
 
       {/* LOADING USER AUTH DATA */}
       {!userFullData ? (
@@ -195,11 +398,13 @@ export function DeleteUser() {
               </label>
               <select
                 id="userSelect"
-                defaultValue={" -- select an option -- "}
+                value={
+                  userData.id !== "" ? userData.id : " -- select an option -- "
+                }
                 className={
                   errors.id
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 name="userSelect"
                 onChange={(e) => {
@@ -218,7 +423,7 @@ export function DeleteUser() {
               </select>
             </div>
 
-            {isSelected ? (
+            {isSelected && (
               <>
                 <div className="flex flex-col pt-2 pb-6 gap-2 bg-white/50 dark:bg-gray-800/40 rounded-xl">
                   {/* DETAILS TITLE */}
@@ -235,7 +440,7 @@ export function DeleteUser() {
                       type="text"
                       name="name"
                       disabled
-                      className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                      className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                       value={userSelectedData?.name}
                     />
                   </div>
@@ -246,10 +451,10 @@ export function DeleteUser() {
                       E-mail:{" "}
                     </label>
                     <input
-                      type="text"
+                      type="email"
                       name="email"
                       disabled
-                      className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                      className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                       value={userSelectedData?.email}
                     />
                   </div>
@@ -265,7 +470,7 @@ export function DeleteUser() {
                           type="text"
                           name="document"
                           disabled
-                          className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                          className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                           value={userSelectedData?.document}
                         />
                       </div>
@@ -318,7 +523,7 @@ export function DeleteUser() {
                       disabled
                       id="role"
                       value={userSelectedData?.role}
-                      className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                      className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                       name="role"
                     >
                       <option value="admin">Administrador</option>
@@ -353,10 +558,25 @@ export function DeleteUser() {
                   </button>
                 </div>
               </>
-            ) : null}
+            )}
           </form>
         </>
       )}
+      {/* BACKDROP */}
+      {settingsMenu && (
+        <BackdropModal
+          setDashboardMenu={setSettingsMenu}
+          setMobileMenuOpen={setSettingsMenu}
+        />
+      )}
+      {/* SETTINGS MENU DRAWER */}
+      <SettingsMenuModal
+        setSettingsMenu={setSettingsMenu}
+        settingsMenu={settingsMenu}
+        itemsMenu={itemsMenu}
+        renderSettingsMenu={renderSettingsMenu}
+        userFullData={userFullData}
+      />
     </div>
   );
 }

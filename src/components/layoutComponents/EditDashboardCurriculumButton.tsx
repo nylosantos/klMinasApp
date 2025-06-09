@@ -7,23 +7,28 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { FaList } from "react-icons/fa6";
 
 type EditCurriculumButtonDetailsProps = {
+  curriculumId?: string;
   dashboardView: boolean;
   classCall: boolean;
   setDashboardView: Dispatch<SetStateAction<boolean>>;
   setModal?: Dispatch<SetStateAction<boolean>>;
   setClassCall: Dispatch<SetStateAction<boolean>>;
   handleDeleteClass?: () => void;
+  onCloseLogModal?: (curriculumId: string) => void; // Função para fechar o modal
 };
 
 export function EditDashboardCurriculumButton({
+  curriculumId,
   dashboardView,
   classCall,
   handleDeleteClass,
   setDashboardView,
   setModal,
   setClassCall,
+  onCloseLogModal,
 }: EditCurriculumButtonDetailsProps) {
   // GET GLOBAL DATA
   const { userFullData } = useContext(
@@ -31,7 +36,7 @@ export function EditDashboardCurriculumButton({
   ) as GlobalDataContextType;
   return (
     <Menu>
-      <MenuButton className="w-auto px-2 inline-flex items-center justify-evenly rounded-md md:bg-klGreen-500 md:dark:bg-klGreen-500/50 px-0 py-[0.125rem] text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white md:hover:dark:bg-klGreen-500 md:hover:bg-klGreen-500/80">
+      <MenuButton className="w-auto px-3 inline-flex items-center justify-evenly rounded-md md:bg-klGreen-500 md:dark:bg-klGreen-500/50 py-[0.325rem] text-sm/6 text-gray-100 dark:text-white focus:outline-none data-[open]:bg-klGreen-500/80 data-[open]:dark:bg-klGreen-500 data-[focus]:outline-1 data-[focus]:outline-white md:hover:dark:bg-klGreen-500 md:hover:bg-klGreen-500/80">
         <p className="hidden md:flex">Opções</p>
         <div className="hidden md:flex">
           <IoIosArrowDown size={10} />
@@ -84,6 +89,16 @@ export function EditDashboardCurriculumButton({
 
         {userFullData && userFullData.role !== "teacher" && (
           <>
+            <MenuItem>
+              <button
+                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
+                onClick={() => onCloseLogModal && curriculumId && onCloseLogModal(curriculumId)}
+              >
+                <FaList />
+                Ver Logs
+              </button>
+            </MenuItem>
+            <div className="my-1 h-px bg-white/5" />
             <MenuItem>
               <button
                 className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"

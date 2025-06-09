@@ -28,6 +28,7 @@ import BackdropModal from "../layoutComponents/BackdropModal";
 import SearchInputModal from "../layoutComponents/SearchInputModal";
 import DashboardSectionSubHeader from "../layoutComponents/DashboardSectionSubHeader";
 import DashboardSectionAddHeader from "../layoutComponents/DashboardSectionAddHeader";
+import { formataCPF } from "../../custom";
 
 interface DashboardStudentsProps {
   filteredStudents: FilteredStudentsProps[];
@@ -43,6 +44,7 @@ interface DashboardStudentsProps {
   setOpen: Dispatch<SetStateAction<boolean>>;
   renderDashboardMenu(itemMenu: DashboardMenuArrayProps): JSX.Element;
   itemsMenu: DashboardMenuArrayProps[];
+  onCloseLogModal: (schoolId: string) => void; // Função para fechar o modal
 }
 
 export type PaymentArrayProps = {
@@ -69,14 +71,15 @@ export default function DashboardStudents({
   setOpen,
   renderDashboardMenu,
   itemsMenu,
+  onCloseLogModal,
 }: DashboardStudentsProps) {
   // GET GLOBAL DATA
   const {
     isSubmitting,
     studentsDatabaseData,
     userFullData,
-    calcStudentPrice2,
     handleDeleteStudent,
+    toggleActiveStudent,
     setIsSubmitting,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
@@ -126,19 +129,9 @@ export default function DashboardStudents({
     useState<string>("");
   const [financialResponsibleDocument, setFinancialResponsibleDocument] =
     useState<string>("");
-
-  // STATE TO CONTROL IF THE SEARCH IS ADVANCED OR NOT
-  // const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
-
-  // FUNCTION TO TOGGLE THE ADVANCED SEARCH MODE
-  // const toggleAdvancedSearch = () => {
-  //   if (isAdvancedSearch) {
-  //     // CLEARING THE ADVANCED SEARCH FIELDS WHEN CLOSING ADVANCED SEARCH
-  //     setFinancialResponsibleName("");
-  //     setFinancialResponsibleDocument("");
-  //   }
-  //   setIsAdvancedSearch(!isAdvancedSearch);
-  // };
+  const [studentDocument, setStudentDocument] = useState<string>("");
+  const [showInactiveStudents, setShowInactiveStudents] =
+    useState<boolean>(false);
 
   // FUNCTION TO CLEAR THE ADVANCED SEARCH FIELDS
   const clearAdvancedSearch = () => {
@@ -146,6 +139,8 @@ export default function DashboardStudents({
     setSearchTerm("");
     setFinancialResponsibleName("");
     setFinancialResponsibleDocument("");
+    setStudentDocument("");
+    setShowInactiveStudents(false);
   };
 
   // EFFECT TO FILTER STUDENTS BASED ON SEARCH TERMS
@@ -153,8 +148,8 @@ export default function DashboardStudents({
     // SEARCH CONSIDERING STUDENT NAME, RESPONSIBLE NAME, AND CPF
     setFilteredSearchStudents(
       filteredStudents.filter((student) => {
-        const matchesPublicId = student
-          .publicId!.toString()
+        const matchesPublicId = student.publicId
+          .toString()
           .toLowerCase()
           .includes(searchId.toLowerCase());
         const matchesName = student.name
@@ -167,56 +162,31 @@ export default function DashboardStudents({
           student.financialResponsible.document.includes(
             financialResponsibleDocument
           );
+        const matchesStudentDocument =
+          student.document.includes(studentDocument);
 
-        // APPLY FILTER ONLY FOR FIELDS THAT HAVE BEEN FILLED
+        // Lógica para filtrar com base no showInactiveStudents
+        const matchesActive = showInactiveStudents || student.active === true;
+
+        // Aplique o filtro apenas para os campos que possuem valores preenchidos
         return (
           (matchesPublicId || !searchId) &&
           (matchesName || !searchTerm) &&
           (matchesResponsibleName || !financialResponsibleName) &&
-          (matchesResponsibleDocument || !financialResponsibleDocument)
+          (matchesResponsibleDocument || !financialResponsibleDocument) &&
+          (matchesStudentDocument || !studentDocument) &&
+          matchesActive // Adicionando a verificação de ativo
         );
       })
     );
-
-    // OLD HOOK WITH ADVANCED SEARCH
-    // if (!isAdvancedSearch) {
-    //   // SIMPLE SEARCH ONLY BASED ON STUDENT NAME
-    //   setFilteredSearchStudents(
-    //     filteredStudents.filter((student) =>
-    //       student.name.toLowerCase().includes(searchTerm.toLowerCase())
-    //     )
-    //   );
-    // } else {
-    //   // ADVANCED SEARCH CONSIDERING STUDENT NAME, RESPONSIBLE NAME, AND CPF
-    //   setFilteredSearchStudents(
-    //     filteredStudents.filter((student) => {
-    //       const matchesName = student.name
-    //         .toLowerCase()
-    //         .includes(searchTerm.toLowerCase());
-    //       const matchesResponsibleName = student.financialResponsible.name
-    //         .toLowerCase()
-    //         .includes(financialResponsibleName.toLowerCase());
-    //       const matchesResponsibleDocument =
-    //         student.financialResponsible.document.includes(
-    //           financialResponsibleDocument
-    //         );
-
-    //       // APPLY FILTER ONLY FOR FIELDS THAT HAVE BEEN FILLED
-    //       return (
-    //         (matchesName || !searchTerm) &&
-    //         (matchesResponsibleName || !financialResponsibleName) &&
-    //         (matchesResponsibleDocument || !financialResponsibleDocument)
-    //       );
-    //     })
-    //   );
-    // }
   }, [
     searchId,
     searchTerm,
+    studentDocument,
     financialResponsibleName,
     financialResponsibleDocument,
     filteredStudents,
-    // isAdvancedSearch,
+    showInactiveStudents,
   ]);
 
   // HANDLER FOR CHANGES IN THE STUDENT ID SEARCH FIELD
@@ -241,7 +211,22 @@ export default function DashboardStudents({
   const handleFinancialResponsibleDocumentChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setFinancialResponsibleDocument(event.target.value);
+    // Recebe o valor do input, formata o CPF em tempo real e atualiza o estado
+    const formattedCPF = formataCPF(event.target.value);
+
+    // Atualiza o estado com o CPF formatado
+    setFinancialResponsibleDocument(formattedCPF);
+  };
+
+  // HANDLER FOR CHANGES IN THE STUDENT CPF SEARCH FIELD
+  const handleStudentDocumentChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    // Recebe o valor do input, formata o CPF em tempo real e atualiza o estado
+    const formattedCPF = formataCPF(event.target.value);
+
+    // Atualiza o estado com o CPF formatado
+    setStudentDocument(formattedCPF);
   };
 
   function closeModal() {
@@ -252,6 +237,19 @@ export default function DashboardStudents({
   function handleDeleteUser() {
     if (studentSelected) {
       handleDeleteStudent(studentSelected.id, handleClose, closeModal);
+    } else {
+      console.log("Nenhum usuário selecionado.");
+    }
+  }
+
+  function toggleActiveUser() {
+    if (studentSelected) {
+      toggleActiveStudent(
+        studentSelected.active,
+        studentSelected.id,
+        handleClose,
+        closeModal
+      );
     } else {
       console.log("Nenhum usuário selecionado.");
     }
@@ -271,8 +269,10 @@ export default function DashboardStudents({
     if (
       searchId ||
       searchTerm ||
+      studentDocument ||
       financialResponsibleName ||
-      financialResponsibleDocument
+      financialResponsibleDocument ||
+      showInactiveStudents
     ) {
       setFilterActive(true);
     } else {
@@ -281,6 +281,8 @@ export default function DashboardStudents({
   }, [
     searchTerm,
     searchId,
+    showInactiveStudents,
+    studentDocument,
     financialResponsibleName,
     financialResponsibleDocument,
   ]);
@@ -318,13 +320,23 @@ export default function DashboardStudents({
           <input
             type="text"
             id="searchStudent"
+            placeholder="Nome do Aluno"
             value={searchTerm}
             onChange={handleSearchTermChange}
-            placeholder="Nome do Aluno"
             className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
           <input
             type="text"
+            name="searchStudentDocument"
+            placeholder="CPF do Aluno"
+            maxLength={14}
+            value={studentDocument}
+            onChange={handleStudentDocumentChange}
+            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+          />
+          <input
+            type="text"
+            name="financialResponsibleName"
             placeholder="Nome do Responsável Financeiro"
             value={financialResponsibleName}
             onChange={handleFinancialResponsibleNameChange}
@@ -339,6 +351,57 @@ export default function DashboardStudents({
             onChange={handleFinancialResponsibleDocumentChange}
             className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
+          <div className="w-full px-1 py-2">
+            <table className="w-full table-auto border-collapse">
+              <thead className="bg-gray-100 dark:bg-gray-700 text-center">
+                <tr>
+                  <th className="px-4 py-2 text-center" colSpan={3}>
+                    Alunos
+                  </th>
+                </tr>
+                <tr>
+                  <th className="px-4 py-2">Ativos</th>
+                  <th className="px-4 py-2">Inativos</th>
+                  <th className="px-4 py-2">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="text-center">
+                  <td className="px-4 py-2 text-red-600 dark:text-klOrange-500">
+                    {
+                      filteredStudents.filter((student) => student.active)
+                        .length
+                    }
+                  </td>
+                  <td className="px-4 py-2 text-red-600 dark:text-klOrange-500">
+                    {
+                      filteredStudents.filter((student) => !student.active)
+                        .length
+                    }
+                  </td>
+                  <td className="px-4 py-2 text-red-600 dark:text-klOrange-500">
+                    {filteredStudents.length}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex gap-2 justify-between px-1">
+            <p>Mostrar Inativos?</p>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showInactiveStudents}
+                onChange={() => {
+                  setShowInactiveStudents(!showInactiveStudents);
+                }}
+                className="sr-only peer"
+              />
+              <div className="w-10 h-5 bg-gray-500 peer-checked:bg-green-600 peer-focus:ring-2 peer-focus:ring-transparent rounded-full peer peer-checked:after:translate-x-4 peer-checked:after:bg-white after:content-[''] after:absolute after:top-1/2 after:left-1 after:w-4 after:h-4 after:bg-white after:border after:rounded-full after:shadow-md after:transform after:-translate-y-1/2"></div>
+            </label>
+          </div>
+
           <div className="flex flex-col gap-4 mt-6">
             <button
               className="flex w-full items-center justify-center gap-4 bg-klGreen-500 dark:bg-klGreen-500/50 py-1 px-3 text-sm/6 text-gray-100 dark:text-white outline-none active:dark:bg-klGreen-500 active:bg-klGreen-500/80 transition-all rounded-xl"
@@ -542,7 +605,6 @@ export default function DashboardStudents({
                                   id: student.id,
                                   option: "details",
                                 });
-                                calcStudentPrice2(student.id);
                               }}
                             >
                               {student.publicId}
@@ -556,7 +618,6 @@ export default function DashboardStudents({
                                   id: student.id,
                                   option: "details",
                                 });
-                                calcStudentPrice2(student.id);
                               }}
                             >
                               {student.name}
@@ -564,6 +625,7 @@ export default function DashboardStudents({
                           </div>
                           <StudentButtonDetails
                             id={student.id}
+                            isActive={student.isActive}
                             isEdit={isEdit}
                             isFinance={isFinance}
                             isDetailsViewing={isDetailsViewing}
@@ -574,9 +636,11 @@ export default function DashboardStudents({
                             handleClose={() => setOpen(false)}
                             handleClickOpen={handleClickOpen}
                             handleDeleteUser={handleDeleteUser}
+                            toggleActiveUser={toggleActiveUser}
                             setIsEdit={setIsEdit}
                             setIsFinance={setIsFinance}
                             setIsDetailsViewing={setIsDetailsViewing}
+                            onCloseLogModal={onCloseLogModal}
                           />
                         </div>
                       </div>
@@ -605,22 +669,23 @@ export default function DashboardStudents({
         >
           <div className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-all backdrop-blur-sm"></div>
           <div className="flex fixed inset-0 z-10 w-screen items-center justify-center overflow-y-auto">
-            {(isEdit || isDetailsViewing) && (
+            {(isEdit || isDetailsViewing) && studentSelected && (
               <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 overflow-scroll no-scrollbar">
                 <EditStudentForm
                   isSubmitting={isSubmitting}
                   setIsSubmitting={setIsSubmitting}
-                  studentId={studentSelected!.id}
-                  key={studentSelected!.id}
+                  studentId={studentSelected.id}
+                  key={studentSelected.id}
                   onClose={handleClose}
                   isEdit={isEdit}
                   isFinance={isFinance}
                   isFinancialResponsible={
-                    studentSelected && studentSelected.isFinancialResponsible
+                    studentSelected.isFinancialResponsible
                   }
                   open={open}
                   handleClickOpen={handleClickOpen}
                   handleDeleteUser={handleDeleteUser}
+                  toggleActiveUser={toggleActiveUser}
                   setIsEdit={setIsEdit}
                   setIsFinance={setIsFinance}
                   setIsDetailsViewing={setIsDetailsViewing}
@@ -633,8 +698,8 @@ export default function DashboardStudents({
             {isFinance && studentSelected && (
               <div className="flex h-full w-11/12 items-start justify-center rounded-xl bg-white dark:bg-gray-800 overflow-scroll no-scrollbar">
                 <FinanceStudentModal
-                  student={studentSelected!}
-                  key={studentSelected!.id}
+                  student={studentSelected}
+                  key={studentSelected.id}
                   onClose={handleClose}
                   isEdit={isEdit}
                   isFinance={isFinance}
@@ -649,6 +714,7 @@ export default function DashboardStudents({
                   setIsFinance={setIsFinance}
                   setIsDetailsViewing={setIsDetailsViewing}
                   onlyView={isDetailsViewing}
+                  toggleActiveUser={toggleActiveUser}
                 />
               </div>
             )}

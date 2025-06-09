@@ -106,31 +106,37 @@ export function FormLogin() {
         const errorCode = error.code;
         const errorMessage = error.message;
         if (errorCode === "auth/user-not-found") {
-          toast.error(`Usuário e/ou Senha incorretos ou não encontrados...`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
+          return toast.error(
+            `Usuário e/ou Senha incorretos ou não encontrados...`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
         }
         if (errorCode === "auth/wrong-password") {
-          toast.error(`Usuário e/ou Senha incorretos ou não encontrados...`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
-        } else {
-          toast.error(errorMessage, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
+          return toast.error(
+            `Usuário e/ou Senha incorretos ou não encontrados...`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
         }
+        console.log(errorCode, errorMessage);
+        toast.error(`Ocorreu um erro inesperado...`, {
+          theme: "colored",
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          autoClose: 3000,
+        });
       });
   };
 
@@ -150,7 +156,7 @@ export function FormLogin() {
         >
           {/* E-MAIL */}
           <input
-            type="text"
+            type="email"
             name="email"
             autoComplete="email"
             disabled={systemSignInClosed ? true : isSubmitting}

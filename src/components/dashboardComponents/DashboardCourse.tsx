@@ -32,6 +32,7 @@ interface DashboardCourseProps {
   setIsEdit: Dispatch<SetStateAction<boolean>>;
   renderDashboardMenu(itemMenu: DashboardMenuArrayProps): JSX.Element;
   itemsMenu: DashboardMenuArrayProps[];
+  onCloseLogModal: (schoolId: string) => void; // Função para fechar o modal
 }
 
 export default function DashboardCourse({
@@ -39,6 +40,7 @@ export default function DashboardCourse({
   isEdit,
   renderDashboardMenu,
   itemsMenu,
+  onCloseLogModal,
 }: DashboardCourseProps) {
   // GET GLOBAL DATA
   const {
@@ -251,6 +253,7 @@ export default function DashboardCourse({
                             handleDeleteCourse={() => {
                               handleDeleteCourse(course.id, () => {});
                             }}
+                            onCloseLogModal={onCloseLogModal}
                           />
                         </div>
                       </div>

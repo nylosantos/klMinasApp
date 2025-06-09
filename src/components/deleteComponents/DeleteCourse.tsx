@@ -4,16 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
-import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
-import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteSchoolCourseValidationSchema } from "../../@types/zodValidation";
 import {
   DeleteSchoolCourseValidationZProps,
   SchoolCourseSearchProps,
-  StudentSearchProps,
 } from "../../@types";
 import {
   GlobalDataContext,
@@ -21,16 +18,10 @@ import {
 } from "../../context/GlobalDataContext";
 import { NumericFormat } from "react-number-format";
 
-// INITIALIZING FIRESTORE DB
-const db = getFirestore(app);
-
 export function DeleteCourse() {
   // GET GLOBAL DATA
-  const {
-    curriculumDatabaseData,
-    schoolCourseDatabaseData,
-    studentsDatabaseData,
-  } = useContext(GlobalDataContext) as GlobalDataContextType;
+  const { schoolCourseDatabaseData, isSubmitting, handleDeleteCourse } =
+    useContext(GlobalDataContext) as GlobalDataContextType;
 
   // SCHOOL COURSE DATA
   const [schoolCourseData, setSchoolCourseData] =
@@ -40,7 +31,7 @@ export function DeleteCourse() {
       priceUnit: 0,
       priceBundle: 0,
       bundleDays: 0,
-      confirmDelete: false,
+      // confirmDelete: false,
     });
 
   // -------------------------- SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
@@ -77,7 +68,7 @@ export function DeleteCourse() {
   // -------------------------- END OF SCHOOL COURSE SELECT STATES AND FUNCTIONS -------------------------- //
 
   // SUBMITTING AND SELECTED STATE
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
 
   // REACT HOOK FORM SETTINGS
@@ -94,7 +85,7 @@ export function DeleteCourse() {
       priceUnit: 0,
       priceBundle: 0,
       bundleDays: 0,
-      confirmDelete: false,
+      // confirmDelete: false,
     },
   });
 
@@ -110,7 +101,7 @@ export function DeleteCourse() {
       priceUnit: 0,
       priceBundle: 0,
       bundleDays: 0,
-      confirmDelete: false,
+      // confirmDelete: false,
     });
     reset();
   };
@@ -122,7 +113,7 @@ export function DeleteCourse() {
     setValue("priceUnit", schoolCourseData.priceUnit);
     setValue("priceBundle", schoolCourseData.priceBundle);
     setValue("bundleDays", schoolCourseData.bundleDays);
-    setValue("confirmDelete", schoolCourseData.confirmDelete);
+    // setValue("confirmDelete", schoolCourseData.confirmDelete);
   }, [schoolCourseData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -132,7 +123,7 @@ export function DeleteCourse() {
       errors.priceUnit,
       errors.priceBundle,
       errors.bundleDays,
-      errors.confirmDelete,
+      // errors.confirmDelete,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -149,141 +140,7 @@ export function DeleteCourse() {
   const handleDeleteSchoolCourse: SubmitHandler<
     DeleteSchoolCourseValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
-
-    // DELETE SCHOOL COURSE FUNCTION
-    const deleteSchoolCourse = async () => {
-      try {
-        await deleteDoc(doc(db, "schoolCourses", data.schoolCourseId));
-        resetForm();
-        toast.success(`Modalidade excluída com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
-
-    // CHECK DELETE CONFIRMATION
-    if (!data.confirmDelete) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir a Modalidade: ${data.schoolCourseName}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    // CHECKING IF SCHOOLCOURSE EXISTS ON SOME STUDENT OR CURRICULUM ON DATABASE
-    // STUDENTS IN THIS SCHOOLCOURSE ARRAY
-    const schoolCourseExistsOnStudent: StudentSearchProps[] = [];
-
-    // SEARCH CURRICULUM WITH THIS SCHOOLCOURSE
-    const schoolCourseExistsOnCurriculum = curriculumDatabaseData.filter(
-      (curriculum) =>
-        curriculum.schoolCourseId === schoolCourseData.schoolCourseId
-    );
-
-    // SEARCH STUDENTS WITH THIS SCHOOLCOURSE AND PUTTING ON ARRAY
-    studentsDatabaseData.map((student) => {
-      if (student.curriculumIds) {
-        // ENROLLED STUDENTS
-        student.curriculumIds.map((studentCurriculum) => {
-          const foundedSchoolCourseStudentWithCurriculum =
-            schoolCourseExistsOnCurriculum.find(
-              (schoolCurriculum) => schoolCurriculum.id === studentCurriculum.id
-            );
-          if (foundedSchoolCourseStudentWithCurriculum) {
-            schoolCourseExistsOnStudent.push(student);
-          }
-        });
-        // EXPERIMENTAL STUDENTS
-        student.experimentalCurriculumIds.map(
-          (studentExperimentalCurriculum) => {
-            const foundedSchoolCourseStudentWithExperimentalCurriculum =
-              schoolCourseExistsOnCurriculum.find(
-                (schoolCurriculum) =>
-                  schoolCurriculum.id === studentExperimentalCurriculum.id
-              );
-            if (foundedSchoolCourseStudentWithExperimentalCurriculum) {
-              schoolCourseExistsOnStudent.push(student);
-            }
-          }
-        );
-      }
-    });
-
-    // IF EXISTS, RETURN ERROR
-    if (schoolCourseExistsOnStudent.length !== 0) {
-      return (
-        setSchoolCourseData({
-          ...schoolCourseData,
-          confirmDelete: false,
-        }),
-        setIsSubmitting(false),
-        toast.error(
-          `Modalidade tem ${schoolCourseExistsOnStudent.length} ${
-            schoolCourseExistsOnStudent.length === 1
-              ? "aluno matriculado"
-              : "alunos matriculados"
-          }, exclua ou altere primeiramente ${
-            schoolCourseExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
-          } e depois exclua a modalidade ${data.schoolCourseName}... ❕`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
-      );
-    } else if (schoolCourseExistsOnCurriculum.length !== 0) {
-      return (
-        setSchoolCourseData({
-          ...schoolCourseData,
-          confirmDelete: false,
-        }),
-        setIsSubmitting(false),
-        toast.error(
-          `Modalidade incluída em ${schoolCourseExistsOnCurriculum.length} ${
-            schoolCourseExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-          }, exclua ou altere primeiramente ${
-            schoolCourseExistsOnCurriculum.length === 1
-              ? "a Turma"
-              : "as Turmas"
-          } e depois exclua a modalidade ${data.schoolCourseName}... ❕`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
-      );
-    } else {
-      // IF NO EXISTS, DELETE
-      deleteSchoolCourse();
-    }
+    handleDeleteCourse(data.schoolCourseId, resetForm);
   };
 
   return (
@@ -316,8 +173,8 @@ export function DeleteCourse() {
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolCourseId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolCourseSelect"
             onChange={(e) => {
@@ -348,7 +205,7 @@ export function DeleteCourse() {
                   type="text"
                   name="name"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={schoolCourseData.schoolCourseName}
                 />
               </div>
@@ -374,7 +231,7 @@ export function DeleteCourse() {
                   decimalScale={2}
                   fixedDecimalScale
                   prefix={"R$ "}
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 />
               </div>
 
@@ -399,7 +256,7 @@ export function DeleteCourse() {
                   decimalScale={2}
                   fixedDecimalScale
                   prefix={"R$ "}
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 />
               </div>
 
@@ -423,13 +280,13 @@ export function DeleteCourse() {
                   allowNegative={false}
                   decimalScale={0}
                   fixedDecimalScale
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 />
               </div>
             </div>
 
             {/** CHECKBOX CONFIRM DELETE */}
-            <div className="flex justify-center items-center gap-2 mt-6">
+            {/* <div className="flex justify-center items-center gap-2 mt-6">
               <input
                 type="checkbox"
                 name="confirmDelete"
@@ -447,7 +304,7 @@ export function DeleteCourse() {
                   ? `Confirmar exclusão de ${schoolCourseData.schoolCourseName}`
                   : `Confirmar exclusão`}
               </label>
-            </div>
+            </div> */}
 
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">

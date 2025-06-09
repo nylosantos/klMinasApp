@@ -98,7 +98,7 @@ export function EditCurriculum() {
           <select
             id="schoolSelect"
             defaultValue={" -- select an option -- "}
-            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             name="schoolSelect"
             onChange={(e) => {
               setCurriculumSelectedIds({
@@ -119,7 +119,7 @@ export function EditCurriculum() {
           <select
             id="schoolClassSelect"
             defaultValue={" -- select an option -- "}
-            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             name="schoolClassSelect"
             onChange={(e) => {
               setCurriculumSelectedIds({
@@ -152,7 +152,7 @@ export function EditCurriculum() {
           <select
             id="curriculumSelect"
             defaultValue={" -- select an option -- "}
-            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             name="curriculumSelect"
             onChange={(e) => {
               setCurriculumSelectedIds({

@@ -12,9 +12,10 @@ import { EditTeacherValidationZProps, TeacherSearchProps } from "../../@types";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { editTeacherValidationSchema } from "../../@types/zodValidation";
-import { doc, getFirestore, updateDoc } from "firebase/firestore";
+import { doc, getFirestore } from "firebase/firestore";
 import { BrazilianStateSelectOptions } from "./BrazilianStateSelectOptions";
 import { EditDashboardTeacherButton } from "../layoutComponents/EditDashboardTeacherButton";
+import { secureUpdateDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -29,6 +30,7 @@ interface EditTeacherFormProps {
   setIsSubmitting: (isSubmitting: boolean) => void;
   setIsEdit: (isEdit: boolean) => void;
   handleDeleteTeacher?: () => void;
+  onCloseLogModal?: (teacherId: string) => void; // Função para fechar o modal
 }
 
 export default function EditTeacherForm({
@@ -41,9 +43,10 @@ export default function EditTeacherForm({
   setIsSubmitting,
   setIsEdit,
   handleDeleteTeacher,
+  onCloseLogModal,
 }: EditTeacherFormProps) {
   // GET GLOBAL DATA
-  const { appUsersDatabaseData } = useContext(
+  const { appUsersDatabaseData, handleConfirmationToSubmit, userFullData } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
 
@@ -88,6 +91,10 @@ export default function EditTeacherForm({
         name: teacherSelectedData.name,
         email: teacherSelectedData.email,
         phone: teacherSelectedData.phone,
+      });
+      setPhoneFormatted({
+        ddd: teacherSelectedData.phone?.slice(3, 5),
+        number: teacherSelectedData.phone?.slice(-9),
       });
     }
   }, [teacherSelectedData]);
@@ -157,131 +164,154 @@ export default function EditTeacherForm({
       });
     });
   }, [errors]);
-
+  
   // SUBMIT DATA FUNCTION
   const handleEditTeacher: SubmitHandler<EditTeacherValidationZProps> = async (
     data
   ) => {
-    // EDIT TEACHER FUNCTION
-    const editTeacher = async () => {
-      try {
-        await updateDoc(doc(db, "teachers", teacherSelectedData.id), {
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-        });
-        toast.success(
-          `Professor ${teacherEditData.name} alterado com sucesso! 👌`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        );
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-      } finally {
-        setIsSubmitting(false);
-        resetForm();
-      }
-    };
-
-    setIsSubmitting(true);
-
-    // CHECK IF THIS THEACHER HAVE A AUTH USER
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user: any = await getAuthUser(teacherSelectedData.id);
-    // IF YES, EDIT ALSO
-    if (user !== undefined) {
-      const teacherPhoneExist = appUsersDatabaseData.find(
-        (teacher) => teacher.phone === data.phone
-      );
-      // IF EXISTS, RETURN ERROR
-      if (teacherPhoneExist) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`Telefone já registrado em nosso banco de dados... ❕`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          })
-        );
-      } else {
-        const teacherEmailExist = appUsersDatabaseData.find(
-          (teacher) => teacher.email === data.email
-        );
-        // IF EXISTS, RETURN ERROR
-        if (teacherEmailExist) {
-          return (
-            setIsSubmitting(false),
-            toast.error(`E-mail já registrado em nosso banco de dados... ❕`, {
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Editar Professor",
+      text: "Tem certeza que deseja confirmar as mudanças?",
+      icon: "question",
+      confirmButtonText: "Sim, confirmar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+    if (confirmation.isConfirmed && userFullData) {
+      setIsSubmitting(true);
+      // EDIT TEACHER FUNCTION
+      const editTeacher = async () => {
+        try {
+          await secureUpdateDoc(doc(db, "teachers", teacherSelectedData.id), {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+          });
+          toast.success(
+            `Professor ${teacherEditData.name} alterado com sucesso! 👌`,
+            {
               theme: "colored",
               closeOnClick: true,
               pauseOnHover: true,
               draggable: true,
               autoClose: 3000,
-            })
+            }
+          );
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+        } finally {
+          setIsSubmitting(false);
+          resetForm();
+        }
+      };
+      // CHECK IF THIS THEACHER HAVE A AUTH USER
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const user: any = await getAuthUser(teacherSelectedData.id);
+      // IF YES, EDIT ALSO
+      if (user !== undefined) {
+        const teacherPhoneExist = appUsersDatabaseData.find(
+          (teacher) => teacher.phone === data.phone
+        );
+        // IF EXISTS, RETURN ERROR
+        if (teacherPhoneExist) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Telefone já registrado em nosso banco de dados... ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            )
           );
         } else {
-          const dataForAuth = {
-            ...data,
-            role: "teacher",
-            id: user!.data.uid,
-          };
-          // EDIT FIREBASE AUTH DATA ONLY WITHOUT CHANGE PASSWORD -> FOR EDIT PASSWORD GO TO EDITUSER
-          await updateAppUserWithoutPassword(dataForAuth);
-          // EDIT CALL
-          await editTeacher();
+          const teacherEmailExist = appUsersDatabaseData.find(
+            (teacher) => teacher.email === data.email
+          );
+          // IF EXISTS, RETURN ERROR
+          if (teacherEmailExist && data.email !== teacherSelectedData.email) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `E-mail já registrado em nosso banco de dados... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else {
+            const dataForAuth = {
+              ...data,
+              role: "teacher",
+              id: user!.data.uid,
+              updatedBy: userFullData.id,
+            };
+            // EDIT CALL
+            await editTeacher();
+            // EDIT FIREBASE AUTH DATA ONLY WITHOUT CHANGE PASSWORD -> FOR EDIT PASSWORD GO TO EDITUSER
+            await updateAppUserWithoutPassword(dataForAuth);
+          }
+        }
+      } else {
+        const teacherPhoneExist = appUsersDatabaseData.find(
+          (teacher) => teacher.phone === data.phone
+        );
+        // IF EXISTS, RETURN ERROR
+        if (teacherPhoneExist) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Telefone já registrado em nosso banco de dados... ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            )
+          );
+        } else {
+          const teacherEmailExist = appUsersDatabaseData.find(
+            (teacher) => teacher.email === data.email
+          );
+          // IF EXISTS, RETURN ERROR
+          if (teacherEmailExist) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `E-mail já registrado em nosso banco de dados... ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else {
+            // EDIT CALL
+            await editTeacher();
+          }
         }
       }
     } else {
-      const teacherPhoneExist = appUsersDatabaseData.find(
-        (teacher) => teacher.phone === data.phone
-      );
-      // IF EXISTS, RETURN ERROR
-      if (teacherPhoneExist) {
-        return (
-          setIsSubmitting(false),
-          toast.error(`Telefone já registrado em nosso banco de dados... ❕`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          })
-        );
-      } else {
-        const teacherEmailExist = appUsersDatabaseData.find(
-          (teacher) => teacher.email === data.email
-        );
-        // IF EXISTS, RETURN ERROR
-        if (teacherEmailExist) {
-          return (
-            setIsSubmitting(false),
-            toast.error(`E-mail já registrado em nosso banco de dados... ❕`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            })
-          );
-        } else {
-          // EDIT CALL
-          await editTeacher();
-        }
-      }
+      setIsSubmitting(false);
     }
   };
 
@@ -307,6 +337,8 @@ export default function EditTeacherForm({
               resetTeacherData={resetTeacherDataFunction}
               setIsEdit={setIsEdit}
               setModal={setModal && setModal}
+              onCloseLogModal={onCloseLogModal}
+              id={teacherSelectedData.id}
             />
           </div>
         </div>
@@ -342,8 +374,8 @@ export default function EditTeacherForm({
             }
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={teacherEditData.name}
             onChange={(e) => {
@@ -368,7 +400,7 @@ export default function EditTeacherForm({
             E-mail:{" "}
           </label>
           <input
-            type="text"
+            type="email"
             name="email"
             disabled={!isEdit ? true : isSubmitting}
             placeholder={
@@ -378,8 +410,8 @@ export default function EditTeacherForm({
             }
             className={
               errors.email
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={teacherEditData.email}
             onChange={(e) => {

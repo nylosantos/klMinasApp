@@ -7,10 +7,7 @@ import {
   SetPageProps,
 } from "../context/GlobalDataContext";
 import Dashboard from "./Dashboard";
-import ManageSchools from "./ManageSchools";
-import ManageUsers from "./ManageUsers";
 import Settings from "./Settings";
-import { ToastContainer } from "react-toastify";
 
 export default function LandingPage() {
   // GET GLOBAL DATA
@@ -27,10 +24,6 @@ export default function LandingPage() {
       return <Dashboard />;
     } else if (pageTo.show === "Settings") {
       return <Settings />;
-    } else if (pageTo.show === "ManageSchools") {
-      return <ManageSchools />;
-    } else if (pageTo.show === "ManageUsers") {
-      return <ManageUsers />;
     }
   }
 
@@ -39,9 +32,9 @@ export default function LandingPage() {
       {/* <Notification /> */}
       {/* HEADER */}
       <Header />
-      {/* TOAST CONTAINER */}
-      <ToastContainer limit={5} />
-      <div className="flex justify-start h-full overflow-scroll no-scrollbar">{renderPage(page)}</div>
+      <div className="flex justify-start h-full overflow-scroll no-scrollbar">
+        {renderPage(page)}
+      </div>
     </div>
   );
 }

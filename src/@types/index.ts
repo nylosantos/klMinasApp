@@ -312,10 +312,12 @@ export interface ScheduleSearchProps {
 export interface StudentSearchProps {
   [x: string]: any;
   // Section 1: Student Data
-  publicId?: number;
+  publicId: number;
+  active: boolean;
   id: string;
   name: string;
   birthDate: string;
+  document: string;
   schoolYears: string;
   schoolYearsComplement: string;
   parentOne: {
@@ -341,10 +343,8 @@ export interface StudentSearchProps {
   familyDiscount: boolean;
   secondCourseDiscount: boolean;
   paymentDay?: string;
-  experimentalCurriculumIds: Array<CurriculumArrayProps>;
-  curriculumIds: Array<CurriculumArrayProps>;
+  curriculums: Array<CurriculumArrayProps>;
   studentFamilyAtSchool: Array<string>;
-  paymentRegister: PaymentRegisterProps;
 
   // Section 3: Student Financial Responsible Data
   financialResponsible: {
@@ -377,22 +377,22 @@ export interface StudentSearchProps {
 //   id: string;
 //   // applyDiscount: boolean;
 // }
-export interface ExcludeFamilyProps {
-  exclude: boolean;
-  id: string;
-}
+// export interface ExcludeFamilyProps {
+//   exclude: boolean;
+//   id: string;
+// }
 
 export interface CurriculumArrayProps {
-  date: string;
+  date: Timestamp | null;
   id: string;
   isExperimental: boolean;
+  isWaiting: boolean;
   indexDays: Array<number>;
-  price: number;
 }
 
-export interface ExcludeCurriculumProps extends CurriculumArrayProps {
-  exclude: boolean;
-}
+// export interface ExcludeCurriculumProps extends CurriculumArrayProps {
+//   exclude: boolean;
+// }
 
 export interface PresenceListProps {
   id: string;
@@ -418,16 +418,16 @@ export interface CurriculumWithNamesProps extends CurriculumSearchProps {
   teacherName: string;
 }
 
-export interface WaitingListProps {
-  id: string;
-  date: Timestamp;
-}
-export interface ExcludeWaitingListProps extends WaitingListProps {
-  exclude: boolean;
-}
+// export interface WaitingListProps {
+//   id: string;
+//   date: Timestamp | null;
+// }
+// export interface ExcludeWaitingListProps extends WaitingListProps {
+//   exclude: boolean;
+// }
 
 export interface CurriculumSearchProps {
-  publicId?: number;
+  publicId: number;
   id: string;
   schoolId: string;
   schoolClassIds: Array<string>;
@@ -436,8 +436,6 @@ export interface CurriculumSearchProps {
   scheduleId: string;
   teacherId: string;
   students: Array<CurriculumArrayProps>;
-  experimentalStudents: Array<CurriculumArrayProps>;
-  waitingList: Array<WaitingListProps>;
   placesAvailable: number;
   updatedAt: Date;
 }
@@ -454,27 +452,112 @@ export interface ButtonSignProps {
   isClosed?: boolean;
 }
 
-export interface SubCollectionFamilyProps {
-  idsArray: Array<string>;
-  detailsArray: Array<SubCollectionFamilyDetailsProps>;
-  id: string;
-  name: string;
-}
+// export interface SubCollectionFamilyProps {
+//   idsArray: Array<string>;
+//   detailsArray: Array<SubCollectionFamilyDetailsProps>;
+//   id: string;
+//   name: string;
+// }
 
-export interface SubCollectionFamilyDetailsProps {
-  id: string;
-  name: string;
-  applyDiscount: boolean;
-}
+// export interface SubCollectionFamilyDetailsProps {
+//   id: string;
+//   name: string;
+//   applyDiscount: boolean;
+// }
 
-export interface PaymentRegisterProps {
-  date: string;
-  month: string;
-  note: string;
-  value: number;
-  year: string;
-}
+// export interface PaymentRegisterProps {
+//   date: string;
+//   month: string;
+//   note: string;
+//   value: number;
+//   year: string;
+// }
 export interface HandleClickOpenFunctionProps {
   id: string;
   option: "edit" | "finance" | "details";
+}
+
+// Estrutura dos dados da família de um aluno para atualização
+export interface StudentFamilyToUpdateProps {
+  familyId: string;
+  appliedPrice: number;
+  fullPrice: number;
+  familyDiscount: boolean;
+  secondCourseDiscount: boolean;
+  employeeDiscount: boolean;
+  customDiscount: boolean;
+  customDiscountValue: string;
+}
+
+export interface CalculateStudentMonthlyFeeResult {
+  studentId: string;
+  appliedPrice: number;
+  fullPrice: number;
+  familyDiscount: boolean;
+  secondCourseDiscount: boolean;
+  employeeDiscount: boolean;
+  customDiscount: boolean;
+  customDiscountValue: string;
+  studentFamilyToUpdate?: StudentFamilyToUpdateProps[];
+}
+
+export interface UpdateStudentFeeProps
+  extends CalculateStudentMonthlyFeeResult {
+  newStudent: boolean;
+}
+
+export interface CurriculumToAddProps {
+  date: Timestamp | null; // Data de matrícula no Curriculum
+  id: string; // id do curriculum
+  isExperimental: boolean; // Booleano que indica se o curriculum é uma aula experimental ou não
+  isWaiting: boolean; // Booleano que indica se o curriculum é uma fila de espera ou não
+  indexDays: Array<number>; // Array de números que indicam os dias da semana em que o aluno frequenta aquele curriculum
+}
+
+export interface StudentFreeDayProps {
+  day: number;
+  curriculumId: string | null;
+}
+
+export interface CurriculumStateProps {
+  curriculums: CurriculumToAddProps[];
+  fullPrice: number;
+  appliedPrice: number;
+  enrollmentFee: number;
+}
+
+export interface VacancyCalculationResult {
+  vacanciesAvailable: boolean; // Se há vagas disponíveis
+  totalVacanciesAvailable: boolean; // Se há vagas disponíveis para todos os dias
+  partialVacancies: { day: number; remainingVacancies: number }[]; // Vagas restantes por dia
+  vacancyType: "total" | "partial"; // Tipo de vaga ("total" ou "parcial")
+  vacanciesPerDay: number[]; // Vagas restantes por cada dia da semana (0=Domingo, 1=Segunda, etc.)
+  totalAvailableVacancies: number; // Número total de vagas disponíveis (considerando a distribuição dos dias)
+}
+
+export interface ConfirmationToSubmitProps {
+  title: string;
+  text: string;
+  icon: "warning" | "error" | "success" | "info" | "question" | undefined;
+  showCancelButton: boolean;
+  cancelButtonText: string;
+  confirmButtonText: string;
+}
+
+export interface CurriculumRegistrationChangesProps {
+  id?: string;
+  whatChanged: "date" | "days" | "courseType";
+  date: Timestamp | null;
+  resetDays?: boolean;
+}
+
+// Definir os tipos dos parâmetros e estrutura de dados
+export interface LogData {
+  id: string;
+  action: string;
+  changedBy: string;
+  deletedData: unknown; // Pode ser mais específico, dependendo da estrutura dos dados deletados
+  entity: string;
+  entityId: string;
+  timestamp: Timestamp; // O tipo do timestamp será compatível com o servidor do Firestore
 }

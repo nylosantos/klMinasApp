@@ -12,12 +12,14 @@ import {
   PresenceListProps,
 } from "../../@types";
 import { classDayIndex, schoolYearsComplementData } from "../../custom";
-import { doc, getFirestore, setDoc, Timestamp } from "firebase/firestore";
+import { doc, getFirestore, Timestamp } from "firebase/firestore";
 import ClassAttendanceList from "./ClassAttendanceList";
 import { app } from "../../db/Firebase";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { toast } from "react-toastify";
+import { getAuth } from "firebase/auth";
+import { secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 type StudentsListForTeachersProps = {
   curriculumSelectedData: CurriculumSearchProps;
@@ -119,58 +121,26 @@ export default function StudentsListForTeachers({
     ? selectedClassDate.weekDay.index
     : new Date().getDay();
 
-  const enrolledStudents = curriculumSelectedData.students.filter(
-    (studentId) => {
-      const studentDetails = handleOneStudentDetails(studentId.id);
-      return studentDetails?.curriculumIds.some((curriculum) => {
-        const curriculumDate = (
-          curriculum.date as unknown as Timestamp
-        ).toDate();
-        const selectedDate = new Date(
-          selectedClassDate ? selectedClassDate.toDate() : new Date()
-        );
-        return (
-          curriculum.id === curriculumSelectedData.id &&
-          curriculum.indexDays.includes(selectedDayIndex) &&
-          selectedDate >= curriculumDate
-        );
-      });
-    }
-  );
-
-  const experimentalStudents =
-    curriculumSelectedData.experimentalStudents.filter((studentId) => {
-      const studentDetails = handleOneStudentDetails(studentId.id);
-      const experimentalClassDate = (
-        studentDetails?.experimentalCurriculumIds.find(
-          (curriculum) => curriculum.id === curriculumSelectedData.id
-        )?.date as unknown as Timestamp
-      )
-        .toDate()
-        .toDateString();
-      return studentDetails?.experimentalCurriculumIds.some(
-        (curriculum) =>
-          curriculum.id === curriculumSelectedData.id &&
-          experimentalClassDate ===
-            new Date(
-              selectedClassDate ? selectedClassDate.toDate() : new Date()
-            ).toDateString()
+  const students = curriculumSelectedData.students.filter((studentId) => {
+    const studentDetails = handleOneStudentDetails(studentId.id);
+    return studentDetails?.curriculums.some((curriculum) => {
+      const curriculumDate = (curriculum.date as unknown as Timestamp).toDate();
+      const selectedDate = new Date(
+        selectedClassDate ? selectedClassDate.toDate() : new Date()
+      );
+      return (
+        curriculum.id === curriculumSelectedData.id &&
+        ((curriculum.indexDays.includes(selectedDayIndex) &&
+          selectedDate >= curriculumDate) ||
+          (curriculum.isExperimental &&
+            selectedDate.setHours(0, 0, 0, 0) ===
+              curriculumDate.setHours(0, 0, 0, 0)))
       );
     });
-
-  const allStudents = useMemo(() => {
-    const students = [];
-    if (experimentalStudents.length > 0) {
-      students.push(...experimentalStudents);
-    }
-    if (enrolledStudents.length > 0) {
-      students.push(...enrolledStudents);
-    }
-    return students;
-  }, [experimentalStudents, enrolledStudents, selectedClassDate]);
+  });
 
   const defaultValues = useMemo(() => {
-    return allStudents.reduce<Record<string, boolean>>((acc, student) => {
+    return students.reduce<Record<string, boolean>>((acc, student) => {
       const attendanceRecord = attendanceDataFromDB?.find(
         (record) => record.id === student.id
       );
@@ -180,7 +150,7 @@ export default function StudentsListForTeachers({
 
       return acc;
     }, {});
-  }, [allStudents, attendanceDataFromDB]);
+  }, [students, attendanceDataFromDB]);
 
   const methods = useForm<{
     attendance: Record<string, boolean>;
@@ -208,7 +178,7 @@ export default function StudentsListForTeachers({
 
   useEffect(() => {
     if (shouldUpdateSwitches) {
-      allStudents.forEach((student) => {
+      students.forEach((student) => {
         const attendanceRecord = attendanceDataFromDB?.find(
           (record) => record.id === student.id
         );
@@ -288,18 +258,22 @@ export default function StudentsListForTeachers({
               ...curriculumData,
               classCalls: filteredArray,
             };
+
             try {
-              await setDoc(
-                doc(db, "curriculum", curriculumData.id),
-                curriculumDataToUpload
-              );
-              toast.success(`Chamada Registrada! 👌`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
+              const user = getAuth().currentUser;
+              if (user && user.uid) {
+                await secureSetDoc(
+                  doc(db, "curriculum", curriculumData.id),
+                  curriculumDataToUpload
+                );
+                toast.success(`Chamada Registrada! 👌`, {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                });
+              }
             } catch (error) {
               console.log("ESSE É O ERROR", error);
               toast.error(`Ocorreu um erro... 🤯`, {
@@ -313,13 +287,12 @@ export default function StudentsListForTeachers({
               setIsSubmitting(false);
             }
           } else {
-            //   updateStudentAttendance(attendanceRecord);
             const curriculumDataToUpload: CurriculumAttendanceProps = {
               ...curriculumSelectedData,
               classCalls: [attendanceRecord],
             };
             try {
-              await setDoc(
+              await secureSetDoc(
                 doc(db, "curriculum", curriculumData.id),
                 curriculumDataToUpload
               );
@@ -386,6 +359,9 @@ export default function StudentsListForTeachers({
           <tbody className="[&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 text-sm md:text-base">
             {curriculumSelectedData.students.length ? (
               curriculumSelectedData.students
+                .filter(
+                  (student) => !student.isExperimental && !student.isWaiting
+                )
                 .sort(
                   (a, b) =>
                     handleOneStudentDetails(a.id)!.publicId! -
@@ -422,7 +398,7 @@ export default function StudentsListForTeachers({
                         className="border-r dark:border-klGreen-500 p-2 text-center"
                       >
                         {handleOneStudentDetails(student.id)
-                          ?.curriculumIds.filter(
+                          ?.curriculums.filter(
                             (curriculum) =>
                               curriculum.id === curriculumSelectedData.id
                           )[0]
@@ -474,17 +450,22 @@ export default function StudentsListForTeachers({
           </thead>
 
           <tbody>
-            {enrolledStudents.length > 0 && (
+            {students.filter(
+              (student) => !student.isExperimental && !student.isWaiting
+            ).length > 0 && (
               <ClassAttendanceList
-                students={enrolledStudents}
+                students={students.filter(
+                  (student) => !student.isExperimental && !student.isWaiting
+                )}
                 title="Matriculados"
                 handleOneStudentDetails={handleOneStudentDetails}
               />
             )}
 
-            {experimentalStudents.length > 0 && (
+            {students.filter((student) => student.isExperimental).length >
+              0 && (
               <ClassAttendanceList
-                students={experimentalStudents}
+                students={students.filter((student) => student.isExperimental)}
                 title="Aula Experimental"
                 handleOneStudentDetails={handleOneStudentDetails}
               />

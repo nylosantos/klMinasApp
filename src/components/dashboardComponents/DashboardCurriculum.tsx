@@ -32,6 +32,7 @@ interface DashboardCurriculumProps {
   setOpen: Dispatch<SetStateAction<boolean>>;
   renderDashboardMenu(itemMenu: DashboardMenuArrayProps): JSX.Element;
   itemsMenu: DashboardMenuArrayProps[];
+  onCloseLogModal: (schoolId: string) => void; // Função para fechar o modal
 }
 
 export default function DashboardCurriculum({
@@ -40,6 +41,7 @@ export default function DashboardCurriculum({
   setOpen,
   renderDashboardMenu,
   itemsMenu,
+  onCloseLogModal,
 }: DashboardCurriculumProps) {
   // GET GLOBAL DATA
   const {
@@ -276,21 +278,21 @@ export default function DashboardCurriculum({
             value={filters.publicId}
             onChange={(e) => handleInputChange("publicId", e.target.value)}
             placeholder="Identificador"
-            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="uppercase w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
           <input
             type="text"
             value={filters.school}
             onChange={(e) => handleInputChange("school", e.target.value)}
             placeholder="Escola"
-            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="uppercase w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
           <input
             type="text"
             value={filters.schoolYear}
             onChange={(e) => handleInputChange("schoolYear", e.target.value)}
             placeholder="Ano Escolar"
-            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="uppercase w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
         </div>
         <div className="flex flex-col w-full gap-2">
@@ -299,14 +301,14 @@ export default function DashboardCurriculum({
             value={filters.modality}
             onChange={(e) => handleInputChange("modality", e.target.value)}
             placeholder="Modalidade"
-            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="uppercase w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
           <input
             type="text"
             value={filters.teacher}
             onChange={(e) => handleInputChange("teacher", e.target.value)}
             placeholder="Professor"
-            className="w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="uppercase w-full px-2 py-1 bg-klGreen-500/10 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           />
         </div>
         <div className="flex flex-col gap-4 mt-6">
@@ -418,68 +420,66 @@ export default function DashboardCurriculum({
                       )
                       .sort((a, b) => a.publicId! - b.publicId!)
                       .map((curriculum, index) => (
-                        <>
-                          <tr
+                        <tr
+                          key={index}
+                          className="hover:bg-gray-100 cursor-pointer"
+                          onClick={() => {
+                            if (
+                              curriculumSelected &&
+                              curriculumSelected.id === curriculum.id
+                            ) {
+                              setCurriculumSelected(undefined);
+                            } else {
+                              handleClickOpen({
+                                id: curriculum.id,
+                                option: "details",
+                              });
+                              setModal(true);
+                            }
+                          }}
+                        >
+                          <td
                             key={index}
-                            className="hover:bg-gray-100 cursor-pointer"
-                            onClick={() => {
-                              if (
-                                curriculumSelected &&
-                                curriculumSelected.id === curriculum.id
-                              ) {
-                                setCurriculumSelected(undefined);
-                              } else {
-                                handleClickOpen({
-                                  id: curriculum.id,
-                                  option: "details",
-                                });
-                                setModal(true);
-                              }
-                            }}
+                            className="uppercase border-r dark:border-klGreen-500 p-2 text-center"
                           >
-                            <td
-                              key={index}
-                              className="border-r dark:border-klGreen-500 p-2 text-center"
-                            >
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .publicId
-                              }
-                            </td>
-                            <td
-                              key={index + 1}
-                              className="border-r dark:border-klGreen-500 p-2 text-center"
-                            >
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .schoolName
-                              }
-                            </td>
-                            <td
-                              key={index + 2}
-                              className="border-r dark:border-klGreen-500 p-2 text-center"
-                            >
-                              {handleOneCurriculumDetails(
-                                curriculum.id
-                              ).schoolClassNames.join(" - ")}
-                            </td>
-                            <td
-                              key={index + 3}
-                              className="border-r dark:border-klGreen-500 p-2 text-center"
-                            >
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .schoolCourseName
-                              }
-                            </td>
-                            <td key={index + 4} className="p-2 text-center">
-                              {
-                                handleOneCurriculumDetails(curriculum.id)
-                                  .teacherName
-                              }
-                            </td>
-                          </tr>
-                        </>
+                            {handleOneCurriculumDetails(curriculum.id).publicId}
+                          </td>
+                          <td
+                            key={index + 1}
+                            className="uppercase border-r dark:border-klGreen-500 p-2 text-center"
+                          >
+                            {
+                              handleOneCurriculumDetails(curriculum.id)
+                                .schoolName
+                            }
+                          </td>
+                          <td
+                            key={index + 2}
+                            className="uppercase border-r dark:border-klGreen-500 p-2 text-center"
+                          >
+                            {handleOneCurriculumDetails(
+                              curriculum.id
+                            ).schoolClassNames.join(" - ")}
+                          </td>
+                          <td
+                            key={index + 3}
+                            className="uppercase border-r dark:border-klGreen-500 p-2 text-center"
+                          >
+                            {
+                              handleOneCurriculumDetails(curriculum.id)
+                                .schoolCourseName
+                            }
+                          </td>
+                          <td
+                            key={index + 4}
+                            className="uppercase p-2 text-center"
+                          >
+                            {
+                              handleOneCurriculumDetails(curriculum.id)
+                                .teacherName
+                            }
+                          </td>
+                        </tr>
                       ))
                   ) : (
                     <tr>
@@ -518,6 +518,7 @@ export default function DashboardCurriculum({
               setIsSubmitting={setIsSubmitting}
               handleDeleteClass={handleDeleteData}
               onClose={handleClose}
+              onCloseLogModal={onCloseLogModal}
             />
           </div>
         </div>

@@ -24,6 +24,7 @@ type FinanceStudentModalProps = {
   setIsEdit?: (option: boolean) => void;
   setIsFinance?: (option: boolean) => void;
   setIsDetailsViewing?: (option: boolean) => void;
+  toggleActiveUser?: () => void;
 };
 
 export function FinanceStudentModal({
@@ -40,6 +41,7 @@ export function FinanceStudentModal({
   setIsEdit,
   setIsFinance,
   setIsDetailsViewing,
+  toggleActiveUser,
 }: FinanceStudentModalProps) {
   // GET GLOBAL DATA
   const { page } = useContext(GlobalDataContext) as GlobalDataContextType;
@@ -96,6 +98,7 @@ export function FinanceStudentModal({
         onClose &&
         setIsEdit &&
         setIsFinance &&
+        toggleActiveUser &&
         setIsDetailsViewing && (
           <EditDashboardHeader
             handleClickOpen={handleClickOpen}
@@ -111,6 +114,7 @@ export function FinanceStudentModal({
             onlyView={onlyView}
             open={open}
             key={student.id}
+            toggleActiveUser={toggleActiveUser}
           />
         )}
       <div className="flex flex-col w-full h-full overflow-scroll no-scrollbar [&>*:nth-child(2)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/00 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/0 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 rounded-xl transition-all duration-1000">

@@ -10,6 +10,7 @@ interface EditDashboardHeaderProps {
   student: StudentSearchProps;
   handleClickOpen: ({ id, option }: HandleClickOpenFunctionProps) => void;
   handleDeleteUser: () => void;
+  toggleActiveUser: () => void;
   onClose: () => void;
   setIsEdit: (option: boolean) => void;
   setIsFinance: (option: boolean) => void;
@@ -29,6 +30,7 @@ export default function EditDashboardHeader({
   setIsEdit,
   setIsFinance,
   setIsDetailsViewing,
+  toggleActiveUser,
 }: EditDashboardHeaderProps) {
   return (
     <div className="flex w-full relative items-center justify-center text-md/snug text-gray-100 bg-klGreen-500/70 dark:bg-klGreen-500/70 rounded-xl uppercase p-4">
@@ -44,6 +46,7 @@ export default function EditDashboardHeader({
       <div className="flex relative justify-end px-2 w-full z-50">
         <StudentButtonDetails
           id={student.id}
+          isActive={student.active}
           isEdit={isEdit}
           isFinance={isFinance}
           isDetailsViewing={onlyView}
@@ -55,6 +58,7 @@ export default function EditDashboardHeader({
           setIsEdit={setIsEdit}
           setIsFinance={setIsFinance}
           setIsDetailsViewing={setIsDetailsViewing}
+          toggleActiveUser={toggleActiveUser}
         />
       </div>
     </div>

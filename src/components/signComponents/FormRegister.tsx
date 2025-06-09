@@ -10,9 +10,7 @@ import {
   getDocs,
   getFirestore,
   query,
-  serverTimestamp,
-  setDoc,
-  where,
+  serverTimestamp, where
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
@@ -29,6 +27,7 @@ import {
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 import { formataCPF, testaCPF } from "../../custom";
+import { secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -46,7 +45,7 @@ export function FormRegister() {
     setIsSubmitting,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
-// SYSTEM SIGN UP CLOSED STATE
+  // SYSTEM SIGN UP CLOSED STATE
   const [systemSignUpClosed, setSystemSignUpClosed] = useState(false);
 
   // GET SYSTEM CONSTANTS DATABASE DATA
@@ -61,7 +60,7 @@ export function FormRegister() {
           (constants) => constants.year === new Date().getFullYear().toString()
         ) as SystemConstantsSearchProps;
 
-        if (foundedSystemConstants) {
+      if (foundedSystemConstants) {
         setSystemSignUpClosed(foundedSystemConstants.systemSignUpClosed);
       }
     }
@@ -150,7 +149,7 @@ export function FormRegister() {
             // ADD USER FUNCTION
             const addUser = async () => {
               try {
-                await setDoc(doc(db, "appUsers", user.uid), {
+                await secureSetDoc(doc(db, "appUsers", user.uid), {
                   id: user.uid,
                   name: user.displayName,
                   email: user.email,
@@ -240,7 +239,7 @@ export function FormRegister() {
 
           {/* E-MAIL */}
           <input
-            type="text"
+            type="email"
             name="email"
             autoComplete="email"
             disabled={systemSignUpClosed ? true : isSubmitting}
@@ -273,8 +272,8 @@ export function FormRegister() {
             <input
               type="text"
               name="financialResponsibleDocument"
-              pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-              maxLength={11}
+              maxLength={14}
+              minLength={14}
               placeholder={
                 testFinancialCPF
                   ? errors.document
@@ -291,7 +290,7 @@ export function FormRegister() {
               }
               value={userSignUp.document}
               onChange={(e) => {
-                if (e.target.value.length === 11) {
+                if (e.target.value.length === 14) {
                   setTestFinancialCPF(testaCPF(e.target.value));
                 }
                 setUserSignUp({

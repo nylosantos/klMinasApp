@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getFirestore, serverTimestamp } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
@@ -15,13 +15,14 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertClass() {
   // GET GLOBAL DATA
-  const { schoolClassDatabaseData } = useContext(
+  const { schoolClassDatabaseData, handleConfirmationToSubmit } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
 
@@ -30,7 +31,7 @@ export function InsertClass() {
     useState<CreateClassValidationZProps>({
       name: "",
       schoolStageId: "",
-      confirmInsert: false,
+      // confirmInsert: false,
     });
 
   // SUBMITTING STATE
@@ -47,7 +48,7 @@ export function InsertClass() {
     defaultValues: {
       name: "",
       schoolStageId: "",
-      confirmInsert: false,
+      // confirmInsert: false,
     },
   });
 
@@ -56,7 +57,7 @@ export function InsertClass() {
     setSchoolClassData({
       name: "",
       schoolStageId: "",
-      confirmInsert: false,
+      // confirmInsert: false,
     });
     ((
       document.getElementById("schoolStageSelect") as HTMLSelectElement
@@ -68,7 +69,7 @@ export function InsertClass() {
   useEffect(() => {
     setValue("name", schoolClassData.name);
     setValue("schoolStageId", schoolClassData.schoolStageId);
-    setValue("confirmInsert", schoolClassData.confirmInsert);
+    // setValue("confirmInsert", schoolClassData.confirmInsert);
   }, [schoolClassData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -76,7 +77,7 @@ export function InsertClass() {
     const fullErrors = [
       errors.name,
       errors.schoolStageId,
-      errors.confirmInsert,
+      // errors.confirmInsert,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -93,80 +94,93 @@ export function InsertClass() {
   const handleAddClass: SubmitHandler<CreateClassValidationZProps> = async (
     data
   ) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Adicionar Ano Escolar",
+      text: "Tem certeza que deseja adicionar este Ano Escolar?",
+      icon: "question",
+      confirmButtonText: "Sim, adicionar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
 
-    // CHECK INSERT CONFIRMATION
-    if (!data.confirmInsert) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar o Ano Escolar ${data.name}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
 
-    // ADD SCHOOL CLASS FUNCTION
-    const addClass = async () => {
-      try {
-        const commonId = uuidv4();
-        await setDoc(doc(db, "schoolClasses", commonId), {
-          id: commonId,
-          name: data.name,
-          schoolStageId: data.schoolStageId,
-          updatedAt: serverTimestamp(),
-        });
-        resetForm();
-        toast.success(`Ano Escolar ${data.name} criado com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
+      // CHECK INSERT CONFIRMATION
+      // if (!data.confirmInsert) {
+      //   setIsSubmitting(false);
+      //   return toast.error(
+      //     `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar o Ano Escolar ${data.name}... ☑️`,
+      //     {
+      //       theme: "colored",
+      //       closeOnClick: true,
+      //       pauseOnHover: true,
+      //       draggable: true,
+      //       autoClose: 3000,
+      //     }
+      //   );
+      // }
 
-    // CHECKING IF SCHOOL CLASS EXISTS ON DATABASE
-    const schoolClassExists = schoolClassDatabaseData.find(
-      (schoolClass) =>
-        schoolClass.name === data.name &&
-        schoolClass.schoolStageId === data.schoolStageId
-    );
-
-    if (schoolClassExists) {
-      // IF EXISTS, RETURN ERROR
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `Ano Escolar ${data.name} já existe no nosso banco de dados... ❕`,
-          {
+      // ADD SCHOOL CLASS FUNCTION
+      const addClass = async () => {
+        try {
+          const commonId = uuidv4();
+          await secureSetDoc(doc(db, "schoolClasses", commonId), {
+            id: commonId,
+            name: data.name,
+            schoolStageId: data.schoolStageId,
+            updatedAt: serverTimestamp(),
+          });
+          resetForm();
+          toast.success(`Ano Escolar ${data.name} criado com sucesso! 👌`, {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
             autoClose: 3000,
-          }
-        )
+          });
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
+
+      // CHECKING IF SCHOOL CLASS EXISTS ON DATABASE
+      const schoolClassExists = schoolClassDatabaseData.find(
+        (schoolClass) =>
+          schoolClass.name === data.name &&
+          schoolClass.schoolStageId === data.schoolStageId
       );
+
+      if (schoolClassExists) {
+        // IF EXISTS, RETURN ERROR
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Ano Escolar ${data.name} já existe no nosso banco de dados... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      } else {
+        // IF NOT EXISTS, CREATE
+        addClass();
+      }
     } else {
-      // IF NOT EXISTS, CREATE
-      addClass();
+      setIsSubmitting(false);
     }
   };
 
@@ -210,8 +224,8 @@ export function InsertClass() {
             }
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={schoolClassData.name}
             onChange={(e) => {
@@ -291,7 +305,7 @@ export function InsertClass() {
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
+        {/* <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
             name="confirmInsert"
@@ -309,7 +323,7 @@ export function InsertClass() {
               ? `Confirmar criação do Ano Escolar ${schoolClassData.name}`
               : `Confirmar criação`}
           </label>
-        </div>
+        </div> */}
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4">

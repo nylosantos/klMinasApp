@@ -1,5 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useContext } from "react";
+import {
+  useState,
+  useEffect,
+  useContext,
+  Dispatch,
+  SetStateAction,
+} from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { getFunctions } from "firebase/functions";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,8 +22,28 @@ import {
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 import { formataCPF, testaCPF } from "../../custom";
+import SettingsMenuModal from "../layoutComponents/SettingsMenuModal";
+import SettingsSectionSubHeader from "../layoutComponents/SettingsSectionSubHeader";
+import BackdropModal from "../layoutComponents/BackdropModal";
+import { SettingsMenuArrayProps } from "../../pages/Settings";
 
-export function EditMyUser() {
+interface EditMyUserProps {
+  renderSettingsMenu(itemMenu: string): JSX.Element | undefined;
+  itemsMenu: SettingsMenuArrayProps[];
+  settingsMenu: boolean;
+  setSettingsMenu: Dispatch<SetStateAction<boolean>>;
+  showSettingsPage: {
+    page: string;
+  };
+}
+
+export function EditMyUser({
+  itemsMenu,
+  renderSettingsMenu,
+  settingsMenu,
+  setSettingsMenu,
+  showSettingsPage,
+}: EditMyUserProps) {
   // GET GLOBAL DATA
   const {
     appUsersDb,
@@ -28,6 +54,7 @@ export function EditMyUser() {
     userFullData,
     setIsSubmitting,
     setPage,
+    handleConfirmationToSubmit,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // EDIT USER WITHOUT CHANGING PASSWORD CLOUD FUNCTION HOOK
@@ -175,25 +202,65 @@ export function EditMyUser() {
   const handleEditUser: SubmitHandler<EditUserValidationZProps> = async (
     data
   ) => {
-    setIsSubmitting(true);
-
-    // CHANGE PASSWORD TEST
-    if (data.changePassword) {
-      if (!data.password || data.password?.length < 6) {
-        setIsSubmitting(false);
-        setErrorPassword(true);
-        toast.error(`A senha precisa ter, no mínimo, 6 caracteres.`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Editar seu Usuário",
+      text: "Tem certeza que deseja confirmar as mudanças?",
+      icon: "question",
+      confirmButtonText: "Sim, confirmar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+    if (confirmation.isConfirmed && userFullData) {
+      setIsSubmitting(true);
+      const dataForAuth = {
+        ...data,
+        updatedBy: userFullData.id,
+      };
+      // CHANGE PASSWORD TEST
+      if (data.changePassword) {
+        if (!data.password || data.password?.length < 6) {
+          setIsSubmitting(false);
+          setErrorPassword(true);
+          toast.error(`A senha precisa ter, no mínimo, 6 caracteres.`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+        } else {
+          setErrorPassword(false);
+          try {
+            // UPDATE APP USER CHANGING PASSWORD FUNCTION (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
+            await updateAppUserWithPassword(dataForAuth);
+            resetForm();
+            toast.success(`${data.name} editado com sucesso! 👌`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            setIsSubmitting(false);
+            setPage({ prev: page.show, show: "Settings" });
+          } catch (error) {
+            console.log("Erro: ", error);
+            toast.error(`Ocorreu um erro... 🤯`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            resetForm();
+            setIsSubmitting(false);
+          }
+        }
       } else {
         setErrorPassword(false);
         try {
-          // UPDATE APP USER CHANGING PASSWORD FUNCTION (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
-          await updateAppUserWithPassword(data);
+          // UPDATE APP USER NOT CHANGING PASSWORD FUNCTION (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
+          await updateAppUserWithoutPassword(dataForAuth);
           resetForm();
           toast.success(`${data.name} editado com sucesso! 👌`, {
             theme: "colored",
@@ -218,32 +285,7 @@ export function EditMyUser() {
         }
       }
     } else {
-      setErrorPassword(false);
-      try {
-        // UPDATE APP USER NOT CHANGING PASSWORD FUNCTION (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
-        await updateAppUserWithoutPassword(data);
-        resetForm();
-        toast.success(`${data.name} editado com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-        setPage({ prev: page.show, show: "Settings" });
-      } catch (error) {
-        console.log("Erro: ", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        resetForm();
-        setIsSubmitting(false);
-      }
+      setIsSubmitting(false);
     }
   };
 
@@ -253,11 +295,15 @@ export function EditMyUser() {
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="editando" />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">
-        {userFullData?.role === "user"
-          ? "Minha Conta"
-          : `Editando ${userEditData?.name}`}
-      </h1>
+      <div className="flex justify-center items-center mt-2 py-2 gap-4">
+        <h1 className="text-lg font-semibold">Configurações</h1>
+      </div>
+      <SettingsSectionSubHeader
+        setSettingsMenu={setSettingsMenu}
+        settingsMenu={settingsMenu}
+        data={itemsMenu}
+        showSettingsPage={showSettingsPage}
+      />
 
       {/* LOADING DATA */}
       {!userFullData ? (
@@ -295,8 +341,8 @@ export function EditMyUser() {
                 }
                 className={
                   errors.name
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 value={userEditData.name}
                 onChange={(e) => {
@@ -321,7 +367,7 @@ export function EditMyUser() {
                 E-mail:{" "}
               </label>
               <input
-                type="text"
+                type="email"
                 name="email"
                 disabled={isSubmitting}
                 placeholder={
@@ -331,8 +377,8 @@ export function EditMyUser() {
                 }
                 className={
                   errors.email
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 value={userEditData.email}
                 onChange={(e) => {
@@ -370,7 +416,8 @@ export function EditMyUser() {
                 <input
                   type="text"
                   name="userDocument"
-                  pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                  maxLength={14}
+                  minLength={14}
                   placeholder={
                     errors.document
                       ? "É necessário inserir o CPF do Responsável Financeiro"
@@ -379,13 +426,13 @@ export function EditMyUser() {
                   className={
                     testFinancialCPF
                       ? errors.document
-                        ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                   }
                   value={userEditData.document}
                   onChange={(e) => {
-                    if (e.target.value.length === 11) {
+                    if (e.target.value.length === 14) {
                       setTestFinancialCPF(testaCPF(e.target.value));
                     }
                     setUserEditData({
@@ -516,9 +563,9 @@ export function EditMyUser() {
                     className={
                       !errorPassword
                         ? errors.password
-                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     }
                     onChange={(e) => {
                       setUserEditData({
@@ -557,9 +604,9 @@ export function EditMyUser() {
                     className={
                       !errorPassword
                         ? errors.confirmPassword
-                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     }
                     onChange={(e) => {
                       setUserEditData({
@@ -598,6 +645,21 @@ export function EditMyUser() {
           </form>
         </>
       )}
+      {/* BACKDROP */}
+      {settingsMenu && (
+        <BackdropModal
+          setDashboardMenu={setSettingsMenu}
+          setMobileMenuOpen={setSettingsMenu}
+        />
+      )}
+      {/* SETTINGS MENU DRAWER */}
+      <SettingsMenuModal
+        setSettingsMenu={setSettingsMenu}
+        settingsMenu={settingsMenu}
+        itemsMenu={itemsMenu}
+        renderSettingsMenu={renderSettingsMenu}
+        userFullData={userFullData}
+      />
     </div>
   );
 }

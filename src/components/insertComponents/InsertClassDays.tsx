@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getFirestore, serverTimestamp } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { ClassDays } from "../formComponents/ClassDays";
@@ -20,13 +20,14 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertClassDays() {
   // GET GLOBAL DATA
-  const { classDaysDatabaseData } = useContext(
+  const { classDaysDatabaseData, handleConfirmationToSubmit } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
 
@@ -293,97 +294,30 @@ export function InsertClassDays() {
   const handleAddClassDays: SubmitHandler<
     CreateClassDaysValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Adicionar Dias de Aula",
+      text: "Tem certeza que deseja adicionar estes Dias de Aula?",
+      icon: "question",
+      confirmButtonText: "Sim, adicionar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
 
-    // CHECK IF ANY DAY WAS PICKED
-    if (
-      !classDaysData.sunday &&
-      !classDaysData.monday &&
-      !classDaysData.tuesday &&
-      !classDaysData.wednesday &&
-      !classDaysData.thursday &&
-      !classDaysData.friday &&
-      !classDaysData.saturday
-    ) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, selecione algum dia para adicionar o dia de aula ${data.name}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    // ADD CLASS DAY FUNCTION
-    const addClassDays = async () => {
-      const daysIncluded: number[] = [];
-      if (data.sunday) {
-        daysIncluded.push(0);
-      }
-      if (data.monday) {
-        daysIncluded.push(1);
-      }
-      if (data.tuesday) {
-        daysIncluded.push(2);
-      }
-      if (data.wednesday) {
-        daysIncluded.push(3);
-      }
-      if (data.thursday) {
-        daysIncluded.push(4);
-      }
-      if (data.friday) {
-        daysIncluded.push(5);
-      }
-      if (data.saturday) {
-        daysIncluded.push(6);
-      }
-      try {
-        const commonId = uuidv4();
-        await setDoc(doc(db, "classDays", commonId), {
-          id: commonId,
-          name: data.name,
-          indexDays: daysIncluded,
-          indexNames: classDayName,
-          timestamp: serverTimestamp(),
-        });
-        resetForm();
-        toast.success(`${data.name} criado com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
+      // CHECK IF ANY DAY WAS PICKED
+      if (
+        !classDaysData.sunday &&
+        !classDaysData.monday &&
+        !classDaysData.tuesday &&
+        !classDaysData.wednesday &&
+        !classDaysData.thursday &&
+        !classDaysData.friday &&
+        !classDaysData.saturday
+      ) {
         setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
-
-    // CHECKING IF CLASS DAY EXISTS ON DATABASE
-
-    const classDaysExist = classDaysDatabaseData.find(
-      (classDay) => classDay.name === data.name
-    );
-    // IF EXISTS, RETURN ERROR
-    if (classDaysExist) {
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `Um identificador com os dias selecionados já existe no nosso banco de dados: ${data.name} ❕`,
+        return toast.error(
+          `Por favor, selecione algum dia para adicionar o dia de aula ${data.name}... ☑️`,
           {
             theme: "colored",
             closeOnClick: true,
@@ -391,11 +325,90 @@ export function InsertClassDays() {
             draggable: true,
             autoClose: 3000,
           }
-        )
+        );
+      }
+
+      // ADD CLASS DAY FUNCTION
+      const addClassDays = async () => {
+        const daysIncluded: number[] = [];
+        if (data.sunday) {
+          daysIncluded.push(0);
+        }
+        if (data.monday) {
+          daysIncluded.push(1);
+        }
+        if (data.tuesday) {
+          daysIncluded.push(2);
+        }
+        if (data.wednesday) {
+          daysIncluded.push(3);
+        }
+        if (data.thursday) {
+          daysIncluded.push(4);
+        }
+        if (data.friday) {
+          daysIncluded.push(5);
+        }
+        if (data.saturday) {
+          daysIncluded.push(6);
+        }
+        try {
+          const commonId = uuidv4();
+          await secureSetDoc(doc(db, "classDays", commonId), {
+            id: commonId,
+            name: data.name,
+            indexDays: daysIncluded,
+            indexNames: classDayName,
+            timestamp: serverTimestamp(),
+          });
+          resetForm();
+          toast.success(`${data.name} criado com sucesso! 👌`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
+
+      // CHECKING IF CLASS DAY EXISTS ON DATABASE
+
+      const classDaysExist = classDaysDatabaseData.find(
+        (classDay) => classDay.name === data.name
       );
+      // IF EXISTS, RETURN ERROR
+      if (classDaysExist) {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Um identificador com os dias selecionados já existe no nosso banco de dados: ${data.name} ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      } else {
+        // IF NOT EXISTS, CREATE
+        addClassDays();
+      }
     } else {
-      // IF NOT EXISTS, CREATE
-      addClassDays();
+      setIsSubmitting(false);
     }
   };
 
@@ -436,8 +449,8 @@ export function InsertClassDays() {
             }
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={classDayName.length > 0 ? classDayName.join(" - ") : ""}
           />

@@ -7,13 +7,12 @@ import {
   getDocs,
   getFirestore,
   query,
-  serverTimestamp,
-  setDoc,
-  where,
+  serverTimestamp, where
 } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { ButtonSignProps, UserFullDataProps } from "../../@types";
+import { secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -61,7 +60,7 @@ export function ButtonSignInGoogle({
           const addUser = async () => {
             try {
               const commonId = result.user.uid;
-              await setDoc(doc(db, "appUsers", commonId), {
+              await secureSetDoc(doc(db, "appUsers", commonId), {
                 id: commonId,
                 name: result.user.displayName,
                 email: result.user.email,

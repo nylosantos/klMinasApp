@@ -1,15 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { IoIosArrowDown } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
-import { ExcludeFamilyProps } from "../../@types";
 
 type EditFamilyButtonDetailsProps = {
-  family: ExcludeFamilyProps;
+  family: any;
   index: number;
-  handleIncludeExcludeFunction: (
-    index: number,
-    data: ExcludeFamilyProps
-  ) => void;
+  handleIncludeExcludeFunction: (index: number, data: any) => void;
 };
 
 export function EditFamilyButton({
@@ -35,7 +32,7 @@ export function EditFamilyButton({
                 : "data-[focus]:bg-red-600/30"
             }`}
             onClick={() => {
-              const data: ExcludeFamilyProps = {
+              const data: any = {
                 exclude: !family.exclude,
                 id: family.id,
               };
@@ -43,7 +40,9 @@ export function EditFamilyButton({
             }}
           >
             <MdDelete />
-            {family.exclude ? "Cancelar Exclusão do vínculo familiar" : "Excluir vínculo familiar"}
+            {family.exclude
+              ? "Cancelar Exclusão do vínculo familiar"
+              : "Excluir vínculo familiar"}
             {/* <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">
                                         ⌘D
                                       </kbd> */}

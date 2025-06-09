@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Dispatch, SetStateAction, useContext } from "react";
 import { IoIosArrowDown } from "react-icons/io";
@@ -8,16 +9,12 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import { ExcludeWaitingListProps } from "../../@types";
 
 type EditWaitingListButtonDetailsProps = {
   studentId: string;
-  curriculum: ExcludeWaitingListProps;
+  curriculum: any;
   index: number;
-  handleIncludeExcludeFunction: (
-    index: number,
-    data: ExcludeWaitingListProps
-  ) => void;
+  handleIncludeExcludeFunction: (index: number, data: any) => void;
   handleEnrollClick: (id: string) => void;
   showEnrollWaitingCurriculumDetails: boolean;
   setShowEnrollWaitingCurriculumDetails: Dispatch<SetStateAction<boolean>>;
@@ -26,7 +23,7 @@ type EditWaitingListButtonDetailsProps = {
 export function EditWaitingListButton({
   curriculum,
   index,
-  studentId,
+  // studentId,
   showEnrollWaitingCurriculumDetails,
   handleEnrollClick,
   handleIncludeExcludeFunction,
@@ -37,12 +34,12 @@ export function EditWaitingListButton({
     GlobalDataContext
   ) as GlobalDataContextType;
 
-  const waitingListPosition =
-    handleOneCurriculumDetails(curriculum.id)
-      .waitingList.sort(
-        (a, b) => Number(a.date.toDate()) - Number(b.date.toDate())
-      )
-      .findIndex((student) => student.id === studentId) + 1;
+  const waitingListPosition = 1;
+  // handleOneCurriculumDetails(curriculum.id)
+  //   .waitingList.sort(
+  //     (a, b) => Number(a.date.toDate()) - Number(b.date.toDate())
+  //   )
+  //   .findIndex((student) => student.id === studentId) + 1;
 
   const placesAvailable =
     handleOneCurriculumDetails(curriculum.id).placesAvailable -
@@ -92,7 +89,7 @@ export function EditWaitingListButton({
                 : "data-[focus]:bg-red-600/30"
             }`}
             onClick={() => {
-              const data: ExcludeWaitingListProps = {
+              const data: any = {
                 exclude: !curriculum.exclude,
                 id: curriculum.id,
                 date: curriculum.date,

@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getFirestore, serverTimestamp } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { CreateTeacherValidationZProps } from "../../@types";
@@ -18,15 +18,19 @@ import {
 } from "../../context/GlobalDataContext";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
 import { getFunctions } from "firebase/functions";
+import { secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertTeacher() {
   // GET GLOBAL DATA
-  const { appUsersDatabaseData, page, userFullData } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const {
+    appUsersDatabaseData,
+    page,
+    userFullData,
+    handleConfirmationToSubmit,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // TEACHER DATA
   const [teacherData, setTeacherData] = useState<CreateTeacherValidationZProps>(
@@ -37,7 +41,7 @@ export function InsertTeacher() {
         ddd: "",
         number: "",
       },
-      confirmInsert: false,
+      // confirmInsert: false,
       createAccount: false,
     }
   );
@@ -63,7 +67,7 @@ export function InsertTeacher() {
         ddd: "",
         number: "",
       },
-      confirmInsert: false,
+      // confirmInsert: false,
     },
   });
 
@@ -76,7 +80,7 @@ export function InsertTeacher() {
         ddd: "",
         number: "",
       },
-      confirmInsert: false,
+      // confirmInsert: false,
       createAccount: false,
     });
     (
@@ -91,7 +95,7 @@ export function InsertTeacher() {
     setValue("email", teacherData.email);
     setValue("phone.ddd", teacherData.phone.ddd);
     setValue("phone.number", teacherData.phone.number);
-    setValue("confirmInsert", teacherData.confirmInsert);
+    // setValue("confirmInsert", teacherData.confirmInsert);
     setValue("createAccount", teacherData.createAccount);
   }, [teacherData]);
 
@@ -101,7 +105,7 @@ export function InsertTeacher() {
       errors.name,
       errors.email,
       errors.phone,
-      errors.confirmInsert,
+      // errors.confirmInsert,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -118,158 +122,155 @@ export function InsertTeacher() {
   const handleAddTeacher: SubmitHandler<CreateTeacherValidationZProps> = async (
     data
   ) => {
-    // ADD TEACHER FUNCTION
-    const addTeacher = async () => {
-      if (data.createAccount) {
-        const teacherData = {
-          name: data.name,
-          email: data.email,
-          phone:
-            data.phone.ddd && data.phone.number
-              ? `+55${data.phone.ddd}${data.phone.number}`
-              : "",
-          confirmInsert: data.confirmInsert,
-          role: "teacher",
-          password: "123456",
-          confirmPassword: "123456",
-        };
-        try {
-          await createAppUser(teacherData).then(async (result) => {
-            if (result?.data) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const userUid: any = result.data;
-              try {
-                // CREATE TEACHER ON DATABASE
-                await setDoc(doc(db, "teachers", userUid), {
-                  id: userUid,
-                  name: data.name,
-                  email: data.email,
-                  phone:
-                    data.phone.ddd && data.phone.number
-                      ? `+55${data.phone.ddd}${data.phone.number}`
-                      : "",
-                  haveAccount: data.createAccount,
-                  updatedAt: serverTimestamp(),
-                });
-                toast.success(`Professor ${data.name} criado com sucesso! 👌`, {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                });
-                resetForm();
-                setIsSubmitting(false);
-              } catch (error) {
-                console.log(error);
-                toast.error(
-                  `Usuário no sistema criado, porém correu um erro ao criar o professor no banco de dados da escola, contate o suporte... 🤯`,
-                  {
-                    theme: "colored",
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    autoClose: 3000,
-                  }
-                );
-                resetForm();
-                setIsSubmitting(false);
-              }
-            }
-          });
-        } catch (error) {
-          console.error("CONSOLE.ERROR: ", error);
-          console.log("ESSE É O ERROR", error);
-          toast.error(
-            `Ocorreu um erro na criação do Usuário no sistema deste professor, contate o suporte... 🤯`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          );
-          setIsSubmitting(false);
-        }
-      } else
-        try {
-          const commonId = uuidv4();
-          await setDoc(doc(db, "teachers", commonId), {
-            id: commonId,
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Adicionar Professor",
+      text: "Tem certeza que deseja adicionar este Professor?",
+      icon: "question",
+      confirmButtonText: "Sim, adicionar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
+      // ADD TEACHER FUNCTION
+      const addTeacher = async () => {
+        if (data.createAccount) {
+          const teacherData = {
             name: data.name,
             email: data.email,
             phone:
               data.phone.ddd && data.phone.number
                 ? `+55${data.phone.ddd}${data.phone.number}`
                 : "",
-            haveAccount: data.createAccount,
-            updatedAt: serverTimestamp(),
-          });
-          resetForm();
-          toast.success(`Professor ${data.name} criado com sucesso! 👌`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
-          setIsSubmitting(false);
-        } catch (error) {
-          console.log("ESSE É O ERROR", error);
-          toast.error(`Ocorreu um erro... 🤯`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
-          setIsSubmitting(false);
-        }
-    };
+            // confirmInsert: data.confirmInsert,
+            role: "teacher",
+            password: "123456",
+            confirmPassword: "123456",
+          };
+          try {
+            await createAppUser(teacherData).then(async (result) => {
+              if (result?.data) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const userUid: any = result.data;
+                try {
+                  // CREATE TEACHER ON DATABASE
+                  await secureSetDoc(doc(db, "teachers", userUid), {
+                    id: userUid,
+                    name: data.name,
+                    email: data.email,
+                    phone:
+                      data.phone.ddd && data.phone.number
+                        ? `+55${data.phone.ddd}${data.phone.number}`
+                        : "",
+                    haveAccount: data.createAccount,
+                    updatedAt: serverTimestamp(),
+                  });
+                  toast.success(
+                    `Professor ${data.name} criado com sucesso! 👌`,
+                    {
+                      theme: "colored",
+                      closeOnClick: true,
+                      pauseOnHover: true,
+                      draggable: true,
+                      autoClose: 3000,
+                    }
+                  );
+                  resetForm();
+                  setIsSubmitting(false);
+                } catch (error) {
+                  console.log(error);
+                  toast.error(
+                    `Usuário no sistema criado, porém correu um erro ao criar o professor no banco de dados da escola, contate o suporte... 🤯`,
+                    {
+                      theme: "colored",
+                      closeOnClick: true,
+                      pauseOnHover: true,
+                      draggable: true,
+                      autoClose: 3000,
+                    }
+                  );
+                  resetForm();
+                  setIsSubmitting(false);
+                }
+              }
+            });
+          } catch (error) {
+            console.error("CONSOLE.ERROR: ", error);
+            console.log("ESSE É O ERROR", error);
+            toast.error(
+              `Ocorreu um erro na criação do Usuário no sistema deste professor, contate o suporte... 🤯`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            );
+            setIsSubmitting(false);
+          }
+        } else
+          try {
+            const commonId = uuidv4();
+            await secureSetDoc(doc(db, "teachers", commonId), {
+              id: commonId,
+              name: data.name,
+              email: data.email,
+              phone:
+                data.phone.ddd && data.phone.number
+                  ? `+55${data.phone.ddd}${data.phone.number}`
+                  : "",
+              haveAccount: data.createAccount,
+              updatedAt: serverTimestamp(),
+            });
+            resetForm();
+            toast.success(`Professor ${data.name} criado com sucesso! 👌`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            setIsSubmitting(false);
+          } catch (error) {
+            console.log("ESSE É O ERROR", error);
+            toast.error(`Ocorreu um erro... 🤯`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            setIsSubmitting(false);
+          }
+      };
 
-    setIsSubmitting(true);
+      // CHECK INSERT CONFIRMATION
+      // if (!data.confirmInsert) {
+      //   setIsSubmitting(false);
+      //   return toast.error(
+      //     `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar o professor ${data.name}... ☑️`,
+      //     {
+      //       theme: "colored",
+      //       closeOnClick: true,
+      //       pauseOnHover: true,
+      //       draggable: true,
+      //       autoClose: 3000,
+      //     }
+      //   );
+      // }
 
-    // CHECK INSERT CONFIRMATION
-    if (!data.confirmInsert) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar o professor ${data.name}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    // ---------- CHECKING IF PHONE EXISTS ON DATABASE ---------- //
-    const teacherPhoneExist = appUsersDatabaseData.find(
-      (teacher) => teacher.phone === `+55${data.phone.ddd}${data.phone.number}`
-    );
-    // IF EXISTS, RETURN ERROR
-    if (teacherPhoneExist) {
-      return (
-        setIsSubmitting(false),
-        toast.error(`Telefone já registrado em nosso banco de dados... ❕`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        })
-      );
-    } else {
-      const teacherEmailExist = appUsersDatabaseData.find(
-        (teacher) => teacher.email === data.email
+      // ---------- CHECKING IF PHONE EXISTS ON DATABASE ---------- //
+      const teacherPhoneExist = appUsersDatabaseData.find(
+        (teacher) =>
+          teacher.phone === `+55${data.phone.ddd}${data.phone.number}`
       );
       // IF EXISTS, RETURN ERROR
-      if (teacherEmailExist) {
+      if (teacherPhoneExist) {
         return (
           setIsSubmitting(false),
-          toast.error(`E-mail já registrado em nosso banco de dados... ❕`, {
+          toast.error(`Telefone já registrado em nosso banco de dados... ❕`, {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
@@ -278,28 +279,47 @@ export function InsertTeacher() {
           })
         );
       } else {
-        const teacherNameExist = appUsersDatabaseData.find(
-          (teacher) => teacher.name === data.name
+        const teacherEmailExist = appUsersDatabaseData.find(
+          (teacher) => teacher.email === data.email
         );
         // IF EXISTS, RETURN ERROR
-        if (teacherNameExist) {
+        if (teacherEmailExist) {
           return (
             setIsSubmitting(false),
-            toast.error(
-              `Professor ${data.name} já existe no nosso banco de dados.. ❕`,
-              {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              }
-            )
+            toast.error(`E-mail já registrado em nosso banco de dados... ❕`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            })
           );
         } else {
-          addTeacher();
+          const teacherNameExist = appUsersDatabaseData.find(
+            (teacher) => teacher.name === data.name
+          );
+          // IF EXISTS, RETURN ERROR
+          if (teacherNameExist) {
+            return (
+              setIsSubmitting(false),
+              toast.error(
+                `Professor ${data.name} já existe no nosso banco de dados.. ❕`,
+                {
+                  theme: "colored",
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  autoClose: 3000,
+                }
+              )
+            );
+          } else {
+            addTeacher();
+          }
         }
       }
+    } else {
+      setIsSubmitting(false);
     }
   };
 
@@ -349,8 +369,8 @@ export function InsertTeacher() {
             }
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={teacherData.name}
             onChange={(e) => {
@@ -372,7 +392,7 @@ export function InsertTeacher() {
             E-mail:{" "}
           </label>
           <input
-            type="text"
+            type="email"
             name="email"
             disabled={isSubmitting}
             placeholder={
@@ -380,8 +400,8 @@ export function InsertTeacher() {
             }
             className={
               errors.email
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={teacherData.email}
             onChange={(e) => {
@@ -480,7 +500,7 @@ export function InsertTeacher() {
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
+        {/* <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
             name="confirmInsert"
@@ -498,7 +518,7 @@ export function InsertTeacher() {
               ? `Confirmar criação de ${teacherData.name}`
               : `Confirmar criação`}
           </label>
-        </div>
+        </div> */}
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4">

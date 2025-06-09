@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getFirestore, serverTimestamp } from "firebase/firestore";
 import { app } from "../../db/Firebase";
 import { CreateCourseValidationZProps } from "../../@types";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
@@ -15,15 +15,19 @@ import {
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 import { NumericFormat } from "react-number-format";
+import { secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertCourse() {
   // GET GLOBAL DATA
-  const { schoolCourseDatabaseData, page, userFullData } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const {
+    schoolCourseDatabaseData,
+    page,
+    userFullData,
+    handleConfirmationToSubmit,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // SCHOOL COURSE DATA
   const [courseData, setCourseData] = useState<CreateCourseValidationZProps>({
@@ -31,7 +35,7 @@ export function InsertCourse() {
     priceUnit: 0,
     priceBundle: 0,
     bundleDays: 0,
-    confirmInsert: false,
+    // confirmInsert: false,
   });
 
   // SUBMITTING STATE
@@ -50,7 +54,7 @@ export function InsertCourse() {
       priceUnit: 0,
       priceBundle: 0,
       bundleDays: 0,
-      confirmInsert: false,
+      // confirmInsert: false,
     },
   });
 
@@ -61,7 +65,7 @@ export function InsertCourse() {
       priceUnit: 0,
       priceBundle: 0,
       bundleDays: 0,
-      confirmInsert: false,
+      // confirmInsert: false,
     });
     reset();
   };
@@ -72,7 +76,7 @@ export function InsertCourse() {
     setValue("priceUnit", courseData.priceUnit / 100);
     setValue("priceBundle", courseData.priceBundle / 100);
     setValue("bundleDays", courseData.bundleDays);
-    setValue("confirmInsert", courseData.confirmInsert);
+    // setValue("confirmInsert", courseData.confirmInsert);
   }, [courseData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -82,7 +86,7 @@ export function InsertCourse() {
       errors.priceUnit,
       errors.priceBundle,
       errors.bundleDays,
-      errors.confirmInsert,
+      // errors.confirmInsert,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -99,82 +103,23 @@ export function InsertCourse() {
   const handleAddCourse: SubmitHandler<CreateCourseValidationZProps> = async (
     data
   ) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Adicionar Modalidade",
+      text: "Tem certeza que deseja adicionar esta Modalidade?",
+      icon: "question",
+      confirmButtonText: "Sim, adicionar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
 
-    // CHECK INSERT CONFIRMATION
-    if (data.bundleDays < 2) {
-      setIsSubmitting(false);
-      return toast.error(
-        `O número de aulas no pacote deve ser, no mínimo, 2... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
 
-    // CHECK INSERT CONFIRMATION
-    if (!data.confirmInsert) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar a modalidade ${data.name}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    // ADD SCHOOL COURSE FUNCTION
-    const addCourse = async () => {
-      try {
-        const commonId = uuidv4();
-        await setDoc(doc(db, "schoolCourses", commonId), {
-          id: commonId,
-          name: data.name,
-          priceUnit: data.priceUnit,
-          priceBundle: data.priceBundle,
-          bundleDays: data.bundleDays,
-          timestamp: serverTimestamp(),
-        });
-        resetForm();
-        toast.success(`${data.name} criado com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
+      // CHECK INSERT CONFIRMATION
+      if (data.bundleDays < 2) {
         setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
-
-    // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
-    const schoolCourseExist = schoolCourseDatabaseData.find(
-      (schoolCourse) => schoolCourse.name === data.name
-    );
-    if (schoolCourseExist) {
-      // IF EXISTS, RETURN ERROR
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `${data.name} já existe no nosso banco de dados mané ... ❕`,
+        return toast.error(
+          `O número de aulas no pacote deve ser, no mínimo, 2... ☑️`,
           {
             theme: "colored",
             closeOnClick: true,
@@ -182,11 +127,83 @@ export function InsertCourse() {
             draggable: true,
             autoClose: 3000,
           }
-        )
+        );
+      }
+
+      // CHECK INSERT CONFIRMATION
+      // if (!data.confirmInsert) {
+      //   setIsSubmitting(false);
+      //   return toast.error(
+      //     `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar a modalidade ${data.name}... ☑️`,
+      //     {
+      //       theme: "colored",
+      //       closeOnClick: true,
+      //       pauseOnHover: true,
+      //       draggable: true,
+      //       autoClose: 3000,
+      //     }
+      //   );
+      // }
+
+      // ADD SCHOOL COURSE FUNCTION
+      const addCourse = async () => {
+        try {
+          const commonId = uuidv4();
+          await secureSetDoc(doc(db, "schoolCourses", commonId), {
+            id: commonId,
+            name: data.name,
+            priceUnit: data.priceUnit,
+            priceBundle: data.priceBundle,
+            bundleDays: data.bundleDays,
+            timestamp: serverTimestamp(),
+          });
+          resetForm();
+          toast.success(`${data.name} criado com sucesso! 👌`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
+
+      // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
+      const schoolCourseExist = schoolCourseDatabaseData.find(
+        (schoolCourse) => schoolCourse.name === data.name
       );
+      if (schoolCourseExist) {
+        // IF EXISTS, RETURN ERROR
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `${data.name} já existe no nosso banco de dados mané ... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      } else {
+        // IF NOT EXISTS, CREATE
+        addCourse();
+      }
     } else {
-      // IF NOT EXISTS, CREATE
-      addCourse();
+      setIsSubmitting(false);
     }
   };
 
@@ -236,8 +253,8 @@ export function InsertCourse() {
             }
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={courseData.name}
             onChange={(e) => {
@@ -279,8 +296,8 @@ export function InsertCourse() {
             }}
             className={
               errors.priceUnit
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
             }
           />
         </div>
@@ -319,8 +336,8 @@ export function InsertCourse() {
             }}
             className={
               errors.priceBundle
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
             }
           />
         </div>
@@ -343,8 +360,8 @@ export function InsertCourse() {
             disabled={isSubmitting}
             className={
               errors.bundleDays
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             placeholder={
               errors.bundleDays
@@ -362,7 +379,7 @@ export function InsertCourse() {
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
+        {/* <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
             name="confirmInsert"
@@ -380,7 +397,7 @@ export function InsertCourse() {
               ? `Confirmar criação da modalidade ${courseData.name}`
               : `Confirmar criação`}
           </label>
-        </div>
+        </div> */}
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4">

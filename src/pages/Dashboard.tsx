@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useContext, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -13,7 +14,12 @@ import DashboardTeacher from "../components/dashboardComponents/DashboardTeacher
 import DashboardSchool from "../components/dashboardComponents/DashboardSchool";
 import DashboardCourse from "../components/dashboardComponents/DashboardCourse";
 import DashboardSchedule from "../components/dashboardComponents/DashboardSchedule";
-import { FilteredStudentsProps } from "../@types";
+import { FilteredStudentsProps, StudentSearchProps } from "../@types";
+import SchoolLogs from "../components/logs/SchoolLogs";
+import SchoolCourseLogs from "../components/logs/SchoolCourseLogs";
+import ScheduleLogs from "../components/logs/ScheduleLogs";
+import TeacherLogs from "../components/logs/TeachersLogs";
+// import CurriculumLogs from "../components/logs/CurriculumLogs";
 
 export type DashBoardPageProps = {
   page:
@@ -144,13 +150,12 @@ export default function Dashboard() {
       page: "student",
       array: filteredStudents,
     },
-    // { title: "Adicionar Aluno", page: "addStudent", array: [] },
   ];
 
   function renderDashboardMenu(itemMenu: DashboardMenuArrayProps) {
     return (
       <div
-        className="flex flex-col w-2/3 md:w-[7vw] md:h-[5vw] mt-4 justify-center items-center text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 hover:bg-klGreen-500/30 hover:dark:bg-klGreen-500/70 py-2 px-3 rounded-xl cursor-pointer"
+        className="flex flex-col w-2/3 md:w-[7vw] md:h-[5vw] py-2 px-3 md:px-14 md:py-10 mt-4 justify-center items-center text-center bg-klGreen-500/20 dark:bg-klGreen-500/50 hover:bg-klGreen-500/30 hover:dark:bg-klGreen-500/70 rounded-xl cursor-pointer"
         onClick={() => {
           setShowDashboardPage({ page: itemMenu.page }),
             setIsEdit(false),
@@ -160,19 +165,109 @@ export default function Dashboard() {
         }}
         key={uuidv4()}
       >
-        <p className="text-klGreen-500 dark:text-gray-100">
-          {itemMenu.title}
-        </p>
+        <p className="text-klGreen-500 dark:text-gray-100">{itemMenu.title}</p>
         <p className="text-klOrange-500 ">
           {itemMenu.title === "Adicionar Aluno"
             ? ""
             : itemMenu.array.length > 0
-            ? itemMenu.array.length
+            ? itemMenu.page === "student"
+              ? (
+                  itemMenu.array.filter(
+                    //@ts-expect-error
+                    (student: StudentSearchProps) => student.active
+                  ) as StudentSearchProps[]
+                ).length
+              : itemMenu.array.length
             : "0"}
         </p>
       </div>
     );
   }
+
+  const [logSchoolModal, setLogSchoolModal] = useState<{
+    id: string | null;
+    open: boolean;
+  }>({
+    id: null,
+    open: false,
+  });
+
+  const toggleSchoolLogModal = (schoolId: string | null) => {
+    setLogSchoolModal({
+      id: schoolId,
+      open: !logSchoolModal.open,
+    });
+  };
+  const [logSchoolCourseModal, setLogSchoolCourseModal] = useState<{
+    id: string | null;
+    open: boolean;
+  }>({
+    id: null,
+    open: false,
+  });
+
+  const toggleSchoolCourseLogModal = (schoolCourseId: string | null) => {
+    setLogSchoolCourseModal({
+      id: schoolCourseId,
+      open: !logSchoolCourseModal.open,
+    });
+  };
+  const [logScheduleModal, setLogScheduleModal] = useState<{
+    id: string | null;
+    open: boolean;
+  }>({
+    id: null,
+    open: false,
+  });
+
+  const toggleScheduleLogModal = (scheduleId: string | null) => {
+    setLogScheduleModal({
+      id: scheduleId,
+      open: !logScheduleModal.open,
+    });
+  };
+  const [logTeacherModal, setLogTeacherModal] = useState<{
+    id: string | null;
+    open: boolean;
+  }>({
+    id: null,
+    open: false,
+  });
+
+  const toggleTeacherLogModal = (teacherId: string | null) => {
+    setLogTeacherModal({
+      id: teacherId,
+      open: !logTeacherModal.open,
+    });
+  };
+  const [logCurriculumModal, setLogCurriculumModal] = useState<{
+    id: string | null;
+    open: boolean;
+  }>({
+    id: null,
+    open: false,
+  });
+
+  const toggleCurriculumLogModal = (curriculumId: string | null) => {
+    setLogCurriculumModal({
+      id: curriculumId,
+      open: !logCurriculumModal.open,
+    });
+  };
+  const [logStudentModal, setLogStudentModal] = useState<{
+    id: string | null;
+    open: boolean;
+  }>({
+    id: null,
+    open: false,
+  });
+
+  const toggleStudentLogModal = (studentId: string | null) => {
+    setLogStudentModal({
+      id: studentId,
+      open: !logStudentModal.open,
+    });
+  };
 
   // LOADING
   if (!userFullData) {
@@ -180,28 +275,6 @@ export default function Dashboard() {
   } else {
     return (
       <div className="w-screen h-full flex flex-col justify-start items-center overflow-scroll no-scrollbar">
-        {/* DASHBOARD BUTTONS MENU */}
-        {/* <div className="flex container items-center justify-center gap-4">
-          {dashboardMenuArray.map((itemMenu) => {
-            if (userFullData) {
-              if (
-                userFullData.role === "root" ||
-                userFullData.role === "admin" ||
-                userFullData.role === "editor"
-              ) {
-                return renderDashboardMenu(itemMenu);
-              }
-              // UNCOMMENT TO SHOW DASHBOARD MENU TO USERS
-              // else if (
-              //   userFullData.role === "user" &&
-              //   (itemMenu.page === "addStudent" || itemMenu.page === "student")
-              // ) {
-              //   return renderDashboardMenu(itemMenu);
-              // } else return;
-            }
-          })}
-        </div> */}
-
         {/* PAGES TO SHOW */}
         <div
           className={
@@ -218,6 +291,7 @@ export default function Dashboard() {
                   setIsEdit={setIsEdit}
                   renderDashboardMenu={renderDashboardMenu}
                   itemsMenu={dashboardMenuArray}
+                  onCloseLogModal={toggleSchoolLogModal}
                 />
               )}
               {/* {showDashboardPage.page === "schoolClass" && (
@@ -232,6 +306,7 @@ export default function Dashboard() {
                   setIsEdit={setIsEdit}
                   renderDashboardMenu={renderDashboardMenu}
                   itemsMenu={dashboardMenuArray}
+                  onCloseLogModal={toggleSchoolCourseLogModal}
                 />
               )}
               {showDashboardPage.page === "schedule" && (
@@ -240,6 +315,7 @@ export default function Dashboard() {
                   setIsEdit={setIsEdit}
                   renderDashboardMenu={renderDashboardMenu}
                   itemsMenu={dashboardMenuArray}
+                  onCloseLogModal={toggleScheduleLogModal}
                 />
               )}
               {showDashboardPage.page === "teacher" && (
@@ -248,6 +324,7 @@ export default function Dashboard() {
                   setIsEdit={setIsEdit}
                   renderDashboardMenu={renderDashboardMenu}
                   itemsMenu={dashboardMenuArray}
+                  onCloseLogModal={toggleTeacherLogModal}
                 />
               )}
               {showDashboardPage.page === "curriculum" && (
@@ -257,6 +334,7 @@ export default function Dashboard() {
                   setOpen={setOpen}
                   renderDashboardMenu={renderDashboardMenu}
                   itemsMenu={dashboardMenuArray}
+                  onCloseLogModal={toggleCurriculumLogModal}
                 />
               )}
             </>
@@ -276,11 +354,43 @@ export default function Dashboard() {
               setOpen={setOpen}
               renderDashboardMenu={renderDashboardMenu}
               itemsMenu={dashboardMenuArray}
+              onCloseLogModal={toggleStudentLogModal}
             />
           )}
           {userFullData.role === "user" &&
             showDashboardPage.page === "addStudent" && <InsertStudent />}
         </div>
+        {/* Modal será exibido dinamicamente com o id da escola */}
+        {logSchoolModal.open && logSchoolModal.id && (
+          <SchoolLogs
+            schoolId={logSchoolModal.id}
+            onClose={() => toggleSchoolLogModal(null)} // Passa null para fechar
+          />
+        )}
+        {logSchoolCourseModal.open && logSchoolCourseModal.id && (
+          <SchoolCourseLogs
+            schoolCourseId={logSchoolCourseModal.id}
+            onClose={() => toggleSchoolCourseLogModal(null)} // Passa null para fechar
+          />
+        )}
+        {logScheduleModal.open && logScheduleModal.id && (
+          <ScheduleLogs
+            scheduleId={logScheduleModal.id}
+            onClose={() => toggleScheduleLogModal(null)} // Passa null para fechar
+          />
+        )}
+        {logTeacherModal.open && logTeacherModal.id && (
+          <TeacherLogs
+            teacherId={logTeacherModal.id}
+            onClose={() => toggleTeacherLogModal(null)} // Passa null para fechar
+          />
+        )}
+        {/* {logCurriculumModal.open && logCurriculumModal.id && (
+          <CurriculumLogs
+            curriculumId={logCurriculumModal.id}
+            onClose={() => toggleCurriculumLogModal(null)} // Passa null para fechar
+          />
+        )} */}
       </div>
     );
   }

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
-import { doc, getFirestore, updateDoc } from "firebase/firestore";
+import { doc, getFirestore } from "firebase/firestore";
 import { EditDashboardScheduleButton } from "../layoutComponents/EditDashboardScheduleButton";
 import { app } from "../../db/Firebase";
 import {
@@ -18,6 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { editScheduleValidationSchema } from "../../@types/zodValidation";
 import DatePicker from "react-multi-date-picker";
 import TimePicker from "react-multi-date-picker/plugins/time_picker";
+import { secureUpdateDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -32,6 +33,7 @@ interface EditScheduleFormProps {
   setIsSubmitting: (isSubmitting: boolean) => void;
   setIsEdit: (isEdit: boolean) => void;
   handleDeleteSchedule?: () => void;
+  onCloseLogModal?: (scheduleId: string) => void; // Função para fechar o modal
 }
 
 export default function EditScheduleForm({
@@ -44,9 +46,10 @@ export default function EditScheduleForm({
   setIsSubmitting,
   setIsEdit,
   handleDeleteSchedule,
+  onCloseLogModal,
 }: EditScheduleFormProps) {
   // GET GLOBAL DATA
-  const { scheduleDatabaseData, page } = useContext(
+  const { scheduleDatabaseData, page, handleConfirmationToSubmit } = useContext(
     GlobalDataContext
   ) as GlobalDataContextType;
 
@@ -156,60 +159,75 @@ export default function EditScheduleForm({
   const handleEditSchedule: SubmitHandler<
     EditScheduleValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Editar Horário",
+      text: "Tem certeza que deseja confirmar as mudanças?",
+      icon: "question",
+      confirmButtonText: "Sim, confirmar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
 
-    // EDIT SCHEDULE FUNCTION
-    const editSchedule = async () => {
-      try {
-        await updateDoc(doc(db, "schedules", scheduleSelectedData.id), {
-          name: data.name,
-          transitionStart: data.transitionStart,
-          transitionEnd: data.transitionEnd,
-          classStart: data.classStart,
-          classEnd: data.classEnd,
-          exit: data.exit,
-        });
-        resetForm();
-        toast.success(`${scheduleSelectedData.name} alterado com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
+      // EDIT SCHEDULE FUNCTION
+      const editSchedule = async () => {
+        try {
+          await secureUpdateDoc(doc(db, "schedules", scheduleSelectedData.id), {
+            name: data.name,
+            transitionStart: data.transitionStart,
+            transitionEnd: data.transitionEnd,
+            classStart: data.classStart,
+            classEnd: data.classEnd,
+            exit: data.exit,
+          });
+          resetForm();
+          toast.success(
+            `${scheduleSelectedData.name} alterado com sucesso! 👌`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
 
-    // CHECKING IF SCHEDULE EXISTS ON DATABASE
-    const schedule = scheduleDatabaseData.find(
-      (schedule) => schedule.id === scheduleSelectedData.id
-    );
-    if (!schedule) {
-      // IF NOT EXISTS, RETURN ERROR
-      return (
-        setIsSubmitting(false),
-        toast.error(`Horário não existe no banco de dados...... ❕`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        })
+      // CHECKING IF SCHEDULE EXISTS ON DATABASE
+      const schedule = scheduleDatabaseData.find(
+        (schedule) => schedule.id === scheduleSelectedData.id
       );
+      if (!schedule) {
+        // IF NOT EXISTS, RETURN ERROR
+        return (
+          setIsSubmitting(false),
+          toast.error(`Horário não existe no banco de dados...... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
+        );
+      } else {
+        // IF EXISTS, EDIT
+        editSchedule();
+      }
     } else {
-      // IF EXISTS, EDIT
-      editSchedule();
+      setIsSubmitting(false);
     }
   };
 
@@ -233,6 +251,8 @@ export default function EditScheduleForm({
               resetScheduleData={resetScheduleDataFunction}
               setIsEdit={setIsEdit}
               setModal={setModal && setModal}
+              onCloseLogModal={onCloseLogModal}
+              id={scheduleSelectedData.id}
             />
           </div>
         </div>
@@ -271,7 +291,7 @@ export default function EditScheduleForm({
               name="oldName"
               disabled
               defaultValue={scheduleSelectedData?.name}
-              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             />
           </div>
 
@@ -285,7 +305,7 @@ export default function EditScheduleForm({
               name="oldTransitionStart"
               disabled
               defaultValue={scheduleSelectedData?.transitionStart}
-              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             />
           </div>
 
@@ -299,7 +319,7 @@ export default function EditScheduleForm({
               name="oldTransitionEnd"
               disabled
               defaultValue={scheduleSelectedData?.transitionEnd}
-              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             />
           </div>
 
@@ -313,7 +333,7 @@ export default function EditScheduleForm({
               name="oldClassStart"
               disabled
               defaultValue={scheduleSelectedData?.classStart}
-              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             />
           </div>
 
@@ -327,7 +347,7 @@ export default function EditScheduleForm({
               name="oldClassEnd"
               disabled
               defaultValue={scheduleSelectedData?.classEnd}
-              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             />
           </div>
 
@@ -341,7 +361,7 @@ export default function EditScheduleForm({
               name="oldExit"
               disabled
               defaultValue={scheduleSelectedData?.exit}
-              className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+              className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             />
           </div>
         </div>
@@ -379,8 +399,8 @@ export default function EditScheduleForm({
                 }
                 className={
                   errors.name
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 value={scheduleEditData.name}
                 onChange={(e) => {

@@ -29,6 +29,7 @@ interface DashboardSchoolProps {
   setIsEdit: Dispatch<SetStateAction<boolean>>;
   renderDashboardMenu(itemMenu: DashboardMenuArrayProps): JSX.Element;
   itemsMenu: DashboardMenuArrayProps[];
+  onCloseLogModal: (schoolId: string) => void; // Função para fechar o modal
 }
 
 export default function DashboardSchool({
@@ -36,6 +37,7 @@ export default function DashboardSchool({
   isEdit,
   renderDashboardMenu,
   itemsMenu,
+  onCloseLogModal,
 }: DashboardSchoolProps) {
   // GET GLOBAL DATA
   const {
@@ -215,7 +217,7 @@ export default function DashboardSchool({
         </div>
         {showSchoolList ? (
           <>
-            {/* TEACHER LIST */}
+            {/* SCHOOL LIST */}
             <div className="w-full ease-in-out flex flex-col h-full overflow-scroll no-scrollbar container [&>*:nth-child(1)]:rounded-t-sm [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 transition-all duration-1000">
               {filteredSchool.length ? (
                 filteredSchool
@@ -244,6 +246,7 @@ export default function DashboardSchool({
                             handleDeleteSchool={() => {
                               handleDeleteSchool(school.id, () => {});
                             }}
+                            onCloseLogModal={onCloseLogModal}
                           />
                         </div>
                       </div>

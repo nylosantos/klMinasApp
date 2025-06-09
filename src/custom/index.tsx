@@ -207,6 +207,9 @@ export const paymentArray = [
 
 // TEST VALID CPF (BRAZILIAN DOCUMENT) FUNCTION
 export function testaCPF(cpfNumber: string) {
+  // Remove pontos e hífens
+  cpfNumber = cpfNumber.replace(/[^\d]/g, "");
+  
   let Soma;
   let Resto;
   Soma = 0;
@@ -230,9 +233,41 @@ export function testaCPF(cpfNumber: string) {
 }
 
 // FORMAT CPF (BRAZILIAN DOCUMENT) FUNCTION
+// export const formataCPF = (cpfNumber: string) => {
+//   cpfNumber = cpfNumber.replace(/[^\d]/g, "");
+//   return cpfNumber.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+// };
+
+export function formatUserName(userName: string) {
+  const nome = userName;
+  const nomeFormatado =
+    nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
+  return nomeFormatado;
+}
+
 export const formataCPF = (cpfNumber: string) => {
-  cpfNumber = cpfNumber.replace(/[^\d]/g, "");
-  return cpfNumber.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  cpfNumber = cpfNumber.replace(/[^\d]/g, ""); // Remove tudo que não for número
+
+  // Limita a quantidade de caracteres no CPF
+  if (cpfNumber.length > 11) {
+    cpfNumber = cpfNumber.substring(0, 11);
+  }
+
+  // Formatação progressiva conforme o número de caracteres
+  if (cpfNumber.length <= 3) {
+    cpfNumber = cpfNumber.replace(/(\d{1,3})/, "$1"); // Exibe os 3 primeiros números
+  } else if (cpfNumber.length <= 6) {
+    cpfNumber = cpfNumber.replace(/(\d{3})(\d{1,3})/, "$1.$2"); // Adiciona o primeiro ponto após 3 caracteres
+  } else if (cpfNumber.length <= 9) {
+    cpfNumber = cpfNumber.replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3"); // Adiciona o segundo ponto após 6 caracteres
+  } else {
+    cpfNumber = cpfNumber.replace(
+      /(\d{3})(\d{3})(\d{3})(\d{1,2})/,
+      "$1.$2.$3-$4"
+    ); // Adiciona o hífen após 9 caracteres
+  }
+
+  return cpfNumber; // Retorna o CPF formatado
 };
 
 export const convertTimestamp = (timestamp: Timestamp) => {

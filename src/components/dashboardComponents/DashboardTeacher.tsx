@@ -29,6 +29,7 @@ interface DashboardTeacherProps {
   setIsEdit: Dispatch<SetStateAction<boolean>>;
   renderDashboardMenu(itemMenu: DashboardMenuArrayProps): JSX.Element;
   itemsMenu: DashboardMenuArrayProps[];
+  onCloseLogModal: (schoolId: string) => void; // Função para fechar o modal
 }
 
 export default function DashboardTeacher({
@@ -36,6 +37,7 @@ export default function DashboardTeacher({
   isEdit,
   renderDashboardMenu,
   itemsMenu,
+  onCloseLogModal,
 }: DashboardTeacherProps) {
   // GET GLOBAL DATA
   const {
@@ -227,7 +229,7 @@ export default function DashboardTeacher({
                           <div className="w-1/6" />
                           <div className="flex w-4/6">
                             <p
-                              className="text-klGreen-500 dark:text-white hover:text-klOrange-500 hover:dark:text-klOrange-500 cursor-pointer"
+                              className="uppercase text-klGreen-500 dark:text-white hover:text-klOrange-500 hover:dark:text-klOrange-500 cursor-pointer"
                               onClick={() => {
                                 handleClickOpen({
                                   id: teacher.id,
@@ -244,6 +246,7 @@ export default function DashboardTeacher({
                             handleDeleteTeacher={() => {
                               handleDeleteTeacher(teacher.id, () => {});
                             }}
+                            onCloseLogModal={onCloseLogModal}
                           />
                         </div>
                       </div>

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useContext, useEffect, useState } from "react";
-
+import { Fragment, useContext, useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import {
   CurriculumSearchProps,
   FilteredStudentsProps,
@@ -158,8 +158,8 @@ export function SelectOptions({
     if (dataType === "searchStudent" && curriculumId) {
       const foundedStudentsArray: StudentSearchProps[] = [];
       studentsDatabaseData.map((student) => {
-        if (student.curriculumIds) {
-          const foundedStudent = student.curriculumIds.find(
+        if (student.curriculums) {
+          const foundedStudent = student.curriculums.find(
             (curriculum) => curriculum.id === curriculumId
           );
           if (foundedStudent) {
@@ -170,9 +170,10 @@ export function SelectOptions({
             }
           }
         }
-        if (student.experimentalCurriculumIds) {
-          const foundedStudent = student.experimentalCurriculumIds.find(
-            (curriculum) => curriculum.id === curriculumId
+        if (student.curriculums) {
+          const foundedStudent = student.curriculums.find(
+            (curriculum) =>
+              curriculum.id === curriculumId && curriculum.isExperimental
           );
           if (foundedStudent) {
             if (dontShowMyself && studentId !== student.id) {
@@ -201,6 +202,8 @@ export function SelectOptions({
             studentsToShow.push({ ...student, isFinancialResponsible: true });
           } else if (
             (student.parentOne?.email === parentOneEmail ||
+              student.parentOne?.email === parentTwoEmail ||
+              student.parentTwo?.email === parentOneEmail ||
               student.parentTwo?.email === parentTwoEmail) &&
             student.id !== studentId
           ) {
@@ -214,6 +217,8 @@ export function SelectOptions({
             studentsToShow.push({ ...student, isFinancialResponsible: true });
           } else if (
             student.parentOne?.email === parentOneEmail ||
+            student.parentOne?.email === parentTwoEmail ||
+            student.parentTwo?.email === parentOneEmail ||
             student.parentTwo?.email === parentTwoEmail
           ) {
             studentsToShow.push({ ...student, isFinancialResponsible: false });
@@ -320,7 +325,7 @@ export function SelectOptions({
 
   return (
     // DYNAMIC OPTIONS
-    <>
+    <Fragment key={uuidv4()}>
       <option disabled value={" -- select an option -- "}>
         {" "}
         -- Selecione --{" "}
@@ -332,6 +337,7 @@ export function SelectOptions({
                 <option
                   key={option.id}
                   value={returnId ? option.id : option.name}
+                  className="uppercase"
                 >
                   {option.name}
                 </option>
@@ -351,6 +357,7 @@ export function SelectOptions({
                 }
                 key={option.id}
                 value={returnId ? option.id : option.name}
+                className="uppercase"
               >
                 {displaySchoolCourseAndSchedule
                   ? `${option.schoolCourseName} | ${option.scheduleName}`
@@ -363,6 +370,7 @@ export function SelectOptions({
               <option
                 key={option.id}
                 value={returnId ? option.id : option.name}
+                className="uppercase"
               >
                 {displaySchoolCourseAndSchedule
                   ? `${option.publicId} - ${option.schoolCourseName} | ${option.scheduleName}`
@@ -370,6 +378,6 @@ export function SelectOptions({
               </option>
             </>
           ))}
-    </>
+    </Fragment>
   );
 }

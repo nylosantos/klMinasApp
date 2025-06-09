@@ -12,8 +12,6 @@ import { FieldErrors, useFormContext } from "react-hook-form";
 interface FinancialResponsibleFormProps<T> {
   onlyView: boolean;
   isExperimental: boolean;
-  placesAvailable: boolean;
-  emptyWaitingList: boolean;
   testFinancialCPF: boolean;
   activePhoneSecondary: boolean;
   activePhoneTertiary: boolean;
@@ -58,8 +56,6 @@ const FinancialResponsibleForm = <
   activePhoneSecondary,
   activePhoneTertiary,
   isExperimental,
-  placesAvailable,
-  emptyWaitingList,
   testFinancialCPF,
   editAddress,
   student,
@@ -146,7 +142,7 @@ const FinancialResponsibleForm = <
   return (
     <>
       {/** STUDENT FINANCIAL RESPONSIBLE SECTION TITLE */}
-      <h1 className="font-bold text-lg py-4 text-red-600 dark:text-yellow-500">
+      <h1 className="font-bold text-lg py-4 text-klGreen-600 dark:text-gray-100">
         Dados do Responsável Financeiro:
       </h1>
 
@@ -156,7 +152,7 @@ const FinancialResponsibleForm = <
           <div className="w-1/4" />
           <div className="flex flex-col gap-2 w-3/4 items-start text-left pb-2">
             {/* EXPERIMENTAL CLASS DISCLAIMER */}
-            {isExperimental && placesAvailable && emptyWaitingList && (
+            {isExperimental && (
               <p className="text-sm text-red-600 dark:text-yellow-500">
                 Em caso de desistência dos serviços, o responsável tem o prazo
                 de até 5 dias para entrar no cadastro e realizar o cancelamento.
@@ -197,8 +193,8 @@ const FinancialResponsibleForm = <
           type="text"
           name="financialResponsibleDocument"
           disabled={onlyView ?? isSubmitting}
-          pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-          maxLength={11}
+          maxLength={14}
+          minLength={14}
           placeholder={
             testFinancialCPF
               ? errors.financialResponsible?.document
@@ -209,13 +205,13 @@ const FinancialResponsibleForm = <
           className={
             testFinancialCPF
               ? errors.financialResponsible?.document
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-              : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
           }
           value={student.financialResponsible.document}
           onChange={(e) => {
-            if (e.target.value.length === 11) {
+            if (e.target.value.length === 14) {
               setTestFinancialCPF(testaCPF(e.target.value));
             }
             setStudentData((prevData) => ({
@@ -252,8 +248,8 @@ const FinancialResponsibleForm = <
           }
           className={
             errors.financialResponsible?.name
-              ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-              : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+              : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           }
           value={student.financialResponsible.name}
           onChange={(e) =>
@@ -281,7 +277,7 @@ const FinancialResponsibleForm = <
           E-mail:{" "}
         </label>
         <input
-          type="text"
+          type="email"
           name="financialResponsibleEmail"
           disabled={onlyView ?? isSubmitting}
           placeholder={
@@ -291,8 +287,8 @@ const FinancialResponsibleForm = <
           }
           className={
             errors.financialResponsible?.email
-              ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-              : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+              : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           }
           value={student.financialResponsible?.email}
           onChange={(e) => {

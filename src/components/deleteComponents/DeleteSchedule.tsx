@@ -4,9 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
-import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteScheduleValidationSchema } from "../../@types/zodValidation";
@@ -19,13 +17,15 @@ import {
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 
-// INITIALIZING FIRESTORE DB
-const db = getFirestore(app);
 
 export function DeleteSchedule() {
   // GET GLOBAL DATA
-  const { schoolDatabaseData, curriculumDatabaseData, scheduleDatabaseData } =
-    useContext(GlobalDataContext) as GlobalDataContextType;
+  const {
+    schoolDatabaseData,
+    isSubmitting,
+    scheduleDatabaseData,
+    handleDeleteSchedule,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // SCHEDULE DATA
   const [scheduleData, setScheduleData] =
@@ -33,7 +33,7 @@ export function DeleteSchedule() {
       scheduleId: "",
       scheduleName: "",
       schoolId: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
@@ -45,16 +45,16 @@ export function DeleteSchedule() {
 
   // RESET SCHOOL CLASS, SCHOOL COURSE AND STUDENT SELECT TO INDEX 0 WHEN SCHOOL CHANGE
   useEffect(() => {
-    setScheduleData({ ...scheduleData, confirmDelete: false }),
-      ((
-        document.getElementById("scheduleSelect") as HTMLSelectElement
-      ).selectedIndex = 0);
+    // setScheduleData({ ...scheduleData, confirmDelete: false }),
+    (
+      document.getElementById("scheduleSelect") as HTMLSelectElement
+    ).selectedIndex = 0;
 
     setScheduleData({
       schoolId: school.id,
       scheduleName: "",
       scheduleId: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     });
     schoolDatabaseData.find((databaseSchool) => {
       if (school.id === databaseSchool.id) {
@@ -74,7 +74,7 @@ export function DeleteSchedule() {
 
   // SET SCHEDULE SELECTED STATE WHEN SELECT SCHEDULE
   useEffect(() => {
-    setScheduleData({ ...scheduleData, confirmDelete: false });
+    // setScheduleData({ ...scheduleData, confirmDelete: false });
     if (scheduleData.scheduleId !== "") {
       setScheduleSelectedData(
         scheduleDatabaseData.find(({ id }) => id === scheduleData.scheduleId)
@@ -99,7 +99,7 @@ export function DeleteSchedule() {
   const [isSelected, setIsSelected] = useState(false);
 
   // SUBMITTING STATE
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [isSubmitting, setIsSubmitting] = useState(false);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -113,7 +113,7 @@ export function DeleteSchedule() {
       scheduleId: "",
       scheduleName: "",
       schoolId: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     },
   });
 
@@ -129,7 +129,7 @@ export function DeleteSchedule() {
       scheduleId: "",
       scheduleName: "",
       schoolId: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     });
     setIsSelected(false);
     setSchool({ id: "", name: "" });
@@ -141,7 +141,7 @@ export function DeleteSchedule() {
     setValue("schoolId", scheduleData.schoolId);
     setValue("scheduleId", scheduleData.scheduleId);
     setValue("scheduleName", scheduleData.scheduleName);
-    setValue("confirmDelete", scheduleData.confirmDelete);
+    // setValue("confirmDelete", scheduleData.confirmDelete);
   }, [scheduleData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -150,7 +150,7 @@ export function DeleteSchedule() {
       errors.schoolId,
       errors.scheduleId,
       errors.scheduleName,
-      errors.confirmDelete,
+      // errors.confirmDelete,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -164,83 +164,10 @@ export function DeleteSchedule() {
   }, [errors]);
 
   // SUBMIT DATA FUNCTION
-  const handleDeleteSchedule: SubmitHandler<
+  const handleSubmitDeleteSchedule: SubmitHandler<
     DeleteScheduleValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
-
-    // DELETE SCHEDULE FUNCTION
-    const deleteSchedule = async () => {
-      try {
-        await deleteDoc(doc(db, "schedules", data.scheduleId));
-        resetForm();
-        toast.success(`Horário excluído com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
-
-    // CHECK DELETE CONFIRMATION
-    if (!data.confirmDelete) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir o ${data.scheduleName}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    // CHECKING IF SCHEDULE EXISTS ON DATABASE
-
-    // SEARCH CURRICULUM WITH THIS SCHEDULE
-    const scheduleExistsOnCurriculum = curriculumDatabaseData.filter(
-      (curriculum) => curriculum.scheduleId === scheduleData.scheduleId
-    );
-
-    // IF EXISTS, RETURN ERROR
-    if (scheduleExistsOnCurriculum.length !== 0) {
-      return (
-        setScheduleData({ ...scheduleData, confirmDelete: false }),
-        setIsSubmitting(false),
-        toast.error(
-          `Horário incluído em ${scheduleExistsOnCurriculum.length} ${
-            scheduleExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-          }, exclua ou altere primeiramente ${
-            scheduleExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
-          } e depois exclua o ${data.scheduleName}... ❕`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
-      );
-    } else {
-      // IF NO EXISTS, DELETE
-      deleteSchedule();
-    }
+    handleDeleteSchedule(data.scheduleId, resetForm);
   };
 
   return (
@@ -253,7 +180,7 @@ export function DeleteSchedule() {
 
       {/* FORM */}
       <form
-        onSubmit={handleSubmit(handleDeleteSchedule)}
+        onSubmit={handleSubmit(handleSubmitDeleteSchedule)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL SELECT */}
@@ -273,8 +200,8 @@ export function DeleteSchedule() {
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolSelect"
             onChange={(e) => {
@@ -304,8 +231,8 @@ export function DeleteSchedule() {
             defaultValue={" -- select an option -- "}
             className={
               errors.scheduleId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="scheduleSelect"
             onChange={(e) => {
@@ -339,7 +266,7 @@ export function DeleteSchedule() {
                   type="text"
                   name="scheduleSchool"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={school.name}
                 />
               </div>
@@ -353,7 +280,7 @@ export function DeleteSchedule() {
                   type="text"
                   name="scheduleName"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={scheduleSelectedData!.name}
                 />
               </div>
@@ -367,7 +294,7 @@ export function DeleteSchedule() {
                   type="text"
                   name="transitionStart"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={scheduleSelectedData!.transitionStart}
                 />
               </div>
@@ -381,7 +308,7 @@ export function DeleteSchedule() {
                   type="text"
                   name="transitionEnd"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={scheduleSelectedData!.transitionEnd}
                 />
               </div>
@@ -395,7 +322,7 @@ export function DeleteSchedule() {
                   type="text"
                   name="classStart"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={scheduleSelectedData!.classStart}
                 />
               </div>
@@ -409,7 +336,7 @@ export function DeleteSchedule() {
                   type="text"
                   name="classEnd"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={scheduleSelectedData!.classEnd}
                 />
               </div>
@@ -423,14 +350,14 @@ export function DeleteSchedule() {
                   type="text"
                   name="exit"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={scheduleSelectedData!.exit}
                 />
               </div>
             </div>
 
             {/** CHECKBOX CONFIRM DELETE */}
-            <div className="flex justify-center items-center gap-2 mt-6">
+            {/* <div className="flex justify-center items-center gap-2 mt-6">
               <input
                 type="checkbox"
                 name="confirmDelete"
@@ -448,7 +375,7 @@ export function DeleteSchedule() {
                   ? `Confirmar exclusão do ${scheduleData.scheduleName}`
                   : `Confirmar exclusão`}
               </label>
-            </div>
+            </div> */}
 
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">

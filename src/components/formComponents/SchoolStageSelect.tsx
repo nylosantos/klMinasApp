@@ -84,8 +84,8 @@ const SchoolStageSelect = <T extends { schoolClassIds: string[] }>({
 
   return (
     <div className="flex flex-col w-full gap-4 items-center">
-      {schoolStage.map((stage) => (
-        <div className="flex gap-2 w-full items-center">
+      {schoolStage.map((stage, index) => (
+        <div className="flex gap-2 w-full items-center" key={index}>
           <p className="w-1/4 text-right">{stage.name}:</p>
           <div className="flex w-3/4 flex-wrap items-center">
             {schoolClassDatabaseData

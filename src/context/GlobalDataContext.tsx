@@ -5,24 +5,29 @@ import { app, initFirebase } from "../db/Firebase";
 import { Auth, getAuth, User } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
+  CalculateStudentMonthlyFeeResult,
   ClassDaySearchProps,
+  ConfirmationToSubmitProps,
   CurriculumArrayProps,
   CurriculumSearchProps,
+  CurriculumToAddProps,
   CurriculumWithNamesProps,
   ScheduleSearchProps,
   SchoolClassSearchProps,
   SchoolCourseSearchProps,
   SchoolSearchProps,
+  StudentFamilyToUpdateProps,
   StudentSearchProps,
   SystemConstantsSearchProps,
   TeacherSearchProps,
+  UpdateStudentFeeProps,
   UserFullDataProps,
+  VacancyCalculationResult,
 } from "../@types";
 import { toast } from "react-toastify";
 import {
   arrayRemove,
   collection,
-  deleteDoc,
   doc,
   DocumentData,
   FirestoreError,
@@ -30,14 +35,18 @@ import {
   getFirestore,
   onSnapshot,
   query,
-  updateDoc,
   where,
 } from "firebase/firestore";
-import Swal from "sweetalert2";
+import Swal, { SweetAlertResult } from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
 import { getFunctions } from "firebase/functions";
+import {
+  secureDeleteDoc,
+  secureSetDoc,
+  secureUpdateDoc,
+} from "../hooks/firestoreMiddleware";
 
 export type SetPageProps = {
   prev: "Dashboard" | "Settings" | "ManageSchools" | "ManageUsers";
@@ -119,8 +128,6 @@ export type GlobalDataContextType = {
     schoolClassId,
     schoolCourseId,
   }: HandleCurriculumDetailsWithScoolCourseProps) => CurriculumWithNamesProps[];
-  calcStudentPrice: (studentId: string) => Promise<void>;
-  calcStudentPrice2: (studentId: string) => Promise<void>;
   formatCurriculumName: (id: string) => string;
   handleDeleteCurriculum: (
     curriculumId: string,
@@ -161,6 +168,63 @@ export type GlobalDataContextType = {
   setLogin: (option: boolean) => void;
   setPage: (newPage: SetPageProps) => void;
   setTheme: (option: "dark" | "light") => void;
+  calculateStudentMonthlyFee(
+    studentId: string,
+    newStudent?: {
+      curriculums: CurriculumArrayProps[];
+      familyDiscount: boolean;
+      studentFamilyAtSchool: string[];
+      employeeDiscount: boolean;
+      customDiscount: boolean;
+      customDiscountValue: string;
+      secondCourseDiscount: boolean;
+    }
+  ): Promise<CalculateStudentMonthlyFeeResult>;
+  updateStudentFeeData({
+    studentId,
+    appliedPrice,
+    fullPrice,
+    customDiscount,
+    customDiscountValue,
+    familyDiscount,
+    secondCourseDiscount,
+    employeeDiscount,
+    studentFamilyToUpdate,
+  }: CalculateStudentMonthlyFeeResult): Promise<void>;
+  calculateEnrollmentFee: (discount?: boolean) => number;
+  calculatePlacesAvailable(
+    classId: string,
+    classDays: number[],
+    studentId?: string
+  ): Promise<VacancyCalculationResult>;
+  handleConfirmationToSubmit({
+    title,
+    text,
+    icon,
+    showCancelButton,
+    cancelButtonText,
+    confirmButtonText,
+  }: ConfirmationToSubmitProps): Promise<SweetAlertResult>;
+  getExperimentalCurriculums: (
+    curriculums: CurriculumToAddProps[]
+  ) => CurriculumToAddProps[];
+  getRegularCurriculums: (
+    curriculums: CurriculumToAddProps[]
+  ) => CurriculumToAddProps[];
+  getWaitingCurriculums: (
+    curriculums: CurriculumToAddProps[]
+  ) => CurriculumToAddProps[];
+  toggleActiveStudent(
+    isActive: boolean,
+    studentId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ): Promise<void>;
+  // logDelete: (
+  //   deletedData: unknown,
+  //   entity: string,
+  //   entityId: string
+  // ) => Promise<void>;
 };
 
 export const GlobalDataContext = createContext<GlobalDataContextType | null>(
@@ -278,8 +342,6 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       teacherId: "",
       teacherName: "",
       students: [],
-      experimentalStudents: [],
-      waitingList: [],
       placesAvailable: 0,
       updatedAt: new Date(),
     };
@@ -300,9 +362,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           scheduleId: curriculum.scheduleId,
           teacherId: curriculum.teacherId,
           students: curriculum.students,
-          experimentalStudents: curriculum.experimentalStudents,
           placesAvailable: curriculum.placesAvailable,
-          waitingList: curriculum.waitingList,
           updatedAt: curriculum.updatedAt,
         };
         schoolDatabaseData.map((school) => {
@@ -386,8 +446,6 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       teacherId: "",
       teacherName: "",
       students: [],
-      experimentalStudents: [],
-      waitingList: [],
       placesAvailable: 0,
       updatedAt: new Date(),
     };
@@ -409,9 +467,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           scheduleId: curriculum.scheduleId,
           teacherId: curriculum.teacherId,
           students: curriculum.students,
-          experimentalStudents: curriculum.experimentalStudents,
           placesAvailable: curriculum.placesAvailable,
-          waitingList: curriculum.waitingList,
           updatedAt: curriculum.updatedAt,
         };
         schoolDatabaseData.map((school) => {
@@ -491,8 +547,6 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       teacherName: "",
       placesAvailable: 0,
       students: [],
-      experimentalStudents: [],
-      waitingList: [],
       updatedAt: new Date(),
     };
 
@@ -505,8 +559,6 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         publicId: foundedCurriculum.publicId,
         placesAvailable: foundedCurriculum.placesAvailable,
         students: foundedCurriculum.students,
-        experimentalStudents: foundedCurriculum.experimentalStudents,
-        waitingList: foundedCurriculum.waitingList,
         id: foundedCurriculum.id,
         schoolId: foundedCurriculum.schoolId,
         schoolClassIds: foundedCurriculum.schoolClassIds,
@@ -584,443 +636,614 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     return studentDetails;
   }
 
-  // CALC STUDENT PRICE (PRICE WITH DISCOUNT: APPLIED PRICE | PRICE WITHOUT DISCOUNTS: FULL PRICE)
-  async function calcStudentPrice(studentId: string) {
-    if (systemConstantsValues) {
-      const userRef = collection(db, "students");
-      const q = query(userRef, where("id", "==", studentId));
-      const querySnapshot = await getDocs(q);
-      const promises: StudentSearchProps[] = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data() as StudentSearchProps;
-        promises.push(promise);
-      });
-      Promise.all(promises).then((results) => {
-        const studentToCalcPrices = results;
-        studentToCalcPrices.map(async (student) => {
-          // DISCOUNT VARIABLE
-          const customDiscountValueSum = 100 - +student.customDiscountValue;
-          const customDiscountFinalValue = +`0.${
-            customDiscountValueSum > 9
-              ? customDiscountValueSum
-              : `0${customDiscountValueSum}`
-          }`;
+  function calculateFullPriceForCurriculum(
+    curriculumId: string,
+    curriculumIndexDays: number[],
+    // curriculumDatabaseData: CurriculumSearchProps[],
+    // schoolCourseDatabaseData: SchoolCourseSearchProps[],
+    systemConstantsValues: SystemConstantsSearchProps
+  ): number {
+    // Passo 1: Encontrar o curriculum correspondente
+    const curriculum = curriculumDatabaseData.find(
+      (c) => c.id === curriculumId
+    );
+    if (!curriculum) throw new Error("Curriculum not found");
 
-          const discountVariable = student.customDiscount
-            ? customDiscountFinalValue
-            : student.employeeDiscount
-            ? systemConstantsValues.employeeDiscountValue
-            : student.familyDiscount
-            ? systemConstantsValues.familyDiscountValue
-            : student.secondCourseDiscount
-            ? systemConstantsValues.secondCourseDiscountValue
-            : 1; // WITHOUT DISCOUNT
+    // Passo 2: Encontrar a modalidade correspondente
+    const schoolCourse = schoolCourseDatabaseData.find(
+      (s) => s.id === curriculum.schoolCourseId
+    );
+    if (!schoolCourse) throw new Error("School course not found");
 
-          // CALC OF FULL AND APPLY PRICE OF STUDENT
-          let smallestPrice = 0;
-          let otherSumPrices = 0;
-          let olderSmallestPrice = 0;
-          student.curriculumIds.map(async (studentCurriculum, index) => {
-            if (index === 0) {
-              smallestPrice = studentCurriculum.price;
-            } else {
-              if (studentCurriculum.price <= smallestPrice) {
-                olderSmallestPrice = smallestPrice;
-                smallestPrice = studentCurriculum.price;
-                otherSumPrices = olderSmallestPrice + otherSumPrices;
-              } else {
-                otherSumPrices = otherSumPrices + studentCurriculum.price;
-              }
-            }
-          });
-          await updateDoc(doc(db, "students", student.id), {
-            appliedPrice: +(
-              smallestPrice * discountVariable +
-              otherSumPrices
-            ).toFixed(2),
-            fullPrice: smallestPrice + otherSumPrices,
-          });
-        });
-      });
+    // Passo 3: Obter os valores necessários
+    const { priceUnit, priceBundle, bundleDays } = schoolCourse;
+
+    // Passo 4: Determinar o número de aulas semanais
+    const classDays = curriculumIndexDays.length;
+
+    // Passo 5: Calcular o preço total
+    // Se nenhum dia foi escolhido, retorna 0
+    if (classDays < 1) {
+      return 0;
     }
-  }
 
-  interface NewStudentCalcProps {
-    enrolledDays: number[];
-    familyDiscount: boolean;
-    employeeDiscount: boolean;
-    customDiscount: boolean;
-    customDiscountValue: string;
-  }
+    // Se há apenas um dia, aplica o preço unitário
+    if (classDays === 1) {
+      return priceUnit;
+    }
 
-  interface OneStudentCalcProps {
-    studentId: string;
-  }
+    // Se há mais de um dia, aplica o preço do bundle
+    const quotient = Math.floor(classDays / bundleDays);
+    const remainder = classDays % bundleDays;
 
-  // interface EditStudentCalcProps {
-  //   // studentId,
-  //   // studentEditData.familyDiscount,
-  //   // studentEditData.employeeDiscount,
-  //   // studentEditData.customDiscount,
-  //   // studentEditData.secondCourseDiscount,
-  //   // studentEditData.customDiscountValue,
-  //   // studentEditData.addFamily,
-  //   // studentEditData.addCurriculum,
-  //   // excludeCurriculum,
-  //   // excludeFamily,
-  //   // newStudentData.curriculum,
-  //   // newClass.enrolledDays,
-  //   // showEnrollWaitingCurriculumDetails,
-  // }
+    // Se não houver dias adicionais (resto zero)
+    if (remainder === 0) {
+      if (quotient === 1) {
+        // Se houver apenas um bundle completo, aplica o preço completo para o primeiro bundle
+        return priceBundle;
+      } else {
+        // Se houver mais de um bundle completo, aplica o preço total para o primeiro e o desconto para os extras
+        return (
+          priceBundle +
+          (quotient - 1) *
+            priceBundle *
+            systemConstantsValues.secondCourseDiscountValue
+        );
+      }
+    }
 
-  function customDiscountValueCalc(student: StudentSearchProps) {
-    // DISCOUNT VARIABLE
-    const customDiscountValueSum = 100 - +student.customDiscountValue;
-    const customDiscountFinalValue = +`0.${
-      customDiscountValueSum > 9
-        ? customDiscountValueSum
-        : `0${customDiscountValueSum}`
-    }`;
-    let appliedPrice = 0;
-    let fullPrice = 0;
-    student.curriculumIds.map((curriculum) => {
-      appliedPrice = appliedPrice + curriculum.price;
-      fullPrice = fullPrice + curriculum.price;
-    });
-    return console.log(
-      "Preço sem desconto: ",
-      fullPrice,
-      " Preço com desconto: ",
-      appliedPrice * customDiscountFinalValue
+    // Se houver dias adicionais (resto não zero)
+    if (quotient === 1) {
+      // Se houver apenas um bundle completo, aplica o preço completo para o primeiro bundle e o preço com desconto para os dias restantes
+      return (
+        priceBundle +
+        remainder *
+          (priceUnit * systemConstantsValues.secondCourseDiscountValue)
+      );
+    }
+
+    // Para mais de um bundle, o primeiro é a preço total e os seguintes recebem desconto
+    return (
+      priceBundle + // Preço do primeiro bundle
+      (quotient - 1) *
+        priceBundle *
+        systemConstantsValues.secondCourseDiscountValue + // Preço com desconto para os bundles extras
+      remainder * (priceUnit * systemConstantsValues.secondCourseDiscountValue) // Preço das aulas restantes com desconto
     );
   }
 
-  function employeeDiscountValueCalc(student: StudentSearchProps) {
-    if (systemConstantsValues) {
-      // WITH EMPLOYEE DISCOUNT
-      let appliedPrice = 0;
-      let fullPrice = 0;
-      student.curriculumIds.map((curriculum) => {
-        appliedPrice = appliedPrice + curriculum.price;
-        fullPrice = fullPrice + curriculum.price;
-      });
-      return console.log(
-        "Preço sem desconto: ",
-        fullPrice,
-        " Preço com desconto: ",
-        appliedPrice * systemConstantsValues.employeeDiscountValue
-      );
-    }
-  }
-
-  function courseDiscountValueCalc(student: StudentSearchProps) {
-    console.log("student", student);
-    if (systemConstantsValues) {
-      // WITHOUT FAMILY DISCOUNT
-      const studentCurriculums: CurriculumArrayProps[] = [];
-      curriculumDatabaseData.map((curriculum) => {
-        curriculum.students.map((student) => {
-          if (student.id === student.id) {
-            if (!studentCurriculums.includes(student)) {
-              studentCurriculums.push(student);
-            }
-          }
-        });
-      });
-      let biggerPriceIndex = 0;
-      let biggerPrice = 0;
-      let otherSumPrices = 0;
-      let olderBiggerPrice = 0;
-      let appliedPrice = 0;
-      let fullPrice = 0;
-      studentCurriculums.map(async (studentCurriculum, index) => {
-        if (studentCurriculum.price > biggerPrice) {
-          biggerPriceIndex = index;
-          olderBiggerPrice = biggerPrice;
-          biggerPrice = studentCurriculum.price;
-          otherSumPrices = olderBiggerPrice + otherSumPrices;
-        } else {
-          otherSumPrices = otherSumPrices + studentCurriculum.price;
-        }
-      });
-      if (otherSumPrices === 0) {
-        appliedPrice = biggerPrice;
-        fullPrice = biggerPrice;
-      } else {
-        appliedPrice =
-          biggerPrice * systemConstantsValues.secondCourseDiscountValue +
-          otherSumPrices;
-        fullPrice = biggerPrice + otherSumPrices;
-      }
-      return console.log(
-        "todos os curriculum juntos, student",
-        studentCurriculums,
-        "Maior mensalidade: ",
-        biggerPrice,
-        " Soma das outras mensalidades: ",
-        otherSumPrices,
-        " Index da maior mensalidade: ",
-        biggerPriceIndex,
-        "Preço total sem desconto: ",
-        fullPrice,
-        " Preço total com desconto: ",
-        appliedPrice
-      );
-    }
-  }
-
-  async function calcStudentPrice2(
+  async function calculateStudentMonthlyFee(
     studentId: string,
-    newStudent?: NewStudentCalcProps,
-    oneStudent?: OneStudentCalcProps
-  ) {
-    console.log("newStudent", newStudent);
-    console.log("oneStudent", oneStudent);
-    if (systemConstantsValues) {
+    newStudent?: {
+      curriculums: CurriculumArrayProps[];
+      familyDiscount: boolean;
+      studentFamilyAtSchool: string[];
+      employeeDiscount: boolean;
+      customDiscount: boolean;
+      customDiscountValue: string;
+      secondCourseDiscount: boolean;
+    }
+  ): Promise<CalculateStudentMonthlyFeeResult> {
+    if (!systemConstantsValues) {
+      throw new Error("System constants not found");
+    }
+
+    let studentData: StudentSearchProps | null = null;
+
+    // Se newStudent não for fornecido, buscamos os dados do aluno no Firestore
+    if (!newStudent) {
       const userRef = collection(db, "students");
       const q = query(userRef, where("id", "==", studentId));
       const querySnapshot = await getDocs(q);
-      const promises: StudentSearchProps[] = [];
-      querySnapshot.forEach((doc) => {
-        const promise = doc.data() as StudentSearchProps;
-        promises.push(promise);
-      });
-      Promise.all(promises).then((results) => {
-        const studentToCalcPrices = results.find(
-          (student) => student.id === studentId
+
+      if (!querySnapshot.empty) {
+        studentData = querySnapshot.docs[0].data() as StudentSearchProps;
+      }
+    }
+
+    // Determina qual conjunto de dados será utilizado
+    const student = newStudent || studentData;
+    if (!student) throw new Error("Student data not found");
+
+    let fullPrice = 0;
+    let appliedPrice = 0;
+    let studentFamilyToUpdate: StudentFamilyToUpdateProps[] = [];
+
+    // Verifica se o aluno está ativo
+    const students = studentsDb as StudentSearchProps[];
+
+    const foundedStudent = students.find(
+      (student) => student.id === student.id
+    );
+
+    const isActive = newStudent
+      ? true
+      : foundedStudent
+      ? foundedStudent.active
+      : false;
+
+    // Calcula o preço total dos currículos do aluno
+    const curriculumPrices = await Promise.all(
+      student.curriculums.map((curriculum) => {
+        if (curriculum.isExperimental || curriculum.isWaiting) {
+          return 0;
+        } else
+          return calculateFullPriceForCurriculum(
+            curriculum.id,
+            curriculum.indexDays,
+            systemConstantsValues
+          );
+      })
+    );
+
+    // Soma os preços dos currículos para obter o preço total
+    fullPrice = +curriculumPrices
+      .reduce((sum, price) => sum + price, 0)
+      .toFixed(2);
+
+    // Verifica se há um desconto personalizado aplicado ao aluno
+    if (student.customDiscount && isActive) {
+      appliedPrice = parseFloat(
+        (
+          fullPrice *
+          (1 - parseFloat(student.customDiscountValue) / 100)
+        ).toFixed(2)
+      );
+      return {
+        studentId,
+        appliedPrice,
+        fullPrice,
+        customDiscount: true,
+        customDiscountValue: student.customDiscountValue,
+        familyDiscount: false,
+        secondCourseDiscount: false,
+        employeeDiscount: false,
+      };
+    }
+
+    // Verifica se o aluno tem desconto de funcionário
+    if (student.employeeDiscount && isActive) {
+      appliedPrice = +(
+        fullPrice * systemConstantsValues.employeeDiscountValue
+      ).toFixed(2);
+      return {
+        studentId,
+        appliedPrice,
+        fullPrice,
+        employeeDiscount: true,
+        familyDiscount: false,
+        secondCourseDiscount: false,
+        customDiscount: false,
+        customDiscountValue: "0",
+      };
+    }
+
+    // Verifica se o aluno tem desconto familiar
+    if (student.familyDiscount && student.studentFamilyAtSchool.length > 0) {
+      const familyCurriculums: Array<{
+        curriculumId: string;
+        studentId: string;
+        indexDays: number[];
+        price: number;
+      }> = [];
+
+      const familyMembers = [studentId, ...student.studentFamilyAtSchool];
+
+      // Adiciona o estudante atual com seus dados atualizados diretamente na lista de familyCurriculums
+      for (const curriculum of student.curriculums) {
+        const price = calculateFullPriceForCurriculum(
+          curriculum.id,
+          curriculum.indexDays,
+          systemConstantsValues
         );
-        if (studentToCalcPrices) {
-          if (studentToCalcPrices.customDiscount) {
-            // // DISCOUNT VARIABLE
-            // const customDiscountValueSum =
-            //   100 - +studentToCalcPrices.customDiscountValue;
-            // const customDiscountFinalValue = +`0.${
-            //   customDiscountValueSum > 9
-            //     ? customDiscountValueSum
-            //     : `0${customDiscountValueSum}`
-            // }`;
-            customDiscountValueCalc(studentToCalcPrices);
-            // IF WE NEED GET THE CURRICULUM ORDERED UNCOMENT BELOW
-            // const curriculumOrderedByPrice =
-            //   studentToCalcPrices.curriculumIds.sort((a, b) => b.price - a.price);
-            // WITH CUSTOM DISCOUNT
-            // let appliedPrice = 0;
-            // studentToCalcPrices.curriculumIds.map((curriculum) => {
-            //   appliedPrice = appliedPrice + curriculum.price;
-            // });
-            // console.log(
-            //   "appliedPrice sem desconto: ",
-            //   appliedPrice,
-            //   " appliedPrice com desconto: ",
-            //   appliedPrice * customDiscountFinalValue
-            // );
-          }
-          // PRICE CALC IF HAVE FAMILY
-          else if (studentToCalcPrices.employeeDiscount) {
-            employeeDiscountValueCalc(studentToCalcPrices);
-            // // WITH EMPLOYEE DISCOUNT
-            // let appliedPrice = 0;
-            // studentToCalcPrices.curriculumIds.map((curriculum) => {
-            //   appliedPrice = appliedPrice + curriculum.price;
-            // });
-            // console.log(
-            //   "appliedPrice sem desconto: ",
-            //   appliedPrice,
-            //   " appliedPrice com desconto: ",
-            //   appliedPrice * systemConstantsValues.employeeDiscountValue
-            // );
-          } else if (studentToCalcPrices.studentFamilyAtSchool.length < 1) {
-            courseDiscountValueCalc(studentToCalcPrices);
-            // // WITHOUT FAMILY DISCOUNT
-            // const studentCurriculums: CurriculumArrayProps[] = [];
-            // curriculumDatabaseData.map((curriculum) => {
-            //   curriculum.students.map((student) => {
-            //     if (student.id === studentToCalcPrices.id) {
-            //       if (!studentCurriculums.includes(student)) {
-            //         studentCurriculums.push(student);
-            //       }
-            //     }
-            //   });
-            // });
-            // let biggerPriceIndex = 0;
-            // let biggerPrice = 0;
-            // let otherSumPrices = 0;
-            // let olderBiggerPrice = 0;
-            // studentCurriculums.map(async (studentCurriculum, index) => {
-            //   if (studentCurriculum.price > biggerPrice) {
-            //     biggerPriceIndex = index;
-            //     olderBiggerPrice = biggerPrice;
-            //     biggerPrice = studentCurriculum.price;
-            //     otherSumPrices = olderBiggerPrice + otherSumPrices;
-            //   } else {
-            //     otherSumPrices = otherSumPrices + studentCurriculum.price;
-            //   }
-            // });
-            // console.log(
-            //   "todos os curriculum juntos, student",
-            //   studentCurriculums
-            // );
-            // console.log(
-            //   "Maior mensalidade: ",
-            //   biggerPrice,
-            //   " Soma das outras mensalidades: ",
-            //   otherSumPrices,
-            //   " Index da maior mensalidade: ",
-            //   biggerPriceIndex
-            // );
-          } else {
-            // WITH FAMILY DISCOUNT
-            const studentFamilyCurriculums: CurriculumArrayProps[] = [];
-            studentToCalcPrices.studentFamilyAtSchool.map((familyId) => {
-              curriculumDatabaseData.map((curriculum) => {
-                curriculum.students.map((student) => {
-                  if (
-                    student.id === familyId ||
-                    student.id === studentToCalcPrices.id
-                  ) {
-                    if (!studentFamilyCurriculums.includes(student)) {
-                      studentFamilyCurriculums.push(student);
-                    }
-                  }
-                });
+        familyCurriculums.push({
+          curriculumId: curriculum.id,
+          studentId: studentId,
+          indexDays: curriculum.indexDays,
+          price,
+        });
+      }
+      const curriculumDbTransformed: CurriculumSearchProps[] = curriculumDb
+        ? curriculumDb.map((doc: DocumentData) => ({
+            ...(doc as CurriculumSearchProps),
+          }))
+        : [];
+      // Agora itere pelos currículos do banco de dados
+      for (const curriculum of curriculumDbTransformed) {
+        for (const studentFromDb of curriculum.students) {
+          if (familyMembers.includes(studentFromDb.id)) {
+            const foundedStudent = students.find(
+              (student) =>
+                student.id === studentFromDb.id && student.id !== studentId
+            );
+            if (
+              foundedStudent &&
+              !foundedStudent.customDiscount &&
+              !foundedStudent.employeeDiscount &&
+              foundedStudent.active
+            ) {
+              const price = calculateFullPriceForCurriculum(
+                curriculum.id,
+                studentFromDb.indexDays,
+                systemConstantsValues
+              );
+              familyCurriculums.push({
+                curriculumId: curriculum.id,
+                studentId: studentFromDb.id,
+                indexDays: studentFromDb.indexDays,
+                price,
               });
-            });
-            let biggerPriceIndex = 0;
-            let biggerPrice = 0;
-            let otherSumPrices = 0;
-            let olderBiggerPrice = 0;
-            studentFamilyCurriculums.map(async (studentCurriculum, index) => {
-              if (studentCurriculum.price > biggerPrice) {
-                biggerPriceIndex = index;
-                olderBiggerPrice = biggerPrice;
-                biggerPrice = studentCurriculum.price;
-                otherSumPrices = olderBiggerPrice + otherSumPrices;
-              } else {
-                otherSumPrices = otherSumPrices + studentCurriculum.price;
-              }
-            });
-            console.log(
-              "todos os curriculum juntos, student and family",
-              studentFamilyCurriculums
-            );
-            console.log(
-              "Maior mensalidade: ",
-              biggerPrice,
-              " Soma das outras mensalidades: ",
-              otherSumPrices,
-              " Index da maior mensalidade: ",
-              biggerPriceIndex,
-              "ID do aluno com maior mensalidade: ",
-              studentFamilyCurriculums[biggerPriceIndex].id
-            );
+            }
           }
-          // if (curriculumOrderedByPrice.length < 1) {
-          //   console.log(
-          //     "O preço total é: R$ ",
-          //     0,
-          //     " o desconto é de ",
-          //     0,
-          //     ", e o valor final é: R$ ",
-          //     0
-          //   );
-          // } else if (curriculumOrderedByPrice.length === 1) {
-          //   if (studentToCalcPrices.customDiscount) {
-          //     console.log(
-          //       "O preço total é: R$ ",
-          //       curriculumOrderedByPrice[0].price,
-          //       " o desconto é de ",
-          //       studentToCalcPrices.customDiscountValue,
-          //       "%, e o valor final é: R$ ",
-          //       curriculumOrderedByPrice[0].price * customDiscountFinalValue
-          //     );
-          //   } else if (studentToCalcPrices.employeeDiscount) {
-          //     console.log(
-          //       "O preço total é: R$ ",
-          //       curriculumOrderedByPrice[0].price,
-          //       " o desconto é de ",
-          //       employeeDiscountValue,
-          //       ", e o valor final é: R$ ",
-          //       curriculumOrderedByPrice[0].price * employeeDiscountValue
-          //     );
-          //   } else if (studentToCalcPrices.familyDiscount) {
-          //     console.log(
-          //       "O preço total é: R$ ",
-          //       curriculumOrderedByPrice[0].price,
-          //       " o desconto é de ",
-          //       familyDiscountValue,
-          //       ", e o valor final é: R$ ",
-          //       curriculumOrderedByPrice[0].price * familyDiscountValue
-          //     );
-          //   } else {
-          //     console.log(
-          //       "O preço total é: R$ ",
-          //       curriculumOrderedByPrice[0].price,
-          //       " o desconto é de ",
-          //       0,
-          //       ", e o valor final é: R$ ",
-          //       curriculumOrderedByPrice[0].price
-          //     );
-          //   }
-          // } else {
-          //   if (studentToCalcPrices.customDiscount) {
-          //     console.log(
-          //       "O preço total é: R$ ",
-          //       curriculumOrderedByPrice[0].price,
-          //       " o desconto é de ",
-          //       studentToCalcPrices.customDiscountValue,
-          //       "%, e o valor final é: R$ ",
-          //       curriculumOrderedByPrice[0].price * customDiscountFinalValue
-          //     );
-          //   }
-          // }
         }
-        // studentToCalcPrices.map(async (student) => {
-        // DISCOUNT VARIABLE
-        // const customDiscountValueSum = 100 - +student.customDiscountValue;
-        // const customDiscountFinalValue = +`0.${
-        //   customDiscountValueSum > 9
-        //     ? customDiscountValueSum
-        //     : `0${customDiscountValueSum}`
-        // }`;
+      }
 
-        // const discountVariable = student.customDiscount
-        //   ? customDiscountFinalValue
-        //   : student.employeeDiscount
-        //   ? employeeDiscountValue
-        //   : student.familyDiscount
-        //   ? familyDiscountValue
-        //   : student.secondCourseDiscount
-        //   ? secondCourseDiscountValue
-        //   : 1; // WITHOUT DISCOUNT
+      // Tipando o acumulador
+      interface Curriculum {
+        curriculumId: string;
+        studentId: string;
+        indexDays: number[];
+        price: number;
+      }
 
-        // CALC OF FULL AND APPLY PRICE OF STUDENT
-        // let smallestPrice = 0;
-        // let otherSumPrices = 0;
-        // let olderSmallestPrice = 0;
-        // student.curriculumIds.map(async (studentCurriculum, index) => {
-        //   if (index === 0) {
-        //     smallestPrice = studentCurriculum.price;
-        //   } else {
-        //     if (studentCurriculum.price <= smallestPrice) {
-        //       olderSmallestPrice = smallestPrice;
-        //       smallestPrice = studentCurriculum.price;
-        //       otherSumPrices = olderSmallestPrice + otherSumPrices;
-        //     } else {
-        //       otherSumPrices = otherSumPrices + studentCurriculum.price;
-        //     }
-        //   }
-        // });
-        // await updateDoc(doc(db, "students", student.id), {
-        //   appliedPrice: +(
-        //     smallestPrice * discountVariable +
-        //     otherSumPrices
-        //   ).toFixed(2),
-        //   fullPrice: smallestPrice + otherSumPrices,
-        // });
-        // });
+      interface MemberData {
+        fullPrice: number;
+        appliedPrice: number;
+        curriculums: Curriculum[];
+      }
+
+      // Tipando o objeto de acumulador
+      const groupedByMember = familyCurriculums.reduce<{
+        [key: string]: MemberData;
+      }>((acc, curriculum) => {
+        // Encontrar o maior preço
+        const maxPrice = Math.max(...familyCurriculums.map((c) => c.price));
+
+        // Aplicar o desconto nos currículos que não são o de maior preço
+        const appliedPrice =
+          curriculum.price === maxPrice
+            ? curriculum.price // Mantém o preço sem alteração
+            : curriculum.price * systemConstantsValues.familyDiscountValue; // Aplica o desconto
+
+        // Adicionar os currículos ao grupo do membro correto
+        if (!acc[curriculum.studentId]) {
+          acc[curriculum.studentId] = {
+            fullPrice: 0,
+            appliedPrice: 0,
+            curriculums: [],
+          };
+        }
+
+        // Adicionar ao array de currículos do membro
+        acc[curriculum.studentId].curriculums.push(curriculum);
+
+        // Somar os preços sem desconto (fullPrice)
+        acc[curriculum.studentId].fullPrice += curriculum.price;
+
+        // Somar os preços com o desconto aplicado (appliedPrice)
+        acc[curriculum.studentId].appliedPrice += appliedPrice;
+
+        return acc;
+      }, {});
+
+      const result = Object.keys(groupedByMember).map((memberId) => {
+        const memberData = groupedByMember[memberId];
+        return {
+          familyId: memberId,
+          appliedPrice: +memberData.appliedPrice.toFixed(2), // Preço final com desconto
+          fullPrice: +memberData.fullPrice.toFixed(2), // Preço total sem desconto
+          familyDiscount: true,
+          secondCourseDiscount: false,
+          employeeDiscount: false,
+          customDiscount: false,
+          customDiscountValue: "0",
+        };
       });
+      // Excluindo o studentId de studentFamilyToUpdate
+      studentFamilyToUpdate = result.filter(
+        (member) => member.familyId !== studentId
+      );
+
+      appliedPrice =
+        result.find((member) => member.familyId === studentId)?.appliedPrice ||
+        fullPrice;
+
+      return {
+        studentId,
+        appliedPrice,
+        fullPrice,
+        familyDiscount: true,
+        secondCourseDiscount: false,
+        employeeDiscount: false,
+        customDiscount: false,
+        customDiscountValue: "0",
+        studentFamilyToUpdate,
+      };
+    }
+
+    // Verifica se o aluno tem desconto para um segundo curso
+    if (curriculumPrices.length > 1) {
+      // Encontre o valor máximo
+      const maxPrice = Math.max(...curriculumPrices);
+
+      // Encontre o índice da primeira ocorrência do valor máximo
+      const maxPriceIndex = curriculumPrices.indexOf(maxPrice);
+
+      // Filtra os preços, mantendo todos os preços que não são a primeira ocorrência do maior preço
+      const discountedCourses = curriculumPrices.filter(
+        (_, index) => index !== maxPriceIndex // Filtrando pelo índice correto
+      );
+
+      const discountAmount = discountedCourses.reduce(
+        (sum, price) =>
+          // sum + price * (1 - systemConstantsValues.secondCourseDiscountValue),
+          sum + price * systemConstantsValues.secondCourseDiscountValue,
+        0
+      );
+
+      appliedPrice = maxPrice + discountAmount;
+
+      return {
+        studentId,
+        appliedPrice: +appliedPrice.toFixed(2),
+        fullPrice: +fullPrice.toFixed(2),
+        secondCourseDiscount: discountAmount > 0 ? true : false,
+        familyDiscount: false,
+        employeeDiscount: false,
+        customDiscount: false,
+        customDiscountValue: "0",
+      };
+    }
+
+    if (isActive) {
+      // Se nenhum desconto for aplicado, o preço final será o preço total
+      appliedPrice = +fullPrice.toFixed(2);
+      return {
+        studentId,
+        appliedPrice,
+        fullPrice,
+        secondCourseDiscount: false,
+        familyDiscount: false,
+        employeeDiscount: false,
+        customDiscount: false,
+        customDiscountValue: "0",
+      };
+    } else {
+      // Se o aluno estiver inativo, retorna 0
+      return {
+        studentId,
+        appliedPrice,
+        fullPrice,
+        secondCourseDiscount: false,
+        familyDiscount: false,
+        employeeDiscount: false,
+        customDiscount: false,
+        customDiscountValue: "0",
+      };
     }
   }
+
+  // UPDATE FEE ON FIREBASE
+  async function updateStudentFeeData({
+    newStudent,
+    studentId,
+    appliedPrice,
+    fullPrice,
+    customDiscount,
+    customDiscountValue,
+    familyDiscount,
+    secondCourseDiscount,
+    employeeDiscount,
+    studentFamilyToUpdate,
+  }: UpdateStudentFeeProps): Promise<void> {
+    if (!newStudent) {
+      await secureUpdateDoc(doc(db, "students", studentId), {
+        appliedPrice,
+        fullPrice,
+        secondCourseDiscount,
+        familyDiscount,
+        employeeDiscount,
+        customDiscount,
+        customDiscountValue,
+      });
+    }
+
+    if (studentFamilyToUpdate && studentFamilyToUpdate.length > 0) {
+      for (const familyMember of studentFamilyToUpdate) {
+        await secureUpdateDoc(doc(db, "students", familyMember.familyId), {
+          appliedPrice: familyMember.appliedPrice,
+          fullPrice: familyMember.fullPrice,
+          secondCourseDiscount: familyMember.secondCourseDiscount,
+          familyDiscount: familyMember.familyDiscount,
+          employeeDiscount: familyMember.employeeDiscount,
+          customDiscount: familyMember.customDiscount,
+          customDiscountValue: familyMember.customDiscountValue,
+        });
+      }
+    }
+  }
+
+  // ENROLMENT FEE CALC FUNCTION
+  const calculateEnrollmentFee = (discount?: boolean): number => {
+    if (!systemConstantsValues) {
+      throw new Error("System constants not found");
+    }
+    const currentMonth = new Date().getMonth() + 1; // Obtém o mês atual (1 a 12)
+
+    let discountToCalc = discount ? 0 : 1; // 100% (sem desconto)
+
+    if (currentMonth >= 8 && currentMonth <= 10) {
+      discountToCalc = 0.5; // 50% de desconto
+    } else if (currentMonth >= 11) {
+      discountToCalc = 0; // Isenção de matrícula
+    }
+
+    return systemConstantsValues.enrolmentFee * discountToCalc;
+  };
+
+  async function calculatePlacesAvailable(
+    classId: string,
+    classDays: number[],
+    studentId?: string
+  ): Promise<VacancyCalculationResult> {
+    if (!curriculumDb) {
+      throw new Error(`Turma com id ${classId} não encontrada`);
+    }
+
+    const classData = curriculumDb.find(
+      (document) => document.id === classId
+    ) as CurriculumSearchProps;
+
+    if (!classData) {
+      throw new Error(`Turma com id ${classId} não encontrada`);
+    }
+
+    const placesAvailable = classData.placesAvailable;
+    let students = classData.students;
+
+    // Se um studentId for fornecido, exclui o aluno de edição da lista de estudantes
+    if (studentId) {
+      students = students.filter((student) => student.id !== studentId);
+    }
+
+    // Criar array de vagas compartilhadas
+    const sharedVacanciesArray = Array.from({ length: placesAvailable }, () =>
+      classDays.reduce((acc, day) => {
+        acc[day] = false; // Inicializa todas as frações da vaga como disponíveis
+        return acc;
+      }, {} as Record<number, boolean>)
+    );
+
+    // Percorrer os alunos e marcar as frações ocupadas
+    students.forEach((student) => {
+      if (!studentsDb) {
+        throw new Error(`Falha na consulta ao banco de dados`);
+      }
+      const studentData = studentsDb.find(
+        (document) => document.id === student.id
+      ) as StudentSearchProps;
+
+      if (studentData.active) {
+        for (const sharedVacancy of sharedVacanciesArray) {
+          if (student.indexDays.every((day) => sharedVacancy[day] === false)) {
+            student.indexDays.forEach((day) => {
+              sharedVacancy[day] = true;
+            });
+            break;
+          }
+        }
+      }
+    });
+
+    // Calcular o número total de vagas disponíveis
+    let totalAvailableVacancies = sharedVacanciesArray.reduce(
+      (count, sharedVacancy) => {
+        // Se todas as frações estão ocupadas, essa vaga não conta como disponível
+        if (Object.values(sharedVacancy).every((occupied) => occupied)) {
+          return count - 1;
+        }
+        return count;
+      },
+      placesAvailable
+    );
+
+    totalAvailableVacancies = Math.max(0, totalAvailableVacancies);
+
+    // Calcular vagas disponíveis por dia
+    const vacanciesPerDay = new Array(7).fill(0);
+    classDays.forEach((day) => {
+      vacanciesPerDay[day] = sharedVacanciesArray.filter(
+        (sharedVacancy) => !sharedVacancy[day]
+      ).length;
+    });
+
+    // Determinar vagas parciais
+    const partialVacancies: { day: number; remainingVacancies: number }[] = [];
+    classDays.forEach((day) => {
+      if (vacanciesPerDay[day] > 0) {
+        partialVacancies.push({
+          day,
+          remainingVacancies: vacanciesPerDay[day],
+        });
+      }
+    });
+
+    // Determinar o tipo de vaga com base na ocupação parcial
+    let vacancyType: "total" | "partial" = "total";
+    for (const sharedVacancy of sharedVacanciesArray) {
+      if (Object.values(sharedVacancy).some((occupied) => !occupied)) {
+        vacancyType = "partial";
+        break;
+      }
+    }
+
+    // Verificar se todas as vagas estão totalmente disponíveis
+    const totalVacanciesAvailable = sharedVacanciesArray.some((sharedVacancy) =>
+      Object.values(sharedVacancy).every((occupied) => !occupied)
+    );
+
+    return {
+      vacanciesAvailable: totalAvailableVacancies > 0,
+      totalVacanciesAvailable,
+      partialVacancies,
+      vacancyType,
+      vacanciesPerDay,
+      totalAvailableVacancies,
+    };
+  }
+
+  const getExperimentalCurriculums = (curriculums: CurriculumToAddProps[]) => {
+    return curriculums.filter((curriculum) => curriculum.isExperimental);
+  };
+
+  const getRegularCurriculums = (curriculums: CurriculumToAddProps[]) => {
+    return curriculums.filter(
+      (curriculum) => !curriculum.isExperimental && !curriculum.isWaiting
+    );
+  };
+
+  const getWaitingCurriculums = (curriculums: CurriculumToAddProps[]) => {
+    return curriculums.filter((curriculum) => curriculum.isWaiting);
+  };
+
+  // // Função para criar um log de exclusão
+  // // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // const logDelete = async (
+  //   deletedData: unknown,
+  //   entity: string,
+  //   entityId: string
+  // ): Promise<void> => {
+  //   const db = getFirestore();
+  //   const auth = getAuth();
+  //   const user = auth.currentUser;
+
+  //   if (!user) {
+  //     console.log("Usuário não autenticado.");
+  //     return;
+  //   }
+
+  //   // Criar um ID aleatório para o log
+  //   const logId: string = Math.random().toString(36).substr(2, 9); // Cria um ID aleatório para o log
+
+  //   const logData: LogData = {
+  //     id: logId,
+  //     action: "delete",
+  //     changedBy: user.uid, // ID do usuário que fez a exclusão
+  //     deletedData: deletedData, // Dados deletados
+  //     entity: entity, // Nome da coleção
+  //     entityId: entityId, // ID do documento afetado
+  //     timestamp: Timestamp.now(), // Data e hora da operação
+  //   };
+
+  //   try {
+  //     // Adiciona o log na coleção 'logs' no Firestore
+  //     await secureAddDoc(collection(db, "logs"), logData);
+  //     console.log("Log de exclusão registrado com sucesso!");
+  //   } catch (error) {
+  //     console.error("Erro ao registrar log de exclusão:", error);
+  //   }
+  // };
+
   // MONITORING USER LOGIN
   useEffect(() => {
     setIsSubmitting(true);
@@ -1305,192 +1528,455 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   // CONFIRM ALERT MODAL
   const ConfirmationAlert = withReactContent(Swal);
 
+  function handleConfirmationToSubmit({
+    title,
+    text,
+    icon,
+    showCancelButton,
+    cancelButtonText,
+    confirmButtonText,
+  }: ConfirmationToSubmitProps): Promise<SweetAlertResult> {
+    return new Promise((resolve, reject) => {
+      ConfirmationAlert.fire({
+        title,
+        text,
+        icon,
+        showCancelButton,
+        cancelButtonColor: "#d33",
+        cancelButtonText,
+        confirmButtonColor: "#2a5369",
+        confirmButtonText,
+      })
+        .then((result) => {
+          resolve(result); // Retorna o objeto completo do SweetAlert
+        })
+        .catch((error) => {
+          reject(error); // Em caso de erro, rejeitar a promessa
+        });
+    });
+  }
+
   // DELETE STUDENT FUNCTION
-  function handleDeleteStudent(
+  async function toggleActiveStudent(
+    isActive: boolean,
     studentId: string,
     resetForm: () => void,
     closeModal?: () => void
   ) {
-    ConfirmationAlert.fire({
-      title: "Você tem certeza?",
-      text: "Não será possível desfazer essa ação!",
+    const confirmation = await handleConfirmationToSubmit({
+      title: `${isActive ? "Desativar" : "Ativar"} Aluno`,
+      text: `Tem certeza que deseja ${
+        isActive ? "desativar" : "ativar"
+      } este Aluno?`,
       icon: "warning",
-      showCancelButton: true,
-      cancelButtonColor: "#d33",
+      confirmButtonText: `Sim, ${isActive ? "desativar" : "ativar"}`,
       cancelButtonText: "Cancelar",
-      confirmButtonColor: "#2a5369",
-      confirmButtonText: "Sim, deletar!",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        const studentToDelete = studentsDatabaseData.find(
-          (student) => student.id === studentId
-        );
-        if (studentToDelete) {
-          // TEST FOR BROTHERS REGISTERED
-          if (studentToDelete.studentFamilyAtSchool.length > 0) {
-            // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
-            studentToDelete.studentFamilyAtSchool.map(
-              async (studentFamilyId) => {
-                const editingStudentFamily = studentsDatabaseData.find(
-                  (student) => student.id === studentFamilyId
-                );
-                if (editingStudentFamily) {
-                  const foundedStudentOnFamilyRecord =
-                    editingStudentFamily.studentFamilyAtSchool.find(
-                      (studentToEditId) => studentToEditId === studentId
-                    );
-                  if (foundedStudentOnFamilyRecord) {
-                    // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
-                    if (
-                      editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
-                      editingStudentFamily.studentFamilyAtSchool.length === 1 &&
-                      !editingStudentFamily.secondCourseDiscount
-                    ) {
-                      await updateDoc(
-                        doc(db, "students", editingStudentFamily.id),
-                        {
-                          studentFamilyAtSchool: arrayRemove(studentId),
-                          familyDiscount: false,
-                          appliedPrice: editingStudentFamily.fullPrice,
-                        }
-                      );
-                      // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
-                    } else if (
-                      editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
-                      editingStudentFamily.studentFamilyAtSchool.length === 1
-                    ) {
-                      await updateDoc(
-                        doc(db, "students", editingStudentFamily.id),
-                        {
-                          studentFamilyAtSchool: arrayRemove(studentId),
-                          familyDiscount: false,
-                        }
-                      );
-                      // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
-                    } else if (
-                      editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
-                      editingStudentFamily.studentFamilyAtSchool.length > 1
-                    ) {
-                      await updateDoc(
-                        doc(db, "students", editingStudentFamily.id),
-                        {
-                          studentFamilyAtSchool: arrayRemove(studentId),
-                        }
-                      );
-                      // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
-                    } else if (
-                      !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
-                      editingStudentFamily.studentFamilyAtSchool.length === 1 &&
-                      !editingStudentFamily.secondCourseDiscount
-                    ) {
-                      await updateDoc(
-                        doc(db, "students", editingStudentFamily.id),
-                        {
-                          studentFamilyAtSchool: arrayRemove(studentId),
-                          familyDiscount: false,
-                          appliedPrice: editingStudentFamily.fullPrice,
-                        }
-                      );
-                      // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
-                    } else if (
-                      !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
-                      editingStudentFamily.studentFamilyAtSchool.length === 1
-                    ) {
-                      await updateDoc(
-                        doc(db, "students", editingStudentFamily.id),
-                        {
-                          studentFamilyAtSchool: arrayRemove(studentId),
-                          familyDiscount: false,
-                        }
-                      );
-                      // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
-                    } else if (
-                      !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
-                      editingStudentFamily.studentFamilyAtSchool.length > 1
-                    ) {
-                      await updateDoc(
-                        doc(db, "students", editingStudentFamily.id),
-                        {
-                          studentFamilyAtSchool: arrayRemove(studentId),
-                        }
-                      );
-                    }
-                  }
-                }
-              }
+      showCancelButton: true,
+    });
+
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
+      await secureSetDoc(
+        doc(db, "students", studentId),
+        {
+          active: !isActive,
+          curriculums: [],
+        },
+        { merge: true }
+      );
+
+      const studentToToggleActive = studentsDatabaseData.find(
+        (student) => student.id === studentId
+      );
+      if (studentToToggleActive) {
+        if (
+          studentToToggleActive.familyDiscount &&
+          studentToToggleActive.studentFamilyAtSchool.length > 0
+        ) {
+          const curriculums = studentToToggleActive.curriculums.map(
+            (curriculum) => ({
+              date: curriculum.date,
+              id: curriculum.id,
+              indexDays: curriculum.indexDays,
+              isExperimental: curriculum.isExperimental,
+              isWaiting: curriculum.isWaiting,
+              price: 0,
+            })
+          );
+
+          const fee = await calculateStudentMonthlyFee(
+            studentToToggleActive.id,
+            {
+              curriculums,
+              customDiscount: studentToToggleActive.customDiscount,
+              customDiscountValue: studentToToggleActive.customDiscountValue,
+              employeeDiscount: studentToToggleActive.employeeDiscount,
+              familyDiscount: studentToToggleActive.familyDiscount,
+              secondCourseDiscount: studentToToggleActive.secondCourseDiscount,
+              studentFamilyAtSchool:
+                studentToToggleActive.studentFamilyAtSchool,
+            }
+          );
+          if (fee.studentFamilyToUpdate) {
+            const studentValues = {
+              secondCourseDiscount: fee.secondCourseDiscount,
+              appliedPrice: fee.appliedPrice,
+              familyDiscount: fee.familyDiscount,
+              customDiscount: fee.customDiscount,
+              customDiscountValue: fee.customDiscountValue,
+              employeeDiscount: fee.employeeDiscount,
+              familyId: studentToToggleActive.id,
+              fullPrice: fee.fullPrice,
+            };
+            const allFamilyPrices = [
+              ...fee.studentFamilyToUpdate,
+              studentValues,
+            ];
+            const allFamilyIds = allFamilyPrices.map(
+              (family) => family.familyId
             );
-          }
 
-          // DELETE STUDENT FROM EXPERIMENTAL CLASSES
-          if (studentToDelete.experimentalCurriculumIds.length > 0) {
-            studentToDelete.experimentalCurriculumIds.map(
-              async (experimentalStudentCurriculum) => {
-                const editingExperimentalCurriculum =
-                  curriculumDatabaseData.find(
-                    (experimentalCurriculum) =>
-                      experimentalCurriculum.id ===
-                      experimentalStudentCurriculum.id
-                  );
-                if (editingExperimentalCurriculum) {
-                  const foundedStudentOnExperimentalCurriculum =
-                    editingExperimentalCurriculum.experimentalStudents.find(
-                      (student) => student.id === studentId
-                    );
-
-                  if (foundedStudentOnExperimentalCurriculum) {
-                    await updateDoc(
-                      doc(db, "curriculum", editingExperimentalCurriculum.id),
-                      {
-                        experimentalStudents: arrayRemove({
-                          date: foundedStudentOnExperimentalCurriculum.date,
-                          id: foundedStudentOnExperimentalCurriculum.id,
-                          indexDays:
-                            foundedStudentOnExperimentalCurriculum.indexDays,
-                          isExperimental:
-                            foundedStudentOnExperimentalCurriculum.isExperimental,
-                          price: foundedStudentOnExperimentalCurriculum.price,
-                        }),
-                      }
-                    );
-                  }
-                }
-              }
-            );
-          }
-
-          // DELETE STUDENT FROM CURRICULUM
-          if (studentToDelete.curriculumIds.length > 0) {
-            studentToDelete.curriculumIds.map(async (studentCurriculum) => {
-              const editingCurriculum = curriculumDatabaseData.find(
-                (curriculum) => curriculum.id === studentCurriculum.id
+            allFamilyPrices.map(async (family) => {
+              // if (family.familyId !== studentEditData.id) {
+              await secureSetDoc(
+                doc(db, "students", family.familyId),
+                {
+                  studentFamilyAtSchool: allFamilyIds.filter(
+                    (student) => student !== family.familyId
+                  ),
+                  fullPrice: family.fullPrice,
+                  appliedPrice: family.appliedPrice,
+                  familyDiscount: family.familyDiscount,
+                  customDiscount: family.customDiscount,
+                  employeeDiscount: family.employeeDiscount,
+                  customDiscountValue: family.customDiscountValue,
+                  secondCourseDiscount: family.secondCourseDiscount,
+                },
+                { merge: true }
               );
-              if (editingCurriculum) {
-                const foundedStudentOnCurriculum =
-                  editingCurriculum.students.find(
-                    (student) => student.id === studentId
-                  );
+              // }
+            });
+          }
+        }
 
-                if (foundedStudentOnCurriculum) {
-                  await updateDoc(doc(db, "curriculum", editingCurriculum.id), {
+        // DELETE STUDENT FROM CURRICULUM
+        if (studentToToggleActive.curriculums.length > 0) {
+          studentToToggleActive.curriculums.map(async (studentCurriculum) => {
+            const editingCurriculum = curriculumDatabaseData.find(
+              (curriculum) => curriculum.id === studentCurriculum.id
+            );
+            if (editingCurriculum) {
+              const foundedStudentOnCurriculum =
+                editingCurriculum.students.find(
+                  (student) => student.id === studentId
+                );
+
+              if (foundedStudentOnCurriculum) {
+                await secureUpdateDoc(
+                  doc(db, "curriculum", editingCurriculum.id),
+                  {
                     students: arrayRemove({
                       date: foundedStudentOnCurriculum.date,
                       id: foundedStudentOnCurriculum.id,
                       indexDays: foundedStudentOnCurriculum.indexDays,
                       isExperimental: foundedStudentOnCurriculum.isExperimental,
-                      price: foundedStudentOnCurriculum.price,
+                      isWaiting: foundedStudentOnCurriculum.isWaiting,
                     }),
-                  });
+                  }
+                );
+              }
+            }
+          });
+        }
+
+        closeModal && closeModal();
+        resetForm();
+        toast.success(
+          `Aluno ${isActive ? "desativado" : "ativado"} com sucesso! 👌`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        );
+        setIsSubmitting(false);
+      } else {
+        toast.error(
+          `Ocorreu um erro, aluno não encontrado no banco de dados... 🤯`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        );
+        setIsSubmitting(false);
+      }
+    } else {
+      setIsSubmitting(false);
+    }
+  }
+  // DELETE STUDENT FUNCTION
+  async function handleDeleteStudent(
+    studentId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) {
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Deletar Aluno",
+      text: "Tem certeza que deseja deletar este Aluno?",
+      icon: "warning",
+      confirmButtonText: "Sim, deletar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
+
+      const studentToDelete = studentsDatabaseData.find(
+        (student) => student.id === studentId
+      );
+      if (studentToDelete) {
+        // TEST FOR BROTHERS REGISTERED
+        if (studentToDelete.studentFamilyAtSchool.length > 0) {
+          // IF EXISTS, REMOVE THIS STUDENT FROM YOUR BROTHER'S REGISTRATION
+          studentToDelete.studentFamilyAtSchool.map(async (studentFamilyId) => {
+            const editingStudentFamily = studentsDatabaseData.find(
+              (student) => student.id === studentFamilyId
+            );
+            if (editingStudentFamily) {
+              const foundedStudentOnFamilyRecord =
+                editingStudentFamily.studentFamilyAtSchool.find(
+                  (studentToEditId) => studentToEditId === studentId
+                );
+              if (foundedStudentOnFamilyRecord) {
+                // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
+                if (
+                  editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+                  editingStudentFamily.studentFamilyAtSchool.length === 1 &&
+                  !editingStudentFamily.secondCourseDiscount
+                ) {
+                  await secureUpdateDoc(
+                    doc(db, "students", editingStudentFamily.id),
+                    {
+                      studentFamilyAtSchool: arrayRemove(studentId),
+                      familyDiscount: false,
+                      appliedPrice: editingStudentFamily.fullPrice,
+                    }
+                  );
+                  // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
+                } else if (
+                  editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+                  editingStudentFamily.studentFamilyAtSchool.length === 1
+                ) {
+                  await secureUpdateDoc(
+                    doc(db, "students", editingStudentFamily.id),
+                    {
+                      studentFamilyAtSchool: arrayRemove(studentId),
+                      familyDiscount: false,
+                    }
+                  );
+                  // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
+                } else if (
+                  editingStudentFamily.familyDiscount && // PREVENT A BUG THAT ACCEPTS ADD BROTHER TO STUDENT WHO ALREADY HAS A BROTHER
+                  editingStudentFamily.studentFamilyAtSchool.length > 1
+                ) {
+                  await secureUpdateDoc(
+                    doc(db, "students", editingStudentFamily.id),
+                    {
+                      studentFamilyAtSchool: arrayRemove(studentId),
+                    }
+                  );
+                  // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND DOESN'T HAVE A SECOND COURSE DISCOUNT (CHANGE TO FULL PRICE)
+                } else if (
+                  !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+                  editingStudentFamily.studentFamilyAtSchool.length === 1 &&
+                  !editingStudentFamily.secondCourseDiscount
+                ) {
+                  await secureUpdateDoc(
+                    doc(db, "students", editingStudentFamily.id),
+                    {
+                      studentFamilyAtSchool: arrayRemove(studentId),
+                      familyDiscount: false,
+                      appliedPrice: editingStudentFamily.fullPrice,
+                    }
+                  );
+                  // AFTER DELETE IF BROTHER IS LEFT WITHOUT ANY FAMILY AND HAVE A SECOND COURSE DISCOUNT (DON'T CHANGE PRICE)
+                } else if (
+                  !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+                  editingStudentFamily.studentFamilyAtSchool.length === 1
+                ) {
+                  await secureUpdateDoc(
+                    doc(db, "students", editingStudentFamily.id),
+                    {
+                      studentFamilyAtSchool: arrayRemove(studentId),
+                      familyDiscount: false,
+                    }
+                  );
+                  // AFTER DELETE IF BROTHER WILL HAVE ANOTHER FAMILY (DON'T CHANGE PRICE)
+                } else if (
+                  !editingStudentFamily.familyDiscount && // NORMAL SCENARIO, WHERE A BROTHER DON'T HAVE A FAMILY DISCOUNT, BECAUSE HAS RECEIVED A BROTHER THAT HAVE A DISCOUNT
+                  editingStudentFamily.studentFamilyAtSchool.length > 1
+                ) {
+                  await secureUpdateDoc(
+                    doc(db, "students", editingStudentFamily.id),
+                    {
+                      studentFamilyAtSchool: arrayRemove(studentId),
+                    }
+                  );
                 }
+              }
+            }
+          });
+        }
+
+        // DELETE STUDENT FROM CURRICULUM
+        if (studentToDelete.curriculums.length > 0) {
+          studentToDelete.curriculums.map(async (studentCurriculum) => {
+            const editingCurriculum = curriculumDatabaseData.find(
+              (curriculum) => curriculum.id === studentCurriculum.id
+            );
+            if (editingCurriculum) {
+              const foundedStudentOnCurriculum =
+                editingCurriculum.students.find(
+                  (student) => student.id === studentId
+                );
+
+              if (foundedStudentOnCurriculum) {
+                await secureUpdateDoc(
+                  doc(db, "curriculum", editingCurriculum.id),
+                  {
+                    students: arrayRemove({
+                      date: foundedStudentOnCurriculum.date,
+                      id: foundedStudentOnCurriculum.id,
+                      indexDays: foundedStudentOnCurriculum.indexDays,
+                      isExperimental: foundedStudentOnCurriculum.isExperimental,
+                      isWaiting: foundedStudentOnCurriculum.isWaiting,
+                    }),
+                  }
+                );
+              }
+            }
+          });
+        }
+
+        // DELETE STUDENT
+        const deleteStudent = async () => {
+          try {
+            await secureDeleteDoc(doc(db, "students", studentId));
+            // await logDelete(studentToDelete, "students", studentToDelete.id);
+            resetForm();
+            toast.success(`Aluno excluído com sucesso! 👌`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            setIsSubmitting(false);
+          } catch (error) {
+            console.log("ESSE É O ERROR", error);
+            toast.error(`Ocorreu um erro... 🤯`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            setIsSubmitting(false);
+          }
+        };
+        closeModal && closeModal();
+        deleteStudent();
+      } else {
+        toast.error(
+          `Ocorreu um erro, aluno não encontrado no banco de dados... 🤯`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        );
+        setIsSubmitting(false);
+      }
+    } else {
+      setIsSubmitting(false);
+    }
+  }
+
+  // DELETE CURRICULUM FUNCTION
+  async function handleDeleteCurriculum(
+    curriculumId: string,
+    resetForm: () => void,
+    closeModal?: () => void
+  ) {
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Deletar Turma",
+      text: "Tem certeza que deseja deletar esta Turma?",
+      icon: "warning",
+      confirmButtonText: "Sim, deletar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
+      const curriculumToDelete = curriculumDatabaseData.find(
+        (curriculum) => curriculum.id === curriculumId
+      );
+      if (curriculumToDelete) {
+        // CHECKING IF CURRICULUM CONTAINS STUDENTS
+        // STUDENTS IN THIS CURRICULUM ARRAY
+        const curriculumExistsOnStudent: StudentSearchProps[] = [];
+
+        // SEARCH STUDENTS WITH THIS SCHOOL AND PUTTING ON ARRAY
+        studentsDatabaseData.map((student) => {
+          if (student.curriculums) {
+            student.curriculums.map((studentCurriculum) => {
+              if (studentCurriculum.id === curriculumId) {
+                curriculumExistsOnStudent.push(student);
               }
             });
           }
+        });
 
-          // DELETE STUDENT
-          const deleteStudent = async () => {
+        // IF EXISTS, RETURN ERROR
+        if (curriculumExistsOnStudent.length !== 0) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Turma incluída em ${curriculumExistsOnStudent.length} ${
+                curriculumExistsOnStudent.length === 1
+                  ? "cadastro de aluno"
+                  : "cadastros de alunos"
+              }, exclua ou altere primeiramente ${
+                curriculumExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
+              } e depois exclua a turma... ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            )
+          );
+        } else {
+          const deleteCurriculum = async () => {
             try {
-              await deleteDoc(doc(db, "students", studentId));
+              await secureDeleteDoc(doc(db, "curriculum", curriculumId));
+              await secureDeleteDoc(
+                doc(db, "classDays", curriculumToDelete.classDayId)
+              );
+              // await logDelete(curriculumToDelete, "curriculum", curriculumId);
               resetForm();
-              toast.success(`Aluno excluído com sucesso! 👌`, {
+              toast.success(`Turma excluída com sucesso! 👌`, {
                 theme: "colored",
                 closeOnClick: true,
                 pauseOnHover: true,
@@ -1511,685 +1997,532 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
             }
           };
           closeModal && closeModal();
-          deleteStudent();
-        } else {
-          toast.error(
-            `Ocorreu um erro, aluno não encontrado no banco de dados... 🤯`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          );
-          setIsSubmitting(false);
+          // IF NO EXISTS, DELETE
+          deleteCurriculum();
         }
       } else {
-        setIsSubmitting(false);
-      }
-    });
-  }
-
-  // DELETE CURRICULUM FUNCTION
-  function handleDeleteCurriculum(
-    curriculumId: string,
-    resetForm: () => void,
-    closeModal?: () => void
-  ) {
-    ConfirmationAlert.fire({
-      title: "Você tem certeza?",
-      text: "Não será possível desfazer essa ação!",
-      icon: "warning",
-      showCancelButton: true,
-      cancelButtonColor: "#d33",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#2a5369",
-      confirmButtonText: "Sim, deletar!",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        const curriculumToDelete = curriculumDatabaseData.find(
-          (curriculum) => curriculum.id === curriculumId
-        );
-        if (curriculumToDelete) {
-          // CHECKING IF CURRICULUM CONTAINS STUDENTS
-          // STUDENTS IN THIS CURRICULUM ARRAY
-          const curriculumExistsOnStudent: StudentSearchProps[] = [];
-
-          // SEARCH STUDENTS WITH THIS SCHOOL AND PUTTING ON ARRAY
-          studentsDatabaseData.map((student) => {
-            if (student.curriculumIds) {
-              // ENROLLED STUDENTS
-              student.curriculumIds.map((studentCurriculum) => {
-                if (studentCurriculum.id === curriculumId) {
-                  curriculumExistsOnStudent.push(student);
-                }
-              });
-              // EXPERIMENTAL STUDENTS
-              student.experimentalCurriculumIds.map(
-                (studentExperimentalCurriculum) => {
-                  if (studentExperimentalCurriculum.id === curriculumId) {
-                    curriculumExistsOnStudent.push(student);
-                  }
-                }
-              );
-            }
-            curriculumDatabaseData.map((curriculum) => {
-              if (curriculum.id === curriculumId) {
-                curriculum.waitingList.map((waitingStudent) => {
-                  if (waitingStudent.id === student.id) {
-                    curriculumExistsOnStudent.push(student);
-                  }
-                });
-              }
-            });
-          });
-
-          // IF EXISTS, RETURN ERROR
-          if (curriculumExistsOnStudent.length !== 0) {
-            return (
-              setIsSubmitting(false),
-              toast.error(
-                `Turma incluída em ${curriculumExistsOnStudent.length} ${
-                  curriculumExistsOnStudent.length === 1
-                    ? "cadastro de aluno"
-                    : "cadastros de alunos"
-                }, exclua ou altere primeiramente ${
-                  curriculumExistsOnStudent.length === 1
-                    ? "o aluno"
-                    : "os alunos"
-                } e depois exclua a turma... ❕`,
-                {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                }
-              )
-            );
-          } else {
-            const deleteCurriculum = async () => {
-              try {
-                await deleteDoc(doc(db, "curriculum", curriculumId));
-                await deleteDoc(
-                  doc(db, "classDays", curriculumToDelete.classDayId)
-                );
-                resetForm();
-                toast.success(`Turma excluída com sucesso! 👌`, {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                });
-                setIsSubmitting(false);
-              } catch (error) {
-                console.log("ESSE É O ERROR", error);
-                toast.error(`Ocorreu um erro... 🤯`, {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                });
-                setIsSubmitting(false);
-              }
-            };
-            closeModal && closeModal();
-            // IF NO EXISTS, DELETE
-            deleteCurriculum();
+        toast.error(
+          `Ocorreu um erro, turma não encontrada no banco de dados... 🤯`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
           }
-        } else {
-          toast.error(
-            `Ocorreu um erro, turma não encontrada no banco de dados... 🤯`,
-            {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            }
-          );
-          setIsSubmitting(false);
-        }
-      } else {
+        );
         setIsSubmitting(false);
       }
-    });
+    } else {
+      setIsSubmitting(false);
+    }
   }
 
   // DELETE TEACHER FUNCTION
-  function handleDeleteTeacher(
+  async function handleDeleteTeacher(
     teacherId: string,
     resetForm: () => void,
     closeModal?: () => void
   ) {
-    ConfirmationAlert.fire({
-      title: "Você tem certeza?",
-      text: "Não será possível desfazer essa ação!",
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Deletar Professor",
+      text: "Tem certeza que deseja deletar este Professor?",
       icon: "warning",
-      showCancelButton: true,
-      cancelButtonColor: "#d33",
+      confirmButtonText: "Sim, deletar",
       cancelButtonText: "Cancelar",
-      confirmButtonColor: "#2a5369",
-      confirmButtonText: "Sim, deletar!",
-    }).then(async (result) => {
+      showCancelButton: true,
+    });
+    if (confirmation.isConfirmed) {
       setIsSubmitting(true);
-      if (result.isConfirmed) {
-        const teacherToDelete = teacherDatabaseData.find(
-          (teacher) => teacher.id === teacherId
-        );
-        if (teacherToDelete) {
-          const deleteTeacher = async () => {
-            try {
-              if (teacherToDelete.haveAccount) {
-                await deleteAppUser(teacherToDelete.id);
-                await deleteDoc(doc(db, "appUsers", teacherToDelete.id));
-              }
-              await deleteDoc(doc(db, "teachers", teacherToDelete.id));
-              resetForm();
-              toast.success(`Professor excluído com sucesso! 👌`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
+      const teachersDbTransformed: TeacherSearchProps[] = teachersDb
+        ? teachersDb.map((doc: DocumentData) => ({
+            ...(doc as TeacherSearchProps),
+          }))
+        : [];
+      const curriculumDbTransformed: CurriculumSearchProps[] = curriculumDb
+        ? curriculumDb.map((doc: DocumentData) => ({
+            ...(doc as CurriculumSearchProps),
+          }))
+        : [];
+      const teacherToDelete = teachersDbTransformed.find(
+        (teacher) => teacher.id === teacherId
+      );
+      if (teacherToDelete && userFullData) {
+        const deleteTeacher = async () => {
+          try {
+            if (teacherToDelete.haveAccount) {
+              await deleteAppUser({
+                teacherToDelete,
+                userFullDataId: userFullData.id,
               });
-            } catch (error) {
-              console.log("ESSE É O ERROR", error);
-              toast.error(`Ocorreu um erro... 🤯`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
-            } finally {
-              setIsSubmitting(false);
-              resetForm();
             }
-          };
-          // SEARCH CURRICULUM WITH THIS TEACHER
-          const teacherExistsOnCurriculum = curriculumDatabaseData.filter(
-            (curriculum) => curriculum.teacherId === teacherToDelete.id
-          );
-
-          // IF EXISTS, RETURN ERROR
-          if (teacherExistsOnCurriculum.length !== 0) {
-            return (
-              setIsSubmitting(false),
-              toast.error(
-                `Professor incluído em ${
-                  teacherExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-                }, exclua ou altere primeiramente ${
-                  teacherExistsOnCurriculum.length === 1
-                    ? "a Turma"
-                    : "as Turmas"
-                } e depois exclua o Professor ${teacherToDelete.name}... ❕`,
-                {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                }
-              )
-            );
-          } else {
-            closeModal && closeModal();
-            // IF NO EXISTS, DELETE
-            deleteTeacher();
-          }
-        } else {
-          toast.error(
-            `Ocorreu um erro, professor não encontrado no banco de dados... 🤯`,
-            {
+            await secureDeleteDoc(doc(db, "teachers", teacherToDelete.id));
+            // await logDelete(teacherToDelete, "teachers", teacherToDelete.id);
+            resetForm();
+            toast.success(`Professor excluído com sucesso! 👌`, {
               theme: "colored",
               closeOnClick: true,
               pauseOnHover: true,
               draggable: true,
               autoClose: 3000,
-            }
+            });
+          } catch (error) {
+            console.log("ESSE É O ERROR", error);
+            toast.error(`Ocorreu um erro... 🤯`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+          } finally {
+            setIsSubmitting(false);
+            resetForm();
+          }
+        };
+        // SEARCH CURRICULUM WITH THIS TEACHER
+        const teacherExistsOnCurriculum = curriculumDbTransformed.filter(
+          (curriculum) => curriculum.teacherId === teacherToDelete.id
+        );
+
+        // IF EXISTS, RETURN ERROR
+        if (teacherExistsOnCurriculum.length !== 0) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Professor incluído em ${teacherExistsOnCurriculum.length} ${
+                teacherExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+              }, exclua ou altere primeiramente ${
+                teacherExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
+              } e depois exclua o Professor ${teacherToDelete.name}... ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            )
           );
-          setIsSubmitting(false);
+        } else {
+          closeModal && closeModal();
+          // IF NO EXISTS, DELETE
+          deleteTeacher();
         }
       } else {
+        toast.error(
+          `Ocorreu um erro, professor não encontrado no banco de dados... 🤯`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        );
         setIsSubmitting(false);
       }
-    });
+    } else {
+      setIsSubmitting(false);
+    }
   }
 
   // DELETE SCHOOL FUNCTION
-  function handleDeleteSchool(
+  async function handleDeleteSchool(
     schoolId: string,
     resetForm: () => void,
     closeModal?: () => void
   ) {
-    ConfirmationAlert.fire({
-      title: "Você tem certeza?",
-      text: "Não será possível desfazer essa ação!",
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Deletar Escola",
+      text: "Tem certeza que deseja deletar esta Escola?",
       icon: "warning",
-      showCancelButton: true,
-      cancelButtonColor: "#d33",
+      confirmButtonText: "Sim, deletar",
       cancelButtonText: "Cancelar",
-      confirmButtonColor: "#2a5369",
-      confirmButtonText: "Sim, deletar!",
-    }).then(async (result) => {
+      showCancelButton: true,
+    });
+
+    if (confirmation.isConfirmed) {
       setIsSubmitting(true);
-      if (result.isConfirmed) {
-        const schoolToDelete = schoolDatabaseData.find(
-          (school) => school.id === schoolId
-        );
-        if (schoolToDelete) {
-          const deleteSchool = async () => {
-            try {
-              await deleteDoc(doc(db, "schools", schoolToDelete.id));
-              toast.success(`Colégio excluído com sucesso ! 👌`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
-            } catch (error) {
-              console.log("ESSE É O ERROR", error);
-              toast.error(`Ocorreu um erro... 🤯`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
-            } finally {
-              resetForm();
-              setIsSubmitting(false);
-            }
-          };
-
-          // CHECKING IF SCHOOL EXISTS ON SOME STUDENT, CLASS, SCHEDULE OR CURRICULUM ON DATABASE
-          // STUDENTS IN THIS SCHOOL ARRAY
-          const schoolExistsOnStudent: StudentSearchProps[] = [];
-
-          // SEARCH CURRICULUM WITH THIS SCHOOL
-          const schoolExistsOnCurriculum = curriculumDatabaseData.filter(
-            (curriculum) => curriculum.schoolId === schoolId
-          );
-
-          // SEARCH STUDENTS WITH THIS SCHOOL AND PUTTING ON ARRAY
-          studentsDatabaseData.map((student) => {
-            if (student.curriculumIds) {
-              // ENROLLED STUDENTS
-              student.curriculumIds.map((studentCurriculum) => {
-                const foundedSchoolStudentWithCurriculum =
-                  schoolExistsOnCurriculum.find(
-                    (schoolCurriculum) =>
-                      schoolCurriculum.id === studentCurriculum.id
-                  );
-                if (foundedSchoolStudentWithCurriculum) {
-                  schoolExistsOnStudent.push(student);
-                }
-              });
-              // EXPERIMENTAL STUDENTS
-              student.experimentalCurriculumIds.map(
-                (studentExperimentalCurriculum) => {
-                  const foundedSchoolStudentWithExperimentalCurriculum =
-                    schoolExistsOnCurriculum.find(
-                      (schoolCurriculum) =>
-                        schoolCurriculum.id === studentExperimentalCurriculum.id
-                    );
-                  if (foundedSchoolStudentWithExperimentalCurriculum) {
-                    schoolExistsOnStudent.push(student);
-                  }
-                }
-              );
-            }
-          });
-
-          // SEARCH SCHEDULE WITH THIS SCHOOL
-          const schoolExistsOnSchedule = scheduleDatabaseData.filter(
-            (schedule) => schedule.schoolId === schoolId
-          );
-
-          // IF EXISTS, RETURN ERROR
-          if (schoolExistsOnStudent.length !== 0) {
-            return (
-              setIsSubmitting(false),
-              toast.error(
-                `Colégio tem ${schoolExistsOnStudent.length} ${
-                  schoolExistsOnStudent.length === 1
-                    ? "aluno matriculado"
-                    : "alunos matriculados"
-                }, exclua ou altere primeiramente ${
-                  schoolExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
-                } e depois exclua o ${schoolToDelete.name}... ❕`,
-                {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                }
-              )
-            );
-          } else if (schoolExistsOnCurriculum.length !== 0) {
-            return (
-              setIsSubmitting(false),
-              toast.error(
-                `Colégio incluído em ${schoolExistsOnCurriculum.length} ${
-                  schoolExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-                }, exclua ou altere primeiramente ${
-                  schoolExistsOnCurriculum.length === 1
-                    ? "a Turma"
-                    : "as Turmas"
-                } e depois exclua o ${schoolToDelete.name}... ❕`,
-                {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                }
-              )
-            );
-          } else if (schoolExistsOnSchedule.length !== 0) {
-            return (
-              setIsSubmitting(false),
-              toast.error(
-                `Colégio incluído em ${schoolExistsOnSchedule.length} ${
-                  schoolExistsOnSchedule.length === 1 ? "Horário" : "Horários"
-                }, exclua ou altere primeiramente ${
-                  schoolExistsOnSchedule.length === 1
-                    ? "o Horário"
-                    : "os Horários"
-                } e depois exclua o ${schoolToDelete.name}... ❕`,
-                {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                }
-              )
-            );
-          } else {
-            closeModal && closeModal();
-            // IF NO EXISTS, DELETE
-            deleteSchool();
-          }
-        } else {
-          toast.error(
-            `Ocorreu um erro, escola não encontrada no banco de dados... 🤯`,
-            {
+      const schoolToDelete = schoolDatabaseData.find(
+        (school) => school.id === schoolId
+      );
+      if (schoolToDelete) {
+        const deleteSchool = async () => {
+          try {
+            await secureDeleteDoc(doc(db, "schools", schoolToDelete.id));
+            // await logDelete(schoolToDelete, "schools", schoolToDelete.id);
+            toast.success(`Colégio excluído com sucesso ! 👌`, {
               theme: "colored",
               closeOnClick: true,
               pauseOnHover: true,
               draggable: true,
               autoClose: 3000,
-            }
+            });
+          } catch (error) {
+            console.log("ESSE É O ERROR", error);
+            toast.error(`Ocorreu um erro... 🤯`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+          } finally {
+            resetForm();
+            setIsSubmitting(false);
+          }
+        };
+
+        // CHECKING IF SCHOOL EXISTS ON SOME STUDENT, CLASS, SCHEDULE OR CURRICULUM ON DATABASE
+        // STUDENTS IN THIS SCHOOL ARRAY
+        const schoolExistsOnStudent: StudentSearchProps[] = [];
+
+        // SEARCH CURRICULUM WITH THIS SCHOOL
+        const schoolExistsOnCurriculum = curriculumDatabaseData.filter(
+          (curriculum) => curriculum.schoolId === schoolId
+        );
+
+        // SEARCH STUDENTS WITH THIS SCHOOL AND PUTTING ON ARRAY
+        studentsDatabaseData.map((student) => {
+          if (student.curriculums) {
+            student.curriculums.map((studentCurriculum) => {
+              const foundedSchoolStudentWithCurriculum =
+                schoolExistsOnCurriculum.find(
+                  (schoolCurriculum) =>
+                    schoolCurriculum.id === studentCurriculum.id
+                );
+              if (foundedSchoolStudentWithCurriculum) {
+                schoolExistsOnStudent.push(student);
+              }
+            });
+          }
+        });
+
+        // SEARCH SCHEDULE WITH THIS SCHOOL
+        const schoolExistsOnSchedule = scheduleDatabaseData.filter(
+          (schedule) => schedule.schoolId === schoolId
+        );
+
+        // IF EXISTS, RETURN ERROR
+        if (schoolExistsOnStudent.length !== 0) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Colégio tem ${schoolExistsOnStudent.length} ${
+                schoolExistsOnStudent.length === 1
+                  ? "aluno matriculado"
+                  : "alunos matriculados"
+              }, exclua ou altere primeiramente ${
+                schoolExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
+              } e depois exclua o ${schoolToDelete.name}... ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            )
           );
-          setIsSubmitting(false);
+        } else if (schoolExistsOnCurriculum.length !== 0) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Colégio incluído em ${schoolExistsOnCurriculum.length} ${
+                schoolExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+              }, exclua ou altere primeiramente ${
+                schoolExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
+              } e depois exclua o ${schoolToDelete.name}... ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            )
+          );
+        } else if (schoolExistsOnSchedule.length !== 0) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Colégio incluído em ${schoolExistsOnSchedule.length} ${
+                schoolExistsOnSchedule.length === 1 ? "Horário" : "Horários"
+              }, exclua ou altere primeiramente ${
+                schoolExistsOnSchedule.length === 1
+                  ? "o Horário"
+                  : "os Horários"
+              } e depois exclua o ${schoolToDelete.name}... ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            )
+          );
+        } else {
+          closeModal && closeModal();
+          // IF NO EXISTS, DELETE
+          deleteSchool();
         }
       } else {
+        toast.error(
+          `Ocorreu um erro, escola não encontrada no banco de dados... 🤯`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        );
         setIsSubmitting(false);
       }
-    });
+    } else {
+      setIsSubmitting(false);
+    }
   }
 
   // DELETE COURSE FUNCTION
-  function handleDeleteCourse(
+  async function handleDeleteCourse(
     courseId: string,
     resetForm: () => void,
     closeModal?: () => void
   ) {
-    ConfirmationAlert.fire({
-      title: "Você tem certeza?",
-      text: "Não será possível desfazer essa ação!",
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Deletar Modalidade",
+      text: "Tem certeza que deseja deletar esta Modalidade?",
       icon: "warning",
-      showCancelButton: true,
-      cancelButtonColor: "#d33",
+      confirmButtonText: "Sim, deletar",
       cancelButtonText: "Cancelar",
-      confirmButtonColor: "#2a5369",
-      confirmButtonText: "Sim, deletar!",
-    }).then(async (result) => {
+      showCancelButton: true,
+    });
+
+    if (confirmation.isConfirmed) {
       setIsSubmitting(true);
-      if (result.isConfirmed) {
-        const courseToDelete = schoolCourseDatabaseData.find(
-          (course) => course.id === courseId
-        );
-        if (courseToDelete) {
-          // DELETE SCHOOL COURSE FUNCTION
-          const deleteSchoolCourse = async () => {
-            try {
-              await deleteDoc(doc(db, "schoolCourses", courseToDelete.id));
-              resetForm();
-              toast.success(`Modalidade excluída com sucesso! 👌`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
-              setIsSubmitting(false);
-            } catch (error) {
-              console.log("ESSE É O ERROR", error);
-              toast.error(`Ocorreu um erro... 🤯`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
-              setIsSubmitting(false);
-            }
-          };
-
-          // CHECKING IF SCHOOLCOURSE EXISTS ON SOME STUDENT OR CURRICULUM ON DATABASE
-          // STUDENTS IN THIS SCHOOLCOURSE ARRAY
-          const schoolCourseExistsOnStudent: StudentSearchProps[] = [];
-
-          // SEARCH CURRICULUM WITH THIS SCHOOLCOURSE
-          const schoolCourseExistsOnCurriculum = curriculumDatabaseData.filter(
-            (curriculum) => curriculum.schoolCourseId === courseToDelete.id
-          );
-
-          // SEARCH STUDENTS WITH THIS SCHOOLCOURSE AND PUTTING ON ARRAY
-          studentsDatabaseData.map((student) => {
-            if (student.curriculumIds) {
-              // ENROLLED STUDENTS
-              student.curriculumIds.map((studentCurriculum) => {
-                const foundedSchoolCourseStudentWithCurriculum =
-                  schoolCourseExistsOnCurriculum.find(
-                    (schoolCurriculum) =>
-                      schoolCurriculum.id === studentCurriculum.id
-                  );
-                if (foundedSchoolCourseStudentWithCurriculum) {
-                  schoolCourseExistsOnStudent.push(student);
-                }
-              });
-              // EXPERIMENTAL STUDENTS
-              student.experimentalCurriculumIds.map(
-                (studentExperimentalCurriculum) => {
-                  const foundedSchoolCourseStudentWithExperimentalCurriculum =
-                    schoolCourseExistsOnCurriculum.find(
-                      (schoolCurriculum) =>
-                        schoolCurriculum.id === studentExperimentalCurriculum.id
-                    );
-                  if (foundedSchoolCourseStudentWithExperimentalCurriculum) {
-                    schoolCourseExistsOnStudent.push(student);
-                  }
-                }
-              );
-            }
-          });
-
-          // IF EXISTS, RETURN ERROR
-          if (schoolCourseExistsOnStudent.length !== 0) {
-            return (
-              setIsSubmitting(false),
-              toast.error(
-                `Modalidade tem ${schoolCourseExistsOnStudent.length} ${
-                  schoolCourseExistsOnStudent.length === 1
-                    ? "aluno matriculado"
-                    : "alunos matriculados"
-                }, exclua ou altere primeiramente ${
-                  schoolCourseExistsOnStudent.length === 1
-                    ? "o aluno"
-                    : "os alunos"
-                } e depois exclua a modalidade ${courseToDelete.name}... ❕`,
-                {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                }
-              )
-            );
-          } else if (schoolCourseExistsOnCurriculum.length !== 0) {
-            return (
-              setIsSubmitting(false),
-              toast.error(
-                `Modalidade incluída em ${
-                  schoolCourseExistsOnCurriculum.length
-                } ${
-                  schoolCourseExistsOnCurriculum.length === 1
-                    ? "Turma"
-                    : "Turmas"
-                }, exclua ou altere primeiramente ${
-                  schoolCourseExistsOnCurriculum.length === 1
-                    ? "a Turma"
-                    : "as Turmas"
-                } e depois exclua a modalidade ${courseToDelete.name}... ❕`,
-                {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                }
-              )
-            );
-          } else {
-            closeModal && closeModal();
-            // IF NO EXISTS, DELETE
-            deleteSchoolCourse();
-          }
-        } else {
-          toast.error(
-            `Ocorreu um erro, modalidade não encontrada no banco de dados... 🤯`,
-            {
+      const courseToDelete = schoolCourseDatabaseData.find(
+        (course) => course.id === courseId
+      );
+      if (courseToDelete) {
+        // DELETE SCHOOL COURSE FUNCTION
+        const deleteSchoolCourse = async () => {
+          try {
+            await secureDeleteDoc(doc(db, "schoolCourses", courseToDelete.id));
+            // await logDelete(courseToDelete, "schoolCourses", courseToDelete.id);
+            resetForm();
+            toast.success(`Modalidade excluída com sucesso! 👌`, {
               theme: "colored",
               closeOnClick: true,
               pauseOnHover: true,
               draggable: true,
               autoClose: 3000,
-            }
+            });
+            setIsSubmitting(false);
+          } catch (error) {
+            console.log("ESSE É O ERROR", error);
+            toast.error(`Ocorreu um erro... 🤯`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            setIsSubmitting(false);
+          }
+        };
+
+        // CHECKING IF SCHOOLCOURSE EXISTS ON SOME STUDENT OR CURRICULUM ON DATABASE
+        // STUDENTS IN THIS SCHOOLCOURSE ARRAY
+        const schoolCourseExistsOnStudent: StudentSearchProps[] = [];
+
+        // SEARCH CURRICULUM WITH THIS SCHOOLCOURSE
+        const schoolCourseExistsOnCurriculum = curriculumDatabaseData.filter(
+          (curriculum) => curriculum.schoolCourseId === courseToDelete.id
+        );
+
+        // SEARCH STUDENTS WITH THIS SCHOOLCOURSE AND PUTTING ON ARRAY
+        studentsDatabaseData.map((student) => {
+          if (student.curriculums) {
+            student.curriculums.map((studentCurriculum) => {
+              const foundedSchoolCourseStudentWithCurriculum =
+                schoolCourseExistsOnCurriculum.find(
+                  (schoolCurriculum) =>
+                    schoolCurriculum.id === studentCurriculum.id
+                );
+              if (foundedSchoolCourseStudentWithCurriculum) {
+                schoolCourseExistsOnStudent.push(student);
+              }
+            });
+          }
+        });
+
+        // IF EXISTS, RETURN ERROR
+        if (schoolCourseExistsOnStudent.length !== 0) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Modalidade tem ${schoolCourseExistsOnStudent.length} ${
+                schoolCourseExistsOnStudent.length === 1
+                  ? "aluno matriculado"
+                  : "alunos matriculados"
+              }, exclua ou altere primeiramente ${
+                schoolCourseExistsOnStudent.length === 1
+                  ? "o aluno"
+                  : "os alunos"
+              } e depois exclua a modalidade ${courseToDelete.name}... ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            )
           );
-          setIsSubmitting(false);
+        } else if (schoolCourseExistsOnCurriculum.length !== 0) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Modalidade incluída em ${
+                schoolCourseExistsOnCurriculum.length
+              } ${
+                schoolCourseExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+              }, exclua ou altere primeiramente ${
+                schoolCourseExistsOnCurriculum.length === 1
+                  ? "a Turma"
+                  : "as Turmas"
+              } e depois exclua a modalidade ${courseToDelete.name}... ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            )
+          );
+        } else {
+          closeModal && closeModal();
+          // IF NO EXISTS, DELETE
+          deleteSchoolCourse();
         }
       } else {
+        toast.error(
+          `Ocorreu um erro, modalidade não encontrada no banco de dados... 🤯`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        );
         setIsSubmitting(false);
       }
-    });
+    } else {
+      setIsSubmitting(false);
+    }
   }
+
   // DELETE SCHEDULE FUNCTION
-  function handleDeleteSchedule(
+  async function handleDeleteSchedule(
     scheduleId: string,
     resetForm: () => void,
     closeModal?: () => void
   ) {
-    ConfirmationAlert.fire({
-      title: "Você tem certeza?",
-      text: "Não será possível desfazer essa ação!",
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Deletar Horário",
+      text: "Tem certeza que deseja deletar este Horário?",
       icon: "warning",
-      showCancelButton: true,
-      cancelButtonColor: "#d33",
+      confirmButtonText: "Sim, deletar",
       cancelButtonText: "Cancelar",
-      confirmButtonColor: "#2a5369",
-      confirmButtonText: "Sim, deletar!",
-    }).then(async (result) => {
+      showCancelButton: true,
+    });
+
+    if (confirmation.isConfirmed) {
       setIsSubmitting(true);
-      if (result.isConfirmed) {
-        const scheduleToDelete = scheduleDatabaseData.find(
-          (schedule) => schedule.id === scheduleId
-        );
-        if (scheduleToDelete) {
-          // DELETE SCHEDULE FUNCTION
-          const deleteSchedule = async () => {
-            try {
-              await deleteDoc(doc(db, "schedules", scheduleToDelete.id));
-              resetForm();
-              toast.success(`Horário excluído com sucesso! 👌`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
-              setIsSubmitting(false);
-            } catch (error) {
-              console.log("ESSE É O ERROR", error);
-              toast.error(`Ocorreu um erro... 🤯`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
-              setIsSubmitting(false);
-            }
-          };
-
-          // CHECKING IF SCHEDULE EXISTS ON DATABASE
-          // SEARCH CURRICULUM WITH THIS SCHEDULE
-          const scheduleExistsOnCurriculum = curriculumDatabaseData.filter(
-            (curriculum) => curriculum.scheduleId === scheduleToDelete.id
-          );
-
-          // IF EXISTS, RETURN ERROR
-          if (scheduleExistsOnCurriculum.length !== 0) {
-            return (
-              setIsSubmitting(false),
-              toast.error(
-                `Horário incluído em ${scheduleExistsOnCurriculum.length} ${
-                  scheduleExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-                }, exclua ou altere primeiramente ${
-                  scheduleExistsOnCurriculum.length === 1
-                    ? "a Turma"
-                    : "as Turmas"
-                } e depois exclua o ${scheduleToDelete.name}... ❕`,
-                {
-                  theme: "colored",
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  autoClose: 3000,
-                }
-              )
-            );
-          } else {
-            closeModal && closeModal();
-            // IF NO EXISTS, DELETE
-            deleteSchedule();
-          }
-        } else {
-          toast.error(
-            `Ocorreu um erro, modalidade não encontrada no banco de dados... 🤯`,
-            {
+      const scheduleToDelete = scheduleDatabaseData.find(
+        (schedule) => schedule.id === scheduleId
+      );
+      if (scheduleToDelete) {
+        // DELETE SCHEDULE FUNCTION
+        const deleteSchedule = async () => {
+          try {
+            await secureDeleteDoc(doc(db, "schedules", scheduleToDelete.id));
+            // await logDelete(scheduleToDelete, "schedules", scheduleToDelete.id);
+            resetForm();
+            toast.success(`Horário excluído com sucesso! 👌`, {
               theme: "colored",
               closeOnClick: true,
               pauseOnHover: true,
               draggable: true,
               autoClose: 3000,
-            }
+            });
+            setIsSubmitting(false);
+          } catch (error) {
+            console.log("ESSE É O ERROR", error);
+            toast.error(`Ocorreu um erro... 🤯`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            setIsSubmitting(false);
+          }
+        };
+
+        // CHECKING IF SCHEDULE EXISTS ON DATABASE
+        // SEARCH CURRICULUM WITH THIS SCHEDULE
+        const scheduleExistsOnCurriculum = curriculumDatabaseData.filter(
+          (curriculum) => curriculum.scheduleId === scheduleToDelete.id
+        );
+
+        // IF EXISTS, RETURN ERROR
+        if (scheduleExistsOnCurriculum.length !== 0) {
+          return (
+            setIsSubmitting(false),
+            toast.error(
+              `Horário incluído em ${scheduleExistsOnCurriculum.length} ${
+                scheduleExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+              }, exclua ou altere primeiramente ${
+                scheduleExistsOnCurriculum.length === 1
+                  ? "a Turma"
+                  : "as Turmas"
+              } e depois exclua o ${scheduleToDelete.name}... ❕`,
+              {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              }
+            )
           );
-          setIsSubmitting(false);
+        } else {
+          closeModal && closeModal();
+          // IF NO EXISTS, DELETE
+          deleteSchedule();
         }
       } else {
+        toast.error(
+          `Ocorreu um erro, modalidade não encontrada no banco de dados... 🤯`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        );
         setIsSubmitting(false);
       }
-    });
+    } else {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -2250,8 +2583,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         user,
         userFullData,
         userLoading,
-        calcStudentPrice,
-        calcStudentPrice2,
+        // calcStudentPrice,
+        // calcStudentPrice2,
         formatCurriculumName,
         handleAllCurriculumDetails,
         handleCurriculumDetailsWithSchoolCourse,
@@ -2270,6 +2603,16 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         setLogin,
         setPage,
         setTheme,
+        calculateStudentMonthlyFee,
+        updateStudentFeeData,
+        calculateEnrollmentFee,
+        calculatePlacesAvailable,
+        handleConfirmationToSubmit,
+        getExperimentalCurriculums,
+        getRegularCurriculums,
+        getWaitingCurriculums,
+        toggleActiveStudent,
+        // logDelete,
       }}
     >
       {children}

@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import TimePicker from "react-multi-date-picker/plugins/time_picker";
-import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getFirestore, serverTimestamp } from "firebase/firestore";
 
 import { createScheduleValidationSchema } from "../../@types/zodValidation";
 import {
@@ -15,20 +15,25 @@ import {
   SchoolSearchProps,
 } from "../../@types";
 import { app } from "../../db/Firebase";
-import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertSchedule() {
   // GET GLOBAL DATA
-  const { schoolDatabaseData, scheduleDatabaseData, page, userFullData } =
-    useContext(GlobalDataContext) as GlobalDataContextType;
+  const {
+    schoolsDb,
+    scheduleDatabaseData,
+    page,
+    userFullData,
+    handleConfirmationToSubmit,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // SCHEDULE DATA
   const [scheduleData, setScheduleData] =
@@ -40,7 +45,7 @@ export function InsertSchedule() {
       classEnd: "",
       exit: "",
       schoolId: "",
-      confirmInsert: false,
+      // confirmInsert: false,
     });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
@@ -56,11 +61,14 @@ export function InsertSchedule() {
 
   // SET SCHOOL SELECTED STATE WHEN SELECT SCHOOL
   useEffect(() => {
-    if (schoolData.schoolId !== "") {
-      setScheduleData({ ...scheduleData, confirmInsert: false });
-      setSchoolSelectedData(
-        schoolDatabaseData.find(({ id }) => id === schoolData.schoolId)
-      );
+    if (schoolData.schoolId !== "" && schoolsDb) {
+      const data = schoolsDb.find(
+        ({ id }) => id === schoolData.schoolId
+      ) as SchoolSearchProps;
+
+      if (data) {
+        setSchoolSelectedData(data);
+      }
     } else {
       setSchoolSelectedData(undefined);
     }
@@ -97,7 +105,6 @@ export function InsertSchedule() {
       classEnd: "",
       exit: "",
       schoolId: "",
-      confirmInsert: false,
     },
   });
 
@@ -111,8 +118,8 @@ export function InsertSchedule() {
       classEnd: "",
       exit: "",
       schoolId: "",
-      confirmInsert: false,
     });
+    setSchoolData({ schoolId: "", schoolName: "" });
     reset();
   };
 
@@ -125,7 +132,6 @@ export function InsertSchedule() {
     setValue("classEnd", scheduleData.classEnd);
     setValue("exit", scheduleData.exit);
     setValue("schoolId", scheduleData.schoolId);
-    setValue("confirmInsert", scheduleData.confirmInsert);
   }, [scheduleData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -137,7 +143,6 @@ export function InsertSchedule() {
       errors.classStart,
       errors.classEnd,
       errors.exit,
-      errors.confirmInsert,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -154,86 +159,85 @@ export function InsertSchedule() {
   const handleAddSchedule: SubmitHandler<
     CreateScheduleValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Adicionar Horário",
+      text: "Tem certeza que deseja adicionar este Horário?",
+      icon: "question",
+      confirmButtonText: "Sim, adicionar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
 
-    // ADD SCHEDULE FUNCTION
-    const addSchedule = async () => {
-      try {
-        const commonId = uuidv4();
-        await setDoc(doc(db, "schedules", commonId), {
-          id: commonId,
-          name: data.name,
-          transitionStart: data.transitionStart,
-          transitionEnd: data.transitionEnd,
-          classStart: data.classStart,
-          classEnd: data.classEnd,
-          exit: data.exit,
-          schoolId: data.schoolId,
-          timestamp: serverTimestamp(),
-        });
-        resetForm();
-        toast.success(
-          `Horário ${data.name} criado com sucesso em ${schoolData.schoolName}! 👌`,
-          {
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
+
+      // ADD SCHEDULE FUNCTION
+      const addSchedule = async () => {
+        try {
+          const commonId = uuidv4();
+          await secureSetDoc(doc(db, "schedules", commonId), {
+            id: commonId,
+            name: data.name,
+            transitionStart: data.transitionStart,
+            transitionEnd: data.transitionEnd,
+            classStart: data.classStart,
+            classEnd: data.classEnd,
+            exit: data.exit,
+            schoolId: data.schoolId,
+            timestamp: serverTimestamp(),
+          });
+          resetForm();
+          toast.success(
+            `Horário ${data.name} criado com sucesso em ${schoolData.schoolName}! 👌`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
             autoClose: 3000,
-          }
-        );
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
-
-    // CHECK INSERT CONFIRMATION
-    if (!data.confirmInsert) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar o Horário ${data.name}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
+          });
+          setIsSubmitting(false);
         }
-      );
-    }
+      };
 
-    // CHECKING IF SCHEDULE EXISTS ON DATABASE
-    const scheduleExists = scheduleDatabaseData.find(
-      (schedule) =>
-        schedule.name === `${data.name}` && data.schoolId === schedule.schoolId
-    );
-
-    if (scheduleExists) {
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `Horário ${data.name} já existe no nosso banco de dados... ❕`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
+      // CHECKING IF SCHEDULE EXISTS ON DATABASE
+      const scheduleExists = scheduleDatabaseData.find(
+        (schedule) =>
+          schedule.name === `${data.name}` &&
+          data.schoolId === schedule.schoolId
       );
+
+      if (scheduleExists) {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Horário ${data.name} já existe no nosso banco de dados... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      } else {
+        // IF NOT EXISTS, CREATE
+        addSchedule();
+      }
     } else {
-      // IF NOT EXISTS, CREATE
-      addSchedule();
+      setIsSubmitting(false);
     }
   };
 
@@ -274,21 +278,25 @@ export function InsertSchedule() {
           </label>
           <select
             id="schoolSelect"
-            defaultValue={" -- select an option -- "}
-            className={
-              errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-            }
-            name="schoolSelect"
-            onChange={(e) => {
+            value={schoolData.schoolId || ""}
+            onChange={(e) =>
               setSchoolData({
                 ...schoolData,
                 schoolId: e.target.value,
-              });
-            }}
+              })
+            }
+            disabled={!schoolsDb || schoolsDb.length === 0}
+            className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           >
-            <SelectOptions returnId dataType="schools" />
+            <option value="" disabled>
+              Selecione a escola
+            </option>
+            {schoolsDb &&
+              schoolsDb.map((school) => (
+                <option key={school.id} value={school.id}>
+                  {school.name}
+                </option>
+              ))}
           </select>
         </div>
 
@@ -316,15 +324,15 @@ export function InsertSchedule() {
             }
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={scheduleData.name}
             onChange={(e) => {
               setScheduleData({
                 ...scheduleData,
                 name: e.target.value,
-                confirmInsert: false,
+                // confirmInsert: false,
               });
             }}
           />
@@ -357,7 +365,7 @@ export function InsertSchedule() {
                 setScheduleData({
                   ...scheduleData,
                   transitionStart: e!.toString(),
-                  confirmInsert: false,
+                  // confirmInsert: false,
                 })
               }
             />
@@ -391,7 +399,7 @@ export function InsertSchedule() {
                 setScheduleData({
                   ...scheduleData,
                   transitionEnd: e!.toString(),
-                  confirmInsert: false,
+                  // confirmInsert: false,
                 })
               }
             />
@@ -425,7 +433,7 @@ export function InsertSchedule() {
                 setScheduleData({
                   ...scheduleData,
                   classStart: e!.toString(),
-                  confirmInsert: false,
+                  // confirmInsert: false,
                 })
               }
             />
@@ -459,7 +467,7 @@ export function InsertSchedule() {
                 setScheduleData({
                   ...scheduleData,
                   classEnd: e!.toString(),
-                  confirmInsert: false,
+                  // confirmInsert: false,
                 })
               }
             />
@@ -493,7 +501,7 @@ export function InsertSchedule() {
                 setScheduleData({
                   ...scheduleData,
                   exit: e!.toString(),
-                  confirmInsert: false,
+                  // confirmInsert: false,
                 })
               }
             />
@@ -501,7 +509,7 @@ export function InsertSchedule() {
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
+        {/* <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
             name="confirmInsert"
@@ -519,7 +527,7 @@ export function InsertSchedule() {
               ? `Confirmar criação do horário ${scheduleData.name} no ${schoolData.schoolName}`
               : `Confirmar criação`}
           </label>
-        </div>
+        </div> */}
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4">

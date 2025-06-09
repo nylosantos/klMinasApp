@@ -1,11 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import {
-  arrayRemove,
-  arrayUnion,
-  doc,
-  getFirestore,
-  updateDoc,
-} from "firebase/firestore";
+import { doc, DocumentData, getFirestore } from "firebase/firestore";
 import { EditDashboardCourseButton } from "../layoutComponents/EditDashboardCourseButton";
 import { app } from "../../db/Firebase";
 import {
@@ -24,6 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { editSchoolCourseValidationSchema } from "../../@types/zodValidation";
 import { toast } from "react-toastify";
 import { NumericFormat } from "react-number-format";
+import { secureSetDoc, secureUpdateDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -38,6 +33,7 @@ interface EditCourseFormProps {
   setIsSubmitting: (isSubmitting: boolean) => void;
   setIsEdit: (isEdit: boolean) => void;
   handleDeleteCourse?: () => void;
+  onCloseLogModal?: (schoolCourseId: string) => void; // Função para fechar o modal
 }
 
 export default function EditCourseForm({
@@ -50,13 +46,15 @@ export default function EditCourseForm({
   setIsSubmitting,
   setIsEdit,
   handleDeleteCourse,
+  onCloseLogModal,
 }: EditCourseFormProps) {
   // GET GLOBAL DATA
   const {
-    calcStudentPrice,
-    curriculumDatabaseData,
-    schoolCourseDatabaseData,
-    studentsDatabaseData,
+    curriculumDb,
+    schoolCoursesDb,
+    studentsDb,
+    handleConfirmationToSubmit,
+    calculateStudentMonthlyFee,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // SCHOOL COURSE EDIT DATA
@@ -78,12 +76,6 @@ export default function EditCourseForm({
         priceBundle: schoolCourseSelectedData.priceBundle,
         bundleDays: schoolCourseSelectedData.bundleDays,
       });
-      //   setSchoolCourseData({
-      //     ...schoolCourseData,
-      //     priceUnit: schoolCourseSelectedData.priceUnit,
-      //     priceBundle: schoolCourseSelectedData.priceBundle,
-      //     bundleDays: schoolCourseSelectedData.bundleDays,
-      //   });
     }
   }, [schoolCourseSelectedData]);
 
@@ -157,7 +149,12 @@ export default function EditCourseForm({
   async function updatePriceOnStudentsData() {
     // SEARCH SCHOOL COURSE ON CURRICULUMS
     const foundedCurriculums: CurriculumSearchProps[] = [];
-    curriculumDatabaseData.map((curriculum) => {
+    const curriculumsDbTransformed: CurriculumSearchProps[] = curriculumDb
+      ? curriculumDb.map((doc: DocumentData) => ({
+          ...(doc as CurriculumSearchProps),
+        }))
+      : [];
+    curriculumsDbTransformed.map((curriculum) => {
       if (curriculum.schoolCourseId === schoolCourseSelectedData.id) {
         foundedCurriculums.push(curriculum);
       }
@@ -166,8 +163,9 @@ export default function EditCourseForm({
     if (foundedCurriculums.length > 0) {
       const foundedStudentsToEdit: StudentSearchProps[] = [];
       foundedCurriculums.map((foundedCurriculum) => {
-        studentsDatabaseData.map((student) => {
-          student.curriculumIds.map((curriculum) => {
+        const students = studentsDb as StudentSearchProps[];
+        students.map((student) => {
+          student.curriculums.map((curriculum) => {
             if (curriculum.id === foundedCurriculum.id) {
               foundedStudentsToEdit.push(student);
             }
@@ -177,108 +175,65 @@ export default function EditCourseForm({
       // MAKING CHANGINGS ON ALL STUDENT
       if (foundedStudentsToEdit.length > 0) {
         foundedStudentsToEdit.map(async (student) => {
-          if (student.curriculumIds.length <= 1) {
-            // IF STUDENT HAS ONLY ONE CURRICULUM
-            // CHANGING CURRICULUM STUDENT PRICES
-            // REMOVING PREVIOUS DATA
-            await updateDoc(doc(db, "students", student.id), {
-              curriculumIds: arrayRemove({
-                date: student.curriculumIds[0].date,
-                id: student.curriculumIds[0].id,
-                isExperimental: student.curriculumIds[0].isExperimental,
-                indexDays: student.curriculumIds[0].indexDays,
-                price: student.curriculumIds[0].price,
-              }),
-            });
+          const curriculums = student.curriculums.map((curriculum) => ({
+            date: curriculum.date,
+            id: curriculum.id,
+            indexDays: curriculum.indexDays,
+            isExperimental: curriculum.isExperimental,
+            isWaiting: curriculum.isWaiting,
+            price: 0,
+          }));
 
-            // WRITING UPDATED DATA
-            if (student.curriculumIds[0].indexDays.length === 1) {
-              await updateDoc(doc(db, "students", student.id), {
-                curriculumIds: arrayUnion({
-                  date: student.curriculumIds[0].date,
-                  id: student.curriculumIds[0].id,
-                  isExperimental: student.curriculumIds[0].isExperimental,
-                  indexDays: student.curriculumIds[0].indexDays,
-                  price: schoolCourseEditData.priceUnit,
-                }),
-              });
-            }
+          const fee = await calculateStudentMonthlyFee(student.id, {
+            curriculums,
+            customDiscount: student.customDiscount,
+            customDiscountValue: student.customDiscountValue,
+            employeeDiscount: student.employeeDiscount,
+            familyDiscount: student.familyDiscount,
+            secondCourseDiscount: student.secondCourseDiscount,
+            studentFamilyAtSchool: student.studentFamilyAtSchool,
+          });
+          if (fee.studentFamilyToUpdate) {
+            const studentValues = {
+              secondCourseDiscount: fee.secondCourseDiscount,
+              appliedPrice: fee.appliedPrice,
+              familyDiscount: fee.familyDiscount,
+              customDiscount: fee.customDiscount,
+              customDiscountValue: fee.customDiscountValue,
+              employeeDiscount: fee.employeeDiscount,
+              familyId: student.id,
+              fullPrice: fee.fullPrice,
+            };
+            const allFamilyPrices = [
+              ...fee.studentFamilyToUpdate,
+              studentValues,
+            ];
 
-            if (student.curriculumIds[0].indexDays.length > 1) {
-              const result = Math.floor(
-                student.curriculumIds[0].indexDays.length /
-                  schoolCourseEditData.bundleDays
-              );
-              const rest =
-                student.curriculumIds[0].indexDays.length %
-                schoolCourseEditData.bundleDays;
-              await updateDoc(doc(db, "students", student.id), {
-                curriculumIds: arrayUnion({
-                  date: student.curriculumIds[0].date,
-                  id: student.curriculumIds[0].id,
-                  isExperimental: student.curriculumIds[0].isExperimental,
-                  indexDays: student.curriculumIds[0].indexDays,
-                  price:
-                    result * schoolCourseEditData.priceBundle +
-                    rest * schoolCourseEditData.priceUnit,
-                }),
-              });
-            }
-          } else {
-            // IF STUDENT HAS MORE THAN ONE CURRICULUM
-            // CHANGING CURRICULUM PRICE ON STUDENT.CURRICULUMIDS
-            student.curriculumIds.map((studentCurriculum) => {
-              foundedCurriculums.map(async (foundedCurriculum) => {
-                if (foundedCurriculum.id === studentCurriculum.id) {
-                  // CHANGING CURRICULUM STUDENT PRICES
-                  // REMOVING PREVIOUS DATA
-                  await updateDoc(doc(db, "students", student.id), {
-                    curriculumIds: arrayRemove({
-                      date: studentCurriculum.date,
-                      id: studentCurriculum.id,
-                      isExperimental: studentCurriculum.isExperimental,
-                      indexDays: studentCurriculum.indexDays,
-                      price: studentCurriculum.price,
-                    }),
-                  });
-                  // WRITING UPDATED DATA
-                  if (studentCurriculum.indexDays.length === 1) {
-                    await updateDoc(doc(db, "students", student.id), {
-                      curriculumIds: arrayUnion({
-                        date: studentCurriculum.date,
-                        id: studentCurriculum.id,
-                        isExperimental: studentCurriculum.isExperimental,
-                        indexDays: studentCurriculum.indexDays,
-                        price: schoolCourseEditData.priceUnit,
-                      }),
-                    });
-                  }
+            const allFamilyIds = allFamilyPrices.map(
+              (family) => family.familyId
+            );
 
-                  if (studentCurriculum.indexDays.length > 1) {
-                    const result = Math.floor(
-                      studentCurriculum.indexDays.length /
-                        schoolCourseEditData.bundleDays
-                    );
-                    const rest =
-                      studentCurriculum.indexDays.length %
-                      schoolCourseEditData.bundleDays;
-                    await updateDoc(doc(db, "students", student.id), {
-                      curriculumIds: arrayUnion({
-                        date: studentCurriculum.date,
-                        id: studentCurriculum.id,
-                        isExperimental: studentCurriculum.isExperimental,
-                        indexDays: studentCurriculum.indexDays,
-                        price:
-                          result * schoolCourseEditData.priceBundle +
-                          rest * schoolCourseEditData.priceUnit,
-                      }),
-                    });
-                  }
-                }
-              });
+            allFamilyPrices.map(async (family) => {
+              if (family.familyId !== student.id) {
+                await secureSetDoc(
+                  doc(db, "students", family.familyId),
+                  {
+                    studentFamilyAtSchool: allFamilyIds.filter(
+                      (student) => student !== family.familyId
+                    ),
+                    fullPrice: family.fullPrice,
+                    appliedPrice: family.appliedPrice,
+                    familyDiscount: family.familyDiscount,
+                    customDiscount: family.customDiscount,
+                    employeeDiscount: family.employeeDiscount,
+                    customDiscountValue: family.customDiscountValue,
+                    secondCourseDiscount: family.secondCourseDiscount,
+                  },
+                  { merge: true }
+                );
+              }
             });
           }
-          await calcStudentPrice(student.id);
         });
       }
     }
@@ -288,66 +243,90 @@ export default function EditCourseForm({
   const handleEditSchool: SubmitHandler<
     EditSchoolCourseValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Editar Modalidade",
+      text: "Tem certeza que deseja confirmar as mudanças?",
+      icon: "question",
+      confirmButtonText: "Sim, confirmar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
 
-    // EDIT SCHOOL COURSE FUNCTION
-    const editSchoolCourse = async () => {
-      try {
-        await updateDoc(doc(db, "schoolCourses", schoolCourseSelectedData.id), {
-          name: data.name,
-          priceUnit: data.priceUnit,
-          priceBundle: data.priceBundle,
-          bundleDays: data.bundleDays,
-        });
-        // CHANGE PRICE ON STUDENTS REGISTERS
-        if (
-          schoolCourseSelectedData.priceUnit !== data.priceUnit ||
-          schoolCourseSelectedData.priceBundle !== data.priceBundle ||
-          schoolCourseSelectedData.bundleDays !== data.bundleDays
-        ) {
-          await updatePriceOnStudentsData();
+      // EDIT SCHOOL COURSE FUNCTION
+      const editSchoolCourse = async () => {
+        try {
+          await secureUpdateDoc(
+            doc(db, "schoolCourses", schoolCourseSelectedData.id),
+            {
+              name: data.name,
+              priceUnit: data.priceUnit,
+              priceBundle: data.priceBundle,
+              bundleDays: data.bundleDays,
+            }
+          );
+          // CHANGE PRICE ON STUDENTS REGISTERS
+          if (
+            schoolCourseSelectedData.priceUnit !== data.priceUnit ||
+            schoolCourseSelectedData.priceBundle !== data.priceBundle ||
+            schoolCourseSelectedData.bundleDays !== data.bundleDays
+          ) {
+            await updatePriceOnStudentsData();
+          }
+          resetForm();
+          toast.success(
+            `${schoolCourseEditData.name} alterado com sucesso! 👌`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          );
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
         }
-        resetForm();
-        toast.success(`${schoolCourseEditData.name} alterado com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
+      };
 
-    // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
-    const schoolCourse = schoolCourseDatabaseData.find(
-      (schoolCourse) => schoolCourse.id === schoolCourseSelectedData.id
-    );
-    if (!schoolCourse) {
-      // IF NOT EXISTS, RETURN ERROR
-      return (
-        setIsSubmitting(false),
-        toast.error(`Modalidade não existe no banco de dados... ❕`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        })
+      // CHECKING IF SCHOOL COURSE EXISTS ON DATABASE
+      const schoolCoursesDbTransformed: SchoolCourseSearchProps[] =
+        schoolCoursesDb
+          ? schoolCoursesDb.map((doc: DocumentData) => ({
+              ...(doc as SchoolCourseSearchProps),
+            }))
+          : [];
+      const schoolCourse = schoolCoursesDbTransformed.find(
+        (schoolCourse) => schoolCourse.id === schoolCourseSelectedData.id
       );
+      if (!schoolCourse) {
+        // IF NOT EXISTS, RETURN ERROR
+        return (
+          setIsSubmitting(false),
+          toast.error(`Modalidade não existe no banco de dados... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
+        );
+      } else {
+        // IF EXISTS, EDIT
+        editSchoolCourse();
+      }
     } else {
-      // IF EXISTS, EDIT
-      editSchoolCourse();
+      setIsSubmitting(false);
     }
   };
 
@@ -370,6 +349,8 @@ export default function EditCourseForm({
               resetCourseData={resetCourseDataFunction}
               setIsEdit={setIsEdit}
               setModal={setModal && setModal}
+              id={schoolCourseSelectedData.id}
+              onCloseLogModal={onCloseLogModal}
             />
           </div>
         </div>
@@ -406,8 +387,8 @@ export default function EditCourseForm({
             }
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={schoolCourseEditData.name}
             onChange={(e) => {
@@ -448,8 +429,8 @@ export default function EditCourseForm({
             }}
             className={
               errors.priceUnit
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
             }
           />
         </div>
@@ -483,8 +464,8 @@ export default function EditCourseForm({
             }}
             className={
               errors.priceBundle
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
             }
           />
         </div>
@@ -517,8 +498,8 @@ export default function EditCourseForm({
             }}
             className={
               errors.bundleDays
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
             }
           />
         </div>

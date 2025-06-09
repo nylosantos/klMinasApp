@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getFirestore, serverTimestamp } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { CreateSchoolValidationZProps } from "../../@types";
@@ -15,20 +15,20 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
 export function InsertSchool() {
   // GET GLOBAL DATA
-  const { schoolDatabaseData, page, userFullData } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const { schoolDatabaseData, page, userFullData, handleConfirmationToSubmit } =
+    useContext(GlobalDataContext) as GlobalDataContextType;
 
   // SCHOOL DATA
   const [schoolData, setSchoolData] = useState<CreateSchoolValidationZProps>({
     name: "",
-    confirmInsert: false,
+    // confirmInsert: false,
   });
 
   // SUBMITTING STATE
@@ -44,7 +44,7 @@ export function InsertSchool() {
     resolver: zodResolver(createSchoolValidationSchema),
     defaultValues: {
       name: "",
-      confirmInsert: false,
+      // confirmInsert: false,
     },
   });
 
@@ -52,7 +52,7 @@ export function InsertSchool() {
   const resetForm = () => {
     setSchoolData({
       name: "",
-      confirmInsert: false,
+      // confirmInsert: false,
     });
     reset();
   };
@@ -60,12 +60,12 @@ export function InsertSchool() {
   // SET REACT HOOK FORM VALUES
   useEffect(() => {
     setValue("name", schoolData.name);
-    setValue("confirmInsert", schoolData.confirmInsert);
+    // setValue("confirmInsert", schoolData.confirmInsert);
   }, [schoolData]);
 
   // SET REACT HOOK FORM ERRORS
   useEffect(() => {
-    const fullErrors = [errors.name, errors.confirmInsert];
+    const fullErrors = [errors.name/*, errors.confirmInsert*/];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
         theme: "colored",
@@ -81,76 +81,89 @@ export function InsertSchool() {
   const handleAddSchool: SubmitHandler<CreateSchoolValidationZProps> = async (
     data
   ) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Adicionar Escola",
+      text: "Tem certeza que deseja adicionar esta escola?",
+      icon: "question",
+      confirmButtonText: "Sim, adicionar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
 
-    // ADD SCHOOL FUNCTION
-    const addSchool = async () => {
-      try {
-        const commonId = uuidv4();
-        await setDoc(doc(db, "schools", commonId), {
-          id: commonId,
-          name: data.name,
-          timestamp: serverTimestamp(),
-        });
-        resetForm();
-        toast.success(`Colégio ${data.name} criado com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
 
-    // CHECK INSERT CONFIRMATION
-    if (!data.confirmInsert) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar o Colégio ${data.name}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    // CHECKING IF SCHOOL EXISTS ON DATABASE
-    const schoolExists = schoolDatabaseData.find(
-      (school) => school.name === `Colégio ${data.name}`
-    );
-    if (schoolExists) {
-      // IF EXISTS, RETURN ERROR
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `Colégio ${data.name} já existe no nosso banco de dados... ❕`,
-          {
+      // ADD SCHOOL FUNCTION
+      const addSchool = async () => {
+        try {
+          const commonId = uuidv4();
+          await secureSetDoc(doc(db, "schools", commonId), {
+            id: commonId,
+            name: data.name,
+            timestamp: serverTimestamp(),
+          });
+          resetForm();
+          toast.success(`Colégio ${data.name} criado com sucesso! 👌`, {
             theme: "colored",
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
             autoClose: 3000,
-          }
-        )
+          });
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
+
+      // CHECK INSERT CONFIRMATION
+      // if (!data.confirmInsert) {
+      //   setIsSubmitting(false);
+      //   return toast.error(
+      //     `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar o Colégio ${data.name}... ☑️`,
+      //     {
+      //       theme: "colored",
+      //       closeOnClick: true,
+      //       pauseOnHover: true,
+      //       draggable: true,
+      //       autoClose: 3000,
+      //     }
+      //   );
+      // }
+
+      // CHECKING IF SCHOOL EXISTS ON DATABASE
+      const schoolExists = schoolDatabaseData.find(
+        (school) => school.name === `Colégio ${data.name}`
       );
+      if (schoolExists) {
+        // IF EXISTS, RETURN ERROR
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Colégio ${data.name} já existe no nosso banco de dados... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      } else {
+        // IF NOT EXISTS, CREATE
+        addSchool();
+      }
     } else {
-      // IF NOT EXISTS, CREATE
-      addSchool();
+      setIsSubmitting(false);
     }
   };
 
@@ -200,8 +213,8 @@ export function InsertSchool() {
             }
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={schoolData.name}
             onChange={(e) => {
@@ -211,7 +224,7 @@ export function InsertSchool() {
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
+        {/* <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
             name="confirmInsert"
@@ -229,7 +242,7 @@ export function InsertSchool() {
               ? `Confirmar criação do Colégio ${schoolData.name}`
               : `Confirmar criação`}
           </label>
-        </div>
+        </div> */}
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4">

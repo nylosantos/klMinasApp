@@ -4,47 +4,40 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
-import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteCurriculumValidationSchema } from "../../@types/zodValidation";
 import {
   CurriculumWithNamesProps,
-  DeleteClassDaysValidationZProps,
   DeleteCurriculumValidationZProps,
   ScheduleSearchProps,
   SchoolClassSearchProps,
   SchoolCourseSearchProps,
   SchoolSearchProps,
-  StudentSearchProps,
 } from "../../@types";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 
-// INITIALIZING FIRESTORE DB
-const db = getFirestore(app);
-
 export function DeleteCurriculum() {
   // GET GLOBAL DATA
   const {
-    curriculumDatabaseData,
     schoolDatabaseData,
     schoolClassDatabaseData,
     schoolCourseDatabaseData,
-    studentsDatabaseData,
+    isSubmitting,
     handleAllCurriculumDetails,
     handleCurriculumDetailsWithSchoolCourse,
+    handleDeleteCurriculum,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // CLASS DAY DATA
-  const [classDaysData, setClassDaysData] =
-    useState<DeleteClassDaysValidationZProps>({
-      classDayId: "",
-    });
+  // const [classDaysData, setClassDaysData] =
+  //   useState<DeleteClassDaysValidationZProps>({
+  //     classDayId: "",
+  //   });
 
   // CURRICULUM DATA
   const [curriculumData, setCurriculumData] =
@@ -53,7 +46,7 @@ export function DeleteCurriculum() {
       schoolId: "",
       schoolClassId: "",
       schoolCourseId: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     });
 
   const [curriculumFormattedName, setCurriculumFormattedName] = useState({
@@ -245,7 +238,7 @@ export function DeleteCurriculum() {
   // -------------------------- END OF RESET SELECTS -------------------------- //
 
   // SUBMITTING AND SELECTED STATE
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
 
   // REACT HOOK FORM SETTINGS
@@ -261,7 +254,7 @@ export function DeleteCurriculum() {
       schoolId: "",
       schoolClassId: "",
       schoolCourseId: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     },
   });
 
@@ -282,11 +275,11 @@ export function DeleteCurriculum() {
       schoolId: "",
       schoolClassId: "",
       schoolCourseId: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     });
-    setClassDaysData({
-      classDayId: "",
-    });
+    // setClassDaysData({
+    //   classDayId: "",
+    // });
     reset();
   };
 
@@ -296,7 +289,7 @@ export function DeleteCurriculum() {
     setValue("schoolId", curriculumData.schoolId);
     setValue("schoolClassId", curriculumData.schoolClassId);
     setValue("schoolCourseId", curriculumData.schoolCourseId);
-    setValue("confirmDelete", curriculumData.confirmDelete);
+    // setValue("confirmDelete", curriculumData.confirmDelete);
   }, [curriculumData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -306,7 +299,7 @@ export function DeleteCurriculum() {
       errors.schoolId,
       errors.schoolClassId,
       errors.schoolCourseId,
-      errors.confirmDelete,
+      // errors.confirmDelete,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -320,111 +313,10 @@ export function DeleteCurriculum() {
   }, [errors]);
 
   // SUBMIT DATA FUNCTION
-  const handleDeleteCurriculum: SubmitHandler<
+  const handleSubmitDeleteCurriculum: SubmitHandler<
     DeleteCurriculumValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
-
-    // DELETE CURRICULUM FUNCTION
-    const deleteCurriculum = async () => {
-      try {
-        await deleteDoc(doc(db, "curriculum", data.curriculumId));
-        await deleteDoc(doc(db, "classDays", classDaysData.classDayId));
-        resetForm();
-        toast.success(`Turma excluída com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
-
-    // CHECK DELETE CONFIRMATION
-    if (!data.confirmDelete) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir a Turma... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    // CHECKING IF CURRICULUM CONTAINS STUDENTS
-    // STUDENTS IN THIS CURRICULUM ARRAY
-    const curriculumExistsOnStudent: StudentSearchProps[] = [];
-
-    // SEARCH STUDENTS WITH THIS CURRICULUM AND PUTTING ON ARRAY
-    studentsDatabaseData.map((student) => {
-      if (student.curriculumIds) {
-        // ENROLLED STUDENTS
-        student.curriculumIds.map((studentCurriculum) => {
-          if (studentCurriculum.id === data.curriculumId) {
-            curriculumExistsOnStudent.push(student);
-          }
-        });
-        // EXPERIMENTAL STUDENTS
-        student.experimentalCurriculumIds.map(
-          (studentExperimentalCurriculum) => {
-            if (studentExperimentalCurriculum.id === data.curriculumId) {
-              curriculumExistsOnStudent.push(student);
-            }
-          }
-        );
-      }
-      curriculumDatabaseData.map((curriculum) => {
-        if (curriculum.id === data.curriculumId) {
-          curriculum.waitingList.map((waitingStudent) => {
-            if (waitingStudent.id === student.id) {
-              curriculumExistsOnStudent.push(student);
-            }
-          });
-        }
-      });
-    });
-
-    // IF EXISTS, RETURN ERROR
-    if (curriculumExistsOnStudent.length !== 0) {
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `Turma incluída em ${curriculumExistsOnStudent.length} ${
-            curriculumExistsOnStudent.length === 1
-              ? "cadastro de aluno"
-              : "cadastros de alunos"
-          }, exclua ou altere primeiramente ${
-            curriculumExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
-          } e depois exclua a turma... ❕`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
-      );
-    } else {
-      // IF NO EXISTS, DELETE
-      deleteCurriculum();
-    }
+    handleDeleteCurriculum(data.curriculumId, resetForm);
   };
 
   return (
@@ -437,7 +329,7 @@ export function DeleteCurriculum() {
 
       {/* FORM */}
       <form
-        onSubmit={handleSubmit(handleDeleteCurriculum)}
+        onSubmit={handleSubmit(handleSubmitDeleteCurriculum)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL SELECT */}
@@ -457,8 +349,8 @@ export function DeleteCurriculum() {
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolSelect"
             onChange={(e) => {
@@ -489,8 +381,8 @@ export function DeleteCurriculum() {
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolClassId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolClassSelect"
             onChange={(e) => {
@@ -533,8 +425,8 @@ export function DeleteCurriculum() {
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolCourseId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolCourseSelect"
             onChange={(e) => {
@@ -600,9 +492,9 @@ export function DeleteCurriculum() {
                           className="text-klGreen-500 dark:text-klGreen-500 border-none"
                           value={c.id}
                           onChange={(e) => {
-                            setClassDaysData({
-                              classDayId: c.classDayId,
-                            });
+                            // setClassDaysData({
+                            //   classDayId: c.classDayId,
+                            // });
                             setCurriculumData({
                               ...curriculumData,
                               curriculumId: e.target.value,
@@ -685,7 +577,7 @@ export function DeleteCurriculum() {
             {curriculumCoursesData.length !== 0 && (
               <>
                 {/** CHECKBOX CONFIRM DELETE */}
-                <div className="flex justify-center items-center gap-2 mt-6">
+                {/* <div className="flex justify-center items-center gap-2 mt-6">
                   <input
                     type="checkbox"
                     name="confirmDelete"
@@ -701,7 +593,7 @@ export function DeleteCurriculum() {
                   <label htmlFor="confirmDelete" className="text-sm">
                     Confirmar exclusão da Turma
                   </label>
-                </div>
+                </div> */}
               </>
             )}
 

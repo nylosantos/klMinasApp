@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { useContext } from "react";
 import { IoIosArrowDown } from "react-icons/io";
@@ -7,7 +8,6 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
-import { ExcludeCurriculumProps } from "../../@types";
 
 type EditCurriculumButtonDetailsProps = {
   isExperimental: boolean;
@@ -15,12 +15,9 @@ type EditCurriculumButtonDetailsProps = {
   setOpenEditCurriculumDays?: (option: boolean) => void;
   openEditExperimentalCurriculumDays?: boolean;
   setOpenEditExperimentalCurriculumDays?: (option: boolean) => void;
-  curriculum: ExcludeCurriculumProps;
+  curriculum: any;
   index: number;
-  handleIncludeExcludeFunction: (
-    index: number,
-    data: ExcludeCurriculumProps
-  ) => void;
+  handleIncludeExcludeFunction: (index: number, data: any) => void;
   cancelEditFunction: (id: string) => void;
 };
 
@@ -74,7 +71,9 @@ export function EditCurriculumButton({
           </button>
         </MenuItem>
 
-        {userFullData && userFullData.role !== "user" && (<div className="my-1 h-px bg-white/5" />)}
+        {userFullData && userFullData.role !== "user" && (
+          <div className="my-1 h-px bg-white/5" />
+        )}
 
         {userFullData && userFullData.role !== "user" && (
           <MenuItem>
@@ -85,7 +84,7 @@ export function EditCurriculumButton({
                   : "data-[focus]:bg-red-600/30"
               }`}
               onClick={() => {
-                const data: ExcludeCurriculumProps = {
+                const data: any = {
                   exclude: !curriculum.exclude,
                   id: curriculum.id,
                   date: curriculum.date,

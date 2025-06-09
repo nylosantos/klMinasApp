@@ -4,39 +4,32 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
-import { deleteDoc, doc, getFirestore } from "firebase/firestore";
 
-import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import { deleteSchoolValidationSchema } from "../../@types/zodValidation";
 import {
   DeleteSchoolValidationZProps,
-  SchoolSearchProps,
-  StudentSearchProps,
+  SchoolSearchProps
 } from "../../@types";
 import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 
-// INITIALIZING FIRESTORE DB
-const db = getFirestore(app);
-
 export function DeleteSchool() {
   // GET GLOBAL DATA
   const {
-    curriculumDatabaseData,
-    scheduleDatabaseData,
     schoolDatabaseData,
-    studentsDatabaseData,
+    isSubmitting,
+    handleDeleteSchool,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // SCHOOL DATA
   const [schoolData, setSchoolData] = useState<DeleteSchoolValidationZProps>({
     schoolId: "",
     schoolName: "",
-    confirmDelete: false,
+    // confirmDelete: false,
   });
 
   // -------------------------- SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
@@ -68,7 +61,7 @@ export function DeleteSchool() {
   // -------------------------- END OF SCHOOL SELECT STATES AND FUNCTIONS -------------------------- //
 
   // SUBMITTING AND SELECTED STATE
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
 
   // REACT HOOK FORM SETTINGS
@@ -82,7 +75,7 @@ export function DeleteSchool() {
     defaultValues: {
       schoolId: "",
       schoolName: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     },
   });
 
@@ -94,7 +87,7 @@ export function DeleteSchool() {
     setSchoolData({
       schoolId: "",
       schoolName: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     });
     setIsSelected(false);
     reset();
@@ -104,7 +97,7 @@ export function DeleteSchool() {
   useEffect(() => {
     setValue("schoolId", schoolData.schoolId);
     setValue("schoolName", schoolData.schoolName);
-    setValue("confirmDelete", schoolData.confirmDelete);
+    // setValue("confirmDelete", schoolData.confirmDelete);
   }, [schoolData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -112,7 +105,7 @@ export function DeleteSchool() {
     const fullErrors = [
       errors.schoolId,
       errors.schoolName,
-      errors.confirmDelete,
+      // errors.confirmDelete,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -126,157 +119,10 @@ export function DeleteSchool() {
   }, [errors]);
 
   // SUBMIT DATA FUNCTION
-  const handleDeleteSchool: SubmitHandler<
+  const handleSubmitDeleteSchool: SubmitHandler<
     DeleteSchoolValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
-
-    // DELETE SCHOOL FUNCTION
-    const deleteSchool = async () => {
-      try {
-        await deleteDoc(doc(db, "schools", data.schoolId));
-        resetForm();
-        toast.success(`Colégio excluído com sucesso ! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
-
-    // CHECK DELETE CONFIRMATION
-    if (!data.confirmDelete) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir o Colégio... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    // CHECKING IF SCHOOL EXISTS ON SOME STUDENT, CLASS, SCHEDULE OR CURRICULUM ON DATABASE
-    // STUDENTS IN THIS SCHOOL ARRAY
-    const schoolExistsOnStudent: StudentSearchProps[] = [];
-
-    // SEARCH CURRICULUM WITH THIS SCHOOL
-    const schoolExistsOnCurriculum = curriculumDatabaseData.filter(
-      (curriculum) => curriculum.schoolId === schoolData.schoolId
-    );
-
-    // SEARCH STUDENTS WITH THIS SCHOOL AND PUTTING ON ARRAY
-    studentsDatabaseData.map((student) => {
-      if (student.curriculumIds) {
-        // ENROLLED STUDENTS
-        student.curriculumIds.map((studentCurriculum) => {
-          const foundedSchoolStudentWithCurriculum =
-            schoolExistsOnCurriculum.find(
-              (schoolCurriculum) => schoolCurriculum.id === studentCurriculum.id
-            );
-          if (foundedSchoolStudentWithCurriculum) {
-            schoolExistsOnStudent.push(student);
-          }
-        });
-        // EXPERIMENTAL STUDENTS
-        student.experimentalCurriculumIds.map(
-          (studentExperimentalCurriculum) => {
-            const foundedSchoolStudentWithExperimentalCurriculum =
-              schoolExistsOnCurriculum.find(
-                (schoolCurriculum) =>
-                  schoolCurriculum.id === studentExperimentalCurriculum.id
-              );
-            if (foundedSchoolStudentWithExperimentalCurriculum) {
-              schoolExistsOnStudent.push(student);
-            }
-          }
-        );
-      }
-    });
-
-    // SEARCH SCHEDULE WITH THIS SCHOOL
-    const schoolExistsOnSchedule = scheduleDatabaseData.filter(
-      (schedule) => schedule.schoolId === schoolData.schoolId
-    );
-
-    // IF EXISTS, RETURN ERROR
-    if (schoolExistsOnStudent.length !== 0) {
-      return (
-        setSchoolData({ ...schoolData, confirmDelete: false }),
-        setIsSubmitting(false),
-        toast.error(
-          `Colégio tem ${schoolExistsOnStudent.length} ${
-            schoolExistsOnStudent.length === 1
-              ? "aluno matriculado"
-              : "alunos matriculados"
-          }, exclua ou altere primeiramente ${
-            schoolExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
-          } e depois exclua o ${data.schoolName}... ❕`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
-      );
-    } else if (schoolExistsOnCurriculum.length !== 0) {
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `Colégio incluído em ${schoolExistsOnCurriculum.length} ${
-            schoolExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-          }, exclua ou altere primeiramente ${
-            schoolExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
-          } e depois exclua o ${data.schoolName}... ❕`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
-      );
-    } else if (schoolExistsOnSchedule.length !== 0) {
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `Colégio incluído em ${schoolExistsOnSchedule.length} ${
-            schoolExistsOnSchedule.length === 1 ? "Horário" : "Horários"
-          }, exclua ou altere primeiramente ${
-            schoolExistsOnSchedule.length === 1 ? "o Horário" : "os Horários"
-          } e depois exclua o ${data.schoolName}... ❕`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
-      );
-    } else {
-      // IF NO EXISTS, DELETE
-      deleteSchool();
-    }
+    handleDeleteSchool(data.schoolId, resetForm);
   };
 
   return (
@@ -289,7 +135,7 @@ export function DeleteSchool() {
 
       {/* FORM */}
       <form
-        onSubmit={handleSubmit(handleDeleteSchool)}
+        onSubmit={handleSubmit(handleSubmitDeleteSchool)}
         className="flex flex-col w-full gap-2 p-4 rounded-xl bg-klGreen-500/20 dark:bg-klGreen-500/30 mt-2"
       >
         {/* SCHOOL SELECT */}
@@ -309,8 +155,8 @@ export function DeleteSchool() {
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolSelect"
             onChange={(e) => {
@@ -324,7 +170,7 @@ export function DeleteSchool() {
         {isSelected ? (
           <>
             {/** CHECKBOX CONFIRM DELETE */}
-            <div className="flex justify-center items-center gap-2 mt-6">
+            {/* <div className="flex justify-center items-center gap-2 mt-6">
               <input
                 type="checkbox"
                 name="confirmDelete"
@@ -342,7 +188,7 @@ export function DeleteSchool() {
                   ? `Confirmar exclusão do ${schoolData.schoolName}`
                   : `Confirmar exclusão`}
               </label>
-            </div>
+            </div> */}
 
             {/* SUBMIT AND RESET BUTTONS */}
             <div className="flex gap-2 mt-4">

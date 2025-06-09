@@ -44,6 +44,9 @@ const ParentForm = <
 
   return (
     <>
+      <h3 className="text-lg py-2 text-klGreen-600 dark:text-gray-100">
+        Filiação {parent === "parentOne" ? "1" : "2"}:
+      </h3>
       {/* PARENT E-MAIL */}
       <div className="flex gap-2 items-center">
         <label
@@ -57,7 +60,7 @@ const ParentForm = <
           E-mail:{" "}
         </label>
         <input
-          type="text"
+          type="email"
           name="parentEmail"
           disabled={onlyView ?? isSubmitting}
           placeholder={
@@ -67,13 +70,14 @@ const ParentForm = <
           }
           className={
             errors[parent]?.email
-              ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-              : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+              : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           }
           value={student[parent].email}
           onChange={(e) => {
             setStudentData((prevData) => ({
               ...prevData,
+              familyDiscount: false,
               [parent]: {
                 ...prevData[parent],
                 email: e.target.value,
@@ -106,8 +110,8 @@ const ParentForm = <
           }
           className={
             errors[parent]?.name
-              ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-              : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+              ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+              : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
           }
           value={student[parent].name}
           onChange={(e) => {

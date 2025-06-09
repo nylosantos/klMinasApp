@@ -1,7 +1,13 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { useContext } from "react";
+import { FaList } from "react-icons/fa6";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoClose, IoPencil } from "react-icons/io5";
 import { MdDelete } from "react-icons/md";
+import {
+  GlobalDataContext,
+  GlobalDataContextType,
+} from "../../context/GlobalDataContext";
 
 type EditScheduleButtonDetailsProps = {
   isEdit: boolean;
@@ -9,15 +15,23 @@ type EditScheduleButtonDetailsProps = {
   resetScheduleData: () => void;
   setModal?: (option: boolean) => void;
   handleDeleteSchedule?: () => void;
+  id?: string;
+  onCloseLogModal?: (scheduleId: string) => void; // Função para fechar o modal
 };
 
 export function EditDashboardScheduleButton({
+  id,
   isEdit,
   handleDeleteSchedule,
   resetScheduleData,
   setIsEdit,
   setModal,
+  onCloseLogModal,
 }: EditScheduleButtonDetailsProps) {
+  // GET GLOBAL DATA
+  const { userFullData } = useContext(
+    GlobalDataContext
+  ) as GlobalDataContextType;
 
   return (
     <Menu>
@@ -41,6 +55,21 @@ export function EditDashboardScheduleButton({
             {!isEdit ? "Editar" : "Cancelar edição"}
           </button>
         </MenuItem>
+
+        {userFullData && userFullData.role !== "user" && (
+          <>
+            <div className="my-1 h-px bg-white/5" />
+            <MenuItem>
+              <button
+                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
+                onClick={() => onCloseLogModal && id && onCloseLogModal(id)}
+              >
+                <FaList />
+                Ver Logs
+              </button>
+            </MenuItem>
+          </>
+        )}
 
         <div className="my-1 h-px bg-white/5" />
 

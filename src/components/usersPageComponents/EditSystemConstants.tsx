@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useContext, useEffect } from "react";
+import { Dispatch, SetStateAction, useContext, useEffect } from "react";
 import { SubmitLoading } from "../layoutComponents/SubmitLoading";
 import {
   GlobalDataContext,
@@ -10,24 +10,42 @@ import { EditSystemConstantsValidationZProps } from "../../@types";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { editSystemConstantsValidationSchema } from "../../@types/zodValidation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { doc, getFirestore, updateDoc } from "firebase/firestore";
+import { doc, getFirestore } from "firebase/firestore";
 import { app } from "../../db/Firebase";
 import { NumericFormat } from "react-number-format";
 import Switch from "react-switch";
+import BackdropModal from "../layoutComponents/BackdropModal";
+import SettingsMenuModal from "../layoutComponents/SettingsMenuModal";
+import { SettingsMenuArrayProps } from "../../pages/Settings";
+import SettingsSectionSubHeader from "../layoutComponents/SettingsSectionSubHeader";
+import { secureUpdateDoc } from "../../hooks/firestoreMiddleware";
 
-// FIRESTORE DB INIT
+// INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
-export default function EditSystemConstants() {
+interface SystemSettingsProps {
+  renderSettingsMenu(itemMenu: string): JSX.Element | undefined;
+  itemsMenu: SettingsMenuArrayProps[];
+  settingsMenu: boolean;
+  setSettingsMenu: Dispatch<SetStateAction<boolean>>;
+  showSettingsPage: { page: string };
+}
+
+export default function EditSystemConstants({
+  itemsMenu,
+  renderSettingsMenu,
+  settingsMenu,
+  setSettingsMenu,
+  showSettingsPage,
+}: SystemSettingsProps) {
   const {
     isSubmitting,
-    // studentsDatabaseData,
     systemConstantsDb,
     systemConstantsDbLoading,
     systemConstantsDbError,
     systemConstantsValues,
-    // calcStudentPrice2,
     setIsSubmitting,
+    userFullData,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // REACT HOOK FORM
@@ -140,29 +158,9 @@ export default function EditSystemConstants() {
       return;
     }
 
-    // CALCULATE STUDENT PRICE IF DISCOUNTS WERE CHANGED
-    // if (
-    //   1 - data.employeeDiscountValue / 100 ===
-    //     systemConstantsValues?.employeeDiscountValue &&
-    //   1 - data.familyDiscountValue / 100 ===
-    //     systemConstantsValues?.familyDiscountValue &&
-    //   1 - data.secondCourseDiscountValue / 100 ===
-    //     systemConstantsValues?.secondCourseDiscountValue
-    // ) {
-    //   studentsDatabaseData.map((student) => {
-    //     if (
-    //       student.employeeDiscount ||
-    //       student.familyDiscount ||
-    //       student.secondCourseDiscount
-    //     ) {
-    //       calcStudentPrice2(student.id);
-    //     }
-    //   });
-    // }
-
     // UPDATE SYSTEM CONSTANTS
     try {
-      await updateDoc(doc(db, "systemConstants", data.id), {
+      await secureUpdateDoc(doc(db, "systemConstants", data.id), {
         enrolmentFee: data.enrolmentFee,
         enrolmentFeeDiscount: data.enrolmentFeeDiscount,
         systemSignInClosed: data.systemSignInClosed,
@@ -201,6 +199,17 @@ export default function EditSystemConstants() {
       {/* SUBMIT LOADING */}
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="salvando" />
 
+      {/* PAGE TITLE */}
+      <div className="flex justify-center items-center mt-2 py-2 gap-4">
+        <h1 className="text-lg font-semibold">Configurações</h1>
+      </div>
+      <SettingsSectionSubHeader
+        setSettingsMenu={setSettingsMenu}
+        settingsMenu={settingsMenu}
+        data={itemsMenu}
+        showSettingsPage={showSettingsPage}
+      />
+
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleEditConstants)}
@@ -208,43 +217,51 @@ export default function EditSystemConstants() {
       >
         {/* CUSTOMER FULL NAME */}
         <div className="flex gap-2 items-center">
-          <label className="w-1/4 text-right">Nome completo da Empresa:</label>
+          <label className="w-2/4 text-sm md:text-base text-right">
+            Nome completo da Empresa:
+          </label>
           <input
             type="text"
             {...register("customerFullName")}
             defaultValue={getValues("customerFullName")}
             placeholder="Insira o nome completo da Empresa"
-            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
+            className="w-2/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
           />
         </div>
 
         {/* CUSTOMER SHORT NAME */}
         <div className="flex gap-2 items-center">
-          <label className="w-1/4 text-right">Nome abreviado da Empresa:</label>
+          <label className="w-2/4 text-sm md:text-base text-right">
+            Nome abreviado da Empresa:
+          </label>
           <input
             type="text"
             {...register("customerShortName")}
             defaultValue={getValues("customerShortName")}
             placeholder="Insira o nome abreviado da Empresa"
-            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
+            className="w-2/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
           />
         </div>
 
         {/* SIGN IN SYSTEM CLOSED */}
-        <label className="flex items-center gap-2">
-          <span className="w-1/4 text-right">Bloquear login no sistema?</span>
-          <Controller
-            name="systemSignInClosed"
-            control={control}
-            render={({ field }) => (
-              <Switch onChange={field.onChange} checked={field.value} />
-            )}
-          />
-        </label>
+        {userFullData && userFullData.role === "root" && (
+          <label className="flex items-center gap-2">
+            <span className="w-2/4 text-sm md:text-base text-right">
+              Bloquear login no sistema?
+            </span>
+            <Controller
+              name="systemSignInClosed"
+              control={control}
+              render={({ field }) => (
+                <Switch onChange={field.onChange} checked={field.value} />
+              )}
+            />
+          </label>
+        )}
 
         {/* SIGN UP SYSTEM CLOSED */}
         <label className="flex items-center gap-2">
-          <span className="w-1/4 text-right">
+          <span className="w-2/4 text-sm md:text-base text-right">
             Bloquear cadastro no sistema?
           </span>
           <Controller
@@ -258,7 +275,9 @@ export default function EditSystemConstants() {
 
         {/* ENROLMENT FEE VALUE */}
         <div className="flex gap-2 items-center">
-          <label className="w-1/4 text-right">Valor da matrícula:</label>
+          <label className="w-2/4 text-sm md:text-base text-right">
+            Valor da matrícula:
+          </label>
           <Controller
             name="enrolmentFee"
             control={control}
@@ -274,7 +293,7 @@ export default function EditSystemConstants() {
                 decimalSeparator=","
                 fixedDecimalScale
                 decimalScale={2}
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
+                className="w-2/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
               />
             )}
           />
@@ -282,7 +301,7 @@ export default function EditSystemConstants() {
 
         {/* ENROLMENT FEE DISCOUNT VALUE */}
         <div className="flex gap-2 items-center">
-          <label className="w-1/4 text-right">
+          <label className="w-2/4 text-sm md:text-base text-right">
             Valor da aula matrícula com desconto:
           </label>
           <Controller
@@ -300,7 +319,7 @@ export default function EditSystemConstants() {
                 decimalSeparator=","
                 fixedDecimalScale
                 decimalScale={2}
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
+                className="w-2/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
               />
             )}
           />
@@ -308,82 +327,94 @@ export default function EditSystemConstants() {
 
         {/* EMPLOYEE DISCOUNT VALUE */}
         <div className="flex gap-2 items-center">
-          <label className="w-1/4 text-right">
+          <label className="w-2/4 text-sm md:text-base text-right">
             Desconto para funcionários:
           </label>
-          <Controller
-            name="employeeDiscountValue"
-            control={control}
-            render={({ field }) => (
-              <input
-                type="text"
-                onChange={(values) => {
-                  const { currentTarget } = values;
-                  field.onChange(+currentTarget.value);
-                }}
-                defaultValue={field.value}
-                className="w-10 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
-              />
-            )}
-          />
-          <p>%</p>
+          <div className="flex items-center gap-2 w-2/4">
+            <Controller
+              name="employeeDiscountValue"
+              control={control}
+              render={({ field }) => (
+                <input
+                  type="text"
+                  onChange={(values) => {
+                    const { currentTarget } = values;
+                    field.onChange(+currentTarget.value);
+                  }}
+                  defaultValue={field.value}
+                  className="w-10 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
+                />
+              )}
+            />
+            <p>%</p>
+          </div>
         </div>
 
         {/* FAMILY DISCOUNT VALUE */}
         <div className="flex gap-2 items-center">
-          <label className="w-1/4 text-right">Desconto para familiares:</label>
-          <Controller
-            name="familyDiscountValue"
-            control={control}
-            render={({ field }) => (
-              <input
-                type="text"
-                onChange={(values) => {
-                  const { currentTarget } = values;
-                  field.onChange(+currentTarget.value);
-                }}
-                defaultValue={field.value}
-                className="w-10 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
-              />
-            )}
-          />
-          <p>%</p>
+          <label className="w-2/4 text-sm md:text-base text-right">
+            Desconto para familiares:
+          </label>
+          <div className="flex items-center gap-2 w-2/4">
+            <Controller
+              name="familyDiscountValue"
+              control={control}
+              render={({ field }) => (
+                <input
+                  type="text"
+                  onChange={(values) => {
+                    const { currentTarget } = values;
+                    field.onChange(+currentTarget.value);
+                  }}
+                  defaultValue={field.value}
+                  className="w-10 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
+                />
+              )}
+            />
+            <p>%</p>
+          </div>
         </div>
 
         {/* SECOND COURSE DISCOUNT VALUE */}
         <div className="flex gap-2 items-center">
-          <label className="w-1/4 text-right">Desconto para 2º curso:</label>
-          <Controller
-            name="secondCourseDiscountValue"
-            control={control}
-            render={({ field }) => (
-              <input
-                type="text"
-                onChange={(values) => {
-                  const { currentTarget } = values;
-                  field.onChange(+currentTarget.value);
-                }}
-                defaultValue={field.value}
-                className="w-10 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
-              />
-            )}
-          />
-          <p>%</p>
+          <label className="w-2/4 text-sm md:text-base text-right">
+            Desconto para 2º curso:
+          </label>
+          <div className="flex items-center gap-2 w-2/4">
+            <Controller
+              name="secondCourseDiscountValue"
+              control={control}
+              render={({ field }) => (
+                <input
+                  type="text"
+                  onChange={(values) => {
+                    const { currentTarget } = values;
+                    field.onChange(+currentTarget.value);
+                  }}
+                  defaultValue={field.value}
+                  className="w-10 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
+                />
+              )}
+            />
+            <p>%</p>
+          </div>
         </div>
 
         {/* STANDARD PAYMENT DAY */}
         <div className="flex gap-2 items-center">
-          <label className="w-1/4 text-right">
+          <label className="w-2/4 text-sm md:text-base text-right">
             Dia padrão para pagamentos:
           </label>
-          <input
-            type="number"
-            inputMode="numeric"
-            maxLength={2}
-            {...register("standardPaymentDay")}
-            defaultValue={getValues("standardPaymentDay")}
-            className="w-10 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
-          />
+          <div className="flex items-center gap-2 w-2/4">
+            <input
+              type="number"
+              inputMode="numeric"
+              maxLength={2}
+              {...register("standardPaymentDay")}
+              defaultValue={getValues("standardPaymentDay")}
+              className="w-10 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl"
+            />
+          </div>
         </div>
 
         {/* SUBMIT AND RESET BUTTONS */}
@@ -410,6 +441,21 @@ export default function EditSystemConstants() {
           </button>
         </div>
       </form>
+      {/* BACKDROP */}
+      {settingsMenu && (
+        <BackdropModal
+          setDashboardMenu={setSettingsMenu}
+          setMobileMenuOpen={setSettingsMenu}
+        />
+      )}
+      {/* SETTINGS MENU DRAWER */}
+      <SettingsMenuModal
+        setSettingsMenu={setSettingsMenu}
+        settingsMenu={settingsMenu}
+        itemsMenu={itemsMenu}
+        renderSettingsMenu={renderSettingsMenu}
+        userFullData={userFullData}
+      />
     </div>
   );
 }

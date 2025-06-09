@@ -9,17 +9,20 @@ import {
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 import { HandleClickOpenFunctionProps } from "../../@types";
+import { FaList } from "react-icons/fa6";
 
 type SchoolButtonDetailsProps = {
   id: string;
   handleClickOpen: ({ id, option }: HandleClickOpenFunctionProps) => void;
   handleDeleteSchool?: () => void;
+  onCloseLogModal?: (schoolId: string) => void; // Função para fechar o modal
 };
 
 export function SchoolButtonDetails({
   id,
   handleClickOpen,
   handleDeleteSchool,
+  onCloseLogModal,
 }: SchoolButtonDetailsProps) {
   // GET GLOBAL DATA
   const { userFullData } = useContext(
@@ -62,6 +65,16 @@ export function SchoolButtonDetails({
 
         {userFullData && userFullData.role !== "user" && (
           <>
+            <div className="my-1 h-px bg-white/5" />
+            <MenuItem>
+              <button
+                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
+                onClick={() => onCloseLogModal && onCloseLogModal(id)}
+              >
+                <FaList />
+                Ver Logs
+              </button>
+            </MenuItem>
             <div className="my-1 h-px bg-white/5" />
             <MenuItem>
               <button

@@ -5,10 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { NumericFormat } from "react-number-format";
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  arrayRemove,
-  arrayUnion, doc, getFirestore, updateDoc
-} from "firebase/firestore";
+import { arrayRemove, arrayUnion, doc, getFirestore } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -24,6 +21,7 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import { secureUpdateDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -35,7 +33,7 @@ export function EditCourse() {
     schoolCourseDatabaseData,
     curriculumDatabaseData,
     studentsDatabaseData,
-    calcStudentPrice,
+    // calcStudentPrice,
     setIsSubmitting,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
@@ -175,7 +173,7 @@ export function EditCourse() {
       const foundedStudentsToEdit: StudentSearchProps[] = [];
       foundedCurriculums.map((foundedCurriculum) => {
         studentsDatabaseData.map((student) => {
-          student.curriculumIds.map((curriculum) => {
+          student.curriculums.map((curriculum) => {
             if (curriculum.id === foundedCurriculum.id) {
               foundedStudentsToEdit.push(student);
             }
@@ -185,47 +183,47 @@ export function EditCourse() {
       // MAKING CHANGINGS ON ALL STUDENT
       if (foundedStudentsToEdit.length > 0) {
         foundedStudentsToEdit.map(async (student) => {
-          if (student.curriculumIds.length <= 1) {
+          if (student.curriculums.length <= 1) {
             // IF STUDENT HAS ONLY ONE CURRICULUM
             // CHANGING CURRICULUM STUDENT PRICES
             // REMOVING PREVIOUS DATA
-            await updateDoc(doc(db, "students", student.id), {
+            await secureUpdateDoc(doc(db, "students", student.id), {
               curriculumIds: arrayRemove({
-                date: student.curriculumIds[0].date,
-                id: student.curriculumIds[0].id,
-                isExperimental: student.curriculumIds[0].isExperimental,
-                indexDays: student.curriculumIds[0].indexDays,
-                price: student.curriculumIds[0].price,
+                date: student.curriculums[0].date,
+                id: student.curriculums[0].id,
+                isExperimental: student.curriculums[0].isExperimental,
+                indexDays: student.curriculums[0].indexDays,
+                // price: student.curriculums[0].price,
               }),
             });
 
             // WRITING UPDATED DATA
-            if (student.curriculumIds[0].indexDays.length === 1) {
-              await updateDoc(doc(db, "students", student.id), {
+            if (student.curriculums[0].indexDays.length === 1) {
+              await secureUpdateDoc(doc(db, "students", student.id), {
                 curriculumIds: arrayUnion({
-                  date: student.curriculumIds[0].date,
-                  id: student.curriculumIds[0].id,
-                  isExperimental: student.curriculumIds[0].isExperimental,
-                  indexDays: student.curriculumIds[0].indexDays,
+                  date: student.curriculums[0].date,
+                  id: student.curriculums[0].id,
+                  isExperimental: student.curriculums[0].isExperimental,
+                  indexDays: student.curriculums[0].indexDays,
                   price: schoolCourseEditData.priceUnit,
                 }),
               });
             }
 
-            if (student.curriculumIds[0].indexDays.length > 1) {
+            if (student.curriculums[0].indexDays.length > 1) {
               const result = Math.floor(
-                student.curriculumIds[0].indexDays.length /
+                student.curriculums[0].indexDays.length /
                   schoolCourseEditData.bundleDays
               );
               const rest =
-                student.curriculumIds[0].indexDays.length %
+                student.curriculums[0].indexDays.length %
                 schoolCourseEditData.bundleDays;
-              await updateDoc(doc(db, "students", student.id), {
+              await secureUpdateDoc(doc(db, "students", student.id), {
                 curriculumIds: arrayUnion({
-                  date: student.curriculumIds[0].date,
-                  id: student.curriculumIds[0].id,
-                  isExperimental: student.curriculumIds[0].isExperimental,
-                  indexDays: student.curriculumIds[0].indexDays,
+                  date: student.curriculums[0].date,
+                  id: student.curriculums[0].id,
+                  isExperimental: student.curriculums[0].isExperimental,
+                  indexDays: student.curriculums[0].indexDays,
                   price:
                     result * schoolCourseEditData.priceBundle +
                     rest * schoolCourseEditData.priceUnit,
@@ -234,24 +232,24 @@ export function EditCourse() {
             }
           } else {
             // IF STUDENT HAS MORE THAN ONE CURRICULUM
-            // CHANGING CURRICULUM PRICE ON STUDENT.CURRICULUMIDS
-            student.curriculumIds.map((studentCurriculum) => {
+            // CHANGING CURRICULUM PRICE ON student.curriculums
+            student.curriculums.map((studentCurriculum) => {
               foundedCurriculums.map(async (foundedCurriculum) => {
                 if (foundedCurriculum.id === studentCurriculum.id) {
                   // CHANGING CURRICULUM STUDENT PRICES
                   // REMOVING PREVIOUS DATA
-                  await updateDoc(doc(db, "students", student.id), {
+                  await secureUpdateDoc(doc(db, "students", student.id), {
                     curriculumIds: arrayRemove({
                       date: studentCurriculum.date,
                       id: studentCurriculum.id,
                       isExperimental: studentCurriculum.isExperimental,
                       indexDays: studentCurriculum.indexDays,
-                      price: studentCurriculum.price,
+                      // price: studentCurriculum.price,
                     }),
                   });
                   // WRITING UPDATED DATA
                   if (studentCurriculum.indexDays.length === 1) {
-                    await updateDoc(doc(db, "students", student.id), {
+                    await secureUpdateDoc(doc(db, "students", student.id), {
                       curriculumIds: arrayUnion({
                         date: studentCurriculum.date,
                         id: studentCurriculum.id,
@@ -270,7 +268,7 @@ export function EditCourse() {
                     const rest =
                       studentCurriculum.indexDays.length %
                       schoolCourseEditData.bundleDays;
-                    await updateDoc(doc(db, "students", student.id), {
+                    await secureUpdateDoc(doc(db, "students", student.id), {
                       curriculumIds: arrayUnion({
                         date: studentCurriculum.date,
                         id: studentCurriculum.id,
@@ -286,7 +284,7 @@ export function EditCourse() {
               });
             });
           }
-          await calcStudentPrice(student.id);
+          // await calcStudentPrice(student.id);
         });
       }
     }
@@ -301,7 +299,7 @@ export function EditCourse() {
     // EDIT SCHOOL COURSE FUNCTION
     const editSchoolCourse = async () => {
       try {
-        await updateDoc(
+        await secureUpdateDoc(
           doc(db, "schoolCourses", schoolCourseData.schoolCourseId),
           {
             name: data.name,
@@ -394,8 +392,8 @@ export function EditCourse() {
             defaultValue={" -- select an option -- "}
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolCourseSelect"
             onChange={(e) => {
@@ -455,8 +453,8 @@ export function EditCourse() {
                 }
                 className={
                   errors.name
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 value={schoolCourseEditData.name}
                 onChange={(e) => {
@@ -496,8 +494,8 @@ export function EditCourse() {
                 }}
                 className={
                   errors.priceUnit
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
                 }
               />
             </div>
@@ -530,8 +528,8 @@ export function EditCourse() {
                 }}
                 className={
                   errors.priceBundle
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
                 }
               />
             </div>
@@ -563,8 +561,8 @@ export function EditCourse() {
                 }}
                 className={
                   errors.bundleDays
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-red-100 rounded-2xl cursor-default"
                 }
               />
             </div>

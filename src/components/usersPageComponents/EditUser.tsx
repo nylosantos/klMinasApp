@@ -1,18 +1,18 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useContext } from "react";
+import {
+  useState,
+  useEffect,
+  useContext,
+  Dispatch,
+  SetStateAction,
+} from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { getFunctions } from "firebase/functions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
-import {
-  deleteDoc,
-  doc,
-  getFirestore,
-  serverTimestamp,
-  setDoc,
-} from "firebase/firestore";
+import { doc, getFirestore, serverTimestamp } from "firebase/firestore";
 
 import { app } from "../../db/Firebase";
 import { SelectOptions } from "../formComponents/SelectOptions";
@@ -25,14 +25,38 @@ import {
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 import { formataCPF, testaCPF } from "../../custom";
+import BackdropModal from "../layoutComponents/BackdropModal";
+import SettingsMenuModal from "../layoutComponents/SettingsMenuModal";
+import { SettingsMenuArrayProps } from "../../pages/Settings";
+import SettingsSectionSubHeader from "../layoutComponents/SettingsSectionSubHeader";
+import { secureDeleteDoc, secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
-export function EditUser() {
+interface EditUserProps {
+  renderSettingsMenu(itemMenu: string): JSX.Element | undefined;
+  itemsMenu: SettingsMenuArrayProps[];
+  settingsMenu: boolean;
+  setSettingsMenu: Dispatch<SetStateAction<boolean>>;
+  showSettingsPage: { page: string };
+}
+
+export function EditUser({
+  itemsMenu,
+  renderSettingsMenu,
+  settingsMenu,
+  setSettingsMenu,
+  showSettingsPage,
+}: EditUserProps) {
   // GET GLOBAL DATA
-  const { appUsersDb, isSubmitting, userFullData, setIsSubmitting } =
-    useContext(GlobalDataContext) as GlobalDataContextType;
+  const {
+    appUsersDb,
+    isSubmitting,
+    userFullData,
+    setIsSubmitting,
+    handleConfirmationToSubmit,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // EDIT USER WITHOUT CHANGING PASSWORD CLOUD FUNCTION HOOK
   const [updateAppUserWithoutPassword] = useHttpsCallable(
@@ -217,33 +241,118 @@ export function EditUser() {
   const handleEditUser: SubmitHandler<EditUserValidationZProps> = async (
     data
   ) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Editar seu Usuário",
+      text: "Tem certeza que deseja confirmar as mudanças?",
+      icon: "question",
+      confirmButtonText: "Sim, confirmar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+    if (confirmation.isConfirmed && userFullData) {
+      setIsSubmitting(true);
 
-    // CHECKING IF THERE'S A PASSWORD CHANGE
-    if (data.changePassword) {
-      // CHECKING IF PASSWORD IS FILLED AND HAVE MIN 6 CHARS
-      if (!data.password || data.password?.length < 6) {
-        setErrorPassword(true);
-        toast.error(`A senha precisa ter, no mínimo, 6 caracteres.`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
+      const dataForAuth = {
+        ...data,
+        updatedBy: userFullData.id,
+      };
+
+      // CHECKING IF THERE'S A PASSWORD CHANGE
+      if (data.changePassword) {
+        // CHECKING IF PASSWORD IS FILLED AND HAVE MIN 6 CHARS
+        if (!data.password || data.password?.length < 6) {
+          setErrorPassword(true);
+          toast.error(`A senha precisa ter, no mínimo, 6 caracteres.`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+        } else {
+          // UPDATING USER CHANGING PASSWORD
+          setErrorPassword(false);
+          try {
+            // UPDATE USER WITH PASSWORD FUNCTION
+            await updateAppUserWithPassword(dataForAuth); // (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
+            // CHECKING IF USER IS WAS AND NOW ISN'T A TEACHER
+            if (
+              userSelectedData?.role === "teacher" &&
+              userEditData.role !== "teacher"
+            ) {
+              // DELETE TEACHER FROM TEACHERS DATABASE FUNCTION
+              await secureDeleteDoc(doc(db, "teachers", data.id));
+              // await logDelete(data, "teachers", data.id);
+              toast.success(`${data.name} editado com sucesso! 👌`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+              resetForm();
+              setIsSubmitting(false);
+            } else if (
+              // CHECKING IF USER IS WASN'T AND NOW IS A TEACHER
+              userSelectedData?.role !== "teacher" &&
+              userEditData.role === "teacher"
+            ) {
+              // ADD TEACHER FROM TEACHERS DATABASE FUNCTION
+              await secureSetDoc(doc(db, "teachers", data.id), {
+                id: data.id,
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                haveAccount: true,
+                updatedAt: serverTimestamp(),
+              });
+              toast.success(`${data.name} editado com sucesso! 👌`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+              resetForm();
+              setIsSubmitting(false);
+            } else {
+              toast.success(`${data.name} editado com sucesso! 👌`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+              resetForm();
+              setIsSubmitting(false);
+            }
+          } catch (error) {
+            console.log("Erro: ", error);
+            toast.error(`Ocorreu um erro... 🤯`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            resetForm();
+            setIsSubmitting(false);
+          }
+        }
       } else {
-        // UPDATING USER CHANGING PASSWORD
+        // UPDATING USER WITHOUT CHANGE PASSWORD
         setErrorPassword(false);
         try {
-          // UPDATE USER WITH PASSWORD FUNCTION
-          await updateAppUserWithPassword(data); // (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
+          // UPDATE USER WITHOUT PASSWORD FUNCTION
+          await updateAppUserWithoutPassword(dataForAuth); // (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
           // CHECKING IF USER IS WAS AND NOW ISN'T A TEACHER
           if (
             userSelectedData?.role === "teacher" &&
             userEditData.role !== "teacher"
           ) {
             // DELETE TEACHER FROM TEACHERS DATABASE FUNCTION
-            await deleteDoc(doc(db, "teachers", data.id));
+            await secureDeleteDoc(doc(db, "teachers", data.id));
+            // await logDelete(data, "teachers", data.id);
             toast.success(`${data.name} editado com sucesso! 👌`, {
               theme: "colored",
               closeOnClick: true,
@@ -259,7 +368,7 @@ export function EditUser() {
             userEditData.role === "teacher"
           ) {
             // ADD TEACHER FROM TEACHERS DATABASE FUNCTION
-            await setDoc(doc(db, "teachers", data.id), {
+            await secureSetDoc(doc(db, "teachers", data.id), {
               id: data.id,
               name: data.name,
               email: data.email,
@@ -301,74 +410,7 @@ export function EditUser() {
         }
       }
     } else {
-      // UPDATING USER WITHOUT CHANGE PASSWORD
-      setErrorPassword(false);
-      try {
-        // UPDATE USER WITHOUT PASSWORD FUNCTION
-        console.log("to mandando isso: ", data);
-        await updateAppUserWithoutPassword(data); // (NOTE: FUNCTION ALSO UPDATE FIREBASE DATA, SEE /functions/src/)
-        // CHECKING IF USER IS WAS AND NOW ISN'T A TEACHER
-        if (
-          userSelectedData?.role === "teacher" &&
-          userEditData.role !== "teacher"
-        ) {
-          // DELETE TEACHER FROM TEACHERS DATABASE FUNCTION
-          await deleteDoc(doc(db, "teachers", data.id));
-          toast.success(`${data.name} editado com sucesso! 👌`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
-          resetForm();
-          setIsSubmitting(false);
-        } else if (
-          // CHECKING IF USER IS WASN'T AND NOW IS A TEACHER
-          userSelectedData?.role !== "teacher" &&
-          userEditData.role === "teacher"
-        ) {
-          // ADD TEACHER FROM TEACHERS DATABASE FUNCTION
-          await setDoc(doc(db, "teachers", data.id), {
-            id: data.id,
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            haveAccount: true,
-            updatedAt: serverTimestamp(),
-          });
-          toast.success(`${data.name} editado com sucesso! 👌`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
-          resetForm();
-          setIsSubmitting(false);
-        } else {
-          toast.success(`${data.name} editado com sucesso! 👌`, {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          });
-          resetForm();
-          setIsSubmitting(false);
-        }
-      } catch (error) {
-        console.log("Erro: ", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        resetForm();
-        setIsSubmitting(false);
-      }
+      setIsSubmitting(false);
     }
   };
 
@@ -378,9 +420,15 @@ export function EditUser() {
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="editando" />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">
-        {isEdit ? `Editando ${userEditData.name}` : "Editar Usuário"}
-      </h1>
+      <div className="flex justify-center items-center mt-2 py-2 gap-4">
+        <h1 className="text-lg font-semibold">Configurações</h1>
+      </div>
+      <SettingsSectionSubHeader
+        setSettingsMenu={setSettingsMenu}
+        settingsMenu={settingsMenu}
+        data={itemsMenu}
+        showSettingsPage={showSettingsPage}
+      />
 
       {/* FORM */}
       <form
@@ -401,11 +449,15 @@ export function EditUser() {
           </label>
           <select
             id="userSelect"
-            defaultValue={" -- select an option -- "}
+            value={
+              userEditData.id !== ""
+                ? userEditData.id
+                : " -- select an option -- "
+            }
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="userSelect"
             onChange={(e) => {
@@ -417,14 +469,14 @@ export function EditUser() {
             }}
           >
             <SelectOptions
-              displayAdmins={userFullData?.role === "root" ? true : false}
               returnId
               dataType="appUsers"
+              displayAdmins={userFullData?.role === "root" ? true : false}
             />
           </select>
         </div>
 
-        {isSelected ? (
+        {isSelected && (
           <>
             {/* EDIT BUTTON */}
             <div className="flex gap-2 mt-4 justify-center">
@@ -442,9 +494,9 @@ export function EditUser() {
               </button>
             </div>
           </>
-        ) : null}
+        )}
 
-        {isEdit ? (
+        {isEdit && (
           <>
             {/* USER NAME */}
             <div className="flex gap-2 items-center">
@@ -469,8 +521,8 @@ export function EditUser() {
                 }
                 className={
                   errors.name
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 value={userEditData.name}
                 onChange={(e) => {
@@ -495,7 +547,7 @@ export function EditUser() {
                 E-mail:{" "}
               </label>
               <input
-                type="text"
+                type="email"
                 name="email"
                 disabled={isSubmitting}
                 placeholder={
@@ -505,8 +557,8 @@ export function EditUser() {
                 }
                 className={
                   errors.email
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 value={userEditData.email}
                 onChange={(e) => {
@@ -544,7 +596,8 @@ export function EditUser() {
                 <input
                   type="text"
                   name="userDocument"
-                  pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                  maxLength={14}
+                  minLength={14}
                   placeholder={
                     errors.document
                       ? "É necessário inserir o CPF do Responsável Financeiro"
@@ -553,13 +606,13 @@ export function EditUser() {
                   className={
                     testFinancialCPF
                       ? errors.document
-                        ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                   }
                   value={userEditData.document}
                   onChange={(e) => {
-                    if (e.target.value.length === 11) {
+                    if (e.target.value.length === 14) {
                       setTestFinancialCPF(testaCPF(e.target.value));
                     }
                     setUserEditData({
@@ -628,9 +681,9 @@ export function EditUser() {
                     className={
                       !errorPassword
                         ? errors.password
-                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     }
                     onChange={(e) => {
                       setUserEditData({
@@ -669,9 +722,9 @@ export function EditUser() {
                     className={
                       !errorPassword
                         ? errors.confirmPassword
-                          ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                          : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                          : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                        : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
                     }
                     onChange={(e) => {
                       setUserEditData({
@@ -764,8 +817,8 @@ export function EditUser() {
                 value={userEditData.role}
                 className={
                   errors.name
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 name="role"
                 onChange={(e) => {
@@ -814,8 +867,23 @@ export function EditUser() {
               </button>
             </div>
           </>
-        ) : null}
+        )}
       </form>
+      {/* BACKDROP */}
+      {settingsMenu && (
+        <BackdropModal
+          setDashboardMenu={setSettingsMenu}
+          setMobileMenuOpen={setSettingsMenu}
+        />
+      )}
+      {/* SETTINGS MENU DRAWER */}
+      <SettingsMenuModal
+        setSettingsMenu={setSettingsMenu}
+        settingsMenu={settingsMenu}
+        itemsMenu={itemsMenu}
+        renderSettingsMenu={renderSettingsMenu}
+        userFullData={userFullData}
+      />
     </div>
   );
 }

@@ -5,7 +5,13 @@ import "react-toastify/dist/ReactToastify.css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  getFirestore,
+  runTransaction,
+  serverTimestamp
+} from "firebase/firestore";
 
 import { createCurriculumValidationSchema } from "../../@types/zodValidation";
 import { app } from "../../db/Firebase";
@@ -29,6 +35,8 @@ import {
 import { classDayIndexNames } from "../../custom";
 import { ClassDays } from "../formComponents/ClassDays";
 import SchoolStageSelect from "../formComponents/SchoolStageSelect";
+import CreateCurriculumFromJson from "../dashboardComponents/CreateCurriculumFromJson";
+import { secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -44,6 +52,7 @@ export function InsertCurriculum() {
     teacherDatabaseData,
     page,
     userFullData,
+    handleConfirmationToSubmit,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // CURRICULUM DATA
@@ -57,7 +66,7 @@ export function InsertCurriculum() {
       classDayId: "",
       teacherId: "",
       placesAvailable: 0,
-      confirmInsert: false,
+      // confirmInsert: false,
     });
 
   // CURRICULUM NAME FORMATTED STATE
@@ -463,7 +472,7 @@ export function InsertCurriculum() {
       scheduleId: "",
       classDayId: "",
       teacherId: "",
-      confirmInsert: false,
+      // confirmInsert: false,
     });
   }, [curriculumData.schoolId]);
 
@@ -480,7 +489,7 @@ export function InsertCurriculum() {
       scheduleId: "",
       classDayId: "",
       teacherId: "",
-      confirmInsert: false,
+      // confirmInsert: false,
     });
   }, [curriculumData.schoolCourseId]);
 
@@ -493,7 +502,7 @@ export function InsertCurriculum() {
       ...curriculumData,
       classDayId: "",
       teacherId: "",
-      confirmInsert: false,
+      // confirmInsert: false,
     });
   }, [curriculumData.scheduleId]);
 
@@ -505,17 +514,17 @@ export function InsertCurriculum() {
     setCurriculumData({
       ...curriculumData,
       teacherId: "",
-      confirmInsert: false,
+      // confirmInsert: false,
     });
   }, [curriculumData.classDayId]);
 
   // RESET CONFIRM INSERT WHEN CHANGE TEACHER
-  useEffect(() => {
-    setCurriculumData({
-      ...curriculumData,
-      confirmInsert: false,
-    });
-  }, [curriculumData.teacherId]);
+  // useEffect(() => {
+  //   setCurriculumData({
+  //     ...curriculumData,
+  //     // confirmInsert: false,
+  //   });
+  // }, [curriculumData.teacherId]);
   // -------------------------- END OF RESET SELECTS -------------------------- //
 
   // REACT HOOK FORM SETTINGS
@@ -533,7 +542,7 @@ export function InsertCurriculum() {
       scheduleId: "",
       classDayId: "",
       teacherId: "",
-      confirmInsert: false,
+      // confirmInsert: false,
     },
   });
 
@@ -561,7 +570,7 @@ export function InsertCurriculum() {
       classDayId: "",
       teacherId: "",
       placesAvailable: 0,
-      confirmInsert: false,
+      // confirmInsert: false,
     });
     reset();
   };
@@ -576,7 +585,7 @@ export function InsertCurriculum() {
     // setValue("classDayName", classDayName.join(" - "));
     setValue("teacherId", curriculumData.teacherId);
     setValue("placesAvailable", curriculumData.placesAvailable);
-    setValue("confirmInsert", curriculumData.confirmInsert);
+    // setValue("confirmInsert", curriculumData.confirmInsert);
   }, [curriculumData, classDaysData, classDayName]);
 
   // SET REACT HOOK FORM ERRORS
@@ -589,7 +598,7 @@ export function InsertCurriculum() {
       errors.classDayId,
       errors.teacherId,
       errors.placesAvailable,
-      errors.confirmInsert,
+      // errors.confirmInsert,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -606,172 +615,181 @@ export function InsertCurriculum() {
   const handleAddCurriculum: SubmitHandler<
     CreateCurriculumValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Adicionar Turma",
+      text: "Tem certeza que deseja adicionar esta Turma?",
+      icon: "question",
+      confirmButtonText: "Sim, adicionar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
 
-    // CHECK INSERT CONFIRMATION
-    if (!data.confirmInsert) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar a Turma... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
+      // CLASS DAY ID DATA
+      const classDaysId = uuidv4();
 
-    // CHECK IF ANY DAY WAS PICKED
-    if (
-      !classDaysData.sunday &&
-      !classDaysData.monday &&
-      !classDaysData.tuesday &&
-      !classDaysData.wednesday &&
-      !classDaysData.thursday &&
-      !classDaysData.friday &&
-      !classDaysData.saturday
-    ) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, selecione algum dia para adicionar a Turma ${curriculumFormattedName}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    // ADD CLASS DAY FUNCTION
-    const addClassDays = async () => {
-      const daysIncluded: number[] = [];
-      if (classDaysData.sunday) {
-        daysIncluded.push(0);
-      }
-      if (classDaysData.monday) {
-        daysIncluded.push(1);
-      }
-      if (classDaysData.tuesday) {
-        daysIncluded.push(2);
-      }
-      if (classDaysData.wednesday) {
-        daysIncluded.push(3);
-      }
-      if (classDaysData.thursday) {
-        daysIncluded.push(4);
-      }
-      if (classDaysData.friday) {
-        daysIncluded.push(5);
-      }
-      if (classDaysData.saturday) {
-        daysIncluded.push(6);
-      }
-      try {
-        await setDoc(doc(db, "classDays", classDaysCommonId), {
-          id: classDaysCommonId,
-          name: classDayName.join(" - "),
-          indexDays: daysIncluded,
-          indexNames: classDayName,
-          timestamp: serverTimestamp(),
-        });
-        resetForm();
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
+      // CHECK IF ANY DAY WAS PICKED
+      if (
+        !classDaysData.sunday &&
+        !classDaysData.monday &&
+        !classDaysData.tuesday &&
+        !classDaysData.wednesday &&
+        !classDaysData.thursday &&
+        !classDaysData.friday &&
+        !classDaysData.saturday
+      ) {
         setIsSubmitting(false);
+        return toast.error(
+          `Por favor, selecione algum dia para adicionar a Turma ${curriculumFormattedName}... ☑️`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          }
+        );
       }
-    };
 
-    let curriculumPublicId = 1;
-    if (curriculumDatabaseData.length > 0) {
-      const lastCurriculum =
-        curriculumDatabaseData[curriculumDatabaseData.length - 1].publicId;
+      // ADD CLASS DAY FUNCTION
+      const addClassDays = async () => {
+        const daysIncluded: number[] = [];
+        if (classDaysData.sunday) {
+          daysIncluded.push(0);
+        }
+        if (classDaysData.monday) {
+          daysIncluded.push(1);
+        }
+        if (classDaysData.tuesday) {
+          daysIncluded.push(2);
+        }
+        if (classDaysData.wednesday) {
+          daysIncluded.push(3);
+        }
+        if (classDaysData.thursday) {
+          daysIncluded.push(4);
+        }
+        if (classDaysData.friday) {
+          daysIncluded.push(5);
+        }
+        if (classDaysData.saturday) {
+          daysIncluded.push(6);
+        }
+        try {
+          await secureSetDoc(doc(db, "classDays", classDaysId), {
+            id: classDaysId,
+            name: classDayName.join(" - "),
+            indexDays: daysIncluded,
+            indexNames: classDayName,
+            timestamp: serverTimestamp(),
+          });
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
 
-      if (lastCurriculum) {
-        curriculumPublicId = lastCurriculum + 1;
-      }
-    }
-
-    // ADD CURRICULUM FUNCTION
-    const addCurriculum = async () => {
-      try {
+      // ADD CURRICULUM FUNCTION
+      const addCurriculum = async () => {
         const commonId = uuidv4();
-        await setDoc(doc(db, "curriculum", commonId), {
-          publicId: curriculumPublicId,
-          id: commonId,
-          schoolId: data.schoolId,
-          schoolClassIds: data.schoolClassIds,
-          schoolCourseId: data.schoolCourseId,
-          scheduleId: data.scheduleId,
-          classDayId: data.classDayId,
-          teacherId: data.teacherId,
-          students: [],
-          experimentalStudents: [],
-          waitingList: [],
-          placesAvailable: data.placesAvailable,
-          updatedAt: serverTimestamp(),
-        });
-        resetForm();
-        toast.success(`Turma criada com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
+        const countersRef = doc(db, "counters", "curriculumPublicId");
+        try {
+          await runTransaction(db, async (transaction) => {
+            // Obtém o documento atual do contador
+            const countersDoc = await getDoc(countersRef);
 
-    // CHECKING IF CURRICULUM EXISTS ON DATABASE
-    const curriculumExists = curriculumDatabaseData.find(
-      (curriculum) =>
-        curriculum.schoolId === data.schoolId &&
-        curriculum.schoolClassIds === data.schoolClassIds &&
-        curriculum.schoolCourseId === data.schoolCourseId &&
-        curriculum.scheduleId === data.scheduleId &&
-        curriculum.teacherId === data.teacherId
-    );
-    const classDaysExists = classDaysDatabaseData.find(
-      (classDay) => classDay.name === classDayName.join(" - ")
-    );
+            // Define o valor inicial do publicId
+            let publicId = 1;
 
-    // IF EXISTS, RETURN ERROR
-    if (curriculumExists && classDaysExists) {
-      return (
-        setIsSubmitting(false),
-        toast.error(`Turma já existe no nosso banco de dados... ❕`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        })
+            // Se o documento de contador existir, pega o valor atual
+            if (countersDoc.exists()) {
+              publicId = countersDoc.data().value;
+            }
+            await secureSetDoc(doc(db, "curriculum", commonId), {
+              publicId,
+              id: commonId,
+              schoolId: data.schoolId,
+              schoolClassIds: data.schoolClassIds,
+              schoolCourseId: data.schoolCourseId,
+              scheduleId: data.scheduleId,
+              classDayId: classDaysId,
+              teacherId: data.teacherId,
+              students: [],
+              experimentalStudents: [],
+              waitingList: [],
+              placesAvailable: data.placesAvailable,
+              updatedAt: serverTimestamp(),
+            });
+            setIsSubmitting(false);
+            // Atualiza ou cria o contador, garantindo que o publicId seja único e crescente
+            transaction.set(
+              countersRef,
+              { value: publicId + 1 },
+              { merge: true }
+            );
+            resetForm();
+            toast.success(`Turma criada com sucesso! 👌`, {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            });
+            setIsSubmitting(false);
+          });
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
+
+      // CHECKING IF CURRICULUM EXISTS ON DATABASE
+      const curriculumExists = curriculumDatabaseData.find(
+        (curriculum) =>
+          curriculum.schoolId === data.schoolId &&
+          curriculum.schoolClassIds === data.schoolClassIds &&
+          curriculum.schoolCourseId === data.schoolCourseId &&
+          curriculum.scheduleId === data.scheduleId &&
+          curriculum.teacherId === data.teacherId
       );
+      const classDaysExists = classDaysDatabaseData.find(
+        (classDay) => classDay.name === classDayName.join(" - ")
+      );
+
+      // IF EXISTS, RETURN ERROR
+      if (curriculumExists && classDaysExists) {
+        return (
+          setIsSubmitting(false),
+          toast.error(`Turma já existe no nosso banco de dados... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
+        );
+      } else {
+        // IF NOT EXISTS, CREATE CLASSDAYS AND CURRICULUM
+        await addClassDays();
+        await addCurriculum();
+      }
     } else {
-      // IF NOT EXISTS, CREATE CLASSDAYS AND CURRICULUM
-      addClassDays();
-      addCurriculum();
+      setIsSubmitting(false);
     }
   };
 
@@ -793,7 +811,7 @@ export function InsertCurriculum() {
         userFullData.role !== "user" && (
           <h1 className="font-bold text-2xl my-4">Adicionar Turma</h1>
         )}
-
+      {userFullData?.role === "root" && <CreateCurriculumFromJson />}
       {/* FORM */}
       <form
         onSubmit={handleSubmit(handleAddCurriculum)}
@@ -822,8 +840,8 @@ export function InsertCurriculum() {
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolSelect"
             onChange={(e) => {
@@ -854,8 +872,8 @@ export function InsertCurriculum() {
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolCourseId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolCourseSelect"
             onChange={(e) => {
@@ -886,8 +904,8 @@ export function InsertCurriculum() {
             defaultValue={" -- select an option -- "}
             className={
               errors.scheduleId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="scheduleSelect"
             onChange={(e) => {
@@ -922,8 +940,8 @@ export function InsertCurriculum() {
             defaultValue={" -- select an option -- "}
             className={
               errors.teacherId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="teacherSelect"
             onChange={(e) => {
@@ -958,8 +976,8 @@ export function InsertCurriculum() {
             placeholder={errors.placesAvailable ? "É necessário um" : "99999"}
             className={
               errors.placesAvailable
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             onChange={(e) => {
               setCurriculumData({
@@ -998,7 +1016,7 @@ export function InsertCurriculum() {
             disabled={isSubmitting}
             readOnly
             placeholder="Selecione os dias para formar o Identificador dos Dias de Aula"
-            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             value={classDayName.length > 0 ? classDayName.join(" - ") : ""}
           />
         </div>
@@ -1017,7 +1035,7 @@ export function InsertCurriculum() {
             name="curriculumName"
             disabled
             placeholder="Escolha as opções acima para visualizar o nome da Turma"
-            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+            className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             value={
               curriculumNameFilled ? curriculumFormattedName.formattedName : ""
             }
@@ -1104,7 +1122,7 @@ export function InsertCurriculum() {
           )}
 
         {/** CHECKBOX CONFIRM INSERT */}
-        {curriculumNameFilled &&
+        {/* {curriculumNameFilled &&
           curriculumFormattedName.schoolClassNames.length > 0 && (
             <div className="flex justify-center items-center gap-2 mt-6">
               <input
@@ -1123,7 +1141,7 @@ export function InsertCurriculum() {
                 Confirmar criação da Turma
               </label>
             </div>
-          )}
+          )} */}
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4 justify-center">

@@ -1,12 +1,18 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useContext } from "react";
+import {
+  useState,
+  useEffect,
+  useContext,
+  Dispatch,
+  SetStateAction,
+} from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { getFunctions } from "firebase/functions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useHttpsCallable } from "react-firebase-hooks/functions";
-import { doc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getFirestore, serverTimestamp } from "firebase/firestore";
 
 import { app, initFirebase } from "../../db/Firebase";
 import { CreateUserValidationZProps } from "../../@types";
@@ -17,15 +23,38 @@ import {
   GlobalDataContext,
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
+import BackdropModal from "../layoutComponents/BackdropModal";
+import SettingsMenuModal from "../layoutComponents/SettingsMenuModal";
+import { SettingsMenuArrayProps } from "../../pages/Settings";
+import SettingsSectionSubHeader from "../layoutComponents/SettingsSectionSubHeader";
+import { secureSetDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
 
-export function InsertUser() {
+interface InsertUserProps {
+  renderSettingsMenu(itemMenu: string): JSX.Element | undefined;
+  itemsMenu: SettingsMenuArrayProps[];
+  settingsMenu: boolean;
+  setSettingsMenu: Dispatch<SetStateAction<boolean>>;
+  showSettingsPage: { page: string };
+}
+
+export function InsertUser({
+  itemsMenu,
+  renderSettingsMenu,
+  settingsMenu,
+  setSettingsMenu,
+  showSettingsPage,
+}: InsertUserProps) {
   // GET GLOBAL DATA
-  const { appUsersDatabaseData, isSubmitting, setIsSubmitting } = useContext(
-    GlobalDataContext
-  ) as GlobalDataContextType;
+  const {
+    userFullData,
+    appUsersDatabaseData,
+    isSubmitting,
+    setIsSubmitting,
+    handleConfirmationToSubmit,
+  } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // INITIALIZING FIREBASE AND FIREBASE ADMIN
   initFirebase();
@@ -41,7 +70,6 @@ export function InsertUser() {
     confirmPassword: "",
     phone: "",
     role: "user",
-    confirmInsert: false,
   });
 
   // PHONE FORMATTED STATE
@@ -77,7 +105,6 @@ export function InsertUser() {
       confirmPassword: "",
       phone: "",
       role: "user",
-      confirmInsert: false,
     },
   });
 
@@ -90,7 +117,6 @@ export function InsertUser() {
       confirmPassword: "",
       phone: "",
       role: "user",
-      confirmInsert: false,
     });
     setPhoneFormatted({
       ddd: "DDD",
@@ -107,7 +133,6 @@ export function InsertUser() {
     setValue("confirmPassword", userData.confirmPassword);
     setValue("phone", userData.phone);
     setValue("role", userData.role);
-    setValue("confirmInsert", userData.confirmInsert);
   }, [userData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -119,7 +144,6 @@ export function InsertUser() {
       errors.confirmPassword,
       errors.phone,
       errors.role,
-      errors.confirmInsert,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -136,53 +160,23 @@ export function InsertUser() {
   const handleAddUser: SubmitHandler<CreateUserValidationZProps> = async (
     data
   ) => {
-    setIsSubmitting(true);
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Adicionar Professor",
+      text: "Tem certeza que deseja adicionar este Professor?",
+      icon: "question",
+      confirmButtonText: "Sim, adicionar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
 
-    // CHECK PHONE IS NOT EMPTY
-    if (!userData.phone) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, insira um número de telefone para o usuário ${data.name}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
 
-    // CHECK INSERT CONFIRMATION
-    if (!data.confirmInsert) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar o usuário ${data.name}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    // CHECKING IF EMAIL EXISTS ON DATABASE
-    const userEmailExist = appUsersDatabaseData.find(
-      (user) => user.email === data.email
-    );
-
-    const userPhoneExist = appUsersDatabaseData.find(
-      (user) => user.phone === data.phone
-    );
-
-    // IF EMAIL EXISTS, RETURN ERROR
-    if (userEmailExist) {
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `Já existe um usuário com este e-mail em nosso banco de dados... ❕`,
+      // CHECK PHONE IS NOT EMPTY
+      if (!userData.phone) {
+        setIsSubmitting(false);
+        return toast.error(
+          `Por favor, insira um número de telefone para o usuário ${data.name}... ☑️`,
           {
             theme: "colored",
             closeOnClick: true,
@@ -190,43 +184,108 @@ export function InsertUser() {
             draggable: true,
             autoClose: 3000,
           }
-        )
+        );
+      }
+
+      // CHECK INSERT CONFIRMATION
+      // if (!data.confirmInsert) {
+      //   setIsSubmitting(false);
+      //   return toast.error(
+      //     `Por favor, clique em "CONFIRMAR CRIAÇÃO" para adicionar o usuário ${data.name}... ☑️`,
+      //     {
+      //       theme: "colored",
+      //       closeOnClick: true,
+      //       pauseOnHover: true,
+      //       draggable: true,
+      //       autoClose: 3000,
+      //     }
+      //   );
+      // }
+
+      // CHECKING IF EMAIL EXISTS ON DATABASE
+      const userEmailExist = appUsersDatabaseData.find(
+        (user) => user.email === data.email
       );
-      // IF PHONE EXISTS, RETURN ERROR
-    } else if (userPhoneExist) {
-      return (
-        setIsSubmitting(false),
-        toast.error(
-          `Já existe um usuário com este número de telefone em nosso banco de dados... ❕`,
-          {
-            theme: "colored",
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            autoClose: 3000,
-          }
-        )
+
+      const userPhoneExist = appUsersDatabaseData.find(
+        (user) => user.phone === data.phone
       );
-    } else {
-      // IF NOT EXISTS, CREATE
-      try {
-        await createAppUser(data).then(async (result) => {
-          if (result) {
-            // CHECKING IF NEW USER IS A TEACHER
-            if (data.role === "teacher") {
-              // GET USER ID FROM FIREBASE CLOUD FUNCTIONS
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const userUid: any = result.data;
-              try {
-                // CREATE TEACHER ON SCHOOL DATABASE
-                await setDoc(doc(db, "teachers", userUid), {
-                  id: userUid,
-                  name: data.name,
-                  email: data.email,
-                  phone: data.phone,
-                  haveAccount: true,
-                  updatedAt: serverTimestamp(),
-                });
+
+      // IF EMAIL EXISTS, RETURN ERROR
+      if (userEmailExist) {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Já existe um usuário com este e-mail em nosso banco de dados... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+        // IF PHONE EXISTS, RETURN ERROR
+      } else if (userPhoneExist) {
+        return (
+          setIsSubmitting(false),
+          toast.error(
+            `Já existe um usuário com este número de telefone em nosso banco de dados... ❕`,
+            {
+              theme: "colored",
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              autoClose: 3000,
+            }
+          )
+        );
+      } else {
+        // IF NOT EXISTS, CREATE
+        try {
+          await createAppUser(data).then(async (result) => {
+            if (result) {
+              // CHECKING IF NEW USER IS A TEACHER
+              if (data.role === "teacher") {
+                // GET USER ID FROM FIREBASE CLOUD FUNCTIONS
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const userUid: any = result.data;
+                try {
+                  // CREATE TEACHER ON SCHOOL DATABASE
+                  await secureSetDoc(doc(db, "teachers", userUid), {
+                    id: userUid,
+                    name: data.name,
+                    email: data.email,
+                    phone: data.phone,
+                    haveAccount: true,
+                    updatedAt: serverTimestamp(),
+                  });
+                  toast.success(`Usuário ${data.name} criado com sucesso! 👌`, {
+                    theme: "colored",
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    autoClose: 3000,
+                  });
+                  resetForm();
+                  setIsSubmitting(false);
+                } catch (error) {
+                  console.log(error);
+                  toast.error(
+                    `Usuário criado, porém correu um erro ao criar o professor no banco de dados da escola, contate o suporte... 🤯`,
+                    {
+                      theme: "colored",
+                      closeOnClick: true,
+                      pauseOnHover: true,
+                      draggable: true,
+                      autoClose: 3000,
+                    }
+                  );
+                  resetForm();
+                  setIsSubmitting(false);
+                }
+              } else {
                 toast.success(`Usuário ${data.name} criado com sucesso! 👌`, {
                   theme: "colored",
                   closeOnClick: true,
@@ -236,46 +295,24 @@ export function InsertUser() {
                 });
                 resetForm();
                 setIsSubmitting(false);
-              } catch (error) {
-                console.log(error);
-                toast.error(
-                  `Usuário criado, porém correu um erro ao criar o professor no banco de dados da escola, contate o suporte... 🤯`,
-                  {
-                    theme: "colored",
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    autoClose: 3000,
-                  }
-                );
-                resetForm();
-                setIsSubmitting(false);
               }
-            } else {
-              toast.success(`Usuário ${data.name} criado com sucesso! 👌`, {
-                theme: "colored",
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                autoClose: 3000,
-              });
-              resetForm();
-              setIsSubmitting(false);
             }
-          }
-        });
-      } catch (e) {
-        console.error("CONSOLE.ERROR: ", e);
-        console.log("ESSE É O ERROR", e);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
+          });
+        } catch (e) {
+          console.error("CONSOLE.ERROR: ", e);
+          console.log("ESSE É O ERROR", e);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
       }
+    } else {
+      setIsSubmitting(false);
     }
   };
 
@@ -285,7 +322,15 @@ export function InsertUser() {
       <SubmitLoading isSubmitting={isSubmitting} whatsGoingOn="criando" />
 
       {/* PAGE TITLE */}
-      <h1 className="font-bold text-2xl my-4">Adicionar Usuário</h1>
+      <div className="flex justify-center items-center mt-2 py-2 gap-4">
+        <h1 className="text-lg font-semibold">Configurações</h1>
+      </div>
+      <SettingsSectionSubHeader
+        setSettingsMenu={setSettingsMenu}
+        settingsMenu={settingsMenu}
+        data={itemsMenu}
+        showSettingsPage={showSettingsPage}
+      />
 
       {/* FORM */}
       <form
@@ -315,15 +360,14 @@ export function InsertUser() {
             }
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={userData.name}
             onChange={(e) => {
               setUserData({
                 ...userData,
                 name: e.target.value,
-                confirmInsert: false,
               });
             }}
           />
@@ -342,7 +386,7 @@ export function InsertUser() {
             E-mail:{" "}
           </label>
           <input
-            type="text"
+            type="email"
             name="email"
             disabled={isSubmitting}
             placeholder={
@@ -352,15 +396,14 @@ export function InsertUser() {
             }
             className={
               errors.email
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={userData.email}
             onChange={(e) => {
               setUserData({
                 ...userData,
                 email: e.target.value,
-                confirmInsert: false,
               });
             }}
           />
@@ -387,15 +430,14 @@ export function InsertUser() {
             }
             className={
               errors.password
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={userData.password}
             onChange={(e) => {
               setUserData({
                 ...userData,
                 password: e.target.value,
-                confirmInsert: false,
               });
             }}
           />
@@ -424,15 +466,14 @@ export function InsertUser() {
             }
             className={
               errors.confirmPassword
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             value={userData.confirmPassword}
             onChange={(e) => {
               setUserData({
                 ...userData,
                 confirmPassword: e.target.value,
-                confirmInsert: false,
               });
             }}
           />
@@ -467,7 +508,6 @@ export function InsertUser() {
                     ...phoneFormatted,
                     ddd: e.target.value,
                   });
-                  setUserData({ ...userData, confirmInsert: false });
                 }}
               >
                 <BrazilianStateSelectOptions />
@@ -491,7 +531,6 @@ export function InsertUser() {
                       .replace(/[^0-9.]/g, "")
                       .replace(/(\..*?)\..*/g, "$1"),
                   });
-                  setUserData({ ...userData, confirmInsert: false });
                 }}
               />
             </div>
@@ -516,8 +555,8 @@ export function InsertUser() {
             value={userData.role}
             className={
               errors.name
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="role"
             onChange={(e) => {
@@ -530,7 +569,6 @@ export function InsertUser() {
                 setUserData({
                   ...userData,
                   role: e.target.value,
-                  confirmInsert: false,
                 });
               }
             }}
@@ -543,7 +581,7 @@ export function InsertUser() {
         </div>
 
         {/** CHECKBOX CONFIRM INSERT */}
-        <div className="flex justify-center items-center gap-2 mt-6">
+        {/* <div className="flex justify-center items-center gap-2 mt-6">
           <input
             type="checkbox"
             name="confirmInsert"
@@ -561,7 +599,7 @@ export function InsertUser() {
               ? `Confirmar criação do Usuário: ${userData.name}`
               : `Confirmar criação`}
           </label>
-        </div>
+        </div> */}
 
         {/* SUBMIT AND RESET BUTTONS */}
         <div className="flex gap-2 mt-4">
@@ -587,6 +625,21 @@ export function InsertUser() {
           </button>
         </div>
       </form>
+      {/* BACKDROP */}
+      {settingsMenu && (
+        <BackdropModal
+          setDashboardMenu={setSettingsMenu}
+          setMobileMenuOpen={setSettingsMenu}
+        />
+      )}
+      {/* SETTINGS MENU DRAWER */}
+      <SettingsMenuModal
+        setSettingsMenu={setSettingsMenu}
+        settingsMenu={settingsMenu}
+        itemsMenu={itemsMenu}
+        renderSettingsMenu={renderSettingsMenu}
+        userFullData={userFullData}
+      />
     </div>
   );
 }

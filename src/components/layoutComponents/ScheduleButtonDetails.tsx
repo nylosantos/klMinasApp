@@ -8,17 +8,20 @@ import {
   GlobalDataContextType,
 } from "../../context/GlobalDataContext";
 import { HandleClickOpenFunctionProps } from "../../@types";
+import { FaList } from "react-icons/fa6";
 
 type ScheduleButtonDetailsProps = {
   id: string;
   handleClickOpen: ({ id, option }: HandleClickOpenFunctionProps) => void;
   handleDeleteSchedule?: () => void;
+  onCloseLogModal?: (schoolId: string) => void; // Função para fechar o modal
 };
 
 export function ScheduleButtonDetails({
   id,
   handleClickOpen,
   handleDeleteSchedule,
+  onCloseLogModal,
 }: ScheduleButtonDetailsProps) {
   // GET GLOBAL DATA
   const { userFullData } = useContext(
@@ -61,6 +64,15 @@ export function ScheduleButtonDetails({
 
         {userFullData && userFullData.role !== "user" && (
           <>
+            <MenuItem>
+              <button
+                className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-red-600/30"
+                onClick={() => onCloseLogModal && onCloseLogModal(id)}
+              >
+                <FaList />
+                Ver Logs
+              </button>
+            </MenuItem>
             <div className="my-1 h-px bg-white/5" />
             <MenuItem>
               <button

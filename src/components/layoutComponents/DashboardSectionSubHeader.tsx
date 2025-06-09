@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { IoIosAddCircleOutline } from "react-icons/io";
-import { UserFullDataProps } from "../../@types";
+import { StudentSearchProps, UserFullDataProps } from "../../@types";
 import { Dispatch, SetStateAction } from "react";
+import { formatUserName } from "../../custom";
 
 type DashboardSectionSubHeaderProps<T = unknown> = {
   userFullData: UserFullDataProps | undefined;
@@ -47,7 +49,7 @@ export default function DashboardSectionSubHeader<T>({
         ) : (
           userFullData && (
             <p className="md:hidden flex relative z-10 text-klGreen-500 dark:text-klOrange-500">
-              Olá, {userFullData.name.split(" ")[0]}
+              Olá, {formatUserName(userFullData.name.split(" ")[0])}
             </p>
           )
         )}
@@ -64,7 +66,16 @@ export default function DashboardSectionSubHeader<T>({
               }}
             >
               {title}:
-              <span className="text-klOrange-500">{dataArray.length}</span>
+              <span className="text-klOrange-500">
+                {title === "Alunos cadastrados"
+                  ? (
+                      dataArray.filter(
+                        //@ts-expect-error
+                        (student) => student.active
+                      ) as StudentSearchProps[]
+                    ).length
+                  : dataArray.length}
+              </span>
             </button>
           </div>
         )}

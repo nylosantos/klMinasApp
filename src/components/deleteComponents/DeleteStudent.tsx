@@ -28,7 +28,6 @@ export function DeleteStudent() {
     schoolDatabaseData,
     studentsDatabaseData,
     handleDeleteStudent,
-    setIsSubmitting,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // STUDENT DATA
@@ -40,7 +39,7 @@ export function DeleteStudent() {
       schoolId: "",
       schoolClassId: "",
       studentType: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     }
   );
 
@@ -162,10 +161,14 @@ export function DeleteStudent() {
     setLoadingData(true);
     if (studentData.studentType === "enrolled") {
       studentsDatabaseData.map((student) => {
-        if (student.curriculumIds) {
+        if (student.curriculums) {
           // ENROLLED STUDENTS
-          student.curriculumIds.map((studentCurriculum) => {
-            if (studentData.curriculumId === studentCurriculum.id) {
+          student.curriculums.map((studentCurriculum) => {
+            if (
+              studentData.curriculumId === studentCurriculum.id &&
+              !studentCurriculum.isExperimental &&
+              !studentCurriculum.isWaiting
+            ) {
               studentsToArray.push(student);
             }
           });
@@ -175,42 +178,29 @@ export function DeleteStudent() {
     }
     if (studentData.studentType === "experimental") {
       studentsDatabaseData.map((student) => {
-        if (student.experimentalCurriculumIds) {
+        if (student.curriculums) {
           // EXPERIMENTAL STUDENTS
-          student.experimentalCurriculumIds.map(
-            (studentExperimentalCurriculum) => {
-              if (
-                studentData.curriculumId === studentExperimentalCurriculum.id
-              ) {
-                studentsToArray.push(student);
-              }
+          student.curriculums.map((studentCurriculum) => {
+            if (
+              studentData.curriculumId === studentCurriculum.id &&
+              studentCurriculum.isExperimental
+            ) {
+              studentsToArray.push(student);
             }
-          );
+          });
         }
       });
       setStudentsArrayData(studentsToArray);
     }
     if (studentData.studentType === "all") {
       studentsDatabaseData.map((student) => {
-        if (student.curriculumIds || student.experimentalCurriculumIds) {
-          // ENROLLED STUDENTS
-          student.curriculumIds.map((studentCurriculum) => {
+        if (student.curriculums) {
+          student.curriculums.map((studentCurriculum) => {
             if (studentData.curriculumId === studentCurriculum.id) {
               studentsToArray.push(student);
             }
           });
-          // EXPERIMENTAL STUDENTS
-          student.experimentalCurriculumIds.map(
-            (studentExperimentalCurriculum) => {
-              if (
-                studentData.curriculumId === studentExperimentalCurriculum.id
-              ) {
-                studentsToArray.push(student);
-              }
-            }
-          );
         }
-        setStudentsArrayData(studentsToArray);
       });
     }
     setLoadingData(false);
@@ -220,9 +210,6 @@ export function DeleteStudent() {
   const [loadingData, setLoadingData] = useState(false);
 
   // -------------------------- END OF STUDENTS SELECT STATES AND FUNCTIONS -------------------------- //
-
-  // SUBMITTING STATE
-  // const [isSubmitting, setIsSubmitting] = useState(false);
 
   // REACT HOOK FORM SETTINGS
   const {
@@ -239,7 +226,7 @@ export function DeleteStudent() {
       schoolId: "",
       schoolClassId: "",
       studentType: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     },
   });
 
@@ -261,7 +248,7 @@ export function DeleteStudent() {
       schoolId: "",
       schoolClassId: "",
       studentType: "",
-      confirmDelete: false,
+      // confirmDelete: false,
     });
     setStudentsArrayData([]);
     setIsSelected(false);
@@ -275,7 +262,7 @@ export function DeleteStudent() {
     setValue("curriculumId", studentData.curriculumId);
     setValue("schoolId", studentData.schoolId);
     setValue("schoolClassId", studentData.schoolClassId);
-    setValue("confirmDelete", studentData.confirmDelete);
+    // setValue("confirmDelete", studentData.confirmDelete);
   }, [studentData]);
 
   // SET REACT HOOK FORM ERRORS
@@ -285,7 +272,7 @@ export function DeleteStudent() {
       errors.curriculumId,
       errors.schoolId,
       errors.schoolClassId,
-      errors.confirmDelete,
+      // errors.confirmDelete,
     ];
     fullErrors.map((fieldError) => {
       toast.error(fieldError?.message, {
@@ -302,22 +289,6 @@ export function DeleteStudent() {
   const handleSubmitDeleteStudent: SubmitHandler<
     DeleteStudentValidationZProps
   > = async (data) => {
-    setIsSubmitting(true);
-
-    // CHECK DELETE CONFIRMATION
-    if (!data.confirmDelete) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, clique em "CONFIRMAR EXCLUSÃO" para excluir o aluno... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
     handleDeleteStudent(data.studentId, resetForm);
   };
 
@@ -357,8 +328,8 @@ export function DeleteStudent() {
             defaultValue={" -- select an option -- "}
             className={
               errors.schoolId
-                ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
             }
             name="schoolSelect"
             onChange={(e) => {
@@ -388,9 +359,9 @@ export function DeleteStudent() {
             className={
               studentData.schoolId
                 ? errors.schoolClassId
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             }
             name="schoolClassSelect"
             onChange={(e) => {
@@ -432,16 +403,16 @@ export function DeleteStudent() {
             className={
               studentData.schoolClassId
                 ? errors.curriculumId
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             }
             name="curriculumSelect"
             onChange={(e) => {
               setStudentData({
                 ...studentData,
                 curriculumId: e.target.value,
-                confirmDelete: false,
+                // confirmDelete: false,
               });
             }}
           >
@@ -482,9 +453,9 @@ export function DeleteStudent() {
             className={
               studentData.curriculumId
                 ? errors.studentType
-                  ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                  : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                  : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             }
             name="studentType"
             onChange={(e) => {
@@ -496,7 +467,7 @@ export function DeleteStudent() {
                 setStudentData({
                   ...studentData,
                   studentType: e.target.value,
-                  confirmDelete: false,
+                  // confirmDelete: false,
                 });
               }
             }}
@@ -567,7 +538,7 @@ export function DeleteStudent() {
                                 ...studentData,
                                 studentId: e.target.value,
                                 studentName: student.name,
-                                confirmDelete: false,
+                                // confirmDelete: false,
                               })
                             }
                           />
@@ -675,7 +646,7 @@ export function DeleteStudent() {
                   </div>
 
                   {/** CHECKBOX CONFIRM DELETE */}
-                  <div className="flex justify-center items-center gap-2 mt-6">
+                  {/* <div className="flex justify-center items-center gap-2 mt-6">
                     <input
                       type="checkbox"
                       name="confirmDelete"
@@ -691,7 +662,7 @@ export function DeleteStudent() {
                     <label htmlFor="confirmDelete" className="text-sm">
                       Confirmar exclusão do Aluno
                     </label>
-                  </div>
+                  </div> */}
                 </>
               ) : (
                 <>

@@ -30,9 +30,7 @@ import {
   arrayRemove,
   arrayUnion,
   doc,
-  getFirestore,
-  setDoc,
-  updateDoc,
+  getFirestore
 } from "firebase/firestore";
 import { app } from "../../db/Firebase";
 import { EditDashboardCurriculumButton } from "../layoutComponents/EditDashboardCurriculumButton";
@@ -40,6 +38,7 @@ import SchoolStageSelect from "./SchoolStageSelect";
 import ClassCallsHeader from "./ClassCallsHeader";
 import { DateObject } from "react-multi-date-picker";
 import StudentsListForTeachers from "./StudentsListForTeachers";
+import { secureSetDoc, secureUpdateDoc } from "../../hooks/firestoreMiddleware";
 
 // INITIALIZING FIRESTORE DB
 const db = getFirestore(app);
@@ -54,6 +53,7 @@ interface EditCurriculumFormProps {
   setIsSubmitting: (isSubmitting: boolean) => void;
   // handleDeleteClass?: () => void;
   handleDeleteClass?: () => void;
+  onCloseLogModal?: (curriculumId: string) => void; // Função para fechar o modal
 }
 
 export default function EditCurriculumForm({
@@ -65,21 +65,26 @@ export default function EditCurriculumForm({
   onClose,
   setIsSubmitting,
   handleDeleteClass,
+  onCloseLogModal
 }: EditCurriculumFormProps) {
   // GET GLOBAL DATA
   const {
     classDaysDatabaseData,
     curriculumDatabaseData,
     scheduleDatabaseData,
-    schoolCourseDatabaseData,
     studentsDatabaseData,
     teacherDatabaseData,
     userFullData,
-    calcStudentPrice,
     handleOneCurriculumDetails,
+    getWaitingCurriculums,
+    calculateStudentMonthlyFee,
+    handleConfirmationToSubmit,
+    calculatePlacesAvailable,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   const [dashboardView, setDasboardView] = useState(true);
+
+  const [placesAvailable, setplacesAvailable] = useState<number>(0);
 
   useEffect(() => {
     !onlyView && setDasboardView(false);
@@ -511,6 +516,20 @@ export default function EditCurriculumForm({
   }, [teacherSelectedData]);
   // -------------------------- END OF TEACHER SELECT STATES AND FUNCTIONS -------------------------- //
 
+  async function handlePlacesAvailable() {
+    const placesValues = await calculatePlacesAvailable(
+      curriculumId,
+      classDaySelectedData!.indexDays
+    );
+    setplacesAvailable(placesValues.totalAvailableVacancies);
+  }
+
+  useEffect(() => {
+    if (classDaySelectedData && curriculumId) {
+      handlePlacesAvailable();
+    }
+  }, [classDaySelectedData, curriculumId]);
+
   // REACT HOOK FORM SETTINGS
   const {
     handleSubmit,
@@ -592,241 +611,255 @@ export default function EditCurriculumForm({
     });
   }, [errors]);
 
+  // COMPARE INDEX CLASS DAYS FUNCTION
+  function arraysEqual(
+    oldIndexClassDays: number[],
+    newIndexClassDays: number[]
+  ) {
+    return (
+      oldIndexClassDays.length === newIndexClassDays.length &&
+      oldIndexClassDays.every(
+        (value, index) => value === newIndexClassDays[index]
+      )
+    );
+  }
+
   // SUBMIT DATA FUNCTION
   const handleEditCurriculum: SubmitHandler<
     EditCurriculumValidationZProps
   > = async (data) => {
-    // CHECKING IF CURRICULUM AND CLASSDAYS EXISTS ON DATABASE
-    const curriculumExists = curriculumDatabaseData.find(
-      (curriculum) => curriculum.id === data.curriculumId
-    );
-    const classDaysExists = classDaysDatabaseData.find(
-      (classDays) => classDays.id === data.classDayId
-    );
+    const confirmation = await handleConfirmationToSubmit({
+      title: "Editar Turma",
+      text: "Tem certeza que deseja confirmar as mudanças?",
+      icon: "question",
+      confirmButtonText: "Sim, confirmar",
+      cancelButtonText: "Cancelar",
+      showCancelButton: true,
+    });
+    if (confirmation.isConfirmed) {
+      setIsSubmitting(true);
+      // CHECKING IF CURRICULUM AND CLASSDAYS EXISTS ON DATABASE
+      const curriculumExists = curriculumDatabaseData.find(
+        (curriculum) => curriculum.id === data.curriculumId
+      );
+      const classDaysExists = classDaysDatabaseData.find(
+        (classDays) => classDays.id === data.classDayId
+      );
 
-    // EDIT CURRICULUM FUNCTION
-    const editCurriculum = async () => {
-      try {
-        await updateDoc(doc(db, "curriculum", data.curriculumId), {
-          scheduleId: data.scheduleId,
-          teacherId: data.teacherId,
-          placesAvailable: data.placesAvailable,
-          schoolClassIds: data.schoolClassIds,
-        });
-        resetForm();
-        toast.success(`Turma alterada com sucesso! 👌`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      } catch (error) {
-        console.log("ESSE É O ERROR", error);
-        toast.error(`Ocorreu um erro... 🤯`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        });
-        setIsSubmitting(false);
-      }
-    };
+      // EDIT CURRICULUM FUNCTION
+      const editCurriculum = async () => {
+        try {
+          await secureUpdateDoc(doc(db, "curriculum", data.curriculumId), {
+            scheduleId: data.scheduleId,
+            teacherId: data.teacherId,
+            placesAvailable: data.placesAvailable,
+            schoolClassIds: data.schoolClassIds,
+          });
+          resetForm();
+          toast.success(`Turma alterada com sucesso! 👌`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        } catch (error) {
+          console.log("ESSE É O ERROR", error);
+          toast.error(`Ocorreu um erro... 🤯`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          });
+          setIsSubmitting(false);
+        }
+      };
 
-    const editStudentsClassDays = async (daysIncluded: number[]) => {
-      if (curriculumSelectedData) {
-        // CHANGING STUDENT INDEX DAYS IN CURRICULUM DATABASE
-        curriculumSelectedData.students.map(async (student) => {
-          const daysToDelete = student.indexDays.filter(
-            (days) => !daysIncluded.includes(days)
-          );
-          const daysToRemain = student.indexDays.filter((days) =>
-            daysIncluded.includes(days)
-          );
-          if (daysToDelete.length > 0) {
-            await updateDoc(doc(db, "curriculum", data.curriculumId), {
-              students: arrayRemove(student),
-            });
-            await updateDoc(doc(db, "curriculum", data.curriculumId), {
-              students: arrayUnion({
-                date: student.date,
-                id: student.id,
-                indexDays: daysToRemain,
-              }),
-            });
-            // CHANGING STUDENT INDEX DAYS AND PRICE IN STUDENT DATABASE
-            const studentToChange = studentsDatabaseData.find(
-              (studentOnDatabase) => student.id === studentOnDatabase.id
+      const editStudentsClassDays = async (daysIncluded: number[]) => {
+        if (curriculumSelectedData) {
+          // CHANGING STUDENT INDEX DAYS IN CURRICULUM DATABASE
+          curriculumSelectedData.students.map(async (student) => {
+            const daysToDelete = student.indexDays.filter(
+              (days) => !daysIncluded.includes(days)
             );
-            if (studentToChange) {
-              const curriculumInsideStudentToChange =
-                studentToChange.curriculumIds.find(
-                  (curriculumInsideStudent) =>
-                    curriculumInsideStudent.id === data.curriculumId
-                );
-              const schoolCourseDetails = schoolCourseDatabaseData.find(
-                (schoolCourse) => schoolCourse.id === data.schoolCourseId
+            const daysToRemain = student.indexDays.filter((days) =>
+              daysIncluded.includes(days)
+            );
+            if (daysToDelete.length > 0) {
+              await secureUpdateDoc(doc(db, "curriculum", data.curriculumId), {
+                students: arrayRemove(student),
+              });
+              await secureUpdateDoc(doc(db, "curriculum", data.curriculumId), {
+                students: arrayUnion({
+                  date: student.date,
+                  id: student.id,
+                  indexDays: daysToRemain,
+                  isExperimental: student.isExperimental,
+                  isWaiting: student.isWaiting,
+                }),
+              });
+              // CHANGING STUDENT INDEX DAYS AND PRICE IN STUDENT DATABASE
+              const studentToChange = studentsDatabaseData.find(
+                (studentOnDatabase) => student.id === studentOnDatabase.id
               );
-              // CHANGING PRICE OF CURRICULUM THAT HAS CLASS DAYS CHANGED
-              if (schoolCourseDetails) {
+              if (studentToChange) {
+                const curriculumInsideStudentToChange =
+                  studentToChange.curriculums.find(
+                    (curriculumInsideStudent) =>
+                      curriculumInsideStudent.id === data.curriculumId
+                  );
+                // CHANGING PRICE OF CURRICULUM THAT HAS CLASS DAYS CHANGED
                 if (curriculumInsideStudentToChange) {
-                  let studentFinalPrice;
-                  if (daysToRemain.length === schoolCourseDetails.bundleDays) {
-                    studentFinalPrice = schoolCourseDetails.priceBundle;
-                  } else if (
-                    daysToRemain.length > schoolCourseDetails.bundleDays
-                  ) {
-                    studentFinalPrice =
-                      schoolCourseDetails.priceUnit * daysToRemain.length;
-                  } else {
-                    const rest =
-                      daysToRemain.length % schoolCourseDetails.bundleDays;
-                    const result = Math.floor(
-                      daysToRemain.length / schoolCourseDetails.bundleDays
-                    );
-                    if (isNaN(result) || isNaN(rest)) {
-                      studentFinalPrice = 0;
-                    } else {
-                      studentFinalPrice =
-                        result * schoolCourseDetails.priceBundle +
-                        rest * schoolCourseDetails.priceUnit;
-                    }
-                  }
-                  await updateDoc(doc(db, "students", student.id), {
-                    curriculumIds: arrayRemove(curriculumInsideStudentToChange),
+                  await secureUpdateDoc(doc(db, "students", student.id), {
+                    curriculums: arrayRemove(curriculumInsideStudentToChange),
                   });
-                  await updateDoc(doc(db, "students", student.id), {
-                    curriculumIds: arrayUnion({
+                  await secureUpdateDoc(doc(db, "students", student.id), {
+                    curriculums: arrayUnion({
                       date: curriculumInsideStudentToChange.date,
                       id: curriculumInsideStudentToChange.id,
                       indexDays: daysToRemain,
                       isExperimental:
                         curriculumInsideStudentToChange.isExperimental,
-                      price: studentFinalPrice,
+                      isWaiting: curriculumInsideStudentToChange.isWaiting,
                     }),
                   });
                 }
+                // UPDATING STUDENT PRICE WITH NEW CURRICULUM PRICE
+                const newStudentPrices = await calculateStudentMonthlyFee(
+                  studentToChange.id
+                );
+                await secureUpdateDoc(doc(db, "students", student.id), {
+                  fullPrice: +newStudentPrices.fullPrice.toFixed(2),
+                  appliedPrice: +newStudentPrices.appliedPrice.toFixed(2),
+                  customDiscount: newStudentPrices.customDiscount,
+                  customDiscountValue: newStudentPrices.customDiscountValue,
+                  employeeDiscount: newStudentPrices.employeeDiscount,
+                  familyDiscount: newStudentPrices.familyDiscount,
+                  secondCourseDiscount: newStudentPrices.secondCourseDiscount,
+                });
+                // UPDATING STUDENT FAMILY PRICE WITH NEW CURRICULUM PRICE
+                if (
+                  newStudentPrices.studentFamilyToUpdate &&
+                  newStudentPrices.studentFamilyToUpdate.length > 0
+                ) {
+                  newStudentPrices.studentFamilyToUpdate.map(async (family) => {
+                    await secureUpdateDoc(doc(db, "students", family.familyId), {
+                      fullPrice: +family.fullPrice.toFixed(2),
+                      appliedPrice: +family.appliedPrice.toFixed(2),
+                      customDiscount: family.customDiscount,
+                      customDiscountValue: family.customDiscountValue,
+                      employeeDiscount: family.employeeDiscount,
+                      familyDiscount: family.familyDiscount,
+                      secondCourseDiscount: family.secondCourseDiscount,
+                    });
+                  });
+                }
               }
-              // UPDATING STUDENT PRICE WITH NEW CURRICULUM PRICE
-              await calcStudentPrice(studentToChange.id);
+            }
+          });
+        }
+      };
+
+      // EDIT CLASS DAY FUNCTION
+      const editClassDay = async () => {
+        const daysIncluded: number[] = [];
+        if (classDayEditData.sunday) {
+          daysIncluded.push(0);
+        }
+        if (classDayEditData.monday) {
+          daysIncluded.push(1);
+        }
+        if (classDayEditData.tuesday) {
+          daysIncluded.push(2);
+        }
+        if (classDayEditData.wednesday) {
+          daysIncluded.push(3);
+        }
+        if (classDayEditData.thursday) {
+          daysIncluded.push(4);
+        }
+        if (classDayEditData.friday) {
+          daysIncluded.push(5);
+        }
+        if (classDayEditData.saturday) {
+          daysIncluded.push(6);
+        }
+        // CHECKING IF CLASSDAYS WAS CHANGED
+        if (classDaysExists) {
+          if (!arraysEqual(classDaysExists.indexDays, daysIncluded)) {
+            try {
+              await secureSetDoc(
+                doc(db, "classDays", data.classDayId),
+                {
+                  name:
+                    classDayName.length > 0
+                      ? classDayName.join(" - ")
+                      : curriculumFormattedName,
+                  indexDays: daysIncluded,
+                  indexNames: classDayName,
+                },
+                { merge: true }
+              );
+              editStudentsClassDays(daysIncluded);
+            } catch (error) {
+              console.log("ESSE É O ERROR", error);
+              toast.error(`Ocorreu um erro... 🤯`, {
+                theme: "colored",
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                autoClose: 3000,
+              });
+              setIsSubmitting(false);
             }
           }
-        });
-      }
-    };
+        }
+      };
 
-    // COMPARE INDEX CLASS DAYS FUNCTION
-    function arraysEqual(
-      oldIndexClassDays: number[],
-      newIndexClassDays: number[]
-    ) {
-      return (
-        oldIndexClassDays.length === newIndexClassDays.length &&
-        oldIndexClassDays.every(
-          (value, index) => value === newIndexClassDays[index]
-        )
-      );
-    }
-
-    // EDIT CLASS DAY FUNCTION
-    const editClassDay = async () => {
-      const daysIncluded: number[] = [];
-      if (classDayEditData.sunday) {
-        daysIncluded.push(0);
-      }
-      if (classDayEditData.monday) {
-        daysIncluded.push(1);
-      }
-      if (classDayEditData.tuesday) {
-        daysIncluded.push(2);
-      }
-      if (classDayEditData.wednesday) {
-        daysIncluded.push(3);
-      }
-      if (classDayEditData.thursday) {
-        daysIncluded.push(4);
-      }
-      if (classDayEditData.friday) {
-        daysIncluded.push(5);
-      }
-      if (classDayEditData.saturday) {
-        daysIncluded.push(6);
-      }
-      // CHECKING IF CLASSDAYS WAS CHANGED
-      if (classDaysExists) {
-        if (!arraysEqual(classDaysExists.indexDays, daysIncluded)) {
-          try {
-            await setDoc(
-              doc(db, "classDays", data.classDayId),
-              {
-                name:
-                  classDayName.length > 0
-                    ? classDayName.join(" - ")
-                    : curriculumFormattedName,
-                indexDays: daysIncluded,
-                indexNames: classDayName,
-              },
-              { merge: true }
-            );
-            editStudentsClassDays(daysIncluded);
-          } catch (error) {
-            console.log("ESSE É O ERROR", error);
-            toast.error(`Ocorreu um erro... 🤯`, {
-              theme: "colored",
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              autoClose: 3000,
-            });
-            setIsSubmitting(false);
+      // CHECK IF ANY DAY WAS PICKED
+      if (
+        !classDayEditData.sunday &&
+        !classDayEditData.monday &&
+        !classDayEditData.tuesday &&
+        !classDayEditData.wednesday &&
+        !classDayEditData.thursday &&
+        !classDayEditData.friday &&
+        !classDayEditData.saturday
+      ) {
+        setIsSubmitting(false);
+        return toast.error(
+          `Por favor, selecione algum dia para editar a Turma ${curriculumFormattedName}... ☑️`,
+          {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
           }
-        }
+        );
       }
-    };
 
-    setIsSubmitting(true);
-
-    // CHECK IF ANY DAY WAS PICKED
-    if (
-      !classDayEditData.sunday &&
-      !classDayEditData.monday &&
-      !classDayEditData.tuesday &&
-      !classDayEditData.wednesday &&
-      !classDayEditData.thursday &&
-      !classDayEditData.friday &&
-      !classDayEditData.saturday
-    ) {
-      setIsSubmitting(false);
-      return toast.error(
-        `Por favor, selecione algum dia para editar a Turma ${curriculumFormattedName}... ☑️`,
-        {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        }
-      );
-    }
-
-    if (!curriculumExists && !classDaysExists) {
-      // IF NOT EXISTS, RETURN ERROR
-      return (
-        setIsSubmitting(false),
-        toast.error(`Turma não existe no banco de dados... ❕`, {
-          theme: "colored",
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          autoClose: 3000,
-        })
-      );
+      if (!curriculumExists && !classDaysExists) {
+        // IF NOT EXISTS, RETURN ERROR
+        return (
+          setIsSubmitting(false),
+          toast.error(`Turma não existe no banco de dados... ❕`, {
+            theme: "colored",
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            autoClose: 3000,
+          })
+        );
+      } else {
+        // IF EXISTS, EDIT
+        editClassDay();
+        editCurriculum();
+      }
     } else {
-      // IF EXISTS, EDIT
-      editClassDay();
-      editCurriculum();
+      setIsSubmitting(false);
     }
   };
 
@@ -880,6 +913,8 @@ export default function EditCurriculumForm({
               setModal={setModal && setModal}
               classCall={classCall}
               setClassCall={setClassCall}
+              onCloseLogModal={onCloseLogModal}
+              curriculumId={curriculumId}
             />
           </div>
         </div>
@@ -905,7 +940,7 @@ export default function EditCurriculumForm({
                 type="text"
                 name="publicId"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={handleOneCurriculumDetails(curriculumId).publicId!}
               />
             </div>
@@ -919,7 +954,7 @@ export default function EditCurriculumForm({
             type="text"
             name="name"
             disabled
-            className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+            className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
             value={curriculumFormattedName}
           />
         </div> */}
@@ -933,7 +968,7 @@ export default function EditCurriculumForm({
                 type="text"
                 name="schoolName"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={handleOneCurriculumDetails(curriculumId).schoolName}
               />
             </div>
@@ -955,7 +990,7 @@ export default function EditCurriculumForm({
                   type="text"
                   name="schooYearsJoinInput"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={
                     curriculumEditData.schoolClassIds.length > 0
                       ? handleOneCurriculumDetails(
@@ -976,7 +1011,7 @@ export default function EditCurriculumForm({
                 type="text"
                 name="schoolCourse"
                 disabled
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 value={
                   handleOneCurriculumDetails(curriculumId).schoolCourseName
                 }
@@ -1023,9 +1058,9 @@ export default function EditCurriculumForm({
                   className={
                     !onlyView || !dashboardView
                       ? errors.placesAvailable
-                        ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                        : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                        ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                        : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   }
                   onChange={(e) => {
                     setCurriculumEditData({
@@ -1052,13 +1087,13 @@ export default function EditCurriculumForm({
                   value={
                     handleOneCurriculumDetails(curriculumId).students.length
                   }
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 />
               </div>
             )}
 
             {/* PLACES AVAILABLE */}
-            {onlyView && dashboardView && (
+            {onlyView && dashboardView && classDaySelectedData && (
               <div className="flex gap-2 items-center">
                 <label htmlFor="placesAvailable" className="w-1/4 text-right">
                   Vagas Disponíveis:{" "}
@@ -1067,11 +1102,8 @@ export default function EditCurriculumForm({
                   disabled
                   type="text"
                   name="placesAvailable"
-                  value={
-                    handleOneCurriculumDetails(curriculumId).placesAvailable -
-                    handleOneCurriculumDetails(curriculumId).students.length
-                  }
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  value={placesAvailable}
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 />
               </div>
             )}
@@ -1087,9 +1119,11 @@ export default function EditCurriculumForm({
                   type="text"
                   name="waitingList"
                   value={
-                    handleOneCurriculumDetails(curriculumId).waitingList.length
+                    getWaitingCurriculums(
+                      handleOneCurriculumDetails(curriculumId).students
+                    ).length
                   }
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                 />
               </div>
             )}
@@ -1124,7 +1158,7 @@ export default function EditCurriculumForm({
                   type="text"
                   name="scheduleName"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={`${handleScheduleDetails(
                     handleOneCurriculumDetails(curriculumId).scheduleId
                   )!.classStart.slice(0, 2)}h${
@@ -1159,8 +1193,8 @@ export default function EditCurriculumForm({
                   }
                   className={
                     errors.scheduleId
-                      ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                      : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                      ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                      : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                   }
                   name="scheduleSelect"
                   onChange={(e) => {
@@ -1191,7 +1225,7 @@ export default function EditCurriculumForm({
                   type="text"
                   name="transitionStart"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={scheduleSelectedData?.transitionStart}
                 />
               </div>
@@ -1207,7 +1241,7 @@ export default function EditCurriculumForm({
                   type="text"
                   name="transitionEnd"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={scheduleSelectedData?.transitionEnd}
                 />
               </div>
@@ -1223,7 +1257,7 @@ export default function EditCurriculumForm({
                   type="text"
                   name="classStart"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={scheduleSelectedData?.classStart}
                 />
               </div>
@@ -1239,7 +1273,7 @@ export default function EditCurriculumForm({
                   type="text"
                   name="classEnd"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={scheduleSelectedData?.classEnd}
                 />
               </div>
@@ -1255,7 +1289,7 @@ export default function EditCurriculumForm({
                   type="text"
                   name="exit"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={scheduleSelectedData?.exit}
                 />
               </div>
@@ -1278,7 +1312,7 @@ export default function EditCurriculumForm({
                   type="text"
                   name="classDaysJoinInput"
                   disabled
-                  className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
+                  className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default opacity-70"
                   value={
                     classDayName.length > 0 ? classDayName.join(" - ") : ""
                   }
@@ -1320,8 +1354,8 @@ export default function EditCurriculumForm({
                 }
                 className={
                   errors.teacherId
-                    ? "w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
-                    : "w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                    ? "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border dark:text-gray-100 border-red-600 rounded-2xl"
+                    : "uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 }
                 name="teacherSelect"
                 onChange={(e) => {
@@ -1394,7 +1428,7 @@ export default function EditCurriculumForm({
                 disabled={isSubmitting}
                 readOnly
                 placeholder="Selecione os dias para formar o Identificador dos Dias de Aula"
-                className="w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
+                className="uppercase w-3/4 px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
                 value={classDayName.length > 0 ? classDayName.join(" - ") : ""}
               />
             </div>
@@ -1448,23 +1482,6 @@ export default function EditCurriculumForm({
 
         {/* CLASS CALL IDENTIFIER */}
         {classCall && (
-          // <>
-          //   <div className="flex gap-2 items-center">
-
-          //     <input
-          //       type="text"
-          //       name="publicId"
-          //       disabled
-          //       className="w-full text-center px-2 py-1 dark:bg-gray-800 border border-transparent dark:border-transparent dark:text-gray-100 rounded-2xl cursor-default"
-          //       value={`${
-          //         handleOneCurriculumDetails(curriculumId).schoolName
-          //       } - ${
-          //         handleOneCurriculumDetails(curriculumId).schoolCourseName
-          //       } - ${handleOneCurriculumDetails(curriculumId).teacherName}`}
-          //     />
-          //   </div>
-
-          // </>
           <ClassCallsHeader
             curriculumId={curriculumId}
             setSelectedClassDate={setSelectedClassDate}
@@ -1484,104 +1501,3 @@ export default function EditCurriculumForm({
     </div>
   );
 }
-// <>
-{
-  /* CURRICULUM LISTS */
-}
-{
-  /* <div className="flex flex-col w-full">
-    <div className="bg-klGreen-500/20 dark:bg-klGreen-500/30 text-center p-[1vw]">
-      Alunos
-    </div>
-    <table className="table-auto w-full border-collapse border border-transparent">
-      {curriculumSelectedData.students.length !== 0 && (
-        <thead className="bg-klGreen-500 sticky top-0 text-gray-100 text-sm md:text-base z-40">
-          <tr>
-            <th className="border-r dark:border-klGreen-500 p-2 font-normal">
-              Nome
-            </th>
-            <th className="border-r dark:border-klGreen-500 p-2 font-normal">
-              Turma
-            </th>
-            <th className="border-r dark:border-klGreen-500 p-2 font-normal">
-              Dias de Aula
-            </th>
-            <th className="border-r dark:border-klGreen-500 p-2 font-normal">
-              Contato
-            </th>
-          </tr>
-        </thead>
-      )}
-      <tbody className="[&>*:nth-child(1)]:rounded-t-xl [&>*:nth-last-child(1)]:rounded-b-xl [&>*:nth-child(odd)]:bg-klGreen-500/30 [&>*:nth-child(even)]:bg-klGreen-500/20 dark:[&>*:nth-child(odd)]:bg-klGreen-500/50 dark:[&>*:nth-child(even)]:bg-klGreen-500/20 [&>*:nth-child]:border-2 [&>*:nth-child]:border-gray-100 text-sm md:text-base">
-        {curriculumSelectedData.students.length ? (
-          curriculumSelectedData.students
-            .sort(
-              (a, b) =>
-                handleOneStudentDetails(a.id)!.publicId! -
-                handleOneStudentDetails(b.id)!.publicId!
-            )
-
-            .map((student, index) => (
-              <>
-                <tr
-                  key={index}
-                  className="hover:bg-gray-100 cursor-pointer"
-                >
-                  <td
-                    key={index}
-                    className="border-r dark:border-klGreen-500 p-2 text-center"
-                  >
-                    {handleOneStudentDetails(student.id)?.name}
-                  </td>
-                  <td
-                    key={index + 1}
-                    className="border-r dark:border-klGreen-500 p-2 text-center"
-                  >
-                    {handleSchoolYearName(
-                      handleOneStudentDetails(student.id)!.schoolYears
-                    )}{" "}
-                    -{" "}
-                    {handleSchoolYearComplementName(
-                      handleOneStudentDetails(student.id)!
-                        .schoolYearsComplement
-                    )}
-                  </td>
-                  <td
-                    key={index + 2}
-                    className="border-r dark:border-klGreen-500 p-2 text-center"
-                  >
-                    {handleOneStudentDetails(student.id)
-                      ?.curriculumIds.filter(
-                        (curriculum) => curriculum.id === curriculumId
-                      )[0]
-                      .indexDays.map(handleClassDaysName)
-                      .join(" - ")}
-                  </td>
-                  <td
-                    key={index + 3}
-                    className="border-r dark:border-klGreen-500 p-2 text-center"
-                  >
-                    {handleOneStudentDetails(student.id)
-                      ?.financialResponsible.phone &&
-                      formatPhoneNumber(
-                        handleOneStudentDetails(student.id)!
-                          .financialResponsible.phone
-                      )}
-                  </td>
-                </tr>
-              </>
-            ))
-        ) : (
-          <tr>
-            <td colSpan={4} className="text-center p-4">
-              <p className="text-klGreen-500 dark:text-white">
-                Nenhum aluno encontrado
-              </p>
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div> */
-}
-// </>
