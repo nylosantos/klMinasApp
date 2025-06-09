@@ -6,8 +6,10 @@ import { Auth, getAuth, User } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
   CalculateStudentMonthlyFeeResult,
+  CalculateStudentMonthlyFeeResultWithBreakdown,
   ClassDaySearchProps,
   ConfirmationToSubmitProps,
+  CourseBreakdown,
   CurriculumArrayProps,
   CurriculumSearchProps,
   CurriculumToAddProps,
@@ -178,8 +180,9 @@ export type GlobalDataContextType = {
       customDiscount: boolean;
       customDiscountValue: string;
       secondCourseDiscount: boolean;
-    }
-  ): Promise<CalculateStudentMonthlyFeeResult>;
+    },
+    includeBreakdown?: boolean
+  ): Promise<CalculateStudentMonthlyFeeResultWithBreakdown>;
   updateStudentFeeData({
     studentId,
     appliedPrice,
@@ -686,8 +689,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         return (
           priceBundle +
           (quotient - 1) *
-            priceBundle *
-            systemConstantsValues.secondCourseDiscountValue
+          priceBundle *
+          systemConstantsValues.secondCourseDiscountValue
         );
       }
     }
@@ -698,7 +701,7 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       return (
         priceBundle +
         remainder *
-          (priceUnit * systemConstantsValues.secondCourseDiscountValue)
+        (priceUnit * systemConstantsValues.secondCourseDiscountValue)
       );
     }
 
@@ -706,12 +709,326 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
     return (
       priceBundle + // Preço do primeiro bundle
       (quotient - 1) *
-        priceBundle *
-        systemConstantsValues.secondCourseDiscountValue + // Preço com desconto para os bundles extras
+      priceBundle *
+      systemConstantsValues.secondCourseDiscountValue + // Preço com desconto para os bundles extras
       remainder * (priceUnit * systemConstantsValues.secondCourseDiscountValue) // Preço das aulas restantes com desconto
     );
   }
 
+  // async function calculateStudentMonthlyFee(
+  //   studentId: string,
+  //   newStudent?: {
+  //     curriculums: CurriculumArrayProps[];
+  //     familyDiscount: boolean;
+  //     studentFamilyAtSchool: string[];
+  //     employeeDiscount: boolean;
+  //     customDiscount: boolean;
+  //     customDiscountValue: string;
+  //     secondCourseDiscount: boolean;
+  //   }
+  // ): Promise<CalculateStudentMonthlyFeeResult> {
+  //   if (!systemConstantsValues) {
+  //     throw new Error("System constants not found");
+  //   }
+
+  //   let studentData: StudentSearchProps | null = null;
+
+  //   // Se newStudent não for fornecido, buscamos os dados do aluno no Firestore
+  //   if (!newStudent) {
+  //     const userRef = collection(db, "students");
+  //     const q = query(userRef, where("id", "==", studentId));
+  //     const querySnapshot = await getDocs(q);
+
+  //     if (!querySnapshot.empty) {
+  //       studentData = querySnapshot.docs[0].data() as StudentSearchProps;
+  //     }
+  //   }
+
+  //   // Determina qual conjunto de dados será utilizado
+  //   const student = newStudent || studentData;
+  //   if (!student) throw new Error("Student data not found");
+
+  //   let fullPrice = 0;
+  //   let appliedPrice = 0;
+  //   let studentFamilyToUpdate: StudentFamilyToUpdateProps[] = [];
+
+  //   // Verifica se o aluno está ativo
+  //   const students = studentsDb as StudentSearchProps[];
+
+  //   const foundedStudent = students.find(
+  //     (student) => student.id === student.id
+  //   );
+
+  //   const isActive = newStudent
+  //     ? true
+  //     : foundedStudent
+  //     ? foundedStudent.active
+  //     : false;
+
+  //   // Calcula o preço total dos currículos do aluno
+  //   const curriculumPrices = await Promise.all(
+  //     student.curriculums.map((curriculum) => {
+  //       if (curriculum.isExperimental || curriculum.isWaiting) {
+  //         return 0;
+  //       } else
+  //         return calculateFullPriceForCurriculum(
+  //           curriculum.id,
+  //           curriculum.indexDays,
+  //           systemConstantsValues
+  //         );
+  //     })
+  //   );
+
+  //   // Soma os preços dos currículos para obter o preço total
+  //   fullPrice = +curriculumPrices
+  //     .reduce((sum, price) => sum + price, 0)
+  //     .toFixed(2);
+
+  //   // Verifica se há um desconto personalizado aplicado ao aluno
+  //   if (student.customDiscount && isActive) {
+  //     appliedPrice = parseFloat(
+  //       (
+  //         fullPrice *
+  //         (1 - parseFloat(student.customDiscountValue) / 100)
+  //       ).toFixed(2)
+  //     );
+  //     return {
+  //       studentId,
+  //       appliedPrice,
+  //       fullPrice,
+  //       customDiscount: true,
+  //       customDiscountValue: student.customDiscountValue,
+  //       familyDiscount: false,
+  //       secondCourseDiscount: false,
+  //       employeeDiscount: false,
+  //     };
+  //   }
+
+  //   // Verifica se o aluno tem desconto de funcionário
+  //   if (student.employeeDiscount && isActive) {
+  //     appliedPrice = +(
+  //       fullPrice * systemConstantsValues.employeeDiscountValue
+  //     ).toFixed(2);
+  //     return {
+  //       studentId,
+  //       appliedPrice,
+  //       fullPrice,
+  //       employeeDiscount: true,
+  //       familyDiscount: false,
+  //       secondCourseDiscount: false,
+  //       customDiscount: false,
+  //       customDiscountValue: "0",
+  //     };
+  //   }
+
+  //   // Verifica se o aluno tem desconto familiar
+  //   if (student.familyDiscount && student.studentFamilyAtSchool.length > 0) {
+  //     const familyCurriculums: Array<{
+  //       curriculumId: string;
+  //       studentId: string;
+  //       indexDays: number[];
+  //       price: number;
+  //     }> = [];
+
+  //     const familyMembers = [studentId, ...student.studentFamilyAtSchool];
+
+  //     // Adiciona o estudante atual com seus dados atualizados diretamente na lista de familyCurriculums
+  //     for (const curriculum of student.curriculums) {
+  //       const price = calculateFullPriceForCurriculum(
+  //         curriculum.id,
+  //         curriculum.indexDays,
+  //         systemConstantsValues
+  //       );
+  //       familyCurriculums.push({
+  //         curriculumId: curriculum.id,
+  //         studentId: studentId,
+  //         indexDays: curriculum.indexDays,
+  //         price,
+  //       });
+  //     }
+  //     const curriculumDbTransformed: CurriculumSearchProps[] = curriculumDb
+  //       ? curriculumDb.map((doc: DocumentData) => ({
+  //           ...(doc as CurriculumSearchProps),
+  //         }))
+  //       : [];
+  //     // Agora itere pelos currículos do banco de dados
+  //     for (const curriculum of curriculumDbTransformed) {
+  //       for (const studentFromDb of curriculum.students) {
+  //         if (familyMembers.includes(studentFromDb.id)) {
+  //           const foundedStudent = students.find(
+  //             (student) =>
+  //               student.id === studentFromDb.id && student.id !== studentId
+  //           );
+  //           if (
+  //             foundedStudent &&
+  //             !foundedStudent.customDiscount &&
+  //             !foundedStudent.employeeDiscount &&
+  //             foundedStudent.active
+  //           ) {
+  //             const price = calculateFullPriceForCurriculum(
+  //               curriculum.id,
+  //               studentFromDb.indexDays,
+  //               systemConstantsValues
+  //             );
+  //             familyCurriculums.push({
+  //               curriculumId: curriculum.id,
+  //               studentId: studentFromDb.id,
+  //               indexDays: studentFromDb.indexDays,
+  //               price,
+  //             });
+  //           }
+  //         }
+  //       }
+  //     }
+
+  //     // Tipando o acumulador
+  //     interface Curriculum {
+  //       curriculumId: string;
+  //       studentId: string;
+  //       indexDays: number[];
+  //       price: number;
+  //     }
+
+  //     interface MemberData {
+  //       fullPrice: number;
+  //       appliedPrice: number;
+  //       curriculums: Curriculum[];
+  //     }
+
+  //     // Tipando o objeto de acumulador
+  //     const groupedByMember = familyCurriculums.reduce<{
+  //       [key: string]: MemberData;
+  //     }>((acc, curriculum) => {
+  //       // Encontrar o maior preço
+  //       const maxPrice = Math.max(...familyCurriculums.map((c) => c.price));
+
+  //       // Aplicar o desconto nos currículos que não são o de maior preço
+  //       const appliedPrice =
+  //         curriculum.price === maxPrice
+  //           ? curriculum.price // Mantém o preço sem alteração
+  //           : curriculum.price * systemConstantsValues.familyDiscountValue; // Aplica o desconto
+
+  //       // Adicionar os currículos ao grupo do membro correto
+  //       if (!acc[curriculum.studentId]) {
+  //         acc[curriculum.studentId] = {
+  //           fullPrice: 0,
+  //           appliedPrice: 0,
+  //           curriculums: [],
+  //         };
+  //       }
+
+  //       // Adicionar ao array de currículos do membro
+  //       acc[curriculum.studentId].curriculums.push(curriculum);
+
+  //       // Somar os preços sem desconto (fullPrice)
+  //       acc[curriculum.studentId].fullPrice += curriculum.price;
+
+  //       // Somar os preços com o desconto aplicado (appliedPrice)
+  //       acc[curriculum.studentId].appliedPrice += appliedPrice;
+
+  //       return acc;
+  //     }, {});
+
+  //     const result = Object.keys(groupedByMember).map((memberId) => {
+  //       const memberData = groupedByMember[memberId];
+  //       return {
+  //         familyId: memberId,
+  //         appliedPrice: +memberData.appliedPrice.toFixed(2), // Preço final com desconto
+  //         fullPrice: +memberData.fullPrice.toFixed(2), // Preço total sem desconto
+  //         familyDiscount: true,
+  //         secondCourseDiscount: false,
+  //         employeeDiscount: false,
+  //         customDiscount: false,
+  //         customDiscountValue: "0",
+  //       };
+  //     });
+  //     // Excluindo o studentId de studentFamilyToUpdate
+  //     studentFamilyToUpdate = result.filter(
+  //       (member) => member.familyId !== studentId
+  //     );
+
+  //     appliedPrice =
+  //       result.find((member) => member.familyId === studentId)?.appliedPrice ||
+  //       fullPrice;
+
+  //     return {
+  //       studentId,
+  //       appliedPrice,
+  //       fullPrice,
+  //       familyDiscount: true,
+  //       secondCourseDiscount: false,
+  //       employeeDiscount: false,
+  //       customDiscount: false,
+  //       customDiscountValue: "0",
+  //       studentFamilyToUpdate,
+  //     };
+  //   }
+
+  //   // Verifica se o aluno tem desconto para um segundo curso
+  //   if (curriculumPrices.length > 1) {
+  //     // Encontre o valor máximo
+  //     const maxPrice = Math.max(...curriculumPrices);
+
+  //     // Encontre o índice da primeira ocorrência do valor máximo
+  //     const maxPriceIndex = curriculumPrices.indexOf(maxPrice);
+
+  //     // Filtra os preços, mantendo todos os preços que não são a primeira ocorrência do maior preço
+  //     const discountedCourses = curriculumPrices.filter(
+  //       (_, index) => index !== maxPriceIndex // Filtrando pelo índice correto
+  //     );
+
+  //     const discountAmount = discountedCourses.reduce(
+  //       (sum, price) =>
+  //         // sum + price * (1 - systemConstantsValues.secondCourseDiscountValue),
+  //         sum + price * systemConstantsValues.secondCourseDiscountValue,
+  //       0
+  //     );
+
+  //     appliedPrice = maxPrice + discountAmount;
+
+  //     return {
+  //       studentId,
+  //       appliedPrice: +appliedPrice.toFixed(2),
+  //       fullPrice: +fullPrice.toFixed(2),
+  //       secondCourseDiscount: discountAmount > 0 ? true : false,
+  //       familyDiscount: false,
+  //       employeeDiscount: false,
+  //       customDiscount: false,
+  //       customDiscountValue: "0",
+  //     };
+  //   }
+
+  //   if (isActive) {
+  //     // Se nenhum desconto for aplicado, o preço final será o preço total
+  //     appliedPrice = +fullPrice.toFixed(2);
+  //     return {
+  //       studentId,
+  //       appliedPrice,
+  //       fullPrice,
+  //       secondCourseDiscount: false,
+  //       familyDiscount: false,
+  //       employeeDiscount: false,
+  //       customDiscount: false,
+  //       customDiscountValue: "0",
+  //     };
+  //   } else {
+  //     // Se o aluno estiver inativo, retorna 0
+  //     return {
+  //       studentId,
+  //       appliedPrice,
+  //       fullPrice,
+  //       secondCourseDiscount: false,
+  //       familyDiscount: false,
+  //       employeeDiscount: false,
+  //       customDiscount: false,
+  //       customDiscountValue: "0",
+  //     };
+  //   }
+  // }
+
+  // UPDATE FEE ON FIREBASE
+
+  // Função principal de cálculo de mensalidade com opção de detalhamento
   async function calculateStudentMonthlyFee(
     studentId: string,
     newStudent?: {
@@ -722,15 +1039,17 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       customDiscount: boolean;
       customDiscountValue: string;
       secondCourseDiscount: boolean;
-    }
-  ): Promise<CalculateStudentMonthlyFeeResult> {
+    },
+    includeBreakdown: boolean = false // Novo parâmetro para incluir o detalhamento por curso
+  ): Promise<CalculateStudentMonthlyFeeResultWithBreakdown> {
+    // 1) Verifica constantes do sistema
     if (!systemConstantsValues) {
       throw new Error("System constants not found");
     }
 
     let studentData: StudentSearchProps | null = null;
 
-    // Se newStudent não for fornecido, buscamos os dados do aluno no Firestore
+    // 2) Se newStudent não for fornecido, buscamos no Firestore
     if (!newStudent) {
       const userRef = collection(db, "students");
       const q = query(userRef, where("id", "==", studentId));
@@ -741,54 +1060,55 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       }
     }
 
-    // Determina qual conjunto de dados será utilizado
+    // 3) Decide qual objeto usar: novo ou do banco
     const student = newStudent || studentData;
     if (!student) throw new Error("Student data not found");
 
+    // 4) Inicializa variáveis de resultado
     let fullPrice = 0;
     let appliedPrice = 0;
     let studentFamilyToUpdate: StudentFamilyToUpdateProps[] = [];
 
-    // Verifica se o aluno está ativo
+    // 5) Verifica se está ativo (caso newStudent, assume ativo)
     const students = studentsDb as StudentSearchProps[];
+    const foundedStudent = students.find(s => s.id === studentId);
+    const isActive = newStudent ? true : (foundedStudent ? foundedStudent.active : false);
 
-    const foundedStudent = students.find(
-      (student) => student.id === student.id
-    );
-
-    const isActive = newStudent
-      ? true
-      : foundedStudent
-      ? foundedStudent.active
-      : false;
-
-    // Calcula o preço total dos currículos do aluno
+    // 6) Calcula o preço cheio de cada currículo (sem descontos)
     const curriculumPrices = await Promise.all(
-      student.curriculums.map((curriculum) => {
+      student.curriculums.map(curriculum => {
         if (curriculum.isExperimental || curriculum.isWaiting) {
           return 0;
-        } else
-          return calculateFullPriceForCurriculum(
-            curriculum.id,
-            curriculum.indexDays,
-            systemConstantsValues
-          );
+        }
+        return calculateFullPriceForCurriculum(
+          curriculum.id,
+          curriculum.indexDays,
+          systemConstantsValues
+        );
       })
     );
 
-    // Soma os preços dos currículos para obter o preço total
-    fullPrice = +curriculumPrices
-      .reduce((sum, price) => sum + price, 0)
-      .toFixed(2);
+    // 7) Soma para obter fullPrice total
+    fullPrice = +curriculumPrices.reduce((sum, price) => sum + price, 0).toFixed(2);
 
-    // Verifica se há um desconto personalizado aplicado ao aluno
+    // 8) Prepara array inicial de breakdown (fullPrice e placeholder appliedPrice)
+    const initialBreakdown: CourseBreakdown[] = student.curriculums.map((c, idx) => ({
+      curriculumId: c.id,
+      fullPrice: curriculumPrices[idx],
+      appliedPrice: curriculumPrices[idx],
+    }));
+
+    // 9) Desconto personalizado (customDiscount)
     if (student.customDiscount && isActive) {
-      appliedPrice = parseFloat(
-        (
-          fullPrice *
-          (1 - parseFloat(student.customDiscountValue) / 100)
-        ).toFixed(2)
-      );
+      const factor = 1 - parseFloat(student.customDiscountValue) / 100;
+      appliedPrice = parseFloat((fullPrice * factor).toFixed(2));
+
+      const breakdown = initialBreakdown.map(item => ({
+        curriculumId: item.curriculumId,
+        fullPrice: item.fullPrice,
+        appliedPrice: +((item.fullPrice * factor).toFixed(2)),
+      }));
+
       return {
         studentId,
         appliedPrice,
@@ -798,14 +1118,22 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         familyDiscount: false,
         secondCourseDiscount: false,
         employeeDiscount: false,
+        studentFamilyToUpdate: [],
+        ...(includeBreakdown && { breakdown }),
       };
     }
 
-    // Verifica se o aluno tem desconto de funcionário
+    // 10) Desconto de funcionário (employeeDiscount)
     if (student.employeeDiscount && isActive) {
-      appliedPrice = +(
-        fullPrice * systemConstantsValues.employeeDiscountValue
-      ).toFixed(2);
+      const factor = systemConstantsValues.employeeDiscountValue;
+      appliedPrice = +(fullPrice * factor).toFixed(2);
+
+      const breakdown = initialBreakdown.map(item => ({
+        curriculumId: item.curriculumId,
+        fullPrice: item.fullPrice,
+        appliedPrice: +(item.fullPrice * factor).toFixed(2),
+      }));
+
       return {
         studentId,
         appliedPrice,
@@ -815,215 +1143,267 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
         secondCourseDiscount: false,
         customDiscount: false,
         customDiscountValue: "0",
+        studentFamilyToUpdate: [],
+        ...(includeBreakdown && { breakdown }),
       };
     }
 
-    // Verifica se o aluno tem desconto familiar
-    if (student.familyDiscount && student.studentFamilyAtSchool.length > 0) {
-      const familyCurriculums: Array<{
-        curriculumId: string;
-        studentId: string;
-        indexDays: number[];
-        price: number;
-      }> = [];
+    // // 11) Desconto familiar (familyDiscount)
+    // if (student.familyDiscount && student.studentFamilyAtSchool.length > 0) {
+    //   const familyCurriculums: {
+    //     curriculumId: string;
+    //     studentId: string;
+    //     indexDays: number[];
+    //     price: number;
+    //   }[] = [];
+    //   const familyMembers = [studentId, ...student.studentFamilyAtSchool];
 
+    //   // Currículos do aluno atual
+    //   for (const curriculum of student.curriculums) {
+    //     const price = calculateFullPriceForCurriculum(
+    //       curriculum.id,
+    //       curriculum.indexDays,
+    //       systemConstantsValues
+    //     );
+    //     familyCurriculums.push({ curriculumId: curriculum.id, studentId, indexDays: curriculum.indexDays, price });
+    //   }
+
+    //   // Currículos de demais membros ativos sem outros descontos
+    //   const curriculumDbTransformed: CurriculumSearchProps[] = curriculumDb
+    //     ? curriculumDb.map(doc => doc as CurriculumSearchProps)
+    //     : [];
+    //   for (const cur of curriculumDbTransformed) {
+    //     for (const stud of cur.students) {
+    //       if (familyMembers.includes(stud.id)) {
+    //         const found = students.find(s => s.id === stud.id && s.id !== studentId);
+    //         if (found && found.active && !found.customDiscount && !found.employeeDiscount) {
+    //           const price = calculateFullPriceForCurriculum(
+    //             cur.id,
+    //             stud.indexDays,
+    //             systemConstantsValues
+    //           );
+    //           familyCurriculums.push({ curriculumId: cur.id, studentId: stud.id, indexDays: stud.indexDays, price });
+    //         }
+    //       }
+    //     }
+    //   }
+
+    //   // Agrupa por membro para cálculo de descontos
+    //   interface MemberData {
+    //     fullPrice: number;
+    //     appliedPrice: number;
+    //     curriculums: { curriculumId: string; price: number }[];
+    //   }
+    //   const grouped = familyCurriculums.reduce<{ [key: string]: MemberData }>((acc, cur) => {
+    //     if (!acc[cur.studentId]) acc[cur.studentId] = { fullPrice: 0, appliedPrice: 0, curriculums: [] };
+    //     acc[cur.studentId].curriculums.push({ curriculumId: cur.curriculumId, price: cur.price });
+    //     acc[cur.studentId].fullPrice += cur.price;
+    //     return acc;
+    //   }, {});
+
+    //   // Aplica desconto: um curso sem desconto (mais caro) e os demais com valor reduzido
+    //   Object.values(grouped).forEach(member => {
+    //     const prices = member.curriculums.map(c => c.price);
+    //     const maxP = Math.max(...prices);
+    //     // Encontra o índice do primeiro maior valor
+    //     const firstMaxIndex = prices.indexOf(maxP);
+
+    //     member.curriculums.forEach((c, idx) => {
+    //       if (idx === firstMaxIndex) {
+    //         member.appliedPrice += c.price; // Não aplica desconto ao primeiro maior
+    //       } else {
+    //         member.appliedPrice += c.price * systemConstantsValues.familyDiscountValue; // Aplica desconto aos demais
+    //       }
+    //     });
+    //   });
+
+    //   console.log("Grouped family members with discounts:", grouped);
+
+    //   // Prepara resultado e studentFamilyToUpdate
+    //   const result = Object.entries(grouped).map(([id, md]) => ({
+    //     familyId: id,
+    //     fullPrice: +md.fullPrice.toFixed(2),
+    //     appliedPrice: +md.appliedPrice.toFixed(2),
+    //     familyDiscount: true,
+    //     secondCourseDiscount: false,
+    //     employeeDiscount: false,
+    //     customDiscount: false,
+    //     customDiscountValue: "0",
+    //   }));
+    //   studentFamilyToUpdate = result.filter(m => m.familyId !== studentId);
+    //   const main = result.find(m => m.familyId === studentId)!;
+    //   appliedPrice = main.appliedPrice;
+    //   fullPrice = main.fullPrice;
+
+    //   const breakdown = grouped[studentId].curriculums.map(c => ({
+    //     curriculumId: c.curriculumId,
+    //     fullPrice: c.price,
+    //     appliedPrice: +(c.price === Math.max(...grouped[studentId].curriculums.map(x => x.price))
+    //       ? c.price
+    //       : c.price * systemConstantsValues.familyDiscountValue).toFixed(2),
+    //   }));
+
+    //   // console.log({
+    //   //   studentId,
+    //   //   appliedPrice,
+    //   //   fullPrice,
+    //   //   familyDiscount: true,
+    //   //   secondCourseDiscount: false,
+    //   //   employeeDiscount: false,
+    //   //   customDiscount: false,
+    //   //   customDiscountValue: "0",
+    //   //   studentFamilyToUpdate,
+    //   //   ...(includeBreakdown && { breakdown }),
+    //   // });
+
+    //   return {
+    //     studentId,
+    //     appliedPrice,
+    //     fullPrice,
+    //     familyDiscount: true,
+    //     secondCourseDiscount: false,
+    //     employeeDiscount: false,
+    //     customDiscount: false,
+    //     customDiscountValue: "0",
+    //     studentFamilyToUpdate,
+    //     ...(includeBreakdown && { breakdown }),
+    //   };
+    // }
+
+    if (student.familyDiscount && student.studentFamilyAtSchool.length > 0) {
+      const familyCurriculums: { curriculumId: string; studentId: string; indexDays: number[]; price: number }[] = [];
       const familyMembers = [studentId, ...student.studentFamilyAtSchool];
 
-      // Adiciona o estudante atual com seus dados atualizados diretamente na lista de familyCurriculums
-      for (const curriculum of student.curriculums) {
-        const price = calculateFullPriceForCurriculum(
-          curriculum.id,
-          curriculum.indexDays,
-          systemConstantsValues
-        );
-        familyCurriculums.push({
-          curriculumId: curriculum.id,
-          studentId: studentId,
-          indexDays: curriculum.indexDays,
-          price,
-        });
-      }
-      const curriculumDbTransformed: CurriculumSearchProps[] = curriculumDb
-        ? curriculumDb.map((doc: DocumentData) => ({
-            ...(doc as CurriculumSearchProps),
-          }))
-        : [];
-      // Agora itere pelos currículos do banco de dados
-      for (const curriculum of curriculumDbTransformed) {
-        for (const studentFromDb of curriculum.students) {
-          if (familyMembers.includes(studentFromDb.id)) {
-            const foundedStudent = students.find(
-              (student) =>
-                student.id === studentFromDb.id && student.id !== studentId
-            );
-            if (
-              foundedStudent &&
-              !foundedStudent.customDiscount &&
-              !foundedStudent.employeeDiscount &&
-              foundedStudent.active
-            ) {
-              const price = calculateFullPriceForCurriculum(
-                curriculum.id,
-                studentFromDb.indexDays,
-                systemConstantsValues
-              );
-              familyCurriculums.push({
-                curriculumId: curriculum.id,
-                studentId: studentFromDb.id,
-                indexDays: studentFromDb.indexDays,
-                price,
-              });
+      // atual
+      student.curriculums.forEach(c => {
+        const price = calculateFullPriceForCurriculum(c.id, c.indexDays, systemConstantsValues);
+        familyCurriculums.push({ curriculumId: c.id, studentId, indexDays: c.indexDays, price });
+      });
+      // demais membros
+      const curriculumDbTr: CurriculumSearchProps[] = curriculumDb ? curriculumDb.map(d => d as CurriculumSearchProps) : [];
+      curriculumDbTr.forEach(cur => {
+        cur.students.forEach(st => {
+          if (familyMembers.includes(st.id)) {
+            const found = students.find(s => s.id === st.id && s.id !== studentId);
+            if (found && found.active && !found.customDiscount && !found.employeeDiscount) {
+              const price = calculateFullPriceForCurriculum(cur.id, st.indexDays, systemConstantsValues);
+              familyCurriculums.push({ curriculumId: cur.id, studentId: st.id, indexDays: st.indexDays, price });
             }
           }
-        }
-      }
+        });
+      });
 
-      // Tipando o acumulador
-      interface Curriculum {
-        curriculumId: string;
-        studentId: string;
-        indexDays: number[];
-        price: number;
-      }
-
-      interface MemberData {
-        fullPrice: number;
-        appliedPrice: number;
-        curriculums: Curriculum[];
-      }
-
-      // Tipando o objeto de acumulador
-      const groupedByMember = familyCurriculums.reduce<{
-        [key: string]: MemberData;
-      }>((acc, curriculum) => {
-        // Encontrar o maior preço
-        const maxPrice = Math.max(...familyCurriculums.map((c) => c.price));
-
-        // Aplicar o desconto nos currículos que não são o de maior preço
-        const appliedPrice =
-          curriculum.price === maxPrice
-            ? curriculum.price // Mantém o preço sem alteração
-            : curriculum.price * systemConstantsValues.familyDiscountValue; // Aplica o desconto
-
-        // Adicionar os currículos ao grupo do membro correto
-        if (!acc[curriculum.studentId]) {
-          acc[curriculum.studentId] = {
-            fullPrice: 0,
-            appliedPrice: 0,
-            curriculums: [],
-          };
-        }
-
-        // Adicionar ao array de currículos do membro
-        acc[curriculum.studentId].curriculums.push(curriculum);
-
-        // Somar os preços sem desconto (fullPrice)
+      // original grouping e desconto
+      interface MemberData { fullPrice: number; appliedPrice: number; curriculums: { curriculumId: string; price: number }[]; }
+      const groupedByMember = familyCurriculums.reduce<{ [key: string]: MemberData }>((acc, curriculum) => {
+        const maxPrice = Math.max(...familyCurriculums.map(c => c.price));
+        const applied = curriculum.price === maxPrice ? curriculum.price : curriculum.price * systemConstantsValues.familyDiscountValue;
+        if (!acc[curriculum.studentId]) acc[curriculum.studentId] = { fullPrice: 0, appliedPrice: 0, curriculums: [] };
+        acc[curriculum.studentId].curriculums.push({ curriculumId: curriculum.curriculumId, price: curriculum.price });
         acc[curriculum.studentId].fullPrice += curriculum.price;
-
-        // Somar os preços com o desconto aplicado (appliedPrice)
-        acc[curriculum.studentId].appliedPrice += appliedPrice;
-
+        acc[curriculum.studentId].appliedPrice += applied;
         return acc;
       }, {});
 
-      const result = Object.keys(groupedByMember).map((memberId) => {
-        const memberData = groupedByMember[memberId];
-        return {
-          familyId: memberId,
-          appliedPrice: +memberData.appliedPrice.toFixed(2), // Preço final com desconto
-          fullPrice: +memberData.fullPrice.toFixed(2), // Preço total sem desconto
-          familyDiscount: true,
-          secondCourseDiscount: false,
-          employeeDiscount: false,
-          customDiscount: false,
-          customDiscountValue: "0",
-        };
-      });
-      // Excluindo o studentId de studentFamilyToUpdate
-      studentFamilyToUpdate = result.filter(
-        (member) => member.familyId !== studentId
-      );
-
-      appliedPrice =
-        result.find((member) => member.familyId === studentId)?.appliedPrice ||
-        fullPrice;
-
-      return {
-        studentId,
-        appliedPrice,
-        fullPrice,
+      // resultado
+      const result = Object.entries(groupedByMember).map(([id, m]) => ({
+        familyId: id,
+        fullPrice: +m.fullPrice.toFixed(2),
+        appliedPrice: +m.appliedPrice.toFixed(2),
         familyDiscount: true,
         secondCourseDiscount: false,
         employeeDiscount: false,
         customDiscount: false,
         customDiscountValue: "0",
-        studentFamilyToUpdate,
-      };
+      }));
+
+      studentFamilyToUpdate = result.filter(r => r.familyId !== studentId);
+      const main = result.find(r => r.familyId === studentId)!;
+      fullPrice = main.fullPrice;
+      appliedPrice = main.appliedPrice;
+
+      // 1. Array com todos os currículos da família
+      const allFamilyCurriculums = familyCurriculums.map(c => ({
+        ...c,
+      }));
+
+      // 2. Maior valor
+      const maxPrice = Math.max(...allFamilyCurriculums.map(c => c.price));
+
+      // 3. Índice do primeiro currículo de maior valor
+      const firstMaxIndex = allFamilyCurriculums.findIndex(c => c.price === maxPrice);
+
+      // 4. Para o breakdown do estudante:
+      let foundFirstMax = false;
+      const breakdown = groupedByMember[studentId].curriculums.map(c => {
+        // Procura o índice global deste currículo no array da família
+        const globalIdx = allFamilyCurriculums.findIndex(
+          famC => famC.curriculumId === c.curriculumId && famC.studentId === studentId
+        );
+        let applied;
+        if (!foundFirstMax && c.price === maxPrice && globalIdx === firstMaxIndex) {
+          applied = c.price;
+          foundFirstMax = true;
+        } else {
+          applied = c.price * systemConstantsValues.familyDiscountValue;
+        }
+        return {
+          curriculumId: c.curriculumId,
+          fullPrice: c.price,
+          appliedPrice: +applied.toFixed(2),
+        };
+      });
+
+      return { studentId, appliedPrice, fullPrice, familyDiscount: true, secondCourseDiscount: false, employeeDiscount: false, customDiscount: false, customDiscountValue: "0", studentFamilyToUpdate, ...(includeBreakdown && { breakdown }) };
     }
 
-    // Verifica se o aluno tem desconto para um segundo curso
+    // 12) Desconto segundo curso (secondCourseDiscount)
     if (curriculumPrices.length > 1) {
-      // Encontre o valor máximo
       const maxPrice = Math.max(...curriculumPrices);
-
-      // Encontre o índice da primeira ocorrência do valor máximo
-      const maxPriceIndex = curriculumPrices.indexOf(maxPrice);
-
-      // Filtra os preços, mantendo todos os preços que não são a primeira ocorrência do maior preço
-      const discountedCourses = curriculumPrices.filter(
-        (_, index) => index !== maxPriceIndex // Filtrando pelo índice correto
-      );
-
-      const discountAmount = discountedCourses.reduce(
-        (sum, price) =>
-          // sum + price * (1 - systemConstantsValues.secondCourseDiscountValue),
-          sum + price * systemConstantsValues.secondCourseDiscountValue,
-        0
-      );
-
-      appliedPrice = maxPrice + discountAmount;
+      const maxIndex = curriculumPrices.indexOf(maxPrice);
+      const factor = systemConstantsValues.secondCourseDiscountValue;
+      const breakdown = initialBreakdown.map((item, idx) => ({
+        curriculumId: item.curriculumId,
+        fullPrice: item.fullPrice,
+        appliedPrice: +(idx === maxIndex ? item.fullPrice : item.fullPrice * factor).toFixed(2),
+      }));
+      appliedPrice = +breakdown.reduce((sum, b) => sum + b.appliedPrice, 0).toFixed(2);
 
       return {
         studentId,
-        appliedPrice: +appliedPrice.toFixed(2),
-        fullPrice: +fullPrice.toFixed(2),
-        secondCourseDiscount: discountAmount > 0 ? true : false,
+        appliedPrice,
+        fullPrice,
+        secondCourseDiscount: true,
         familyDiscount: false,
         employeeDiscount: false,
         customDiscount: false,
         customDiscountValue: "0",
+        studentFamilyToUpdate: [],
+        ...(includeBreakdown && { breakdown }),
       };
     }
 
+    // 13) Sem desconto ou inativo
     if (isActive) {
-      // Se nenhum desconto for aplicado, o preço final será o preço total
-      appliedPrice = +fullPrice.toFixed(2);
-      return {
-        studentId,
-        appliedPrice,
-        fullPrice,
-        secondCourseDiscount: false,
-        familyDiscount: false,
-        employeeDiscount: false,
-        customDiscount: false,
-        customDiscountValue: "0",
-      };
+      appliedPrice = fullPrice;
     } else {
-      // Se o aluno estiver inativo, retorna 0
-      return {
-        studentId,
-        appliedPrice,
-        fullPrice,
-        secondCourseDiscount: false,
-        familyDiscount: false,
-        employeeDiscount: false,
-        customDiscount: false,
-        customDiscountValue: "0",
-      };
+      appliedPrice = 0;
     }
+
+    return {
+      studentId,
+      appliedPrice,
+      fullPrice,
+      secondCourseDiscount: false,
+      familyDiscount: false,
+      employeeDiscount: false,
+      customDiscount: false,
+      customDiscountValue: "0",
+      studentFamilyToUpdate: [],
+      ...(includeBreakdown && { breakdown: initialBreakdown }),
+    };
   }
 
-  // UPDATE FEE ON FIREBASE
   async function updateStudentFeeData({
     newStudent,
     studentId,
@@ -1565,9 +1945,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
   ) {
     const confirmation = await handleConfirmationToSubmit({
       title: `${isActive ? "Desativar" : "Ativar"} Aluno`,
-      text: `Tem certeza que deseja ${
-        isActive ? "desativar" : "ativar"
-      } este Aluno?`,
+      text: `Tem certeza que deseja ${isActive ? "desativar" : "ativar"
+        } este Aluno?`,
       icon: "warning",
       confirmButtonText: `Sim, ${isActive ? "desativar" : "ativar"}`,
       cancelButtonText: "Cancelar",
@@ -1951,12 +2330,10 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           return (
             setIsSubmitting(false),
             toast.error(
-              `Turma incluída em ${curriculumExistsOnStudent.length} ${
-                curriculumExistsOnStudent.length === 1
-                  ? "cadastro de aluno"
-                  : "cadastros de alunos"
-              }, exclua ou altere primeiramente ${
-                curriculumExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
+              `Turma incluída em ${curriculumExistsOnStudent.length} ${curriculumExistsOnStudent.length === 1
+                ? "cadastro de aluno"
+                : "cadastros de alunos"
+              }, exclua ou altere primeiramente ${curriculumExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
               } e depois exclua a turma... ❕`,
               {
                 theme: "colored",
@@ -2036,13 +2413,13 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
       setIsSubmitting(true);
       const teachersDbTransformed: TeacherSearchProps[] = teachersDb
         ? teachersDb.map((doc: DocumentData) => ({
-            ...(doc as TeacherSearchProps),
-          }))
+          ...(doc as TeacherSearchProps),
+        }))
         : [];
       const curriculumDbTransformed: CurriculumSearchProps[] = curriculumDb
         ? curriculumDb.map((doc: DocumentData) => ({
-            ...(doc as CurriculumSearchProps),
-          }))
+          ...(doc as CurriculumSearchProps),
+        }))
         : [];
       const teacherToDelete = teachersDbTransformed.find(
         (teacher) => teacher.id === teacherId
@@ -2090,10 +2467,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           return (
             setIsSubmitting(false),
             toast.error(
-              `Professor incluído em ${teacherExistsOnCurriculum.length} ${
-                teacherExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-              }, exclua ou altere primeiramente ${
-                teacherExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
+              `Professor incluído em ${teacherExistsOnCurriculum.length} ${teacherExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+              }, exclua ou altere primeiramente ${teacherExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
               } e depois exclua o Professor ${teacherToDelete.name}... ❕`,
               {
                 theme: "colored",
@@ -2209,12 +2584,10 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           return (
             setIsSubmitting(false),
             toast.error(
-              `Colégio tem ${schoolExistsOnStudent.length} ${
-                schoolExistsOnStudent.length === 1
-                  ? "aluno matriculado"
-                  : "alunos matriculados"
-              }, exclua ou altere primeiramente ${
-                schoolExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
+              `Colégio tem ${schoolExistsOnStudent.length} ${schoolExistsOnStudent.length === 1
+                ? "aluno matriculado"
+                : "alunos matriculados"
+              }, exclua ou altere primeiramente ${schoolExistsOnStudent.length === 1 ? "o aluno" : "os alunos"
               } e depois exclua o ${schoolToDelete.name}... ❕`,
               {
                 theme: "colored",
@@ -2229,10 +2602,8 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           return (
             setIsSubmitting(false),
             toast.error(
-              `Colégio incluído em ${schoolExistsOnCurriculum.length} ${
-                schoolExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-              }, exclua ou altere primeiramente ${
-                schoolExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
+              `Colégio incluído em ${schoolExistsOnCurriculum.length} ${schoolExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+              }, exclua ou altere primeiramente ${schoolExistsOnCurriculum.length === 1 ? "a Turma" : "as Turmas"
               } e depois exclua o ${schoolToDelete.name}... ❕`,
               {
                 theme: "colored",
@@ -2247,12 +2618,10 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           return (
             setIsSubmitting(false),
             toast.error(
-              `Colégio incluído em ${schoolExistsOnSchedule.length} ${
-                schoolExistsOnSchedule.length === 1 ? "Horário" : "Horários"
-              }, exclua ou altere primeiramente ${
-                schoolExistsOnSchedule.length === 1
-                  ? "o Horário"
-                  : "os Horários"
+              `Colégio incluído em ${schoolExistsOnSchedule.length} ${schoolExistsOnSchedule.length === 1 ? "Horário" : "Horários"
+              }, exclua ou altere primeiramente ${schoolExistsOnSchedule.length === 1
+                ? "o Horário"
+                : "os Horários"
               } e depois exclua o ${schoolToDelete.name}... ❕`,
               {
                 theme: "colored",
@@ -2364,14 +2733,12 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           return (
             setIsSubmitting(false),
             toast.error(
-              `Modalidade tem ${schoolCourseExistsOnStudent.length} ${
-                schoolCourseExistsOnStudent.length === 1
-                  ? "aluno matriculado"
-                  : "alunos matriculados"
-              }, exclua ou altere primeiramente ${
-                schoolCourseExistsOnStudent.length === 1
-                  ? "o aluno"
-                  : "os alunos"
+              `Modalidade tem ${schoolCourseExistsOnStudent.length} ${schoolCourseExistsOnStudent.length === 1
+                ? "aluno matriculado"
+                : "alunos matriculados"
+              }, exclua ou altere primeiramente ${schoolCourseExistsOnStudent.length === 1
+                ? "o aluno"
+                : "os alunos"
               } e depois exclua a modalidade ${courseToDelete.name}... ❕`,
               {
                 theme: "colored",
@@ -2386,14 +2753,11 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           return (
             setIsSubmitting(false),
             toast.error(
-              `Modalidade incluída em ${
-                schoolCourseExistsOnCurriculum.length
-              } ${
-                schoolCourseExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-              }, exclua ou altere primeiramente ${
-                schoolCourseExistsOnCurriculum.length === 1
-                  ? "a Turma"
-                  : "as Turmas"
+              `Modalidade incluída em ${schoolCourseExistsOnCurriculum.length
+              } ${schoolCourseExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+              }, exclua ou altere primeiramente ${schoolCourseExistsOnCurriculum.length === 1
+                ? "a Turma"
+                : "as Turmas"
               } e depois exclua a modalidade ${courseToDelete.name}... ❕`,
               {
                 theme: "colored",
@@ -2486,12 +2850,10 @@ export const GlobalDataProvider = ({ children }: PostsContextProviderProps) => {
           return (
             setIsSubmitting(false),
             toast.error(
-              `Horário incluído em ${scheduleExistsOnCurriculum.length} ${
-                scheduleExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
-              }, exclua ou altere primeiramente ${
-                scheduleExistsOnCurriculum.length === 1
-                  ? "a Turma"
-                  : "as Turmas"
+              `Horário incluído em ${scheduleExistsOnCurriculum.length} ${scheduleExistsOnCurriculum.length === 1 ? "Turma" : "Turmas"
+              }, exclua ou altere primeiramente ${scheduleExistsOnCurriculum.length === 1
+                ? "a Turma"
+                : "as Turmas"
               } e depois exclua o ${scheduleToDelete.name}... ❕`,
               {
                 theme: "colored",

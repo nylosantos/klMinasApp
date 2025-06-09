@@ -173,24 +173,24 @@ export interface DaysProps {
 
 export interface SelectProps {
   dataType:
-    | "schools"
-    | "schoolClasses"
-    | "schoolCourses"
-    | "schedules"
-    | "classDays"
-    | "teachers"
-    | "curriculum"
-    | "students"
-    | "allStudents"
-    | "enrolledStudents"
-    | "allCurriculum"
-    | "enrolledCurriculum"
-    | "appUsers"
-    | "searchEnrolledStudent"
-    | "schoolStage"
-    | "schoolYears"
-    | "schoolYearsComplement"
-    | "searchStudent";
+  | "schools"
+  | "schoolClasses"
+  | "schoolCourses"
+  | "schedules"
+  | "classDays"
+  | "teachers"
+  | "curriculum"
+  | "students"
+  | "allStudents"
+  | "enrolledStudents"
+  | "allCurriculum"
+  | "enrolledCurriculum"
+  | "appUsers"
+  | "searchEnrolledStudent"
+  | "schoolStage"
+  | "schoolYears"
+  | "schoolYearsComplement"
+  | "searchStudent";
   schoolId?: string;
   schoolClassId?: string;
   schoolCourseId?: string;
@@ -317,7 +317,7 @@ export interface StudentSearchProps {
   id: string;
   name: string;
   birthDate: string;
-  document: string;
+  document?: string;
   schoolYears: string;
   schoolYearsComplement: string;
   parentOne: {
@@ -499,11 +499,24 @@ export interface CalculateStudentMonthlyFeeResult {
   customDiscount: boolean;
   customDiscountValue: string;
   studentFamilyToUpdate?: StudentFamilyToUpdateProps[];
+
 }
 
 export interface UpdateStudentFeeProps
   extends CalculateStudentMonthlyFeeResult {
   newStudent: boolean;
+}
+
+// Tipagem auxiliar para detalhamento por curso
+export interface CourseBreakdown {
+  curriculumId: string;
+  fullPrice: number;
+  appliedPrice: number;
+}
+
+// Extensão do resultado para incluir breakdown opcional
+export interface CalculateStudentMonthlyFeeResultWithBreakdown extends CalculateStudentMonthlyFeeResult {
+  breakdown?: CourseBreakdown[];
 }
 
 export interface CurriculumToAddProps {

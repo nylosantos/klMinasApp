@@ -163,7 +163,7 @@ export default function DashboardStudents({
             financialResponsibleDocument
           );
         const matchesStudentDocument =
-          student.document.includes(studentDocument);
+          student.document?.includes(studentDocument);
 
         // Lógica para filtrar com base no showInactiveStudents
         const matchesActive = showInactiveStudents || student.active === true;

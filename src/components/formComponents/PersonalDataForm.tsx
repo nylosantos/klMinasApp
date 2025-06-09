@@ -23,7 +23,7 @@ interface PersonalDataFormProps<T> {
 // Aqui você define o tipo base do seu StudentData
 interface StudentData {
   name: string;
-  document: string;
+  document?: string;
   birthDate: string;
   schoolYears: string;
   schoolYearsComplement: string;
@@ -161,6 +161,14 @@ const PersonalDataForm = <T extends StudentData>({
               ...prevData,
               document: formataCPF(e.target.value),
             }));
+          }}
+          onBlur={(e) => {
+            // Se não estiver vazio, testa o CPF
+            if (e.target.value.trim() !== "") {
+              setTestCPF(testaCPF(e.target.value));
+            } else {
+              setTestCPF(true); // Considera válido se vazio (opcional)
+            }
           }}
         />
       </div>

@@ -103,7 +103,8 @@ export const createStudentValidationSchema = z.object({
   name: z.string().min(1, { message: `Por favor, preencha o campo "Nome"` }),
   document: z
     .string()
-    .min(1, { message: `Por favor, preencha o campo "CPF" do Aluno` }),
+    .min(1, { message: `Por favor, preencha o campo "CPF" do Aluno` }).optional()
+    .or(z.literal("")),
   birthDate: z
     .string()
     .min(1, { message: `Por favor, selecione a Data de Nascimento` }),

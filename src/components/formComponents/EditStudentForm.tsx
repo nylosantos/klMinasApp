@@ -40,10 +40,12 @@ import SelectSchoolAndCourse from "./SelectSchoolAndCourse";
 import { DiscountForm } from "./DiscountForm";
 import { PaymentDetails } from "../layoutComponents/PaymentDetails";
 import CurriculumBalloon from "../layoutComponents/CurriculumBaloon";
-import FamilyFormSelect from "./FamilyFormSelect";
+// import FamilyFormSelect from "./FamilyFormSelect";
 import ShowFamily from "./ShowFamily";
 import ActiveStudent from "./ActiveStudent";
 import { secureSetDoc, secureUpdateDoc } from "../../hooks/firestoreMiddleware";
+import FamilyForm from "./FamilyForm";
+import GeneratePDF from "../../utils/GeneratePdf";
 
 export type NewPricesProps = {
   appliedPrice: number;
@@ -114,6 +116,7 @@ export function EditStudentForm({
     handleConfirmationToSubmit,
     getRegularCurriculums,
     getExperimentalCurriculums,
+    handleOneStudentDetails,
   } = useContext(GlobalDataContext) as GlobalDataContextType;
 
   // STUDENT EDIT DATA
@@ -209,7 +212,7 @@ export function EditStudentForm({
 
   const [removedFamily, setRemovedFamily] = useState<string[]>([]);
 
-  const [newAddFamily, setNewAddFamily] = useState<string[]>([]);
+  const [newAddFamily/*, setNewAddFamily*/] = useState<string[]>([]);
 
   const [studentFreeDays, setStudentFreeDays] = useState<StudentFreeDayProps[]>(
     [
@@ -481,15 +484,15 @@ export function EditStudentForm({
             ddd: studentEditData.financialResponsible.activePhoneSecondary
               ? studentSelectedData.financialResponsible.phoneSecondary !== ""
                 ? studentSelectedData.financialResponsible.phoneSecondary.slice(
-                    3,
-                    5
-                  )
+                  3,
+                  5
+                )
                 : "DDD"
               : "DDD",
             number: studentEditData.financialResponsible.activePhoneSecondary
               ? studentSelectedData.financialResponsible.phoneSecondary.slice(
-                  -9
-                )
+                -9
+              )
               : "",
           },
           phoneTertiary: {
@@ -497,9 +500,9 @@ export function EditStudentForm({
             ddd: studentEditData.financialResponsible.activePhoneTertiary
               ? studentSelectedData.financialResponsible.phoneTertiary !== ""
                 ? studentSelectedData.financialResponsible.phoneTertiary.slice(
-                    3,
-                    5
-                  )
+                  3,
+                  5
+                )
                 : "DDD"
               : "DDD",
             number: studentEditData.financialResponsible.activePhoneTertiary
@@ -545,7 +548,7 @@ export function EditStudentForm({
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-expect-error
         birthDate: studentSelectedData.birthDate.toDate().toLocaleDateString(),
-        document: studentSelectedData.document,
+        document: studentSelectedData.document || "",
         schoolYears: studentSelectedData.schoolYears,
         schoolYearsComplement: studentSelectedData.schoolYearsComplement,
         parentOne: {
@@ -606,14 +609,14 @@ export function EditStudentForm({
           phoneSecondary: {
             ddd: studentSelectedData.financialResponsible.phoneSecondary
               ? studentSelectedData.financialResponsible.phoneSecondary.slice(
-                  3,
-                  5
-                )
+                3,
+                5
+              )
               : "DDD",
             number: studentSelectedData.financialResponsible.phoneSecondary
               ? studentSelectedData.financialResponsible.phoneSecondary.slice(
-                  -9
-                )
+                -9
+              )
               : "",
           },
           activePhoneTertiary:
@@ -623,9 +626,9 @@ export function EditStudentForm({
           phoneTertiary: {
             ddd: studentSelectedData.financialResponsible.phoneTertiary
               ? studentSelectedData.financialResponsible.phoneTertiary.slice(
-                  3,
-                  5
-                )
+                3,
+                5
+              )
               : "DDD",
             number: studentSelectedData.financialResponsible.phoneTertiary
               ? studentSelectedData.financialResponsible.phoneTertiary.slice(-9)
@@ -1070,8 +1073,8 @@ export function EditStudentForm({
       // CURRICULUM DB DATA
       const curriculumDbTransformed: CurriculumSearchProps[] = curriculumDb
         ? curriculumDb.map((doc: DocumentData) => ({
-            ...(doc as CurriculumSearchProps),
-          }))
+          ...(doc as CurriculumSearchProps),
+        }))
         : [];
 
       // ALL CURRICULUMS
@@ -1091,8 +1094,7 @@ export function EditStudentForm({
         return (
           setIsSubmitting(false),
           toast.error(
-            `CPF do ${
-              testCPF ? "aluno" : "responsável financeiro"
+            `CPF do ${testCPF ? "aluno" : "responsável financeiro"
             } é inválido, por favor verifique... ❕`,
             {
               theme: "colored",
@@ -1414,11 +1416,10 @@ export function EditStudentForm({
 
   return (
     <div
-      className={`w-full ${
-        open
-          ? "flex flex-col h-full max-w-9xl bg-white/80 dark:bg-klGreen-500/60 rounded-xl overflow-y-auto no-scrollbar"
-          : ""
-      } `}
+      className={`w-full ${open
+        ? "flex flex-col h-full max-w-9xl bg-white/80 dark:bg-klGreen-500/60 rounded-xl overflow-y-auto no-scrollbar"
+        : ""
+        } `}
     >
       <div className="flex flex-col w-full h-full overflow-scroll no-scrollbar gap-2 pt-4 px-4 rounded-xl text-center">
         {/** DAHSBOARD SECTION TITLE */}
@@ -1463,6 +1464,7 @@ export function EditStudentForm({
             onSubmit={handleSubmit(handleEditStudent)}
             className="flex flex-col w-full gap-2 px-4 pb-16 rounded-xl bg-klGreen-500/0 dark:bg-klGreen-500/0 text-center h-full overflow-scroll no-scrollbar "
           >
+            <GeneratePDF student={handleOneStudentDetails(studentEditData.id)!} />
             {/** PERSONAL DATA FORM */}
             <PersonalDataForm
               studentData={studentEditData}
@@ -1555,7 +1557,7 @@ export function EditStudentForm({
               </div>
             )}
 
-            {studentEditData.studentFamilyAtSchool.length > 0 && (
+            {onlyView && studentEditData.studentFamilyAtSchool.length > 0 && (
               <ShowFamily
                 onlyView={onlyView}
                 removedFamily={removedFamily}
@@ -1565,6 +1567,13 @@ export function EditStudentForm({
               />
             )}
             {!onlyView && systemConstantsValues && studentEditData.active && (
+              <FamilyForm
+                studentData={studentEditData}
+                setStudentData={setStudentEditData}
+                systemConstantsValues={systemConstantsValues}
+              />
+            )}
+            {/* {!onlyView && systemConstantsValues && studentEditData.active && (
               <FamilyFormSelect
                 studentData={studentEditData}
                 setStudentData={setStudentEditData}
@@ -1573,7 +1582,7 @@ export function EditStudentForm({
                 newAddFamily={newAddFamily}
                 setNewAddFamily={setNewAddFamily}
               />
-            )}
+            )} */}
 
             {curriculumState.curriculums.length > 0 &&
               systemConstantsValues &&
@@ -1582,26 +1591,26 @@ export function EditStudentForm({
                 <>
                   {getRegularCurriculums(curriculumState.curriculums).length >
                     0 && (
-                    <>
-                      {!onlyView && userFullData.role !== "user" && (
-                        <DiscountForm
+                      <>
+                        {!onlyView && userFullData.role !== "user" && (
+                          <DiscountForm
+                            data={studentEditData}
+                            setData={setStudentEditData}
+                            systemConstantsValues={systemConstantsValues}
+                            userRole={userFullData.role}
+                          />
+                        )}
+                        <PaymentDetails
                           data={studentEditData}
                           setData={setStudentEditData}
                           systemConstantsValues={systemConstantsValues}
                           userRole={userFullData.role}
+                          appliedPrice={curriculumState.appliedPrice}
+                          enrolmentFee={curriculumState.enrollmentFee}
+                          onlyView={onlyView}
                         />
-                      )}
-                      <PaymentDetails
-                        data={studentEditData}
-                        setData={setStudentEditData}
-                        systemConstantsValues={systemConstantsValues}
-                        userRole={userFullData.role}
-                        appliedPrice={curriculumState.appliedPrice}
-                        enrolmentFee={curriculumState.enrollmentFee}
-                        onlyView={onlyView}
-                      />
-                    </>
-                  )}
+                      </>
+                    )}
                 </>
               )}
 
