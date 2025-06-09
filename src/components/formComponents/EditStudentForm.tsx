@@ -1460,11 +1460,11 @@ export function EditStudentForm({
 
         {/* FORM */}
         <FormProvider {...methods}>
+          {userFullData && userFullData.role !== 'user' && <GeneratePDF student={handleOneStudentDetails(studentEditData.id)!} />}
           <form
             onSubmit={handleSubmit(handleEditStudent)}
             className="flex flex-col w-full gap-2 px-4 pb-16 rounded-xl bg-klGreen-500/0 dark:bg-klGreen-500/0 text-center h-full overflow-scroll no-scrollbar "
           >
-            <GeneratePDF student={handleOneStudentDetails(studentEditData.id)!} />
             {/** PERSONAL DATA FORM */}
             <PersonalDataForm
               studentData={studentEditData}

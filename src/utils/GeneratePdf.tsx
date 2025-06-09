@@ -150,7 +150,7 @@ const GeneratePDF: React.FC<Props> = ({ student }) => {
             onClick={generateDocx}
             className="px-4 py-2 rounded shadow hover:shadow-lg hover:bg-blue-600 transition disabled:opacity-50 bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:none"
         >
-            Genera Documento
+            Gerar Contrato
         </button>
     );
 };
