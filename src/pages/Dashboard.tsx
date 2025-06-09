@@ -15,11 +15,11 @@ import DashboardSchool from "../components/dashboardComponents/DashboardSchool";
 import DashboardCourse from "../components/dashboardComponents/DashboardCourse";
 import DashboardSchedule from "../components/dashboardComponents/DashboardSchedule";
 import { FilteredStudentsProps, StudentSearchProps } from "../@types";
-import SchoolLogs from "../components/logs/SchoolLogs";
-import SchoolCourseLogs from "../components/logs/SchoolCourseLogs";
-import ScheduleLogs from "../components/logs/ScheduleLogs";
-import TeacherLogs from "../components/logs/TeachersLogs";
-// import CurriculumLogs from "../components/logs/CurriculumLogs";
+import SchoolLogs from "../components/logComponents/SchoolLogs";
+import SchoolCourseLogs from "../components/logComponents/SchoolCourseLogs";
+import ScheduleLogs from "../components/logComponents/ScheduleLogs";
+import TeacherLogs from "../components/logComponents/TeachersLogs";
+// import CurriculumLogs from "../components/logComponents/CurriculumLogs";
 
 export type DashBoardPageProps = {
   page:
