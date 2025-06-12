@@ -106,21 +106,22 @@ const GeneratePDF: React.FC<Props> = ({ student }) => {
                 })
             );
 
+            // DUPLICA O PRIMEIRO ITEM PARA TESTE
+            // if (enrichedCurriculum.length === 1) {
+            //     enrichedCurriculum.push({ ...enrichedCurriculum[0], courseIndex: 2 });
+            // }
+
             // 4. Cria nova versão do student
             const studentWithEnrichedCurriculum = {
                 ...student,
                 detailedCurriculum: enrichedCurriculum,
                 fullPrice: student.fullPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
                 appliedPrice: student.appliedPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                enrollmentFee: student.enrolmentFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
             };
 
-            console.log("Student with enriched curriculum:", studentWithEnrichedCurriculum);
-
-            console.log(student.financialResponsible.name);
-            console.log(student.financialResponsible.document);
-
             // 5. Carrega template do contrato
-            const response = await fetch(`/src/models/contratoKlMinas.docx`);
+            const response = await fetch(`/models/contratoKlMinas.docx`);
             const blob = await response.blob();
             const arrayBuffer = await blob.arrayBuffer();
             const zip = new PizZip(arrayBuffer);
